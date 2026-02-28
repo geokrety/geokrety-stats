@@ -59,7 +59,7 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 		       total_moves AS moves,
 		       active_users,
 		       active_gks,
-		       drops, grabs, dips, comments, seen
+		       drops, grabs, dips, comments, sees
 		FROM geokrety_stats.mv_daily_activity
 		WHERE activity_date >= CURRENT_DATE - (interval '1 day' * $1)
 		ORDER BY activity_date DESC`
@@ -80,13 +80,13 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 		Grabs       int64  `json:"grabs"`
 		Dips        int64  `json:"dips"`
 		Comments    int64  `json:"comments"`
-		Seen        int64  `json:"seen"`
+		Sees        int64  `json:"sees"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
 		if err := rows.Scan(&r.Day, &r.Moves, &r.ActiveUsers, &r.ActiveGKs,
-			&r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Seen); err != nil {
+			&r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees); err != nil {
 			errInternal(c, err)
 			return
 		}

@@ -2,12 +2,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
+import { idToGkId } from '../composables/useGkId.js'
 import { getMoveTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
+import GkTypeBadge from '../components/GkTypeBadge.vue'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
-import GkTypeBadge from '../components/GkTypeBadge.vue'
 import RelatedUsersTab from '../components/RelatedUsersTab.vue'
 import PointsBreakdownChart from '../components/PointsBreakdownChart.vue'
 
@@ -83,7 +84,7 @@ watch(activeTab, (tab) => {
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Leaderboard</RouterLink></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ gk.gk_hex_id ? `GK${gk.gk_hex_id}` : gk.gk_name }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ gk.gk_name }}</li>
       </ol>
     </nav>
 
@@ -94,13 +95,14 @@ watch(activeTab, (tab) => {
         <div class="flex-grow-1">
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <h3 class="mb-0">{{ gk.gk_name }}</h3>
-            <span class="badge bg-dark" style="font-size: 0.8rem">GK{{ gk.gk_hex_id || gk.gk_id }}</span>
+            <span class="badge bg-dark" style="font-size: 0.8rem">{{ gk.gk_hex_id || idToGkId(gk.gk_id) }}</span>
+            <span v-if="gk.missing" class="badge bg-danger">⚠️ Missing</span>
+            <span v-if="gk.is_non_collectible" class="badge bg-warning text-dark" title="Non-transferable (sealed) GeoKret">🔒 Sealed</span>
+            <span v-if="gk.is_parked" class="badge bg-info text-dark" title="Parked GeoKret">🅿️ Parked</span>
           </div>
           <p class="mb-0 text-muted small mt-1">
             Type: <GkTypeBadge :gk-type="gk.gk_type" :type-name="gk.gk_type_name" />
-            <span v-if="gk.missing" class="badge bg-danger ms-2">Missing</span>
-            <span v-if="!gk.in_cache" class="badge bg-secondary ms-2" title="Currently held by a user">👤 In Hand</span>
-            <span v-else class="badge bg-success ms-2">🏦 In Cache</span>
+            <span v-if="gk.loves_count" class="ms-2">❤️ {{ gk.loves_count.toLocaleString() }} loves</span>
           </p>
           <p class="mb-0 text-muted small">
             Owner:
@@ -132,10 +134,6 @@ watch(activeTab, (tab) => {
           <div class="col">
             <div class="fw-bold fs-5">{{ gk.current_multiplier?.toFixed(2) }}×</div>
             <div class="text-muted small" title="Points multiplier applied to moves with this GeoKret">Multiplier</div>
-          </div>
-          <div class="col" v-if="gk.loves_count">
-            <div class="fw-bold fs-5 text-danger">{{ gk.loves_count?.toLocaleString() }}</div>
-            <div class="text-muted small">Loves ❤️</div>
           </div>
         </div>
       </div>

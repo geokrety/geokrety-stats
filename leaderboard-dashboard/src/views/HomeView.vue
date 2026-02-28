@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { fetchList } from '../composables/useApi.js'
+import { fetchList, fetchOne } from '../composables/useApi.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
 import { useLeaderboardLive } from '../composables/useWebSocket.js'
 import Pagination from '../components/Pagination.vue'
@@ -32,10 +32,9 @@ const effectivePeriod = computed(() => yearValue.value || period.value)
 
 async function fetchYears() {
   try {
-    const data = await fetchList('/stats/periods', { per_page: 100 })
-    // data.items may be [{year: 2023, months: [...]}, ...]
-    const items = data.items || []
-    availableYears.value = items.map(i => String(i.year || i)).filter(Boolean).sort((a, b) => b - a)
+    const data = await fetchOne('/stats/periods')
+    // response is { months: [...], years: [2010, 2011, ...] }
+    availableYears.value = (data.years || []).map(String).sort((a, b) => Number(b) - Number(a))
   } catch (e) {
     // non-critical
   }
@@ -61,18 +60,11 @@ onMounted(() => { fetchYears(); load() })
 watch([period, yearValue], () => { page.value = 1; load() })
 watch([page], load)
 
-// Live update: merge top-10 into first page results when connected
-watch(liveTop, (live) => {
-  if (effectivePeriod.value === 'all' && page.value === 1 && live.length) {
-    rows.value = live
-  }
-})
+// Live update: just a signal, do not replace paginated API results
+// (WebSocket only sends top-10; overwriting 25-item pages would truncate the list)
 
 function selectPeriod(p) { period.value = p; yearValue.value = '' }
-function selectYear(y)   {
-  if (!y) { yearValue.value = ''; return }
-  yearValue.value = y; period.value = ''
-}
+function selectYear(y)   { yearValue.value = y; period.value = '' }
 
 function medalClass(rank) {
   if (rank === 1) return 'text-warning fw-bold'
@@ -86,44 +78,53 @@ function medalClass(rank) {
   <div>
     <!-- Header card -->
     <div class="card mb-4 shadow-sm">
-      <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-          <h2 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Leaderboard</h2>
-          <p class="text-muted mb-0 small">Points earned by players across all GeoKrety moves</p>
-        </div>
-        <span v-if="connected" class="badge bg-success fs-6"><i class="bi bi-broadcast me-1"></i>Live</span>
+      <div class="card-body">
+        <h2 class="mb-1"><i class="bi bi-trophy-fill text-warning me-2"></i>Leaderboard</h2>
+        <p class="text-muted mb-0">User rankings by points earned through GeoKrety interactions</p>
       </div>
     </div>
 
-    <!-- Period + Year controls -->
-    <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
-      <div class="btn-group btn-group-sm" role="group" aria-label="Period selector">
-        <button
-          v-for="p in PERIODS" :key="p.value"
-          class="btn"
-          :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
-          @click="selectPeriod(p.value)"
-        >{{ p.label }}</button>
+    <!-- Controls row -->
+    <div class="d-flex align-items-center justify-content-end mb-3 flex-wrap gap-2">
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <!-- Live badge -->
+        <span v-if="connected" class="badge bg-success"><i class="bi bi-broadcast me-1"></i>Live</span>
+        <!-- Period selector -->
+        <div class="btn-group btn-group-sm" role="group">
+          <button
+            v-for="p in PERIODS" :key="p.value"
+            class="btn"
+            :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
+            @click="selectPeriod(p.value)"
+          >
+            <span v-if="p.value === 'year'">📅 Year</span>
+            <span v-else>{{ p.label }}</span>
+          </button>
+        </div>
+        <!-- Year dropdown selector -->
+        <div v-if="availableYears.length" class="dropdown">
+          <button
+            class="btn btn-sm"
+            :class="yearValue ? 'btn-info' : 'btn-outline-secondary'"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {{ yearValue ? `${yearValue} 📅` : 'Select Year...' }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" style="max-height: 300px; overflow-y: auto;">
+            <li v-for="y in availableYears" :key="y">
+              <a href="#" class="dropdown-item" :class="yearValue === y ? 'active' : ''" @click.prevent="selectYear(y)">
+                {{ y }}
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <!-- Native year select (replaces broken Bootstrap dropdown) -->
-      <select
-        v-if="availableYears.length"
-        class="form-select form-select-sm"
-        style="width: auto"
-        :value="yearValue"
-        @change="selectYear($event.target.value)"
-        :title="'Filter by specific year'">
-        <option value="">📅 Specific Year…</option>
-        <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
-      </select>
-      <span class="text-muted ms-auto small">{{ meta.total || 0 }} players</span>
     </div>
 
     <!-- Error -->
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-    <!-- Top pagination -->
-    <Pagination v-if="meta.total > perPage" :meta="meta" v-model:page="page" class="mb-2" />
 
     <!-- Table -->
     <div class="card shadow-sm">
@@ -181,7 +182,7 @@ function medalClass(rank) {
       </div>
     </div>
 
-    <!-- Bottom Pagination -->
+    <!-- Pagination -->
     <Pagination v-if="meta.total" :meta="meta" v-model:page="page" class="mt-3" />
   </div>
 </template>

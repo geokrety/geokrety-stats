@@ -3,113 +3,124 @@ package handlers
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/geokrety/leaderboard-api/internal/models"
 )
 
+// gkHexID converts a numeric GeoKret ID to its public GKXXXX format.
+// Example: 4660 → "GK1234"
+func gkHexID(id int64) string {
+	return fmt.Sprintf("GK%04X", id)
+}
+
 // ListGeokrety handles GET /api/v1/geokrety
-// Query: page, per_page, sort (points|moves|users|countries|loves), search
+// Query: page, per_page, sort (points|moves|users|countries|loves|multiplier|distance), search
 func (h *Handler) ListGeokrety(c *gin.Context) {
 	page, perPage, offset := parsePagination(c)
 	search := c.Query("search")
 
-	// Validate and map sort parameter
-	sortCol := "s.total_points_generated"
-	switch c.Query("sort") {
-	case "moves":
-		sortCol = "s.total_moves"
-	case "users":
-		sortCol = "s.distinct_users"
-	case "countries":
-		sortCol = "s.countries_count"
-	case "loves":
-		sortCol = "g.loves_count"
-	case "multiplier":
-		sortCol = "s.current_multiplier"
+	// Map frontend sort key → SQL ORDER BY expression
+	sortMap := map[string]string{
+		"points":     "total_points_generated DESC",
+		"moves":      "total_moves DESC",
+		"users":      "distinct_users DESC",
+		"countries":  "countries_count DESC",
+		"loves":      "loves_count DESC",
+		"multiplier": "current_multiplier DESC",
+		"distance":   "distance DESC",
+	}
+	sortParam := c.DefaultQuery("sort", "points")
+	orderBy, ok2 := sortMap[sortParam]
+	if !ok2 {
+		orderBy = "total_points_generated DESC"
 	}
 
 	baseSelect := `
-		SELECT s.gk_id,
-		       LPAD(UPPER(TO_HEX(s.gk_id::int)), 1, '0') AS gk_hex_id,
-		       s.name, s.gk_type, s.missing,
-		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
-		       s.total_moves, s.distinct_users, s.countries_count,
-		       s.total_points_generated, s.current_multiplier, s.last_move_at,
-		       COALESCE(g.loves_count, 0) AS loves_count
-		FROM geokrety_stats.mv_gk_stats s
-		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id`
+		SELECT gk_id, name, gk_type, missing, distance,
+		       owner_id, owner_username, holder_id, holder_username,
+		       in_cache, is_non_collectible, is_parked, loves_count,
+		       total_moves, distinct_users, countries_count,
+		       total_points_generated, current_multiplier, last_move_at`
 
 	var (
 		countQ, listQ string
-		args          []interface{}
+		countArgs     []interface{}
+		listArgs      []interface{}
 	)
 
 	if search != "" {
-		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats s WHERE s.name ILIKE $1`
-		listQ = baseSelect + fmt.Sprintf(`
-		WHERE s.name ILIKE $1
-		ORDER BY %s DESC NULLS LAST
-		LIMIT $2 OFFSET $3`, sortCol)
-		args = []interface{}{"%" + search + "%", perPage, offset}
+		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats WHERE name ILIKE $1`
+		listQ = baseSelect + `
+			FROM geokrety_stats.mv_gk_stats
+			WHERE name ILIKE $1
+			ORDER BY ` + orderBy + `
+			LIMIT $2 OFFSET $3`
+		countArgs = []interface{}{"%" + search + "%"}
+		listArgs = []interface{}{"%" + search + "%", perPage, offset}
 	} else {
 		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats`
-		listQ = baseSelect + fmt.Sprintf(`
-		ORDER BY %s DESC NULLS LAST
-		LIMIT $1 OFFSET $2`, sortCol)
-		args = []interface{}{perPage, offset}
+		listQ = baseSelect + `
+			FROM geokrety_stats.mv_gk_stats
+			ORDER BY ` + orderBy + `
+			LIMIT $1 OFFSET $2`
+		countArgs = nil
+		listArgs = []interface{}{perPage, offset}
 	}
 
 	var total int64
-	if search != "" {
-		_ = h.DB.QueryRow(c.Request.Context(), countQ, "%"+search+"%").Scan(&total)
+	if countArgs != nil {
+		_ = h.DB.QueryRow(c.Request.Context(), countQ, countArgs...).Scan(&total)
 	} else {
 		_ = h.DB.QueryRow(c.Request.Context(), countQ).Scan(&total)
 	}
 
-	rows, err := h.DB.Query(c.Request.Context(), listQ, args...)
+	dbRows, err := h.DB.Query(c.Request.Context(), listQ, listArgs...)
 	if err != nil {
 		errInternal(c, err)
 		return
 	}
-	defer rows.Close()
+	defer dbRows.Close()
 
 	type row struct {
-		GkID                 int64       `json:"gk_id"`
-		GkHexID              string      `json:"gk_hex_id"`
-		Name                 string      `json:"gk_name"`
-		GkType               int         `json:"gk_type"`
-		GkTypeName           string      `json:"gk_type_name"`
-		Missing              bool        `json:"missing"`
-		OwnerID              *int64      `json:"owner_id,omitempty"`
-		OwnerUsername        *string     `json:"owner_username,omitempty"`
-		HolderID             *int64      `json:"holder_id,omitempty"`
-		HolderUsername       *string     `json:"holder_username,omitempty"`
-		InCache              bool        `json:"in_cache"`
-		TotalMoves           int64       `json:"total_moves"`
-		DistinctUsers        int64       `json:"distinct_users"`
-		CountriesCount       int64       `json:"countries_count"`
-		TotalPointsGenerated float64     `json:"total_points_generated"`
-		CurrentMultiplier    float64     `json:"current_multiplier"`
-		LastMoveAt           interface{} `json:"last_move_at,omitempty"`
-		LovesCount           int64       `json:"loves_count"`
+		GkID                int64    `json:"gk_id"`
+		GkHexID             string   `json:"gk_hex_id"`
+		Name                string   `json:"gk_name"`
+		GkType              int      `json:"gk_type"`
+		GkTypeName          string   `json:"gk_type_name"`
+		Missing             bool     `json:"missing"`
+		InCache             bool     `json:"in_cache"`
+		IsNonCollectible    bool     `json:"is_non_collectible"`
+		IsParked            bool     `json:"is_parked"`
+		LovesCount          int      `json:"loves_count"`
+		Distance            int64    `json:"distance_km"`
+		OwnerID             *int64   `json:"owner_id,omitempty"`
+		OwnerUsername       *string  `json:"owner_username,omitempty"`
+		HolderID            *int64   `json:"holder_id,omitempty"`
+		HolderUsername      *string  `json:"holder_username,omitempty"`
+		TotalMoves          int64    `json:"total_moves"`
+		DistinctUsers       int64    `json:"distinct_users"`
+		CountriesCount      int64    `json:"countries_count"`
+		TotalPointsGenerated float64 `json:"total_points_generated"`
+		CurrentMultiplier   float64    `json:"current_multiplier"`
+		LastMoveAt          *time.Time `json:"last_move_at,omitempty"`
 	}
 
 	var out []row
-	for rows.Next() {
+	for dbRows.Next() {
 		var r row
-		if err := rows.Scan(&r.GkID, &r.GkHexID, &r.Name, &r.GkType, &r.Missing,
+		if err := dbRows.Scan(&r.GkID, &r.Name, &r.GkType, &r.Missing, &r.Distance,
 			&r.OwnerID, &r.OwnerUsername, &r.HolderID, &r.HolderUsername,
+			&r.InCache, &r.IsNonCollectible, &r.IsParked, &r.LovesCount,
 			&r.TotalMoves, &r.DistinctUsers, &r.CountriesCount,
-			&r.TotalPointsGenerated, &r.CurrentMultiplier, &r.LastMoveAt,
-			&r.LovesCount); err != nil {
+			&r.TotalPointsGenerated, &r.CurrentMultiplier, &r.LastMoveAt); err != nil {
 			errInternal(c, err)
 			return
 		}
 		r.GkTypeName = gkTypeName(r.GkType)
-		// GK is in cache when holder_id is null
-		r.InCache = r.HolderID == nil
+		r.GkHexID = gkHexID(r.GkID)
 		out = append(out, r)
 	}
 
@@ -132,31 +143,30 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT s.gk_id,
-		       UPPER(TO_HEX(s.gk_id::int))     AS gk_hex_id,
-		       s.name, s.tracking_code, s.gk_type, s.missing, s.distance, s.caches_count,
-		       s.created_on_datetime, s.born_on_datetime,
-		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
-		       s.total_moves, s.total_drops, s.total_grabs, s.total_seen, s.total_dips,
-		       s.distinct_users, s.countries_count, s.caches_count_distinct,
-		       s.total_points_generated, s.users_awarded, s.current_multiplier,
-		       s.first_move_at, s.last_move_at,
-		       COALESCE(g.loves_count, 0)       AS loves_count
-		FROM geokrety_stats.mv_gk_stats s
-		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id
-		WHERE s.gk_id = $1`
+		SELECT gk_id, name, tracking_code, gk_type, missing, distance, caches_count,
+		       created_on_datetime, born_on_datetime,
+		       owner_id, owner_username, holder_id, holder_username,
+		       in_cache, is_non_collectible, is_parked, loves_count,
+		       total_moves, total_drops, total_grabs, total_seen, total_dips,
+		       distinct_users, countries_count, caches_count_distinct,
+		       total_points_generated, users_awarded, current_multiplier,
+		       first_move_at, last_move_at
+		FROM geokrety_stats.mv_gk_stats
+		WHERE gk_id = $1`
 
 	var g models.GeoKret
 	err = h.DB.QueryRow(c.Request.Context(), q, id).Scan(
-		&g.GkID, &g.GkHexID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
-		&g.CreatedAt, &g.BornAt, &g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
+		&g.GkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+		&g.CreatedAt, &g.BornAt,
+		&g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
+		&g.InCache, &g.IsNonCollectible, &g.IsParked, &g.LovesCount,
 		&g.TotalMoves, &g.TotalDrops, &g.TotalGrabs, &g.TotalSeen, &g.TotalDips,
 		&g.DistinctUsers, &g.CountriesCount, &g.DistinctCaches,
 		&g.TotalPointsGenerated, &g.UsersAwarded, &g.CurrentMultiplier,
-		&g.FirstMoveAt, &g.LastMoveAt, &g.LovesCount,
+		&g.FirstMoveAt, &g.LastMoveAt,
 	)
 	if err != nil {
-		// fallback to raw table
+		// fallback to raw table (no stats)
 		const fallback = `
 			SELECT id, name, tracking_code, type, missing, distance, caches_count,
 			       created_on_datetime, born_on_datetime
@@ -169,12 +179,11 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 			errNotFound(c, "geokret not found")
 			return
 		}
-		g.GkHexID = fmt.Sprintf("%X", id)
 		g.CurrentMultiplier = 1.0
 	}
 
+	g.GkHexID = gkHexID(g.GkID)
 	g.GkTypeName = gkTypeName(g.GkType)
-	g.InCache = g.HolderID == nil
 	ok(c, g, models.Meta{}, nil)
 }
 

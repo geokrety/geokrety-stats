@@ -218,7 +218,7 @@ const formatFloat = (num, decimals = 2) => {
                   </div>
                   <div class="col-6">
                     <span class="me-1">{{ getMoveTypeIcon('sees') }}</span>
-                    <span class="text-muted">{{ formatInt(country.sees) }}</span>
+                    <span class="text-muted">{{ formatInt(country.seen) }}</span>
                   </div>
                   <div class="col-12" v-if="country.comments">
                     <span class="me-1">{{ getMoveTypeIcon('comments') }}</span>
@@ -267,7 +267,7 @@ const formatFloat = (num, decimals = 2) => {
               <td class="text-end text-muted small">{{ formatInt(country.drops) }}</td>
               <td class="text-end text-muted small">{{ formatInt(country.grabs) }}</td>
               <td class="text-end text-muted small">{{ formatInt(country.dips) }}</td>
-              <td class="text-end text-muted small">{{ formatInt(country.sees) }}</td>
+              <td class="text-end text-muted small">{{ formatInt(country.seen) }}</td>
               <td class="text-end">{{ formatInt(country.unique_gks) }}</td>
               <td class="text-end">{{ formatInt(country.unique_users) }}</td>
             </tr>

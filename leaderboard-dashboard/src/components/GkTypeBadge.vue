@@ -1,48 +1,63 @@
 <script setup>
 /**
- * GkTypeBadge - displays a GeoKret type as a colored badge with emoji icon
- * Props:
- *   gkType (Number): numeric GeoKret type ID (0-10)
- *   typeName (String): type name string (optional, used as fallback)
- *   showLabel (Boolean): whether to show the type name text (default true)
+ * GkTypeBadge - Reusable badge for GeoKrety type display.
+ *
+ * GeoKrety type mapping (from geokrety PHP constants):
+ *   0  Traditional   🏷️
+ *   1  Book/CD/DVD   📚
+ *   2  Human         👤
+ *   3  Coin          🪙
+ *   4  KretyPost     ✉️
+ *   5  Pebble        🪨
+ *   6  Car           🚗
+ *   7  Playing Card  🃏
+ *   8  Dog Tag       🐶
+ *   9  Jigsaw        🧩
+ *  10  Easter Egg    🥚
+ *  --  Unknown       ❓
  */
-defineProps({
+
+const props = defineProps({
   gkType: { type: Number, default: null },
   typeName: { type: String, default: null },
-  showLabel: { type: Boolean, default: true },
 })
 
 const TYPE_MAP = {
-  0:  { name: 'Traditional', emoji: '🏷️', color: 'bg-success' },
-  1:  { name: 'Book/CD/DVD', emoji: '📚', color: 'bg-info text-dark' },
-  2:  { name: 'Human',       emoji: '👤', color: 'bg-primary' },
-  3:  { name: 'Coin',        emoji: '🪙', color: 'bg-warning text-dark' },
-  4:  { name: 'KretyPost',   emoji: '✉️',  color: 'bg-secondary' },
-  5:  { name: 'Pebble',      emoji: '🪨', color: 'bg-dark' },
-  6:  { name: 'Car',         emoji: '🚗', color: 'bg-danger' },
-  7:  { name: 'Playing Card',emoji: '🃏', color: 'bg-info text-dark' },
-  8:  { name: 'Dog Tag',     emoji: '🐶', color: 'bg-secondary' },
-  9:  { name: 'Jigsaw',      emoji: '🧩', color: 'bg-warning text-dark' },
-  10: { name: 'Easter Egg',  emoji: '🥚', color: 'bg-danger' },
+  0:  { icon: '🏷️', label: 'Traditional',  cls: 'bg-warning text-dark' },
+  1:  { icon: '📚', label: 'Book/CD/DVD',  cls: 'bg-info text-dark' },
+  2:  { icon: '👤', label: 'Human',         cls: 'bg-primary' },
+  3:  { icon: '🪙', label: 'Coin',          cls: 'bg-warning text-dark' },
+  4:  { icon: '✉️', label: 'KretyPost',     cls: 'bg-danger' },
+  5:  { icon: '🪨', label: 'Pebble',        cls: 'bg-secondary' },
+  6:  { icon: '🚗', label: 'Car',           cls: 'bg-success' },
+  7:  { icon: '🃏', label: 'Playing Card',  cls: 'bg-info text-dark' },
+  8:  { icon: '🐶', label: 'Dog Tag',       cls: 'bg-dark' },
+  9:  { icon: '🧩', label: 'Jigsaw',        cls: 'bg-primary' },
+  10: { icon: '🥚', label: 'Easter Egg',    cls: 'bg-danger' },
 }
 
-function resolveType(gkType, typeName) {
-  if (gkType !== null && gkType !== undefined && TYPE_MAP[gkType]) {
-    return TYPE_MAP[gkType]
+const UNKNOWN = { icon: '❓', label: 'Unknown', cls: 'bg-secondary' }
+
+function getInfo() {
+  if (props.gkType !== null && props.gkType !== undefined) {
+    return TYPE_MAP[props.gkType] ?? UNKNOWN
   }
-  // fallback: find by name
-  if (typeName) {
-    const entry = Object.values(TYPE_MAP).find(t => t.name === typeName)
-    if (entry) return entry
+  // Fall back to string name if type id not available
+  const name = (props.typeName || '').toLowerCase()
+  for (const [k, v] of Object.entries(TYPE_MAP)) {
+    if (v.label.toLowerCase() === name) return v
   }
-  return { name: typeName || 'Unknown', emoji: '❓', color: 'bg-secondary' }
+  return UNKNOWN
 }
+
+const info = getInfo()
 </script>
 
 <template>
-  <span :class="['badge', resolveType(gkType, typeName).color]"
-        :title="resolveType(gkType, typeName).name">
-    {{ resolveType(gkType, typeName).emoji }}
-    <span v-if="showLabel"> {{ resolveType(gkType, typeName).name }}</span>
+  <span
+    :class="['badge', info.cls]"
+    :title="info.label"
+  >
+    {{ info.icon }} {{ info.label }}
   </span>
 </template>
