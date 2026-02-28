@@ -110,7 +110,8 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 func (h *Handler) TopCountries(c *gin.Context) {
 	const q = `
 		SELECT cs.country, cs.total_moves, cs.unique_gks, cs.unique_users,
-		       cs.total_points_awarded, cs.drops, cs.grabs, cs.dips, cs.comments, cs.seen,
+		       cs.drops, cs.grabs, cs.dips, cs.comments, cs.seen,
+		       cs.total_points_awarded,
 		       CASE WHEN cs.total_moves > 0 THEN ROUND(cs.total_points_awarded::NUMERIC / cs.total_moves, 2) ELSE 0 END AS avg_points_per_move,
 		       COALESCE(lv.total_loves, 0) AS total_loves
 		FROM geokrety_stats.mv_country_summary cs
@@ -135,12 +136,12 @@ func (h *Handler) TopCountries(c *gin.Context) {
 		TotalMoves           int64   `json:"total_moves"`
 		UniqueGks            int64   `json:"unique_gks"`
 		UniqueUsers          int64   `json:"unique_users"`
-		TotalPointsAwarded   float64 `json:"total_points_awarded"`
 		Drops                int64   `json:"drops"`
 		Grabs                int64   `json:"grabs"`
 		Dips                 int64   `json:"dips"`
 		Comments             int64   `json:"comments"`
 		Seen                 int64   `json:"seen"`
+		TotalPointsAwarded   float64 `json:"total_points_awarded"`
 		AvgPointsPerMove     float64 `json:"avg_points_per_move"`
 		TotalLoves           int64   `json:"total_loves"`
 	}
@@ -148,8 +149,8 @@ func (h *Handler) TopCountries(c *gin.Context) {
 	for rows.Next() {
 		var r row
 		if err := rows.Scan(&r.Country, &r.TotalMoves, &r.UniqueGks, &r.UniqueUsers,
-			&r.TotalPointsAwarded, &r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Seen,
-			&r.AvgPointsPerMove, &r.TotalLoves); err != nil {
+			&r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Seen,
+			&r.TotalPointsAwarded, &r.AvgPointsPerMove, &r.TotalLoves); err != nil {
 			errInternal(c, err)
 			return
 		}
