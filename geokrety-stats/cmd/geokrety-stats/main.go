@@ -33,6 +33,7 @@ func main() {
 		replayStart   = flag.Int64("start-id", 0, "Replay moves with id >= start-id")
 		replayEnd     = flag.Int64("end-id", 0, "Replay moves with id <= end-id")
 		replayTruncate = flag.Bool("truncate", false, "Truncate stats schema before replay")
+		replayExpireDuringRun = flag.Bool("replay-expire-during-run", false, "During replay, periodically expire chains using historical as-of timestamps (slower; default false)")
 		migrationUp   = flag.Bool("migration-up", false, "Apply all pending migrations and exit")
 		migrationDown = flag.Bool("migration-down", false, "Rollback all migrations and exit")
 	)
@@ -80,7 +81,7 @@ func main() {
 
 	// ── Replay mode ──────────────────────────────────────────────────────────
 	if *replayMode {
-		runReplay(*cfg, db, s, eng, *replayYear, *replayStart, *replayEnd, *replayTruncate)
+		runReplay(*cfg, db, s, eng, *replayYear, *replayStart, *replayEnd, *replayTruncate, *replayExpireDuringRun)
 		return
 	}
 
@@ -112,7 +113,7 @@ func runReplay(
 	db *database.DB,
 	s store.Store,
 	eng *engine.Engine,
-	year int, startID, endID int64, truncate bool,
+	year int, startID, endID int64, truncate bool, expireDuringRun bool,
 ) {
 	opts := replay.Options{
 		StartID:       startID,
@@ -144,6 +145,59 @@ func runReplay(
 		return eng.ProcessMove(ctx, moveID)
 	})
 
+	lastPrunedMonth := ""
+	runner.SetReplayAsOfHook(func(ctx context.Context, asOf time.Time) error {
+		currentMonth := asOf.UTC().Format("2006-01")
+		if currentMonth != lastPrunedMonth {
+			if _, err := db.Pool.Exec(ctx, `
+				DELETE FROM geokrety_stats.user_monthly_diversity
+				WHERE year_month < $1
+			`, currentMonth); err != nil {
+				return fmt.Errorf("pruning user_monthly_diversity: %w", err)
+			}
+			if _, err := db.Pool.Exec(ctx, `
+				DELETE FROM geokrety_stats.user_monthly_diversity_countries
+				WHERE year_month < $1
+			`, currentMonth); err != nil {
+				return fmt.Errorf("pruning user_monthly_diversity_countries: %w", err)
+			}
+			if _, err := db.Pool.Exec(ctx, `
+				DELETE FROM geokrety_stats.user_monthly_diversity_drops
+				WHERE year_month < $1
+			`, currentMonth); err != nil {
+				return fmt.Errorf("pruning user_monthly_diversity_drops: %w", err)
+			}
+			if _, err := db.Pool.Exec(ctx, `
+				DELETE FROM geokrety_stats.user_monthly_diversity_owners
+				WHERE year_month < $1
+			`, currentMonth); err != nil {
+				return fmt.Errorf("pruning user_monthly_diversity_owners: %w", err)
+			}
+
+			if err := s.RotateWaypointMonthlyPartitions(ctx, asOf, cfg.Maintenance.WaypointPartitionRetentionMonths, cfg.Maintenance.WaypointPartitionFutureMonths); err != nil {
+				return fmt.Errorf("rotating waypoint partitions: %w", err)
+			}
+
+			endedBefore := asOf.AddDate(0, 0, -cfg.Maintenance.EndedChainRetentionDays)
+			if _, err := s.PruneEndedChainsOlderThan(ctx, endedBefore); err != nil {
+				return fmt.Errorf("pruning ended chains: %w", err)
+			}
+
+			pointsBefore := asOf.AddDate(0, 0, -cfg.Maintenance.GKPointsLogRetentionDays)
+			if _, err := s.PruneGKPointsLogOlderThan(ctx, pointsBefore); err != nil {
+				return fmt.Errorf("pruning gk_points_log: %w", err)
+			}
+
+			lastPrunedMonth = currentMonth
+		}
+
+		if expireDuringRun {
+			return maintenance.ExpireChainsAt(ctx, s, eng.ChainBonus(), cfg.Stats.ChainTimeoutDays, asOf)
+		}
+
+		return nil
+	})
+
 	// Set progress tracking callbacks on runner
 	runner.SetErrorRecorder(tracker)
 
@@ -158,7 +212,7 @@ func runReplay(
 		// Stop progress display and show summary
 		stats := stopProgress()
 		fmt.Print("\r\033[K")
-		fmt.Print(stats)
+		fmt.Printf("%s\n", stats)
 
 		// Silently exit on interrupt
 		if ctx.Err() != nil {
@@ -171,7 +225,29 @@ func runReplay(
 	// Stop progress display and show summary
 	stats := stopProgress()
 	fmt.Print("\r\033[K")
-	fmt.Print(stats)
+	fmt.Printf("%s\n", stats)
+
+	// Apply historical chain timeout pass as-of replay date (for chains that would
+	// have expired without a subsequent move event on the same GK).
+	replayAsOf := time.Now().UTC()
+	if year != 0 {
+		replayAsOf = time.Date(year, 12, 31, 23, 59, 59, 999999999, time.UTC)
+	}
+
+	maintCtx, maintCancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer maintCancel()
+
+	if err := maintenance.ExpireChainsAt(maintCtx, s, eng.ChainBonus(), cfg.Stats.ChainTimeoutDays, replayAsOf); err != nil {
+		log.Warn().Err(err).Msg("replay: historical chain expiry pass failed (non-fatal)")
+	}
+
+	log.Info().Msg("replay: final materialized view refresh (light + heavy)")
+	if err := db.RefreshMaterializedViewsLight(maintCtx); err != nil {
+		log.Warn().Err(err).Msg("replay: final light materialized view refresh failed (non-fatal)")
+	}
+	if err := db.RefreshMaterializedViewsHeavy(maintCtx); err != nil {
+		log.Warn().Err(err).Msg("replay: final heavy materialized view refresh failed (non-fatal)")
+	}
 }
 
 // setupLogging configures zerolog based on the log config.

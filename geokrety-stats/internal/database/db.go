@@ -130,10 +130,14 @@ func (db *DB) TruncateStatsSchema(ctx context.Context) error {
 		"geokrety_stats.user_points_totals",
 		"geokrety_stats.gk_multiplier_state",
 		"geokrety_stats.gk_countries_visited",
+		"geokrety_stats.gk_context_cache",
 		"geokrety_stats.user_move_history",
 		"geokrety_stats.user_owner_gk_counts",
 		"geokrety_stats.user_waypoint_monthly_counts",
 		"geokrety_stats.user_monthly_diversity",
+		"geokrety_stats.user_monthly_diversity_countries",
+		"geokrety_stats.user_monthly_diversity_drops",
+		"geokrety_stats.user_monthly_diversity_owners",
 		"geokrety_stats.gk_chains",
 		"geokrety_stats.gk_chain_members",
 		"geokrety_stats.gk_chain_completions",
@@ -160,5 +164,29 @@ func (db *DB) RefreshMaterializedViews(ctx context.Context) error {
 		return fmt.Errorf("refreshing materialized views: %w", err)
 	}
 	log.Info().Msg("materialized views refreshed")
+	return nil
+}
+
+// RefreshMaterializedViewsLight refreshes only the frequently queried leaderboard views.
+// Intended for periodic refreshes during replay to reduce overhead.
+func (db *DB) RefreshMaterializedViewsLight(ctx context.Context) error {
+	log.Info().Msg("refreshing materialized views (light profile)...")
+	_, err := db.Pool.Exec(ctx, `SELECT geokrety_stats.refresh_leaderboard_views_light()`)
+	if err != nil {
+		return fmt.Errorf("refreshing materialized views (light): %w", err)
+	}
+	log.Info().Msg("materialized views refreshed (light profile)")
+	return nil
+}
+
+// RefreshMaterializedViewsHeavy refreshes heavier analytical views.
+// Intended for end-of-replay or scheduled maintenance windows.
+func (db *DB) RefreshMaterializedViewsHeavy(ctx context.Context) error {
+	log.Info().Msg("refreshing materialized views (heavy profile)...")
+	_, err := db.Pool.Exec(ctx, `SELECT geokrety_stats.refresh_leaderboard_views_heavy()`)
+	if err != nil {
+		return fmt.Errorf("refreshing materialized views (heavy): %w", err)
+	}
+	log.Info().Msg("materialized views refreshed (heavy profile)")
 	return nil
 }

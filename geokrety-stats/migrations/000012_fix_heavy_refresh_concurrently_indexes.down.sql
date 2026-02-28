@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS geokrety_stats.idx_mv_geokrety_related_users_unique_pair;
+DROP INDEX IF EXISTS geokrety_stats.idx_mv_user_related_users_unique_pair;

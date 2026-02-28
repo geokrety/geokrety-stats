@@ -199,4 +199,13 @@ type Store interface {
 	// Only IDs with id > afterID, id <= maxID (0 = no limit),
 	// and moved_on_datetime within the optional date range are returned.
 	GetMoveIDsPage(ctx context.Context, afterID, maxID int64, startDate, endDate *time.Time, limit int) ([]int64, error)
+
+	// RotateWaypointMonthlyPartitions ensures near-future partitions exist and drops obsolete month partitions.
+	RotateWaypointMonthlyPartitions(ctx context.Context, asOf time.Time, retainMonths int, futureMonths int) error
+
+	// PruneEndedChainsOlderThan deletes ended chain rows older than the provided timestamp.
+	PruneEndedChainsOlderThan(ctx context.Context, before time.Time) (int64, error)
+
+	// PruneGKPointsLogOlderThan deletes multiplier audit rows older than the provided timestamp.
+	PruneGKPointsLogOlderThan(ctx context.Context, before time.Time) (int64, error)
 }

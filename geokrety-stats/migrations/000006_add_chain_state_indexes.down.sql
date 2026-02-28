@@ -1,0 +1,3 @@
+DROP INDEX IF EXISTS geokrety_stats.idx_gk_chains_active_gk_started_desc;
+DROP INDEX IF EXISTS geokrety_stats.idx_gk_chains_active_last_active;
+DROP INDEX IF EXISTS geokrety_stats.idx_gk_chain_members_chain_position;

@@ -27,6 +27,7 @@ type ProgressTracker struct {
 	totalPointsAwarded     int64
 	currentMoveDatetime    time.Time
 	logTypeCounts          map[int]int64 // counts by pipeline.LogType
+	lastSnapshotAt         time.Time
 }
 
 // NewProgressTracker creates a new progress tracker.
@@ -40,6 +41,7 @@ func NewProgressTracker(refreshInterval time.Duration) *ProgressTracker {
 		batchStartTime:  time.Now(),
 		distinctGKIDs:   make(map[int64]bool),
 		logTypeCounts:   make(map[int]int64),
+		lastSnapshotAt:  time.Now(),
 	}
 }
 
@@ -105,13 +107,17 @@ func (pt *ProgressTracker) SetTotal(total int64) {
 func (pt *ProgressTracker) Start(ctx context.Context) func() *Statistics {
 	ticker := time.NewTicker(pt.refreshInterval)
 	done := make(chan struct{})
+	stop := make(chan struct{})
+	var once sync.Once
 
 	go func() {
+		defer ticker.Stop()
+		defer close(done)
 		for {
 			select {
 			case <-ctx.Done():
-				ticker.Stop()
-				close(done)
+				return
+			case <-stop:
 				return
 			case <-ticker.C:
 				pt.displayProgress()
@@ -120,7 +126,7 @@ func (pt *ProgressTracker) Start(ctx context.Context) func() *Statistics {
 	}()
 
 	return func() *Statistics {
-		ticker.Stop()
+		once.Do(func() { close(stop) })
 		<-done
 		return pt.GetStatistics()
 	}
@@ -180,6 +186,13 @@ func (pt *ProgressTracker) displayProgress() {
 		progress,
 		eta,
 	)
+
+	pt.mu.Lock()
+	if time.Since(pt.lastSnapshotAt) >= 30*time.Second {
+		fmt.Print("\n")
+		pt.lastSnapshotAt = time.Now()
+	}
+	pt.mu.Unlock()
 }
 
 // GetStatistics returns the current replay statistics.

@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -16,6 +18,8 @@ import (
 // pgStore implements Store using a PostgreSQL pgxpool.
 type pgStore struct {
 	pool *pgxpool.Pool
+	processedMaxInit sync.Once
+	processedMaxID   atomic.Int64
 }
 
 // New creates a Store backed by the given connection pool.
@@ -26,6 +30,17 @@ func New(pool *pgxpool.Pool) Store {
 // ---- Event idempotency ----
 
 func (s *pgStore) IsEventProcessed(ctx context.Context, moveID int64) (bool, error) {
+	s.processedMaxInit.Do(func() {
+		var maxID *int64
+		if err := s.pool.QueryRow(ctx, `SELECT MAX(move_id) FROM geokrety_stats.processed_events`).Scan(&maxID); err == nil && maxID != nil {
+			s.processedMaxID.Store(*maxID)
+		}
+	})
+
+	if moveID > s.processedMaxID.Load() {
+		return false, nil
+	}
+
 	var exists bool
 	err := s.pool.QueryRow(ctx,
 		`SELECT EXISTS(SELECT 1 FROM geokrety_stats.processed_events WHERE move_id = $1)`,
@@ -41,6 +56,14 @@ func (s *pgStore) MarkEventProcessed(ctx context.Context, moveID int64, result s
 		 ON CONFLICT (move_id) DO UPDATE SET pipeline_result = $2, processed_at = NOW()`,
 		moveID, result,
 	)
+	if err == nil {
+		for {
+			current := s.processedMaxID.Load()
+			if moveID <= current || s.processedMaxID.CompareAndSwap(current, moveID) {
+				break
+			}
+		}
+	}
 	return err
 }
 
@@ -161,13 +184,17 @@ func (s *pgStore) GetGKDistinctUsers6M(ctx context.Context, gkID int64, before t
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT m.author
 		FROM geokrety.gk_moves m
-		INNER JOIN geokrety_stats.user_points_log upl ON upl.move_id = m.id
 		WHERE m.geokret = $1
 		  AND m.moved_on_datetime >= $2
 		  AND m.moved_on_datetime < $3
 		  AND m.author IS NOT NULL
 		  AND m.author != (SELECT owner FROM geokrety.gk_geokrety WHERE id = $1)
-		  AND upl.points > 0
+		  AND EXISTS (
+			  SELECT 1
+			  FROM geokrety_stats.user_points_log upl
+			  WHERE upl.move_id = m.id
+				AND upl.points > 0
+		  )
 	`, gkID, sixMonthsAgo, before)
 	if err != nil {
 		return nil, err
@@ -297,9 +324,13 @@ func (s *pgStore) AddUserMoveHistory(ctx context.Context, userID, gkID int64, lo
 func (s *pgStore) GetActorGKsPerOwnerCount(ctx context.Context, actorID, ownerID int64) (int, error) {
 	var count int
 	err := s.pool.QueryRow(ctx, `
-		SELECT COUNT(*) FROM geokrety_stats.user_owner_gk_counts
-		WHERE user_id = $1 AND owner_id = $2
-	`, actorID, ownerID).Scan(&count)
+		SELECT COALESCE(gk_count, 0)
+		FROM geokrety_stats.user_owner_counts_summary
+		WHERE user_id = $1 AND owner_id = $2`,
+		actorID, ownerID).Scan(&count)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, nil
+	}
 	return count, err
 }
 
@@ -745,4 +776,82 @@ func (s *pgStore) GetMoveIDsPage(
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+func (s *pgStore) RotateWaypointMonthlyPartitions(ctx context.Context, asOf time.Time, retainMonths int, futureMonths int) error {
+	if retainMonths < 1 {
+		retainMonths = 1
+	}
+	if futureMonths < 1 {
+		futureMonths = 1
+	}
+
+	if _, err := s.pool.Exec(ctx,
+		`SELECT geokrety_stats.ensure_user_waypoint_month_partitions($1, $2)`,
+		retainMonths, futureMonths,
+	); err != nil {
+		return fmt.Errorf("ensuring waypoint month partitions: %w", err)
+	}
+
+	cutoffMonth := asOf.UTC().AddDate(0, -(retainMonths - 1), 0).Format("2006-01")
+
+	rows, err := s.pool.Query(ctx, `
+		SELECT REPLACE(REPLACE(c.relname, 'user_waypoint_monthly_counts_p_', ''), '_', '-') AS month_key
+		FROM pg_inherits i
+		JOIN pg_class p ON p.oid = i.inhparent
+		JOIN pg_class c ON c.oid = i.inhrelid
+		JOIN pg_namespace n ON n.oid = p.relnamespace
+		WHERE n.nspname = 'geokrety_stats'
+		  AND p.relname = 'user_waypoint_monthly_counts'
+		  AND c.relname <> 'user_waypoint_monthly_counts_p_default'
+		  AND REPLACE(REPLACE(c.relname, 'user_waypoint_monthly_counts_p_', ''), '_', '-') < $1
+	`, cutoffMonth)
+	if err != nil {
+		return fmt.Errorf("loading obsolete waypoint partitions: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var monthKey string
+		if err := rows.Scan(&monthKey); err != nil {
+			return fmt.Errorf("scanning obsolete waypoint partition month: %w", err)
+		}
+		if _, err := s.pool.Exec(ctx,
+			`SELECT geokrety_stats.detach_or_drop_user_waypoint_month_partition($1::char(7), TRUE)`,
+			monthKey,
+		); err != nil {
+			return fmt.Errorf("dropping waypoint partition %s: %w", monthKey, err)
+		}
+	}
+
+	return rows.Err()
+}
+
+func (s *pgStore) PruneEndedChainsOlderThan(ctx context.Context, before time.Time) (int64, error) {
+	cmd, err := s.pool.Exec(ctx, `
+		DELETE FROM geokrety_stats.gk_chains
+		WHERE status = 'ended'
+		  AND ended_at IS NOT NULL
+		  AND ended_at < $1
+	`, before)
+	if err != nil {
+		return 0, err
+	}
+	return cmd.RowsAffected(), nil
+}
+
+func (s *pgStore) PruneGKPointsLogOlderThan(ctx context.Context, before time.Time) (int64, error) {
+	asOf := before.AddDate(0, 6, 0)
+	_, _ = s.pool.Exec(ctx, `
+		SELECT geokrety_stats.rotate_gk_points_log_partitions($1, 6, 2)
+	`, asOf)
+
+	cmd, err := s.pool.Exec(ctx, `
+		DELETE FROM geokrety_stats.gk_points_log
+		WHERE updated_at < $1
+	`, before)
+	if err != nil {
+		return 0, err
+	}
+	return cmd.RowsAffected(), nil
 }

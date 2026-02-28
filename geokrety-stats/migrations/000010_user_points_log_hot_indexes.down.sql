@@ -1,0 +1,3 @@
+DROP INDEX IF EXISTS geokrety_stats.idx_user_points_log_move_id_points_pos;
+DROP INDEX IF EXISTS geokrety_stats.idx_user_points_log_user_awarded_desc;
+DROP INDEX IF EXISTS geokrety_stats.idx_user_points_log_gk_awarded_desc;

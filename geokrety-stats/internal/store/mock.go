@@ -255,3 +255,15 @@ func (m *MockStore) SaveAwards(ctx context.Context, awards []pipeline.FinalAward
 func (m *MockStore) GetMoveIDsPage(_ context.Context, _, _ int64, _, _ *time.Time, _ int) ([]int64, error) {
 	return nil, nil
 }
+
+func (m *MockStore) RotateWaypointMonthlyPartitions(_ context.Context, _ time.Time, _, _ int) error {
+	return nil
+}
+
+func (m *MockStore) PruneEndedChainsOlderThan(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockStore) PruneGKPointsLogOlderThan(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}

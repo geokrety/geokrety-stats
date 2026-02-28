@@ -46,6 +46,11 @@ func (s *Scheduler) Start() {
 		log.Error().Err(err).Msg("maintenance: failed to register chain expiry job")
 	}
 
+	// Daily cleanup and partition rotation.
+	if _, err := s.cron.AddFunc("@daily", s.cleanupAndRotate); err != nil {
+		log.Error().Err(err).Msg("maintenance: failed to register daily cleanup job")
+	}
+
 	s.cron.Start()
 	log.Info().Msg("maintenance scheduler started")
 }
@@ -64,25 +69,58 @@ func (s *Scheduler) expireChains() {
 	defer cancel()
 
 	now := time.Now().UTC()
-	expired, err := s.store.GetExpiredChains(ctx, s.cfg.Stats.ChainTimeoutDays, now)
+	if err := ExpireChainsAt(ctx, s.store, s.awarder, s.cfg.Stats.ChainTimeoutDays, now); err != nil {
+		log.Error().Err(err).Msg("maintenance: failed to expire chains")
+	}
+}
+
+// ExpireChainsAt expires all active chains whose inactivity is beyond timeoutDays at the given timestamp.
+// This is used by both the real-time scheduler (asOf=now) and historical replay (asOf=replay time).
+func ExpireChainsAt(ctx context.Context, st store.Store, awarder ChainAwarder, timeoutDays int, asOf time.Time) error {
+	expired, err := st.GetExpiredChains(ctx, timeoutDays, asOf)
 	if err != nil {
-		log.Error().Err(err).Msg("maintenance: failed to fetch expired chains")
-		return
+		return err
 	}
 
 	if len(expired) == 0 {
-		return
+		return nil
 	}
 
-	log.Info().Int("count", len(expired)).Msg("maintenance: expiring chains")
+	log.Info().Int("count", len(expired)).Time("as_of", asOf).Msg("maintenance: expiring chains")
 
 	for _, chain := range expired {
-		if err := s.awarder.AwardTimeoutBonus(ctx, chain.ID, chain.GKID, now); err != nil {
+		if err := awarder.AwardTimeoutBonus(ctx, chain.ID, chain.GKID, asOf); err != nil {
 			log.Error().
 				Int64("chain_id", chain.ID).
 				Int64("gk_id", chain.GKID).
 				Err(err).
 				Msg("maintenance: chain timeout bonus error")
 		}
+	}
+
+	return nil
+}
+
+func (s *Scheduler) cleanupAndRotate() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	now := time.Now().UTC()
+
+	if _, err := s.store.PruneEndedChainsOlderThan(ctx, now.AddDate(0, 0, -s.cfg.Maintenance.EndedChainRetentionDays)); err != nil {
+		log.Error().Err(err).Msg("maintenance: pruning ended chains failed")
+	}
+
+	if _, err := s.store.PruneGKPointsLogOlderThan(ctx, now.AddDate(0, 0, -s.cfg.Maintenance.GKPointsLogRetentionDays)); err != nil {
+		log.Error().Err(err).Msg("maintenance: pruning gk_points_log failed")
+	}
+
+	if err := s.store.RotateWaypointMonthlyPartitions(
+		ctx,
+		now,
+		s.cfg.Maintenance.WaypointPartitionRetentionMonths,
+		s.cfg.Maintenance.WaypointPartitionFutureMonths,
+	); err != nil {
+		log.Error().Err(err).Msg("maintenance: rotating waypoint month partitions failed")
 	}
 }

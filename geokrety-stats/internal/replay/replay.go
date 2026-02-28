@@ -49,6 +49,7 @@ type Runner struct {
 	handler            Handler
 	progressCallback   ProgressCallback
 	errorRecorder      ErrorRecorder
+	replayAsOfHook     func(ctx context.Context, asOf time.Time) error
 }
 
 // New creates a new Replay runner.
@@ -64,6 +65,12 @@ func (r *Runner) SetProgressCallback(cb ProgressCallback) {
 // SetErrorRecorder sets the optional error recorder.
 func (r *Runner) SetErrorRecorder(rec ErrorRecorder) {
 	r.errorRecorder = rec
+}
+
+// SetReplayAsOfHook sets an optional hook invoked during replay with historical
+// timestamps as processing advances. Intended for replay-only maintenance logic.
+func (r *Runner) SetReplayAsOfHook(hook func(ctx context.Context, asOf time.Time) error) {
+	r.replayAsOfHook = hook
 }
 
 // Run replays all moves matching opts.
@@ -97,8 +104,8 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 
 	var processed int64
 	var errors int64
-	var batchCount int
 	isInterrupted := false
+	lastHookMonth := ""
 
 	for {
 		ids, err := r.store.GetMoveIDsPage(ctx, afterID, opts.EndID, opts.StartDate, opts.EndDate, batchSize)
@@ -127,13 +134,20 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 			afterID = id // next page starts after this id
 		}
 
-		batchCount++
-
-		// Refresh materialized views every 10 batches (~10k moves)
-		if batchCount%10 == 0 {
-			log.Info().Int64("processed", processed).Msg("replay: refreshing materialized views mid-replay")
-			if err := db.RefreshMaterializedViews(ctx); err != nil {
-				log.Warn().Err(err).Msg("replay: materialized view refresh failed (non-fatal)")
+		if r.replayAsOfHook != nil && afterID > 0 {
+			lastMove, moveErr := r.store.GetMove(ctx, afterID)
+			if moveErr != nil {
+				return fmt.Errorf("loading last move for replay hook (%d): %w", afterID, moveErr)
+			}
+			if lastMove != nil {
+				asOf := lastMove.MovedOnDatetime.UTC()
+				monthKey := asOf.Format("2006-01")
+				if monthKey != lastHookMonth {
+					if hookErr := r.replayAsOfHook(ctx, asOf); hookErr != nil {
+						return fmt.Errorf("running replay as-of hook (%s): %w", monthKey, hookErr)
+					}
+					lastHookMonth = monthKey
+				}
 			}
 		}
 
@@ -171,22 +185,13 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 		Msg("replay: complete")
 
 	if isInterrupted {
-		// Still do a final refresh on interrupt
-		_ = db.RefreshMaterializedViews(ctx)
 		return fmt.Errorf("replay interrupted by user")
-	}
-
-	// Final refresh of materialized views
-	log.Info().Msg("replay: final materialized view refresh")
-	if err := db.RefreshMaterializedViews(ctx); err != nil {
-		log.Warn().Err(err).Msg("replay: final materialized view refresh failed (non-fatal)")
 	}
 
 	return nil
 }
 
-// dbTruncator is a minimal interface used only by replay to wipe state and refresh views.
+// dbTruncator is a minimal interface used only by replay to wipe state.
 type dbTruncator interface {
 	TruncateStatsSchema(ctx context.Context) error
-	RefreshMaterializedViews(ctx context.Context) error
 }

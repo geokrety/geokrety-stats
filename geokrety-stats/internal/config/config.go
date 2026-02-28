@@ -193,6 +193,14 @@ type MaintenanceConfig struct {
 	PruneSchedule string `mapstructure:"prune_schedule"`
 	// How long to keep processed events log (days)
 	ProcessedEventRetentionDays int `mapstructure:"processed_event_retention_days"`
+	// How long to keep ended chains (days)
+	EndedChainRetentionDays int `mapstructure:"ended_chain_retention_days"`
+	// How long to keep gk_points_log rows (days)
+	GKPointsLogRetentionDays int `mapstructure:"gk_points_log_retention_days"`
+	// How many month partitions to retain for waypoint monthly counts
+	WaypointPartitionRetentionMonths int `mapstructure:"waypoint_partition_retention_months"`
+	// How many future month partitions to keep precreated for waypoint monthly counts
+	WaypointPartitionFutureMonths int `mapstructure:"waypoint_partition_future_months"`
 }
 
 // Load reads configuration from file and environment variables.
@@ -344,6 +352,10 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("maintenance.multiplier_decay_schedule", "0 0 2 * * *")   // daily at 2am
 	v.SetDefault("maintenance.prune_schedule", "0 0 3 * * *")              // daily at 3am
 	v.SetDefault("maintenance.processed_event_retention_days", 30)
+	v.SetDefault("maintenance.ended_chain_retention_days", 180)
+	v.SetDefault("maintenance.gk_points_log_retention_days", 180)
+	v.SetDefault("maintenance.waypoint_partition_retention_months", 2)
+	v.SetDefault("maintenance.waypoint_partition_future_months", 2)
 }
 
 // parsePostgresURL parses a PostgreSQL connection URL and sets database config values.
