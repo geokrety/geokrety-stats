@@ -40,6 +40,7 @@ type LeaderboardEntry struct {
 	TotalPoints        float64    `json:"total_points"`
 	GkCount            int64      `json:"gk_count,omitempty"`
 	MoveCount          int64      `json:"move_count,omitempty"`
+	CountriesCount     int64      `json:"countries_count,omitempty"`
 	LastActive         *time.Time `json:"last_active,omitempty"`
 	AvgPointsPerMove   float64    `json:"avg_points_per_move,omitempty"`
 	PointsPeriod       float64    `json:"points_period,omitempty"`

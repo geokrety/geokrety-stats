@@ -1,15 +1,34 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 
 const props = defineProps({
-  data:   { type: Array,  required: true },
-  xKey:   { type: String, default: 'x' },
-  yKey:   { type: String, default: 'y' },
-  color:  { type: String, default: '#0d6efd' },
-  height: { type: Number, default: 180 },
+  data:      { type: Array,  required: true },
+  xKey:      { type: String, default: 'x' },
+  yKey:      { type: String, default: 'y' },
+  color:     { type: String, default: '#0d6efd' },
+  height:    { type: Number, default: 200 },
+  startDate: { type: String, default: null },  // ISO date string, e.g. '2020-03-15'
+  endDate:   { type: String, default: null },  // ISO date string, defaults to today
+  showRangeButtons: { type: Boolean, default: false },
 })
 
 const container = ref(null)
+const activeRange = ref('all')
+
+const RANGES = [
+  { label: 'All',  key: 'all',  months: null },
+  { label: '5Y',   key: '5y',   months: 60 },
+  { label: '1Y',   key: '1y',   months: 12 },
+  { label: '6M',   key: '6m',   months: 6 },
+  { label: '3M',   key: '3m',   months: 3 },
+  { label: '1M',   key: '1m',   months: 1 },
+]
+
+function parseDate(d) {
+  if (!d) return null
+  const p = window.d3?.timeParse('%Y-%m-%d')
+  return p ? (p(d) || new Date(d)) : new Date(d)
+}
 
 function draw() {
   if (!container.value || !window.d3 || !props.data.length) return
@@ -18,9 +37,38 @@ function draw() {
   const el = container.value
   el.innerHTML = ''
 
-  const margin = { top: 10, right: 20, bottom: 30, left: 50 }
-  const width  = el.clientWidth - margin.left - margin.right
+  const margin = { top: 10, right: 20, bottom: 30, left: 52 }
+  const totalWidth = el.clientWidth || 600
+  const width  = totalWidth - margin.left - margin.right
   const height = props.height - margin.top - margin.bottom
+
+  // Determine the x domain
+  const today = new Date()
+  const dataEnd = props.endDate ? parseDate(props.endDate) : today
+  let domainStart, domainEnd
+
+  if (activeRange.value !== 'all') {
+    const rangeObj = RANGES.find(r => r.key === activeRange.value)
+    const cutoff = new Date(dataEnd)
+    cutoff.setMonth(cutoff.getMonth() - rangeObj.months)
+    domainStart = cutoff
+    domainEnd = dataEnd
+  } else {
+    domainStart = props.startDate ? parseDate(props.startDate) : d3.min(props.data, d => parseDate(d[props.xKey]))
+    domainEnd = dataEnd
+  }
+
+  // Filter data to visible domain
+  const visibleData = props.data.filter(d => {
+    const t = parseDate(d[props.xKey])
+    return t && t >= domainStart && t <= domainEnd
+  })
+
+  if (!visibleData.length && activeRange.value !== 'all') {
+    // fallback: show all data if filter too narrow
+  }
+
+  const displayData = visibleData.length ? visibleData : props.data
 
   const svg = d3.select(el)
     .append('svg')
@@ -29,14 +77,12 @@ function draw() {
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`)
 
-  const parseDate = d3.timeParse('%Y-%m-%d')
-
   const x = d3.scaleTime()
-    .domain(d3.extent(props.data, d => parseDate(d[props.xKey]) || new Date(d[props.xKey])))
+    .domain([domainStart, domainEnd])
     .range([0, width])
 
   const y = d3.scaleLinear()
-    .domain([0, d3.max(props.data, d => +d[props.yKey]) * 1.1])
+    .domain([0, d3.max(displayData, d => +d[props.yKey]) * 1.1 || 1])
     .nice()
     .range([height, 0])
 
@@ -49,34 +95,49 @@ function draw() {
 
   // Area
   const area = d3.area()
-    .x(d => x(parseDate(d[props.xKey]) || new Date(d[props.xKey])))
+    .defined(d => !isNaN(+d[props.yKey]))
+    .x(d => x(parseDate(d[props.xKey])))
     .y0(height)
     .y1(d => y(+d[props.yKey]))
     .curve(d3.curveMonotoneX)
 
   svg.append('path')
-    .datum(props.data)
+    .datum(displayData)
     .attr('fill', props.color)
     .attr('fill-opacity', 0.15)
     .attr('d', area)
 
   // Line
   const line = d3.line()
-    .x(d => x(parseDate(d[props.xKey]) || new Date(d[props.xKey])))
+    .defined(d => !isNaN(+d[props.yKey]))
+    .x(d => x(parseDate(d[props.xKey])))
     .y(d => y(+d[props.yKey]))
     .curve(d3.curveMonotoneX)
 
   svg.append('path')
-    .datum(props.data)
+    .datum(displayData)
     .attr('fill', 'none')
     .attr('stroke', props.color)
     .attr('stroke-width', 2)
     .attr('d', line)
 
-  // Axes
+  // Smart x tick format based on range
+  const rangeMs = domainEnd - domainStart
+  const dayMs = 86400000
+  let xFormat, xTicks
+  if (rangeMs < 40 * dayMs) {
+    xFormat = d3.timeFormat('%b %d'); xTicks = 7
+  } else if (rangeMs < 200 * dayMs) {
+    xFormat = d3.timeFormat('%b %d'); xTicks = 6
+  } else if (rangeMs < 800 * dayMs) {
+    xFormat = d3.timeFormat('%b %Y'); xTicks = 8
+  } else {
+    xFormat = d3.timeFormat('%Y'); xTicks = 8
+  }
+
   svg.append('g')
     .attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x).ticks(6).tickFormat(d3.timeFormat('%b %d')))
+    .call(d3.axisBottom(x).ticks(xTicks).tickFormat(xFormat))
     .selectAll('text').attr('font-size', '11px')
 
   svg.append('g')
@@ -84,10 +145,24 @@ function draw() {
     .selectAll('text').attr('font-size', '11px')
 }
 
-onMounted(draw)
+onMounted(() => { setTimeout(draw, 50) })
 watch(() => props.data, draw, { deep: true })
+watch(() => props.startDate, draw)
+watch(activeRange, draw)
 </script>
 
 <template>
-  <div ref="container" style="width:100%;" :style="{ height: height + 'px' }"></div>
+  <div>
+    <!-- Range buttons -->
+    <div v-if="showRangeButtons" class="d-flex justify-content-end mb-1 gap-1">
+      <button
+        v-for="r in RANGES" :key="r.key"
+        class="btn btn-xs py-0 px-2"
+        style="font-size:0.75rem"
+        :class="activeRange === r.key ? 'btn-primary' : 'btn-outline-secondary'"
+        @click="activeRange = r.key"
+      >{{ r.label }}</button>
+    </div>
+    <div ref="container" style="width:100%;" :style="{ height: height + 'px' }"></div>
+  </div>
 </template>

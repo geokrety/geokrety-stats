@@ -49,7 +49,7 @@ const isActive = (path) => route.path === path || route.path.startsWith(path + '
   </nav>
 
   <!-- Main content -->
-  <main class="container-fluid py-3">
+  <main class="container-xl py-3">
     <RouterView />
   </main>
 

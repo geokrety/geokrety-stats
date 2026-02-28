@@ -341,6 +341,89 @@ func (h *Handler) UserPointsBreakdown(c *gin.Context) {
 	ok(c, out, models.Meta{Total: int64(len(out))}, nil)
 }
 
+// UserPointsAwards handles GET /api/v1/users/:id/points/awards
+// Returns paginated list of individual point award log entries.
+func (h *Handler) UserPointsAwards(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		errNotFound(c, "invalid user id")
+		return
+	}
+	page, perPage, offset := parsePagination(c)
+	label := c.Query("label") // optional filter by label
+
+	type awardRow struct {
+		ID        int64   `json:"id"`
+		Label     string  `json:"label"`
+		Reason    string  `json:"reason"`
+		Points    float64 `json:"points"`
+		MoveID    *int64  `json:"move_id,omitempty"`
+		GkID      *int64  `json:"gk_id,omitempty"`
+		AwardedAt string  `json:"awarded_at"`
+	}
+
+	var total int64
+	out := make([]awardRow, 0)
+
+	if label != "" {
+		_ = h.DB.QueryRow(c.Request.Context(),
+			`SELECT COUNT(*) FROM geokrety_stats.user_points_log WHERE user_id = $1 AND label = $2`,
+			id, label).Scan(&total)
+
+		qrows, qerr := h.DB.Query(c.Request.Context(), `
+			SELECT id, label, reason, points, move_id, gk_id, awarded_at::text
+			FROM geokrety_stats.user_points_log
+			WHERE user_id = $1 AND label = $2
+			ORDER BY awarded_at DESC
+			LIMIT $3 OFFSET $4`, id, label, perPage, offset)
+		if qerr != nil {
+			errInternal(c, qerr)
+			return
+		}
+		defer qrows.Close()
+		for qrows.Next() {
+			var r awardRow
+			if err2 := qrows.Scan(&r.ID, &r.Label, &r.Reason, &r.Points, &r.MoveID, &r.GkID, &r.AwardedAt); err2 != nil {
+				errInternal(c, err2)
+				return
+			}
+			out = append(out, r)
+		}
+	} else {
+		_ = h.DB.QueryRow(c.Request.Context(),
+			`SELECT COUNT(*) FROM geokrety_stats.user_points_log WHERE user_id = $1`, id).Scan(&total)
+
+		qrows, qerr := h.DB.Query(c.Request.Context(), `
+			SELECT id, label, reason, points, move_id, gk_id, awarded_at::text
+			FROM geokrety_stats.user_points_log
+			WHERE user_id = $1
+			ORDER BY awarded_at DESC
+			LIMIT $2 OFFSET $3`, id, perPage, offset)
+		if qerr != nil {
+			errInternal(c, qerr)
+			return
+		}
+		defer qrows.Close()
+		for qrows.Next() {
+			var r awardRow
+			if err2 := qrows.Scan(&r.ID, &r.Label, &r.Reason, &r.Points, &r.MoveID, &r.GkID, &r.AwardedAt); err2 != nil {
+				errInternal(c, err2)
+				return
+			}
+			out = append(out, r)
+		}
+	}
+
+	hasNext := int64(offset+perPage) < total
+	ok(c, out, models.Meta{
+		Total:   total,
+		Page:    page,
+		PerPage: perPage,
+		HasNext: hasNext,
+		HasPrev: page > 1,
+	}, buildLinks(c, page, perPage, hasNext))
+}
+
 // UserRankHistory handles GET /api/v1/users/:id/rank/history
 func (h *Handler) UserRankHistory(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)

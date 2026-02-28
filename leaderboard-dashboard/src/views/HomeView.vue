@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchList } from '../composables/useApi.js'
 import { useLeaderboardLive } from '../composables/useWebSocket.js'
@@ -14,22 +14,38 @@ const PERIODS = [
   { value: 'today',   label: 'Today' },
 ]
 
-const period   = ref('all')
-const page     = ref(1)
-const perPage  = ref(25)
-const loading  = ref(false)
-const error    = ref(null)
-const rows     = ref([])
-const meta     = ref({})
+const period    = ref('all')
+const yearValue = ref('')       // e.g. '2023'
+const page      = ref(1)
+const perPage   = ref(25)
+const loading   = ref(false)
+const error     = ref(null)
+const rows      = ref([])
+const meta      = ref({})
+const availableYears = ref([])
 
 const { connected, leaderboard: liveTop } = useLeaderboardLive()
+
+// Effective period sent to the API
+const effectivePeriod = computed(() => yearValue.value || period.value)
+
+async function fetchYears() {
+  try {
+    const data = await fetchList('/stats/periods', { per_page: 100 })
+    // data.items may be [{year: 2023, months: [...]}, ...]
+    const items = data.items || []
+    availableYears.value = items.map(i => String(i.year || i)).filter(Boolean).sort((a, b) => b - a)
+  } catch (e) {
+    // non-critical
+  }
+}
 
 async function load() {
   loading.value = true
   error.value   = null
   try {
     const { items, meta: m } = await fetchList('/leaderboard', {
-      period: period.value, page: page.value, per_page: perPage.value,
+      period: effectivePeriod.value, page: page.value, per_page: perPage.value,
     })
     rows.value = items
     meta.value = m
@@ -40,16 +56,19 @@ async function load() {
   }
 }
 
-onMounted(load)
-watch([period], () => { page.value = 1; load() })
+onMounted(() => { fetchYears(); load() })
+watch([period, yearValue], () => { page.value = 1; load() })
 watch([page], load)
 
 // Live update: merge top-10 into first page results when connected
 watch(liveTop, (live) => {
-  if (period.value === 'all' && page.value === 1 && live.length) {
+  if (effectivePeriod.value === 'all' && page.value === 1 && live.length) {
     rows.value = live
   }
 })
+
+function selectPeriod(p) { period.value = p; yearValue.value = '' }
+function selectYear(y)   { yearValue.value = y; period.value = '' }
 
 function medalClass(rank) {
   if (rank === 1) return 'text-warning fw-bold'
@@ -72,9 +91,18 @@ function medalClass(rank) {
           <button
             v-for="p in PERIODS" :key="p.value"
             class="btn"
-            :class="period === p.value ? 'btn-primary' : 'btn-outline-secondary'"
-            @click="period = p.value"
+            :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
+            @click="selectPeriod(p.value)"
           >{{ p.label }}</button>
+        </div>
+        <!-- Year selector -->
+        <div v-if="availableYears.length" class="btn-group btn-group-sm" role="group">
+          <button
+            v-for="y in availableYears.slice(0, 6)" :key="y"
+            class="btn"
+            :class="yearValue === y ? 'btn-info' : 'btn-outline-secondary'"
+            @click="selectYear(y)"
+          >{{ y }}</button>
         </div>
       </div>
     </div>
@@ -90,11 +118,13 @@ function medalClass(rank) {
             <tr>
               <th style="width:60px">#</th>
               <th>User</th>
-              <th class="text-end">Points</th>
-              <th class="text-end">Moves</th>
-              <th class="text-end">GKs</th>
-              <th class="text-end">Countries</th>
-              <th class="text-end">Avg/move</th>
+              <th class="text-end" title="Total accumulated points for this period">Points</th>
+              <th class="text-end" title="Number of moves logged in this period">Moves</th>
+              <th class="text-end" title="Number of distinct GeoKrety interacted with">GKs</th>
+              <th class="text-end" title="Number of unique countries visited">Countries</th>
+              <th class="text-end" title="Average points earned per logged move (total_points ÷ total_moves)">
+                Avg/move <i class="bi bi-info-circle text-secondary" style="font-size:0.75rem"></i>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -117,12 +147,17 @@ function medalClass(rank) {
                 <RouterLink :to="`/users/${row.user_id}`" class="text-decoration-none fw-semibold">
                   {{ row.username }}
                 </RouterLink>
+                <span v-if="row.home_country" class="text-muted small ms-1">({{ row.home_country }})</span>
               </td>
               <td class="text-end fw-bold text-primary">{{ row.total_points?.toLocaleString() }}</td>
               <td class="text-end">{{ row.move_count?.toLocaleString() }}</td>
               <td class="text-end">{{ row.gk_count?.toLocaleString() }}</td>
-              <td class="text-end">{{ row.countries_count?.toLocaleString() }}</td>
-              <td class="text-end text-muted small">{{ row.avg_points_per_move?.toFixed(1) }}</td>
+              <td class="text-end">{{ row.countries_count?.toLocaleString() ?? '—' }}</td>
+              <td class="text-end text-muted small">
+                <span :title="`${row.total_points?.toLocaleString()} pts ÷ ${row.move_count?.toLocaleString()} moves`">
+                  {{ row.avg_points_per_move?.toFixed(1) }}
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>

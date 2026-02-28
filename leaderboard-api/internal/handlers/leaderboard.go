@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -37,7 +38,9 @@ func (h *Handler) Leaderboard(c *gin.Context) {
 	case period == "3months":
 		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 90, offset, perPage)
 	case period == "year":
-		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 365, offset, perPage)
+		// Use actual current year from yearly materialized view
+		currentYear := time.Now().Year()
+		entries, total, err = h.leaderboardYear(c.Request.Context(), currentYear, offset, perPage)
 	case len(period) == 7 && strings.ContainsRune(period, '-'):
 		// YYYY-MM – monthly board
 		entries, total, err = h.leaderboardMonth(c.Request.Context(), period, offset, perPage)
@@ -73,10 +76,12 @@ func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int) ([]
 	_ = h.DB.QueryRow(ctx, countQ).Scan(&total)
 
 	const q = `
-		SELECT user_id, username, home_country, total_points, rank,
-		       distinct_gks, total_moves, last_active
-		FROM geokrety_stats.mv_leaderboard_all_time
-		ORDER BY rank ASC
+		SELECT l.user_id, l.username, l.home_country, l.total_points, l.rank,
+		       l.distinct_gks, l.total_moves, l.last_active,
+		       COALESCE(s.countries_visited_count, 0) AS countries_count
+		FROM geokrety_stats.mv_leaderboard_all_time l
+		LEFT JOIN geokrety_stats.mv_user_stats s ON s.user_id = l.user_id
+		ORDER BY l.rank ASC
 		LIMIT $1 OFFSET $2`
 
 	rows, err := h.DB.Query(ctx, q, limit, offset)
@@ -89,7 +94,7 @@ func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int) ([]
 	for rows.Next() {
 		var e models.LeaderboardEntry
 		if err := rows.Scan(&e.UserID, &e.Username, &e.HomeCountry,
-			&e.TotalPoints, &e.Rank, &e.GkCount, &e.MoveCount, &e.LastActive); err != nil {
+			&e.TotalPoints, &e.Rank, &e.GkCount, &e.MoveCount, &e.LastActive, &e.CountriesCount); err != nil {
 			return nil, 0, err
 		}
 		if e.MoveCount > 0 {

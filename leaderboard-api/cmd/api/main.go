@@ -44,6 +44,26 @@ func main() {
 	go hub.Run()
 	go h.StartBroadcaster(ctx, hub, time.Duration(cfg.Server.RefreshInterval)*time.Second)
 
+	// ── Materialized view refresh scheduler (every 15 min) ───────────────────
+	go func() {
+		ticker := time.NewTicker(15 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				refCtx, refCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				if _, err := pool.Exec(refCtx, `SELECT geokrety_stats.refresh_leaderboard_views()`); err != nil {
+					log.Error().Err(err).Msg("materialized view refresh failed")
+				} else {
+					log.Info().Msg("materialized views refreshed")
+				}
+				refCancel()
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	// ── Router ───────────────────────────────────────────────────────────────
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -73,6 +93,7 @@ func main() {
 		v1.GET("/users/:id/countries", h.UserCountries)
 		v1.GET("/users/:id/points/timeline", h.UserPointsTimeline)
 		v1.GET("/users/:id/points/breakdown", h.UserPointsBreakdown)
+		v1.GET("/users/:id/points/awards", h.UserPointsAwards)
 		v1.GET("/users/:id/rank/history", h.UserRankHistory)
 
 		// ── GeoKrety ─────────────────────────────────────────────────────

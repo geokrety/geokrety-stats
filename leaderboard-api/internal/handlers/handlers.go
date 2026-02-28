@@ -108,25 +108,32 @@ func moveTypeName(t int) string {
 }
 
 // gkTypeName maps gk_type int to human-readable name.
+// Types from GeoKrety PHP constants.
 func gkTypeName(t int) string {
 	switch t {
 	case 0:
-		return "standard"
+		return "Traditional"
 	case 1:
-		return "special"
+		return "Book/CD/DVD"
+	case 2:
+		return "Human"
+	case 3:
+		return "Coin"
+	case 4:
+		return "KretyPost"
+	case 5:
+		return "Pebble"
+	case 6:
+		return "Car"
+	case 7:
+		return "Playing Card"
+	case 8:
+		return "Dog Tag"
+	case 9:
+		return "Jigsaw"
+	case 10:
+		return "Easter Egg"
 	default:
-		return "unknown"
+		return "Unknown"
 	}
-	// # TODO
-	//     public const GEOKRETY_TYPE_TRADITIONAL = 0;
-    // public const GEOKRETY_TYPE_BOOK_CD_DVD = 1;
-    // public const GEOKRETY_TYPE_HUMAN = 2;
-    // public const GEOKRETY_TYPE_COIN = 3;
-    // public const GEOKRETY_TYPE_KRETYPOST = 4;
-    // public const GEOKRETY_TYPE_PEBBLE = 5;
-    // public const GEOKRETY_TYPE_CAR = 6;
-    // public const GEOKRETY_TYPE_PLAYING_CARD = 7;
-    // public const GEOKRETY_TYPE_DOG_TAG = 8;
-    // public const GEOKRETY_TYPE_JIGSAW = 9;
-    // public const GEOKRETY_TYPE_EASTER_EGG = 10;
 }

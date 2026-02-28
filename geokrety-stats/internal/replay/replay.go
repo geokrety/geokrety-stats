@@ -97,6 +97,7 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 
 	var processed int64
 	var errors int64
+	var batchCount int
 	isInterrupted := false
 
 	for {
@@ -124,6 +125,16 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 				processed++
 			}
 			afterID = id // next page starts after this id
+		}
+
+		batchCount++
+
+		// Refresh materialized views every 10 batches (~10k moves)
+		if batchCount%10 == 0 {
+			log.Info().Int64("processed", processed).Msg("replay: refreshing materialized views mid-replay")
+			if err := db.RefreshMaterializedViews(ctx); err != nil {
+				log.Warn().Err(err).Msg("replay: materialized view refresh failed (non-fatal)")
+			}
 		}
 
 		// Yield between batches according to config.
@@ -160,13 +171,22 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 		Msg("replay: complete")
 
 	if isInterrupted {
+		// Still do a final refresh on interrupt
+		_ = db.RefreshMaterializedViews(ctx)
 		return fmt.Errorf("replay interrupted by user")
+	}
+
+	// Final refresh of materialized views
+	log.Info().Msg("replay: final materialized view refresh")
+	if err := db.RefreshMaterializedViews(ctx); err != nil {
+		log.Warn().Err(err).Msg("replay: final materialized view refresh failed (non-fatal)")
 	}
 
 	return nil
 }
 
-// dbTruncator is a minimal interface used only by replay to wipe state.
+// dbTruncator is a minimal interface used only by replay to wipe state and refresh views.
 type dbTruncator interface {
 	TruncateStatsSchema(ctx context.Context) error
+	RefreshMaterializedViews(ctx context.Context) error
 }

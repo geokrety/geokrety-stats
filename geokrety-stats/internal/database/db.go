@@ -150,3 +150,15 @@ func (db *DB) TruncateStatsSchema(ctx context.Context) error {
 	log.Info().Msg("stats schema truncated")
 	return nil
 }
+
+// RefreshMaterializedViews refreshes all leaderboard materialized views.
+// Should be called periodically or at the end of a replay.
+func (db *DB) RefreshMaterializedViews(ctx context.Context) error {
+	log.Info().Msg("refreshing materialized views...")
+	_, err := db.Pool.Exec(ctx, `SELECT geokrety_stats.refresh_leaderboard_views()`)
+	if err != nil {
+		return fmt.Errorf("refreshing materialized views: %w", err)
+	}
+	log.Info().Msg("materialized views refreshed")
+	return nil
+}
