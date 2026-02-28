@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
+import { idToGkId } from '../composables/useGkId.js'
 import LineChart from '../components/LineChart.vue'
 import Pagination from '../components/Pagination.vue'
 
@@ -74,7 +75,7 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
             <div class="text-muted small">Rank</div>
           </div>
           <div class="col">
-            <div class="fw-bold fs-5">{{ user.move_count?.toLocaleString() }}</div>
+            <div class="fw-bold fs-5">{{ user.total_moves?.toLocaleString() }}</div>
             <div class="text-muted small">Moves</div>
           </div>
           <div class="col">
@@ -156,7 +157,10 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
               <tr v-for="m in moves" :key="m.move_id">
                 <td class="small text-muted">{{ m.moved_on?.slice(0, 10) }}</td>
                 <td>
-                  <RouterLink :to="`/geokrety/${m.gk_id}`">{{ m.gk_name || m.gk_id }}</RouterLink>
+                  <RouterLink :to="`/geokrety/${m.gk_id}`">
+                    <span v-if="m.gk_name">{{ m.gk_name }}</span>
+                    <code class="text-muted small">{{ idToGkId(m.gk_id) }}</code>
+                  </RouterLink>
                 </td>
                 <td><span class="badge bg-secondary">{{ m.type_name }}</span></td>
                 <td class="text-end fw-semibold text-primary">{{ m.points?.toLocaleString() }}</td>
@@ -175,7 +179,7 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
         <div v-for="c in countries" :key="c.country" class="col">
           <div class="card text-center p-2 shadow-sm h-100">
             <div class="fw-semibold">{{ c.country }}</div>
-            <div class="text-muted small">{{ c.move_count }} moves</div>
+            <div class="text-muted small">{{ c.move_count || c.moves || '—' }} moves</div>
           </div>
         </div>
       </div>
