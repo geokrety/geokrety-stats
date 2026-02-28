@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS geokrety_stats;
 -- ============================================================
 -- processed_events: idempotency record for move events
 -- ============================================================
-CREATE TABLE geokrety_stats.processed_events (
+CREATE TABLE IF NOT EXISTS geokrety_stats.processed_events (
     move_id         BIGINT      NOT NULL PRIMARY KEY,
     processed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     pipeline_result TEXT        -- 'scored', 'rejected', 'error'
@@ -18,7 +18,7 @@ COMMENT ON TABLE geokrety_stats.processed_events IS
 -- ============================================================
 -- gk_multiplier_state: per-GK multiplier tracking
 -- ============================================================
-CREATE TABLE geokrety_stats.gk_multiplier_state (
+CREATE TABLE IF NOT EXISTS geokrety_stats.gk_multiplier_state (
     gk_id               BIGINT          NOT NULL PRIMARY KEY,
     current_multiplier  DOUBLE PRECISION NOT NULL DEFAULT 1.0,
     last_updated_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
@@ -35,7 +35,7 @@ COMMENT ON TABLE geokrety_stats.gk_multiplier_state IS
 -- ============================================================
 -- gk_countries_visited: per-GK countries visited set
 -- ============================================================
-CREATE TABLE geokrety_stats.gk_countries_visited (
+CREATE TABLE IF NOT EXISTS geokrety_stats.gk_countries_visited (
     gk_id           BIGINT          NOT NULL,
     country_code    CHAR(2)         NOT NULL,  -- ISO 3166-1 alpha-2
     first_visited_at TIMESTAMPTZ   NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE geokrety_stats.gk_countries_visited (
     PRIMARY KEY (gk_id, country_code)
 );
 
-CREATE INDEX idx_gk_countries_gk_id ON geokrety_stats.gk_countries_visited (gk_id);
+CREATE INDEX IF NOT EXISTS idx_gk_countries_gk_id ON geokrety_stats.gk_countries_visited (gk_id);
 
 COMMENT ON TABLE geokrety_stats.gk_countries_visited IS
     'Records all countries a GeoKret has visited. Used for country crossing detection.';
@@ -52,7 +52,7 @@ COMMENT ON TABLE geokrety_stats.gk_countries_visited IS
 -- user_move_history: tracks (user, gk, log_type) tuples
 -- Used for first-move detection and multiplier tracking.
 -- ============================================================
-CREATE TABLE geokrety_stats.user_move_history (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_move_history (
     user_id     BIGINT      NOT NULL,
     gk_id       BIGINT      NOT NULL,
     log_type    SMALLINT    NOT NULL,  -- 0=drop,1=grab,3=seen,5=dip
@@ -60,7 +60,7 @@ CREATE TABLE geokrety_stats.user_move_history (
     PRIMARY KEY (user_id, gk_id, log_type)
 );
 
-CREATE INDEX idx_user_move_history_user_gk ON geokrety_stats.user_move_history (user_id, gk_id);
+CREATE INDEX IF NOT EXISTS idx_user_move_history_user_gk ON geokrety_stats.user_move_history (user_id, gk_id);
 
 COMMENT ON TABLE geokrety_stats.user_move_history IS
     'Records which (user, gk, log_type) combinations have been seen. Used to enforce first-move-only base points.';
@@ -69,7 +69,7 @@ COMMENT ON TABLE geokrety_stats.user_move_history IS
 -- user_owner_gk_counts: tracks per-user, per-owner GK interaction counts
 -- Used for the anti-farming 10-GK-per-owner limit.
 -- ============================================================
-CREATE TABLE geokrety_stats.user_owner_gk_counts (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_owner_gk_counts (
     user_id     BIGINT  NOT NULL,
     owner_id    BIGINT  NOT NULL,
     gk_id       BIGINT  NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE geokrety_stats.user_owner_gk_counts (
     PRIMARY KEY (user_id, owner_id, gk_id)
 );
 
-CREATE INDEX idx_user_owner_gk_user_owner ON geokrety_stats.user_owner_gk_counts (user_id, owner_id);
+CREATE INDEX IF NOT EXISTS idx_user_owner_gk_user_owner ON geokrety_stats.user_owner_gk_counts (user_id, owner_id);
 
 COMMENT ON TABLE geokrety_stats.user_owner_gk_counts IS
     'Tracks distinct GKs per (user, owner) pair where base points were earned. Enforces max-10-per-owner limit.';
@@ -86,7 +86,7 @@ COMMENT ON TABLE geokrety_stats.user_owner_gk_counts IS
 -- user_waypoint_monthly_counts: tracks per-user, per-waypoint, per-month GK counts
 -- Used for waypoint penalty calculation.
 -- ============================================================
-CREATE TABLE geokrety_stats.user_waypoint_monthly_counts (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_waypoint_monthly_counts (
     user_id         BIGINT          NOT NULL,
     -- waypoint or NULL (use coordinates as text when no waypoint)
     location_id     VARCHAR(64)     NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE geokrety_stats.user_waypoint_monthly_counts (
     PRIMARY KEY (user_id, location_id, year_month, gk_id)
 );
 
-CREATE INDEX idx_user_waypoint_user_loc_month
+CREATE INDEX IF NOT EXISTS idx_user_waypoint_user_loc_month
     ON geokrety_stats.user_waypoint_monthly_counts (user_id, location_id, year_month);
 
 COMMENT ON TABLE geokrety_stats.user_waypoint_monthly_counts IS
@@ -105,7 +105,7 @@ COMMENT ON TABLE geokrety_stats.user_waypoint_monthly_counts IS
 -- ============================================================
 -- user_monthly_diversity: tracks monthly diversity bonuses per user
 -- ============================================================
-CREATE TABLE geokrety_stats.user_monthly_diversity (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_monthly_diversity (
     user_id                     BIGINT      NOT NULL,
     year_month                  CHAR(7)     NOT NULL,  -- YYYY-MM pattern
     gks_dropped_count           INTEGER     NOT NULL DEFAULT 0,
@@ -119,7 +119,7 @@ COMMENT ON TABLE geokrety_stats.user_monthly_diversity IS
     'Monthly diversity tracking per user: drops count and distinct owner count (with bonus flags).';
 
 -- Per (user, month, country) diversity country bonus tracking
-CREATE TABLE geokrety_stats.user_monthly_diversity_countries (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_monthly_diversity_countries (
     user_id     BIGINT      NOT NULL,
     year_month  CHAR(7)     NOT NULL,
     country     CHAR(2)     NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE geokrety_stats.user_monthly_diversity_countries (
 );
 
 -- Per (user, month) distinct owners tracking (which owners counted)
-CREATE TABLE geokrety_stats.user_monthly_diversity_owners (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_monthly_diversity_owners (
     user_id     BIGINT      NOT NULL,
     year_month  CHAR(7)     NOT NULL,
     owner_id    BIGINT      NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE geokrety_stats.user_monthly_diversity_owners (
 );
 
 -- Per (user, month) distinct GKs dropped tracking
-CREATE TABLE geokrety_stats.user_monthly_diversity_drops (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_monthly_diversity_drops (
     user_id     BIGINT      NOT NULL,
     year_month  CHAR(7)     NOT NULL,
     gk_id       BIGINT      NOT NULL,
@@ -148,7 +148,7 @@ CREATE TABLE geokrety_stats.user_monthly_diversity_drops (
 -- ============================================================
 -- gk_chains: active and completed chains
 -- ============================================================
-CREATE TABLE geokrety_stats.gk_chains (
+CREATE TABLE IF NOT EXISTS geokrety_stats.gk_chains (
     id                  BIGSERIAL   PRIMARY KEY,
     gk_id               BIGINT      NOT NULL,
     status              VARCHAR(16) NOT NULL DEFAULT 'active',  -- 'active', 'ended'
@@ -160,7 +160,7 @@ CREATE TABLE geokrety_stats.gk_chains (
     CONSTRAINT chain_status CHECK (status IN ('active', 'ended'))
 );
 
-CREATE INDEX idx_gk_chains_gk_active ON geokrety_stats.gk_chains (gk_id, status);
+CREATE INDEX IF NOT EXISTS idx_gk_chains_gk_active ON geokrety_stats.gk_chains (gk_id, status);
 
 COMMENT ON TABLE geokrety_stats.gk_chains IS
     'Tracks movement chains per GeoKret. One active chain per GK at most.';
@@ -168,7 +168,7 @@ COMMENT ON TABLE geokrety_stats.gk_chains IS
 -- ============================================================
 -- gk_chain_members: ordered members of each chain
 -- ============================================================
-CREATE TABLE geokrety_stats.gk_chain_members (
+CREATE TABLE IF NOT EXISTS geokrety_stats.gk_chain_members (
     chain_id    BIGINT      NOT NULL REFERENCES geokrety_stats.gk_chains(id) ON DELETE CASCADE,
     user_id     BIGINT      NOT NULL,
     position    INTEGER     NOT NULL,  -- order joined
@@ -176,7 +176,7 @@ CREATE TABLE geokrety_stats.gk_chain_members (
     PRIMARY KEY (chain_id, user_id)
 );
 
-CREATE INDEX idx_gk_chain_members_chain ON geokrety_stats.gk_chain_members (chain_id);
+CREATE INDEX IF NOT EXISTS idx_gk_chain_members_chain ON geokrety_stats.gk_chain_members (chain_id);
 
 COMMENT ON TABLE geokrety_stats.gk_chain_members IS
     'Members of each chain, in order of joining.';
@@ -184,7 +184,7 @@ COMMENT ON TABLE geokrety_stats.gk_chain_members IS
 -- ============================================================
 -- gk_chain_completions: anti-farming record per user per chain
 -- ============================================================
-CREATE TABLE geokrety_stats.gk_chain_completions (
+CREATE TABLE IF NOT EXISTS geokrety_stats.gk_chain_completions (
     user_id         BIGINT      NOT NULL,
     gk_id           BIGINT      NOT NULL,
     chain_id        BIGINT      NOT NULL,
@@ -192,7 +192,7 @@ CREATE TABLE geokrety_stats.gk_chain_completions (
     PRIMARY KEY (user_id, chain_id)
 );
 
-CREATE INDEX idx_gk_chain_completions_user_gk ON geokrety_stats.gk_chain_completions (user_id, gk_id, completed_at);
+CREATE INDEX IF NOT EXISTS idx_gk_chain_completions_user_gk ON geokrety_stats.gk_chain_completions (user_id, gk_id, completed_at);
 
 COMMENT ON TABLE geokrety_stats.gk_chain_completions IS
     'Records chain bonus awards per user per chain. Used for anti-farming (6-month cooldown per user per GK).';
@@ -200,7 +200,7 @@ COMMENT ON TABLE geokrety_stats.gk_chain_completions IS
 -- ============================================================
 -- user_points_log: detailed points award ledger
 -- ============================================================
-CREATE TABLE geokrety_stats.user_points_log (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_points_log (
     id              BIGSERIAL   PRIMARY KEY,
     user_id         BIGINT      NOT NULL,
     points          DOUBLE PRECISION NOT NULL,
@@ -216,9 +216,9 @@ CREATE TABLE geokrety_stats.user_points_log (
     CONSTRAINT points_non_negative CHECK (points >= 0)
 );
 
-CREATE INDEX idx_user_points_log_user_id ON geokrety_stats.user_points_log (user_id);
-CREATE INDEX idx_user_points_log_move_id ON geokrety_stats.user_points_log (move_id);
-CREATE INDEX idx_user_points_log_awarded_at ON geokrety_stats.user_points_log (awarded_at);
+CREATE INDEX IF NOT EXISTS idx_user_points_log_user_id ON geokrety_stats.user_points_log (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_points_log_move_id ON geokrety_stats.user_points_log (move_id);
+CREATE INDEX IF NOT EXISTS idx_user_points_log_awarded_at ON geokrety_stats.user_points_log (awarded_at);
 
 COMMENT ON TABLE geokrety_stats.user_points_log IS
     'Append-only ledger of all points awarded to users. One row per award entry.';
@@ -226,7 +226,7 @@ COMMENT ON TABLE geokrety_stats.user_points_log IS
 -- ============================================================
 -- gk_points_log: detailed GK-level points/multiplier changes log
 -- ============================================================
-CREATE TABLE geokrety_stats.gk_points_log (
+CREATE TABLE IF NOT EXISTS geokrety_stats.gk_points_log (
     id                  BIGSERIAL   PRIMARY KEY,
     gk_id               BIGINT      NOT NULL,
     move_id             BIGINT,
@@ -238,8 +238,8 @@ CREATE TABLE geokrety_stats.gk_points_log (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_gk_points_log_gk_id ON geokrety_stats.gk_points_log (gk_id);
-CREATE INDEX idx_gk_points_log_move_id ON geokrety_stats.gk_points_log (move_id);
+CREATE INDEX IF NOT EXISTS idx_gk_points_log_gk_id ON geokrety_stats.gk_points_log (gk_id);
+CREATE INDEX IF NOT EXISTS idx_gk_points_log_move_id ON geokrety_stats.gk_points_log (move_id);
 
 COMMENT ON TABLE geokrety_stats.gk_points_log IS
     'Log of GeoKret multiplier changes with full audit trail.';
@@ -247,7 +247,7 @@ COMMENT ON TABLE geokrety_stats.gk_points_log IS
 -- ============================================================
 -- user_points_totals: aggregated points per user
 -- ============================================================
-CREATE TABLE geokrety_stats.user_points_totals (
+CREATE TABLE IF NOT EXISTS geokrety_stats.user_points_totals (
     user_id         BIGINT          NOT NULL PRIMARY KEY,
     total_points    DOUBLE PRECISION NOT NULL DEFAULT 0,
     last_updated_at TIMESTAMPTZ     NOT NULL DEFAULT NOW(),

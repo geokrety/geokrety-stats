@@ -3,6 +3,21 @@
 -- Run: SELECT refresh_leaderboard_views(); to refresh all.
 
 -- ============================================================
+-- DROP existing views if they exist (safe for re-runs)
+-- ============================================================
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_leaderboard_all_time CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_leaderboard_daily CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_leaderboard_monthly CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_leaderboard_yearly CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_user_stats CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_gk_stats CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_user_points_daily CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_user_countries CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_gk_countries CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_global_stats CASCADE;
+DROP FUNCTION IF EXISTS geokrety_stats.refresh_leaderboard_views CASCADE;
+
+-- ============================================================
 -- LEADERBOARD: all-time top users
 -- ============================================================
 CREATE MATERIALIZED VIEW geokrety_stats.mv_leaderboard_all_time AS
