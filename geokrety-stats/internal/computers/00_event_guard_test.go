@@ -39,32 +39,8 @@ func TestEventGuard_HaltsOnNonScoreable(t *testing.T) {
 	assert.Contains(t, err.Error(), "not scoreable")
 }
 
-func TestEventGuard_HaltsOnDuplicate(t *testing.T) {
-	ms := mockStore()
-	ms.IsEventProcessedFn = func(ctx context.Context, moveID int64) (bool, error) {
-		return true, nil // already processed
-	}
-
-	guard := computers.NewEventGuard(ms)
-	ctx := context.Background()
-
-	evt := testEvent(1, 123, pipeline.LogTypeDrop)
-	pipeCtx := testCtx(evt, 456, 1.0)
-	acc := pipeline.NewAccumulator()
-
-	err := guard.Process(ctx, pipeCtx, acc)
-	require.Error(t, err)
-	assert.True(t, computers.IsHalt(err))
-	assert.Contains(t, err.Error(), "duplicate")
-}
-
 func TestEventGuard_PassesValidEvent(t *testing.T) {
-	ms := mockStore()
-	ms.IsEventProcessedFn = func(ctx context.Context, moveID int64) (bool, error) {
-		return false, nil // not yet processed
-	}
-
-	guard := computers.NewEventGuard(ms)
+	guard := computers.NewEventGuard(mockStore())
 	ctx := context.Background()
 
 	evt := testEvent(1, 123, pipeline.LogTypeDrop)
@@ -73,4 +49,18 @@ func TestEventGuard_PassesValidEvent(t *testing.T) {
 
 	err := guard.Process(ctx, pipeCtx, acc)
 	assert.NoError(t, err)
+}
+
+func TestEventGuard_AllowsArchivedAndDipAsScoreable(t *testing.T) {
+	guard := computers.NewEventGuard(mockStore())
+	ctx := context.Background()
+
+	for _, logType := range []pipeline.LogType{pipeline.LogTypeArchived, pipeline.LogTypeDip} {
+		evt := testEvent(1, 123, logType)
+		pipeCtx := testCtx(evt, 456, 1.0)
+		acc := pipeline.NewAccumulator()
+
+		err := guard.Process(ctx, pipeCtx, acc)
+		require.NoError(t, err)
+	}
 }
