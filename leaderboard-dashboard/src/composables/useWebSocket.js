@@ -6,6 +6,7 @@ const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.ho
 const connected = ref(false)
 const leaderboard = ref([])
 const stats = ref(null)
+const connectedUsers = ref(0)
 
 let ws = null
 let reconnectTimer = null
@@ -36,6 +37,8 @@ function connect() {
         leaderboard.value = msg.payload ?? []
       } else if (msg.type === 'global_stats') {
         stats.value = msg.payload
+      } else if (msg.type === 'connected_users') {
+        connectedUsers.value = msg.payload?.count ?? 0
       }
     } catch (_) { /* noop */ }
   }
@@ -58,7 +61,7 @@ export function useLiveStats() {
   onUnmounted(() => {
     // only disconnect if this is the last consumer (App.vue)
   })
-  return { connected, leaderboard, stats }
+  return { connected, leaderboard, stats, connectedUsers }
 }
 
 /**

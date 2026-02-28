@@ -4,7 +4,7 @@ import { ref, computed } from 'vue'
 import { useLiveStats } from './composables/useWebSocket.js'
 
 const route = useRoute()
-const { connected, stats } = useLiveStats()
+const { connected, stats, connectedUsers } = useLiveStats()
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 </script>
@@ -24,6 +24,11 @@ const isActive = (path) => route.path === path || route.path.startsWith(path + '
           <li class="nav-item">
             <RouterLink class="nav-link" :class="{ active: isActive('/') && route.path === '/' }" to="/">
               <i class="bi bi-trophy me-1"></i>Leaderboard
+            </RouterLink>
+          </li>
+          <li class="nav-item">
+            <RouterLink class="nav-link" :class="{ active: isActive('/countries') }" to="/countries">
+              <i class="bi bi-globe me-1"></i>Countries
             </RouterLink>
           </li>
           <li class="nav-item">
@@ -55,7 +60,13 @@ const isActive = (path) => route.path === path || route.path.startsWith(path + '
 
   <!-- Footer -->
   <footer class="bg-dark text-secondary text-center py-2 small mt-4">
-    GeoKrety Points System &mdash; Data refreshes live via WebSocket
+    GeoKrety Points System &mdash;
+    <span v-if="connected" class="text-success">
+      <i class="bi bi-people-fill me-1"></i>{{ connectedUsers }} user{{ connectedUsers !== 1 ? 's' : '' }} online
+    </span>
+    <span v-else class="text-secondary">
+      Data refreshes when connection restored
+    </span>
   </footer>
 </template>
 

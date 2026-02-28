@@ -66,6 +66,14 @@ func (h *Handler) StartBroadcaster(ctx context.Context, hub *wsHub.Hub, interval
 				Type:    "leaderboard_update",
 				Payload: entries,
 			})
+
+			// Broadcast connected user count every 10 seconds
+			hub.Broadcast(models.WSMessage{
+				Type: "connected_users",
+				Payload: map[string]int{
+					"count": hub.ClientCount(),
+				},
+			})
 		}
 	}
 }
