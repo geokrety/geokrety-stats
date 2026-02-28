@@ -4,6 +4,7 @@ import { useRoute, RouterLink, useRouter } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
 import { getMoveTypeBadgeClass, getGkTypeBadgeClass } from '../composables/useMoveTypeColors.js'
+import { getCountryFlag } from '../composables/useCountryFlags.js'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
@@ -239,7 +240,10 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
       <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2">
         <div v-for="c in countries" :key="c.country" class="col">
           <div class="card text-center p-2 shadow-sm h-100">
-            <div class="fw-semibold">{{ c.country }}</div>
+            <div class="fw-semibold">
+              <span class="fs-3">{{ getCountryFlag(c.country) }}</span><br/>
+              {{ c.country.toUpperCase() }}
+            </div>
             <div class="text-muted small">{{ (c.move_count || c.moves || 0).toLocaleString() }} moves</div>
           </div>
         </div>

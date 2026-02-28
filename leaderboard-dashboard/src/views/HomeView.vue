@@ -2,6 +2,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchList } from '../composables/useApi.js'
+import { getCountryFlag } from '../composables/useCountryFlags.js'
 import { useLeaderboardLive } from '../composables/useWebSocket.js'
 import Pagination from '../components/Pagination.vue'
 
@@ -147,7 +148,9 @@ function medalClass(rank) {
                 <RouterLink :to="`/users/${row.user_id}`" class="text-decoration-none fw-semibold">
                   {{ row.username }}
                 </RouterLink>
-                <span v-if="row.home_country" class="text-muted small ms-1">({{ row.home_country }})</span>
+                <span v-if="row.home_country" class="text-muted small ms-1" :title="`Country: ${row.home_country}`">
+                  {{ getCountryFlag(row.home_country) }} {{ row.home_country.toUpperCase() }}
+                </span>
               </td>
               <td class="text-end fw-bold text-primary">{{ row.total_points?.toLocaleString() }}</td>
               <td class="text-end">{{ row.move_count?.toLocaleString() }}</td>
