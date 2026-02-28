@@ -38,6 +38,15 @@ func (h *Handler) ServeWS(hub *wsHub.Hub) gin.HandlerFunc {
 			}
 			stats := h.computeGlobalStatsFallback(context.Background())
 			hub.Broadcast(models.WSMessage{Type: "global_stats", Payload: stats})
+
+			// Send connected users count immediately (delayed to allow registration)
+			time.Sleep(150 * time.Millisecond)
+			hub.Broadcast(models.WSMessage{
+				Type: "connected_users",
+				Payload: map[string]int{
+					"count": hub.ClientCount(),
+				},
+			})
 		}()
 
 		hub.ServeClient(conn)
@@ -54,6 +63,15 @@ func (h *Handler) StartBroadcaster(ctx context.Context, hub *wsHub.Hub, interval
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			// Always broadcast connected user count (even if 0)
+			hub.Broadcast(models.WSMessage{
+				Type: "connected_users",
+				Payload: map[string]int{
+					"count": hub.ClientCount(),
+				},
+			})
+
+			// Only send leaderboard if clients are connected
 			if hub.ClientCount() == 0 {
 				continue
 			}
@@ -65,14 +83,6 @@ func (h *Handler) StartBroadcaster(ctx context.Context, hub *wsHub.Hub, interval
 			hub.Broadcast(models.WSMessage{
 				Type:    "leaderboard_update",
 				Payload: entries,
-			})
-
-			// Broadcast connected user count every 10 seconds
-			hub.Broadcast(models.WSMessage{
-				Type: "connected_users",
-				Payload: map[string]int{
-					"count": hub.ClientCount(),
-				},
 			})
 		}
 	}

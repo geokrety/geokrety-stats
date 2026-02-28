@@ -55,14 +55,14 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT DATE(moved_on_datetime AT TIME ZONE 'UTC')::text AS day,
-		       COUNT(*) AS moves,
-		       COUNT(DISTINCT author) AS active_users,
-		       COUNT(DISTINCT geokret) AS active_gks
-		FROM geokrety.gk_moves
-		WHERE moved_on_datetime >= NOW() - (interval '1 day' * $1)
-		GROUP BY DATE(moved_on_datetime AT TIME ZONE 'UTC')
-		ORDER BY day DESC`
+		SELECT activity_date::text AS day,
+		       total_moves AS moves,
+		       active_users,
+		       active_gks,
+		       drops, grabs, dips, comments, sees
+		FROM geokrety_stats.mv_daily_activity
+		WHERE activity_date >= CURRENT_DATE - (interval '1 day' * $1)
+		ORDER BY activity_date DESC`
 
 	rows, err := h.DB.Query(c.Request.Context(), q, days)
 	if err != nil {
@@ -76,11 +76,17 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 		Moves       int64  `json:"moves"`
 		ActiveUsers int64  `json:"active_users"`
 		ActiveGKs   int64  `json:"active_gks"`
+		Drops       int64  `json:"drops"`
+		Grabs       int64  `json:"grabs"`
+		Dips        int64  `json:"dips"`
+		Comments    int64  `json:"comments"`
+		Sees        int64  `json:"sees"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
-		if err := rows.Scan(&r.Day, &r.Moves, &r.ActiveUsers, &r.ActiveGKs); err != nil {
+		if err := rows.Scan(&r.Day, &r.Moves, &r.ActiveUsers, &r.ActiveGKs,
+			&r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees); err != nil {
 			errInternal(c, err)
 			return
 		}
@@ -93,12 +99,11 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 // TopCountries handles GET /api/v1/stats/countries
 func (h *Handler) TopCountries(c *gin.Context) {
 	const q = `
-		SELECT country, COUNT(*) AS move_count, COUNT(DISTINCT geokret) AS gk_count,
-		       COUNT(DISTINCT author) AS user_count
-		FROM geokrety.gk_moves
-		WHERE country IS NOT NULL
-		GROUP BY country
-		ORDER BY move_count DESC
+		SELECT country, total_moves AS move_count, unique_gks AS gk_count,
+		       unique_users AS user_count, total_points_awarded, 
+		       drops, grabs, dips, comments, sees
+		FROM geokrety_stats.mv_country_summary
+		ORDER BY total_points_awarded DESC
 		LIMIT 50`
 
 	rows, err := h.DB.Query(c.Request.Context(), q)
@@ -109,15 +114,22 @@ func (h *Handler) TopCountries(c *gin.Context) {
 	defer rows.Close()
 
 	type row struct {
-		Country   string `json:"country"`
-		MoveCount int64  `json:"move_count"`
-		GkCount   int64  `json:"gk_count"`
-		UserCount int64  `json:"user_count"`
+		Country            string  `json:"country"`
+		MoveCount          int64   `json:"move_count"`
+		GkCount            int64   `json:"gk_count"`
+		UserCount          int64   `json:"user_count"`
+		TotalPointsAwarded float64 `json:"total_points_awarded"`
+		Drops              int64   `json:"drops"`
+		Grabs              int64   `json:"grabs"`
+		Dips               int64   `json:"dips"`
+		Comments           int64   `json:"comments"`
+		Sees               int64   `json:"sees"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
-		if err := rows.Scan(&r.Country, &r.MoveCount, &r.GkCount, &r.UserCount); err != nil {
+		if err := rows.Scan(&r.Country, &r.MoveCount, &r.GkCount, &r.UserCount, 
+			&r.TotalPointsAwarded, &r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees); err != nil {
 			errInternal(c, err)
 			return
 		}
