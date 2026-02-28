@@ -99,9 +99,9 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 // TopCountries handles GET /api/v1/stats/countries
 func (h *Handler) TopCountries(c *gin.Context) {
 	const q = `
-		SELECT country, total_moves AS move_count, unique_gks AS gk_count,
-		       unique_users AS user_count, total_points_awarded, 
-		       drops, grabs, dips, comments, sees
+		SELECT country, total_moves, unique_gks, unique_users,
+		       total_points_awarded, drops, grabs, dips, comments, sees,
+		       CASE WHEN total_moves > 0 THEN ROUND(total_points_awarded::NUMERIC / total_moves, 2) ELSE 0 END AS avg_points_per_move
 		FROM geokrety_stats.mv_country_summary
 		ORDER BY total_points_awarded DESC
 		LIMIT 50`
@@ -114,22 +114,23 @@ func (h *Handler) TopCountries(c *gin.Context) {
 	defer rows.Close()
 
 	type row struct {
-		Country            string  `json:"country"`
-		MoveCount          int64   `json:"move_count"`
-		GkCount            int64   `json:"gk_count"`
-		UserCount          int64   `json:"user_count"`
-		TotalPointsAwarded float64 `json:"total_points_awarded"`
-		Drops              int64   `json:"drops"`
-		Grabs              int64   `json:"grabs"`
-		Dips               int64   `json:"dips"`
-		Comments           int64   `json:"comments"`
-		Sees               int64   `json:"sees"`
+		Country              string  `json:"country"`
+		TotalMoves           int64   `json:"total_moves"`
+		UniqueGks            int64   `json:"unique_gks"`
+		UniqueUsers          int64   `json:"unique_users"`
+		TotalPointsAwarded   float64 `json:"total_points_awarded"`
+		Drops                int64   `json:"drops"`
+		Grabs                int64   `json:"grabs"`
+		Dips                 int64   `json:"dips"`
+		Comments             int64   `json:"comments"`
+		Sees                 int64   `json:"sees"`
+		AvgPointsPerMove     float64 `json:"avg_points_per_move"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
-		if err := rows.Scan(&r.Country, &r.MoveCount, &r.GkCount, &r.UserCount, 
-			&r.TotalPointsAwarded, &r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees); err != nil {
+		if err := rows.Scan(&r.Country, &r.TotalMoves, &r.UniqueGks, &r.UniqueUsers,
+			&r.TotalPointsAwarded, &r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees, &r.AvgPointsPerMove); err != nil {
 			errInternal(c, err)
 			return
 		}
