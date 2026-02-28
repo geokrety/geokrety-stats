@@ -1,0 +1,73 @@
+services:
+
+  # # ── PostgreSQL ────────────────────────────────────────────────────────────
+  # postgres:
+  #   image: postgres:16-alpine
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER:     ${POSTGRES_USER:-geokrety}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geokrety}
+  #     POSTGRES_DB:       ${POSTGRES_DB:-geokrety}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geokrety}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # ── GeoKrety Stats (scoring pipeline) ────────────────────────────────────
+  geokrety-stats:
+    build:
+      context: ./geokrety-stats
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_DSN: postgres://${POSTGRES_USER:-geokrety}:${POSTGRES_PASSWORD:-geokrety}@192.168.130.65:5432/${POSTGRES_DB:-geokrety}?sslmode=disable
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
+    profiles: ["stats"]
+
+  # ── Leaderboard API ───────────────────────────────────────────────────────
+  leaderboard-api:
+    build:
+      context: ./leaderboard-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      API_DATABASE_DSN:            postgres://${POSTGRES_USER:-geokrety}:${POSTGRES_PASSWORD:-geokrety}@192.168.130.65:5432/${POSTGRES_DB:-geokrety}?sslmode=disable
+      API_SERVER_PORT:             8080
+      API_SERVER_HOST:             0.0.0.0
+      API_SERVER_ALLOW_ORIGINS:    "*"
+      API_SERVER_REFRESH_INTERVAL: 30
+      API_DATABASE_POOL_MAX:       20
+      API_DATABASE_POOL_MIN:       2
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Leaderboard Dashboard (Vue + nginx) ───────────────────────────────────
+  leaderboard-dashboard:
+    build:
+      context: ./leaderboard-dashboard
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      leaderboard-api:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
