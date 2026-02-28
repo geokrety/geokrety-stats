@@ -412,6 +412,304 @@ All questions must answer YES before merging.
 
 ---
 
-**Last Updated:** 2026-02-26
-**Version:** 1.0
+# 🚀 AI Rules for Feature Development Workflow
+
+**Purpose:** Standardized development process for all GeoKrety Points System features, ensuring quality, consistency, and reproducibility.
+
+**Key Requirement:** All features must document themselves in the `features/` directory before or immediately after implementation.
+
+---
+
+## 📁 Feature Documentation Directory
+
+**Location:** `features/` directory at project root
+
+**Purpose:** 
+- AI context for feature implementation
+- Integration specifications
+- Testing procedures
+- Deployment runbooks
+- Future maintenance reference
+
+**AI Instructions:**
+1. **Before implementing a feature**, read the feature spec from `features/[feature-name].md`
+2. **During development**, follow the documented API spec and component structure
+3. **After implementation**, update the feature file with final implementation details
+4. **For maintenance**, use feature files as source of truth
+
+### Existing Features
+
+| Feature | File | Status |
+|---------|------|--------|
+| Country Leaderboard | [features/country-leaderboard.md](features/country-leaderboard.md) | ✅ Complete |
+| Breakdown Charts | [features/breakdown-charts.md](features/breakdown-charts.md) | ✅ Complete |
+| WebSocket User Count | [features/websocket-user-count.md](features/websocket-user-count.md) | ✅ Complete |
+
+### Adding New Features
+
+Create new file: `features/[feature-name].md`
+
+Use template from: [features/README.md](features/README.md)
+
+---
+
+## ✅ Development Workflow (Sequential Steps)
+
+### Phase 1: Specification & Documentation
+
+```
+┌─ Create feature spec in features/[name].md
+│  ├─ Overview & goals
+│  ├─ API endpoint specifications
+│  ├─ Frontend component structure
+│  └─ Testing procedures (curl examples)
+└─ AI reads spec before implementing
+```
+
+### Phase 2: Implementation
+
+```
+┌─ Implement backend (if needed)
+│  ├─ Create/modify Go handlers
+│  └─ Update feature spec with final details
+├─ Implement frontend (if needed)
+│  ├─ Create/modify Vue components
+│  └─ Update router if adding routes
+└─ Update feature spec with implementation notes
+```
+
+### Phase 3: Testing (DO NOT use Playwright)
+
+#### Test API Endpoints with curl
+```bash
+# Quick test
+curl -s http://localhost:8080/api/endpoint | jq .
+
+# Full example from feature spec
+curl -s "http://localhost:8080/api/endpoint?param=value" | jq .
+```
+
+#### Test UI with Gotenberg (NOT Playwright)
+```bash
+# Desktop screenshot
+curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
+  --form url=http://localhost:3000/route \
+  --form width=1280 --form height=1024 \
+  -o /tmp/test.png
+
+# Mobile screenshot
+curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
+  --form url=http://localhost:3000/route \
+  --form width=720 --form height=2048 \
+  -o /tmp/test-mobile.png
+```
+
+#### Test Binary Tools with make
+```bash
+# For geokrety-stats
+cd geokrety-stats
+make build
+./bin/geokrety-stats --help
+./bin/geokrety-stats --flag=value
+```
+
+### Phase 4: Docker Deployment
+
+```
+┌─ DO NOT start services directly (no npm dev, go run)
+├─ Always use Docker Compose
+│  ├─ docker compose down           (clean)
+│  ├─ docker compose build          (rebuild images)
+│  └─ docker compose up -d          (deploy)
+├─ Verify services running
+│  └─ docker compose ps
+└─ Check logs for errors
+   └─ docker compose logs -f [service-name]
+```
+
+### Phase 5: Git Commit
+
+```
+┌─ One commit per completed feature
+├─ Use conventional commit format
+│  ├─ feat: new feature description
+│  ├─ fix: bug fix description
+│  └─ docs: documentation changes
+└─ Example commits:
+   ├─ feat: add country leaderboard page
+   ├─ feat: implement breakdown charts
+   └─ feat: add websocket user count
+```
+
+---
+
+## 🛠️ Testing Checklist (Required Before Commit)
+
+- [ ] **Code Quality**
+  - [ ] Follows project patterns
+  - [ ] Proper error handling
+  - [ ] No debug code left in
+
+- [ ] **API Testing**
+  - [ ] All endpoints tested with curl
+  - [ ] Responses match documentation
+  - [ ] Error cases handled
+
+- [ ] **UI Testing**
+  - [ ] Screenshots taken with Gotenberg
+  - [ ] Responsive design verified (mobile + desktop)
+  - [ ] No JavaScript errors in logs
+
+- [ ] **Binary Testing** (if applicable)
+  - [ ] Builds with `make build`
+  - [ ] Help output clear
+  - [ ] All flags documented
+
+- [ ] **Documentation**
+  - [ ] Feature file in `features/`
+  - [ ] API endpoints documented
+  - [ ] Components documented
+  - [ ] Testing procedures included
+
+- [ ] **Deployment**
+  - [ ] Docker images build successfully
+  - [ ] Services start with `docker compose up`
+  - [ ] No errors in logs
+  - [ ] Can verify with curl/Gotenberg
+
+---
+
+## ❌ DON'Ts (Critical Rules)
+
+- ❌ **DO NOT use Playwright** - Use Gotenberg instead
+  ```bash
+  # WRONG: Do not do this
+  npx playwright test
+  
+  # RIGHT: Use Gotenberg
+  curl --request POST http://localhost:3001/forms/chromium/screenshot/url ...
+  ```
+
+- ❌ **DO NOT start services directly** - Always use docker compose
+  ```bash
+  # WRONG: Do not do this
+  npm run dev
+  go run ./cmd/api
+  
+  # RIGHT: Use docker compose
+  docker compose build && docker compose up -d
+  ```
+
+- ❌ **DO NOT skip feature documentation** - Document before or immediately after
+  ```bash
+  # WRONG: Implement without spec
+  # RIGHT: Create features/[name].md first
+  ```
+
+- ❌ **DO NOT forget to test** - Test every endpoint and UI
+  ```bash
+  # WRONG: Assume it works
+  # RIGHT: Test with curl and Gotenberg
+  ```
+
+---
+
+## ✅ DOs (Best Practices)
+
+- ✅ **Document features in `features/` directory**
+- ✅ **Test API with curl** - See examples in feature files
+- ✅ **Screenshot UI with Gotenberg** - Not Playwright
+- ✅ **Build binaries with make build** - Check Makefile for usage
+- ✅ **Deploy with docker compose** - No direct npm/go run
+- ✅ **Commit per feature** - Logical, atomic commits
+- ✅ **Use conventional commits** - feat:, fix:, docs:
+- ✅ **Read feature specs before implementation**
+- ✅ **Update feature specs after implementation**
+- ✅ **Verify with docker compose ps** after deploy
+
+---
+
+## 📊 Quick Reference: Common Commands
+
+### Build & Deploy
+```bash
+cd /home/kumy/GIT/geokrety-points-system
+
+# Full rebuild
+docker compose down
+docker compose build
+docker compose up -d
+
+# Single service rebuild
+docker compose build leaderboard-api
+docker compose up -d leaderboard-api
+```
+
+### Testing
+```bash
+# API test
+curl -s http://localhost:8080/api/endpoint | jq .
+
+# UI screenshot (desktop)
+curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
+  --form url=http://localhost:3000/route \
+  --form width=1280 --form height=1024 \
+  -o /tmp/test.png
+
+# UI screenshot (mobile)
+curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
+  --form url=http://localhost:3000/route \
+  --form width=720 --form height=2048 \
+  -o /tmp/test-mobile.png
+
+# Binary build & run
+cd geokrety-stats && make build && ./bin/geokrety-stats --help
+
+# Check service status
+docker compose ps
+docker compose logs -f [service-name]
+```
+
+### Git
+```bash
+# Commit feature
+git add .
+git commit -m "feat: describe your feature"
+
+# View feature docs
+cat features/[feature-name].md
+```
+
+---
+
+## 🎯 Success Criteria for Feature Completion
+
+A feature is **production-ready** when:
+
+✅ Documented in `features/[name].md` with API spec
+✅ Backend implemented and tested with curl
+✅ Frontend implemented and tested with Gotenberg
+✅ All curl examples work as documented
+✅ All components created/modified documented
+✅ Docker images build without errors
+✅ Services deployed and running
+✅ No errors in docker logs
+✅ Git commit created with conventional format
+✅ Feature spec updated with final implementation
+✅ Ready for deployment without review delays
+
+---
+
+## 📝 See Also
+
+- [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md) - Detailed workflow guide
+- [features/README.md](features/README.md) - Feature documentation directory
+- [features/country-leaderboard.md](features/country-leaderboard.md) - Example feature spec
+- [features/breakdown-charts.md](features/breakdown-charts.md) - Example feature spec
+- [features/websocket-user-count.md](features/websocket-user-count.md) - Example feature spec
+
+---
+
+**Last Updated:** 2026-02-28
+**Version:** 2.0
 **Maintained By:** AI Assistant
