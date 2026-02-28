@@ -188,19 +188,19 @@ onMounted(async () => {
 
       <!-- Evolution charts -->
       <div class="row g-4 mb-2">
-        <div class="col-md-6">
+        <div class="col-12 col-xl-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header"><b>User Growth</b></div>
-            <div class="card-body">
+            <div class="card-header border-0 bg-transparent py-3"><b>User Growth</b></div>
+            <div class="card-body pt-0">
               <LineChart v-if="usersEvolution.length" :data="usersEvolution" x-key="month" y-key="total_users" color="#0d6efd" :height="220" />
               <p v-else class="text-muted text-center py-3">No user evolution data.</p>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-12 col-xl-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header"><b>GeoKrety Growth</b></div>
-            <div class="card-body">
+            <div class="card-header border-0 bg-transparent py-3"><b>GeoKrety Growth</b></div>
+            <div class="card-body pt-0">
               <LineChart v-if="gksEvolution.length" :data="gksEvolution" x-key="month" y-key="total_gks" color="#198754" :height="220" />
               <p v-else class="text-muted text-center py-3">No GeoKrety evolution data.</p>
             </div>
@@ -241,11 +241,11 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="row g-4">
+      <div class="row g-4 mb-2">
         <!-- Top countries -->
-        <div class="col-lg-6">
+        <div class="col-12 col-xl-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header">
+            <div class="card-header border-0 bg-transparent py-3">
               <div class="container-fluid p-0">
                 <div class="row align-items-center g-2">
                   <div class="col-12 col-sm-auto">
@@ -270,7 +270,7 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
-            <div class="card-body p-2">
+            <div class="card-body p-2 pt-0">
               <BarChart
                 v-if="filteredCountries.length"
                 :data="filteredCountries"
@@ -287,30 +287,32 @@ onMounted(async () => {
           </div>
         </div>
         <!-- Points breakdown -->
-        <div class="col-lg-6">
+        <div class="col-12 col-xl-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header"><b>Points Breakdown by Type</b></div>
-            <div class="table-responsive border-0 mb-0" style="max-height:360px; overflow-y:auto">
-              <table class="table table-sm table-hover mb-0 align-middle">
-                <thead class="table-light sticky-top">
-                  <tr>
-                    <th title="Type of activity or bonus that awarded points">Reward Type</th>
-                    <th class="text-end" title="Total points awarded for this type globally">Points</th>
-                    <th class="text-end d-none d-sm-table-cell" title="Number of times this reward was triggered">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="b in breakdown" :key="b.label">
-                    <td>
-                      <span class="badge bg-light text-dark border fw-medium text-truncate d-inline-block" style="max-width: 180px">{{ b.label.replace(/_/g, ' ') }}</span>
-                    </td>
-                    <td class="text-end fw-bold text-success">{{ b.points?.toLocaleString() }}</td>
-                    <td class="text-end d-none d-sm-table-cell text-muted">{{ b.count?.toLocaleString() }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="card-header border-0 bg-transparent py-3"><b>Points Breakdown by Type</b></div>
+            <div class="card-body pt-0 px-0">
+              <div class="table-responsive border-0 mb-0" style="max-height:360px; overflow-y:auto">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th title="Type of activity or bonus that awarded points" class="ps-3">Reward Type</th>
+                      <th class="text-end" title="Total points awarded for this type globally">Points</th>
+                      <th class="text-end d-none d-sm-table-cell pe-3" title="Number of times this reward was triggered">Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="b in breakdown" :key="b.label">
+                      <td class="ps-3">
+                        <span class="badge bg-light text-dark border fw-medium text-truncate d-inline-block" style="max-width: 180px">{{ b.label.replace(/_/g, ' ') }}</span>
+                      </td>
+                      <td class="text-end fw-bold text-success">{{ b.points?.toLocaleString() }}</td>
+                      <td class="text-end d-none d-sm-table-cell text-muted pe-3">{{ b.count?.toLocaleString() }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <small class="d-block text-muted text-center mt-2 p-1">Distribution of awarded points by reward type</small>
+            <small class="d-block text-muted text-center mt-auto p-2 border-top">Distribution of awarded points by reward type</small>
           </div>
         </div>
       </div>

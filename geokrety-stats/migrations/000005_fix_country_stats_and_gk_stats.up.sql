@@ -21,8 +21,17 @@ DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_country_summary CASCADE;
 DROP MATERIALIZED VIEW IF EXISTS geokrety_stats.mv_country_stats CASCADE;
 
 CREATE MATERIALIZED VIEW geokrety_stats.mv_country_stats AS
+WITH move_countries AS (
+    SELECT
+        id,
+        author,
+        geokret,
+        move_type,
+        COALESCE(country, LAG(country) OVER (PARTITION BY geokret ORDER BY id)) as effective_country
+    FROM geokrety.gk_moves
+)
 SELECT
-    m.country,
+    m.effective_country as country,
     COUNT(*)                                              AS total_moves,
     COUNT(DISTINCT m.geokret)                             AS unique_gks,
     COUNT(DISTINCT m.author)                              AS unique_users,
@@ -32,10 +41,10 @@ SELECT
     COUNT(*) FILTER (WHERE m.move_type = 2)               AS comments,
     COUNT(*) FILTER (WHERE m.move_type = 3)               AS seen,
     COALESCE(SUM(CASE WHEN p.gk_id IS NOT NULL THEN p.points ELSE 0 END), 0) AS total_points_awarded
-FROM geokrety.gk_moves m
-LEFT JOIN geokrety_stats.user_points_log p ON m.geokret = p.gk_id AND m.author = p.user_id
-WHERE m.country IS NOT NULL
-GROUP BY m.country;
+FROM move_countries m
+LEFT JOIN geokrety_stats.user_points_log p ON m.id = p.move_id
+WHERE m.effective_country IS NOT NULL
+GROUP BY m.effective_country;
 
 CREATE INDEX idx_mv_country_stats_country ON geokrety_stats.mv_country_stats(country);
 CREATE INDEX idx_mv_country_stats_points  ON geokrety_stats.mv_country_stats(total_points_awarded DESC);

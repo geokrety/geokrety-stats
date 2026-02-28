@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +14,7 @@ import (
 func (h *Handler) GlobalStats(c *gin.Context) {
 	const q = `
 		SELECT total_users, total_gks, total_moves, scored_users,
-		       total_points_awarded, countries_reached, total_km, 
+		       total_points_awarded, countries_reached, total_km,
 		       total_images, total_loves, computed_at
 		FROM geokrety_stats.mv_global_stats`
 
@@ -243,14 +244,14 @@ func (h *Handler) AvailablePeriods(c *gin.Context) {
 func (h *Handler) UserEvolution(c *gin.Context) {
 	const q = `
 		WITH monthly_counts AS (
-			SELECT 
+			SELECT
 				DATE_TRUNC('month', joined_on_datetime)::DATE AS month,
 				COUNT(*) AS created_count
 			FROM gk_users
 			WHERE joined_on_datetime >= '2007-01-01'
 			GROUP BY 1
 		)
-		SELECT 
+		SELECT
 			month,
 			SUM(created_count) OVER (ORDER BY month) AS cumulative_users
 		FROM monthly_counts
@@ -288,14 +289,14 @@ func (h *Handler) UserEvolution(c *gin.Context) {
 func (h *Handler) GeoKretyEvolution(c *gin.Context) {
 	const q = `
 		WITH monthly_counts AS (
-			SELECT 
+			SELECT
 				DATE_TRUNC('month', created_on_datetime)::DATE AS month,
 				COUNT(*) AS created_count
 			FROM gk_geokrety
 			WHERE created_on_datetime >= '2007-01-01'
 			GROUP BY 1
 		)
-		SELECT 
+		SELECT
 			month,
 			created_count,
 			SUM(created_count) OVER (ORDER BY month) AS cumulative_gks
@@ -336,21 +337,28 @@ func (h *Handler) CountryMoveTypeEvolution(c *gin.Context) {
 	country := c.Param("country")
 
 	const q = `
-		SELECT 
-			DATE_TRUNC('month', moved_on_datetime)::DATE AS month,
+		WITH effective_moves AS (
+			SELECT
+				DATE_TRUNC('month', moved_on_datetime)::DATE AS month,
+				move_type,
+				COALESCE(country, LAG(country) OVER (PARTITION BY geokret ORDER BY id)) as effective_country
+			FROM geokrety.gk_moves
+			WHERE moved_on_datetime >= '2007-01-01'
+		)
+		SELECT
+			month,
 			COUNT(*) FILTER (WHERE move_type = 0) AS drops,
 			COUNT(*) FILTER (WHERE move_type = 1) AS grabs,
-			COUNT(*) FILTER (WHERE move_type = 3) AS dips,
-			COUNT(*) FILTER (WHERE move_type = 4) AS seen,
+			COUNT(*) FILTER (WHERE move_type = 5) AS dips,
+			COUNT(*) FILTER (WHERE move_type = 3) AS seen,
 			COUNT(*) AS total_moves
-		FROM gk_moves
-		WHERE country = $1
-		  AND moved_on_datetime >= '2007-01-01'
+		FROM effective_moves
+		WHERE effective_country = $1
 		GROUP BY 1
 		ORDER BY month ASC
 	`
 
-	rows, err := h.DB.Query(c.Request.Context(), q, country)
+	rows, err := h.DB.Query(c.Request.Context(), q, strings.ToUpper(country))
 	if err != nil {
 		errInternal(c, err)
 		return

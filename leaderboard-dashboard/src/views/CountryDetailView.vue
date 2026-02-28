@@ -150,21 +150,39 @@ onMounted(loadCountryData)
 
       <!-- Country Evolution Charts -->
       <div class="row g-4 mb-2">
-        <div class="col-md-6">
+        <div class="col-12 col-xl-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header"><b>Drops Evolution</b></div>
-            <div class="card-body">
-              <LineChart v-if="evolution.length" :data="evolution" x-key="month" y-key="drops" color="#0d6efd" :height="220" />
-              <p v-else class="text-muted text-center py-3">No drops data for this country.</p>
+            <div class="card-header border-0 bg-transparent py-3"><b>Activity Evolution (Drops & Grabs)</b></div>
+            <div class="card-body pt-0">
+              <LineChart
+                v-if="evolution.length"
+                :data="evolution"
+                x-key="month"
+                :datasets="[
+                  { key: 'drops', label: 'Drops', color: '#0d6efd' },
+                  { key: 'grabs', label: 'Grabs', color: '#198754' }
+                ]"
+                :height="280"
+              />
+              <p v-else class="text-muted text-center py-3">No activity data for this country.</p>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-12 col-xl-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header"><b>Grabs Evolution</b></div>
-            <div class="card-body">
-              <LineChart v-if="evolution.length" :data="evolution" x-key="month" y-key="grabs" color="#198754" :height="220" />
-              <p v-else class="text-muted text-center py-3">No grabs data for this country.</p>
+            <div class="card-header border-0 bg-transparent py-3"><b>Other Activity Evolution (DIPs & Seen)</b></div>
+            <div class="card-body pt-0">
+              <LineChart
+                v-if="evolution.length"
+                :data="evolution"
+                x-key="month"
+                :datasets="[
+                  { key: 'dips', label: 'DIPs', color: '#ffc107' },
+                  { key: 'seen', label: 'Seen', color: '#6c757d' }
+                ]"
+                :height="280"
+              />
+              <p v-else class="text-muted text-center py-3">No other activity data for this country.</p>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ const props = defineProps({
   data:      { type: Array,  required: true },
   xKey:      { type: String, default: 'x' },
   yKey:      { type: String, default: 'y' },
+  datasets:  { type: Array,  default: null }, // [{ key, label, color }]
   color:     { type: String, default: '#0d6efd' },
   height:    { type: Number, default: 200 },
   startDate: { type: String, default: null },  // ISO date string, e.g. '2020-03-15'
@@ -83,8 +84,12 @@ function draw() {
     .domain([domainStart, domainEnd])
     .range([0, width])
 
+  const datasets = props.datasets || [{ key: props.yKey, label: '', color: props.color }]
+
   const y = d3.scaleLinear()
-    .domain([0, d3.max(displayData, d => +d[props.yKey]) * 1.1 || 1])
+    .domain([0, d3.max(displayData, d => {
+      return d3.max(datasets, ds => +d[ds.key])
+    }) * 1.1 || 1])
     .nice()
     .range([height, 0])
 
@@ -95,33 +100,58 @@ function draw() {
     .select('.domain').remove()
   svg.selectAll('.grid line').attr('stroke', '#e9ecef').attr('stroke-dasharray', '3,3')
 
-  // Area
-  const area = d3.area()
-    .defined(d => !isNaN(+d[props.yKey]))
-    .x(d => x(parseDate(d[props.xKey])))
-    .y0(height)
-    .y1(d => y(+d[props.yKey]))
-    .curve(d3.curveMonotoneX)
+  datasets.forEach(ds => {
+    // Area
+    const area = d3.area()
+      .defined(d => !isNaN(+d[ds.key]))
+      .x(d => x(parseDate(d[props.xKey])))
+      .y0(height)
+      .y1(d => y(+d[ds.key]))
+      .curve(d3.curveMonotoneX)
 
-  svg.append('path')
-    .datum(displayData)
-    .attr('fill', props.color)
-    .attr('fill-opacity', 0.15)
-    .attr('d', area)
+    svg.append('path')
+      .datum(displayData)
+      .attr('fill', ds.color)
+      .attr('fill-opacity', 0.1)
+      .attr('d', area)
 
-  // Line
-  const line = d3.line()
-    .defined(d => !isNaN(+d[props.yKey]))
-    .x(d => x(parseDate(d[props.xKey])))
-    .y(d => y(+d[props.yKey]))
-    .curve(d3.curveMonotoneX)
+    // Line
+    const line = d3.line()
+      .defined(d => !isNaN(+d[ds.key]))
+      .x(d => x(parseDate(d[props.xKey])))
+      .y(d => y(+d[ds.key]))
+      .curve(d3.curveMonotoneX)
 
-  svg.append('path')
-    .datum(displayData)
-    .attr('fill', 'none')
-    .attr('stroke', props.color)
-    .attr('stroke-width', 2)
-    .attr('d', line)
+    svg.append('path')
+      .datum(displayData)
+      .attr('fill', 'none')
+      .attr('stroke', ds.color)
+      .attr('stroke-width', 2)
+      .attr('d', line)
+  })
+
+  // Legend if multiple datasets
+  if (datasets.length > 1) {
+    const legend = svg.append('g')
+      .attr('font-family', 'sans-serif')
+      .attr('font-size', 10)
+      .selectAll('g')
+      .data(datasets)
+      .join('g')
+      .attr('transform', (d, i) => `translate(${i * 80}, -5)`)
+
+    legend.append('rect')
+      .attr('x', 0)
+      .attr('width', 12)
+      .attr('height', 8)
+      .attr('fill', d => d.color)
+
+    legend.append('text')
+      .attr('x', 16)
+      .attr('y', 4)
+      .attr('dy', '0.35em')
+      .text(d => d.label)
+  }
 
   // Smart x tick format based on range
   const rangeMs = domainEnd - domainStart
@@ -172,25 +202,33 @@ function draw() {
     })
 
     if (nearest) {
-      const xPos = x(parseDate(nearest[props.xKey]))
-      const yPos = y(+nearest[props.yKey])
       const dateStr = new Date(parseDate(nearest[props.xKey])).toLocaleDateString()
-      const value = +nearest[props.yKey]
+
+      const lines = datasets.map(ds => {
+        const val = +nearest[ds.key]
+        return `<div class="d-flex justify-content-between gap-3">
+          <span style="color:${ds.color}">●</span> <span>${ds.label || ds.key}:</span>
+          <span class="fw-bold">${val.toLocaleString()}</span>
+        </div>`
+      }).join('')
 
       tooltip
         .style('display', 'block')
-        .html(`<strong>${dateStr}</strong><br/>${value.toLocaleString()}`)
+        .html(`<strong>${dateStr}</strong><hr class="my-1 border-secondary" />${lines}`)
 
       // Position tooltip near cursor but ensure it doesn't go off-screen
-      const tooltipWidth = tooltip.node().offsetWidth || 120
-      const tooltipHeight = tooltip.node().offsetHeight || 50
-      let left = margin.left + xPos - tooltipWidth / 2
-      let top = margin.top + yPos - tooltipHeight - 8
+      const tooltipRect = tooltip.node().getBoundingClientRect()
+      const tooltipWidth = tooltipRect.width || 140
+      const tooltipHeight = tooltipRect.height || 50
+
+      const mousePos = d3.pointer(event, el)
+      let left = mousePos[0] - tooltipWidth / 2
+      let top = mousePos[1] - tooltipHeight - 15
 
       // Keep tooltip within bounds
       if (left < 0) left = 0
-      if (left + tooltipWidth > totalWidth) left = totalWidth - tooltipWidth
-      if (top < 0) top = margin.top + yPos + 8
+      if (left + tooltipWidth > totalWidth + margin.left + margin.right) left = (totalWidth + margin.left + margin.right) - tooltipWidth
+      if (top < 0) top = mousePos[1] + 15
 
       tooltip
         .style('left', left + 'px')
