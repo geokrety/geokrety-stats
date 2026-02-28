@@ -2,6 +2,7 @@ package computers_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,9 @@ func TestEventGuard_HaltsOnNonScoreable(t *testing.T) {
 }
 
 func TestEventGuard_PassesValidEvent(t *testing.T) {
-	guard := computers.NewEventGuard(mockStore())
+	ms := mockStore()
+	ms.IsEventProcessedFn = func(context.Context, int64) (bool, error) { return false, nil }
+	guard := computers.NewEventGuard(ms)
 	ctx := context.Background()
 
 	evt := testEvent(1, 123, pipeline.LogTypeDrop)
@@ -51,8 +54,44 @@ func TestEventGuard_PassesValidEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestEventGuard_HaltsOnDuplicate(t *testing.T) {
+	ms := mockStore()
+	ms.IsEventProcessedFn = func(context.Context, int64) (bool, error) { return true, nil }
+	guard := computers.NewEventGuard(ms)
+	ctx := context.Background()
+
+	evt := testEvent(1, 123, pipeline.LogTypeDrop)
+	pipeCtx := testCtx(evt, 456, 1.0)
+	acc := pipeline.NewAccumulator()
+
+	err := guard.Process(ctx, pipeCtx, acc)
+	require.Error(t, err)
+	assert.True(t, computers.IsHalt(err))
+	assert.Contains(t, err.Error(), "duplicate")
+}
+
+func TestEventGuard_ReturnsErrorWhenDuplicateCheckFails(t *testing.T) {
+	ms := mockStore()
+	ms.IsEventProcessedFn = func(context.Context, int64) (bool, error) {
+		return false, errors.New("db timeout")
+	}
+	guard := computers.NewEventGuard(ms)
+	ctx := context.Background()
+
+	evt := testEvent(1, 123, pipeline.LogTypeDrop)
+	pipeCtx := testCtx(evt, 456, 1.0)
+	acc := pipeline.NewAccumulator()
+
+	err := guard.Process(ctx, pipeCtx, acc)
+	require.Error(t, err)
+	assert.False(t, computers.IsHalt(err))
+	assert.Contains(t, err.Error(), "checking duplicate")
+}
+
 func TestEventGuard_AllowsArchivedAndDipAsScoreable(t *testing.T) {
-	guard := computers.NewEventGuard(mockStore())
+	ms := mockStore()
+	ms.IsEventProcessedFn = func(context.Context, int64) (bool, error) { return false, nil }
+	guard := computers.NewEventGuard(ms)
 	ctx := context.Background()
 
 	for _, logType := range []pipeline.LogType{pipeline.LogTypeArchived, pipeline.LogTypeDip} {

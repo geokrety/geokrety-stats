@@ -41,15 +41,14 @@ func (c *EventGuard) Process(ctx context.Context, pipeCtx *pipeline.Context, acc
 		}
 	}
 
-	// // Condition 3 – No duplicate processing.
-	// processed, err := c.store.IsEventProcessed(ctx, event.LogID)
-	// if err != nil {
-	// 	return fmt.Errorf("checking duplicate: %w", err)
-	// }
-	// if processed {
-	// 	log.Warn().Int64("log_id", event.LogID).Msg("duplicate event, already scored")
-	// 	return &HaltError{Reason: "duplicate event, already scored"}
-	// }
+	// Condition 3 – No duplicate processing.
+	processed, err := c.store.IsEventProcessed(ctx, event.LogID)
+	if err != nil {
+		return fmt.Errorf("checking duplicate: %w", err)
+	}
+	if processed {
+		return &HaltError{Reason: "duplicate event, already scored"}
+	}
 
 	return nil
 }
