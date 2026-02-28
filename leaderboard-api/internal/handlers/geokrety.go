@@ -150,6 +150,9 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.tracking_code, s.gk_type, s.missing, s.distance, s.caches_count,
 		       s.created_on_datetime, s.born_on_datetime,
 		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
+		       COALESCE(o.home_country, NULL) AS owner_home_country,
+		       COALESCE(h.home_country, NULL) AS holder_home_country,
+		       COALESCE(m.country, NULL) AS cache_country,
 		       s.in_cache, s.is_non_collectible, s.is_parked, s.loves_count,
 		       s.total_moves, s.total_drops, s.total_grabs, s.total_seen, s.total_dips,
 		       s.distinct_users, s.countries_count, s.caches_count_distinct,
@@ -157,6 +160,13 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		       s.first_move_at, s.last_move_at
 		FROM geokrety_stats.mv_gk_stats s
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id
+		LEFT JOIN geokrety.gk_users o ON o.id = s.owner_id
+		LEFT JOIN geokrety.gk_users h ON h.id = s.holder_id
+		LEFT JOIN LATERAL (
+			SELECT country FROM geokrety.gk_moves 
+			WHERE geokret = $1 AND country IS NOT NULL
+			ORDER BY moved_on_datetime DESC LIMIT 1
+		) m ON TRUE
 		WHERE s.gk_id = $1`
 
 	var g models.GeoKret
@@ -165,6 +175,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		&g.GkID, &publicGkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 		&g.CreatedAt, &g.BornAt,
 		&g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
+		&g.OwnerHomeCountry, &g.HolderHomeCountry, &g.CacheCountry,
 		&g.InCache, &g.IsNonCollectible, &g.IsParked, &g.LovesCount,
 		&g.TotalMoves, &g.TotalDrops, &g.TotalGrabs, &g.TotalSeen, &g.TotalDips,
 		&g.DistinctUsers, &g.CountriesCount, &g.DistinctCaches,
@@ -187,6 +198,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		}
 		g.CurrentMultiplier = 1.0
 	}
+
 
 	g.GkHexID = gkHexID(publicGkID)
 	g.GkTypeName = gkTypeName(g.GkType)

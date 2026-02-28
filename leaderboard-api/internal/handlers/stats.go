@@ -23,6 +23,12 @@ func (h *Handler) GlobalStats(c *gin.Context) {
 	if err != nil {
 		// fallback to direct count
 		s = h.computeGlobalStatsFallback(c.Request.Context())
+	} else {
+		// Always compute images and loves (not in view)
+		_ = h.DB.QueryRow(c.Request.Context(),
+			`SELECT COALESCE(COUNT(*), 0) FROM geokrety.gk_images`).Scan(&s.TotalImages)
+		_ = h.DB.QueryRow(c.Request.Context(),
+			`SELECT COALESCE(SUM(loves_count), 0) FROM geokrety.gk_geokrety`).Scan(&s.TotalLoves)
 	}
 	ok(c, s, models.Meta{}, nil)
 }
@@ -41,6 +47,10 @@ func (h *Handler) computeGlobalStatsFallback(ctx context.Context) models.GlobalS
 		`SELECT COUNT(DISTINCT country) FROM geokrety.gk_moves WHERE country IS NOT NULL`).Scan(&s.CountriesReached)
 	_ = h.DB.QueryRow(ctx,
 		`SELECT COALESCE(SUM(distance),0) FROM geokrety.gk_geokrety`).Scan(&s.TotalKm)
+	_ = h.DB.QueryRow(ctx,
+		`SELECT COALESCE(COUNT(*), 0) FROM geokrety.gk_images`).Scan(&s.TotalImages)
+	_ = h.DB.QueryRow(ctx,
+		`SELECT COALESCE(SUM(loves_count), 0) FROM geokrety.gk_geokrety`).Scan(&s.TotalLoves)
 	return s
 }
 

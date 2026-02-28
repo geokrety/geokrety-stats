@@ -129,8 +129,11 @@ type GeoKret struct {
 	BornAt              *time.Time `json:"born_at,omitempty"`
 	OwnerID             *int64     `json:"owner_id,omitempty"`
 	OwnerUsername       *string    `json:"owner_username,omitempty"`
+	OwnerHomeCountry    *string    `json:"owner_home_country,omitempty"`
 	HolderID            *int64     `json:"holder_id,omitempty"`
 	HolderUsername      *string    `json:"holder_username,omitempty"`
+	HolderHomeCountry   *string    `json:"holder_home_country,omitempty"`
+	CacheCountry        *string    `json:"cache_country,omitempty"` // Country where GK is currently cached
 	TotalMoves          int64      `json:"total_moves"`
 	TotalDrops          int64      `json:"total_drops"`
 	TotalGrabs          int64      `json:"total_grabs"`
@@ -176,6 +179,8 @@ type GlobalStats struct {
 	TotalPointsAwarded float64    `json:"total_points_awarded"`
 	CountriesReached   int64      `json:"countries_reached"`
 	TotalKm            int64      `json:"total_km"`
+	TotalImages        int64      `json:"total_images"`
+	TotalLoves         int64      `json:"total_loves"`
 	ComputedAt         *time.Time `json:"computed_at,omitempty"`
 }
 
