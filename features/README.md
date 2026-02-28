@@ -28,8 +28,8 @@ Every feature file should include:
 ```markdown
 # Feature: [Feature Name]
 
-**Status:** In Development / Testing / Complete  
-**Date Created:** YYYY-MM-DD  
+**Status:** In Development / Testing / Complete
+**Date Created:** YYYY-MM-DD
 **Last Updated:** YYYY-MM-DD
 
 ## Overview
@@ -73,18 +73,18 @@ Include:
 ## Existing Features
 
 ### Country Leaderboard
-**File:** [country-leaderboard.md](country-leaderboard.md)  
-**Status:** Complete  
+**File:** [country-leaderboard.md](country-leaderboard.md)
+**Status:** Complete
 **Description:** Display top 50 countries ranked by total points
 
 ### Breakdown Charts
-**File:** [breakdown-charts.md](breakdown-charts.md)  
-**Status:** Complete  
+**File:** [breakdown-charts.md](breakdown-charts.md)
+**Status:** Complete
 **Description:** Interactive charts showing points, moves, costs, and events
 
 ### WebSocket Connected Users
-**File:** [websocket-user-count.md](websocket-user-count.md)  
-**Status:** Complete  
+**File:** [websocket-user-count.md](websocket-user-count.md)
+**Status:** Complete
 **Description:** Real-time display of active dashboard users
 
 ## How AI Uses These Files
@@ -200,5 +200,5 @@ All feature files are checked by AI when developing new features or maintaining 
 
 ---
 
-**Last Updated:** 2026-02-28  
+**Last Updated:** 2026-02-28
 **Maintained By:** Development Team

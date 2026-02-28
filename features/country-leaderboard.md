@@ -1,8 +1,8 @@
 # Feature: Country Leaderboard
 
-**Status:** Complete  
-**Date Created:** 2026-02-28  
-**Last Updated:** 2026-02-28  
+**Status:** Complete
+**Date Created:** 2026-02-28
+**Last Updated:** 2026-02-28
 **Version:** 1.0
 
 ## Overview
@@ -284,7 +284,7 @@ Query aggregates from `mv_user_stats` materialized view:
 
 ```sql
 -- Conceptual query (actual implementation in handler)
-SELECT 
+SELECT
   home_country as country,
   SUM(total_points) as total_points,
   COUNT(DISTINCT user_id) as user_count,
@@ -399,6 +399,6 @@ docker compose logs leaderboard-dashboard | grep -i error
 
 ---
 
-**Last Updated:** 2026-02-28  
-**Version:** 1.0  
+**Last Updated:** 2026-02-28
+**Version:** 1.0
 **Maintainer:** Development Team

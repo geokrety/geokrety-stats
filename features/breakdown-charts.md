@@ -1,8 +1,8 @@
 # Feature: Breakdown Charts (Statistics Dashboard)
 
-**Status:** Complete  
-**Date Created:** 2026-02-28  
-**Last Updated:** 2026-02-28  
+**Status:** Complete
+**Date Created:** 2026-02-28
+**Last Updated:** 2026-02-28
 **Version:** 1.0
 
 ## Overview
@@ -25,7 +25,7 @@ The Breakdown Charts feature provides detailed visualizations of GeoKrety statis
 ### Frontend
 - `leaderboard-dashboard/src/views/StatsBreakdown.vue` - Main statistics view with charts
 - `leaderboard-dashboard/src/components/PointsBreakdownChart.vue` - D3.js points chart
-- `leaderboard-dashboard/src/components/MovesBreakdownChart.vue` - D3.js moves chart  
+- `leaderboard-dashboard/src/components/MovesBreakdownChart.vue` - D3.js moves chart
 - `leaderboard-dashboard/src/components/EventCostChart.vue` - Cost breakdown chart
 - `leaderboard-dashboard/src/components/EventCountChart.vue` - Event count chart
 - `leaderboard-dashboard/src/router/index.js` - New /stats route
@@ -460,7 +460,7 @@ FROM geokrety_stats.mv_user_stats
 ORDER BY total_points DESC LIMIT ?
 
 -- Event costs (aggregated from event logs)
-SELECT user_id, username, 
+SELECT user_id, username,
   SUM(CASE WHEN event_type='drop' THEN cost ELSE 0 END) as drop_cost,
   SUM(CASE WHEN event_type='grab' THEN cost ELSE 0 END) as grab_cost,
   SUM(CASE WHEN event_type='comment' THEN cost ELSE 0 END) as comment_cost
@@ -581,6 +581,6 @@ docker compose logs leaderboard-dashboard | tail -10
 
 ---
 
-**Last Updated:** 2026-02-28  
-**Version:** 1.0  
+**Last Updated:** 2026-02-28
+**Version:** 1.0
 **Maintainer:** Development Team

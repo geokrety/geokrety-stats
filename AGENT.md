@@ -424,7 +424,7 @@ All questions must answer YES before merging.
 
 **Location:** `features/` directory at project root
 
-**Purpose:** 
+**Purpose:**
 - AI context for feature implementation
 - Integration specifications
 - Testing procedures
@@ -585,7 +585,7 @@ make build
   ```bash
   # WRONG: Do not do this
   npx playwright test
-  
+
   # RIGHT: Use Gotenberg
   curl --request POST http://localhost:3001/forms/chromium/screenshot/url ...
   ```
@@ -595,7 +595,7 @@ make build
   # WRONG: Do not do this
   npm run dev
   go run ./cmd/api
-  
+
   # RIGHT: Use docker compose
   docker compose build && docker compose up -d
   ```

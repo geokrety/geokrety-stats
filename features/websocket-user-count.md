@@ -1,8 +1,8 @@
 # Feature: WebSocket Connected Users Count
 
-**Status:** Complete  
-**Date Created:** 2026-02-28  
-**Last Updated:** 2026-02-28  
+**Status:** Complete
+**Date Created:** 2026-02-28
+**Last Updated:** 2026-02-28
 **Version:** 1.0
 
 ## Overview
@@ -183,7 +183,7 @@ Simplified composable for read-only leaderboard access (deprecated).
 **Current Implementation:**
 ```vue
 <footer class="bg-dark text-secondary text-center py-2 small mt-4">
-  GeoKrety Points System &mdash; 
+  GeoKrety Points System &mdash;
   <span v-if="connected" class="text-success">
     <i class="bi bi-people-fill me-1"></i>{{ connectedUsers }} user{{ connectedUsers !== 1 ? 's' : '' }} online
   </span>
@@ -223,7 +223,7 @@ ws = websocket.create_connection("ws://localhost:8080/ws")
 for i in range(3):
     msg = ws.recv()
     print(json.dumps(json.loads(msg), indent=2))
-    
+
 ws.close()
 PYTHON
 ```
@@ -256,7 +256,7 @@ while time.time() - start < 15:
             break
     except:
         continue
-        
+
 ws.close()
 PYTHON
 ```
@@ -284,7 +284,7 @@ while time.time() - start < 15:
         count += 1
     except:
         break
-        
+
 ws.close()
 print(f"Received {count} messages in 15 seconds")
 print(f"Message rate: ~{count/15:.1f} messages/second")  # Should be ~1-2 messages/second
@@ -327,12 +327,12 @@ while time.time() - start < 30:
             connected_users_msgs.append(time.time())
     except:
         break
-        
+
 ws.close()
 
 # Calculate intervals
 if len(connected_users_msgs) > 1:
-    intervals = [connected_users_msgs[i+1] - connected_users_msgs[i] 
+    intervals = [connected_users_msgs[i+1] - connected_users_msgs[i]
                  for i in range(len(connected_users_msgs)-1)]
     avg_interval = sum(intervals) / len(intervals)
     print(f"Average interval: {avg_interval:.1f} seconds")
@@ -429,7 +429,7 @@ for i in range(3):
     msg = ws.recv()
     data = json.loads(msg)
     print(f"Message {i+1}: {data['type']}")
-    
+
 ws.close()
 PYTHON
 
@@ -591,6 +591,6 @@ curl -s http://localhost:3000 | grep -o "bi-people-fill" && echo "✓ Footer com
 
 ---
 
-**Last Updated:** 2026-02-28  
-**Version:** 1.0  
+**Last Updated:** 2026-02-28
+**Version:** 1.0
 **Maintainer:** Development Team

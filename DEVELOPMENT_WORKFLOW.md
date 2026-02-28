@@ -2,7 +2,7 @@
 
 **Purpose:** Standardized development, testing, and deployment process for the GeoKrety Points System to ensure quality, consistency, and reproducibility.
 
-**Last Updated:** 2026-02-28  
+**Last Updated:** 2026-02-28
 **Version:** 1.0
 
 ---
@@ -281,8 +281,8 @@ docker compose down -v
 ```markdown
 # Feature: [Feature Name]
 
-**Status:** In Development / Testing / Complete  
-**Date Created:** YYYY-MM-DD  
+**Status:** In Development / Testing / Complete
+**Date Created:** YYYY-MM-DD
 **Last Updated:** YYYY-MM-DD
 
 ## Overview
