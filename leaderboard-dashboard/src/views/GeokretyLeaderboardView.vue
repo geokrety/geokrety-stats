@@ -123,7 +123,7 @@ const fmtFloat = (v, d = 2) => (v !== null && v !== undefined) ? Number(v).toFix
               <td class="text-center text-muted fw-semibold small">{{ (page - 1) * perPage + idx + 1 }}</td>
               <td>
                 <RouterLink :to="`/geokrety/${gk.gk_id}`" class="text-decoration-none fw-bold text-primary">
-                  {{ gk.gk_hex_id || idToGkId(gk.gk_id) }}
+                  {{ idToGkId(gk.gk_id) }}
                 </RouterLink>
               </td>
               <td>

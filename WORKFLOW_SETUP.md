@@ -7,7 +7,7 @@ I've created a comprehensive development workflow for the GeoKrety Points System
 ### 1. **DEVELOPMENT_WORKFLOW.md** - The Complete Workflow Guide
 A detailed 400+ line guide covering:
 - Feature development workflow (5 phases)
-- Testing procedures with curl, Gotenberg, and make
+- Testing procedures with curl, MCP Playwright, and make
 - Docker Compose deployment steps
 - Git commit conventions
 - Common commands reference
@@ -16,7 +16,7 @@ A detailed 400+ line guide covering:
 **Key Sections:**
 - Phase 1: Specification & Documentation
 - Phase 2: Implementation
-- Phase 3: Testing (curl + Gotenberg, NOT Playwright)
+- Phase 3: Testing (curl + MCP Playwright, NOT npx playwright test)
 - Phase 4: Docker Deployment
 - Phase 5: Git Commits
 - Complete testing checklist
@@ -36,7 +36,7 @@ A new directory at project root containing standardized feature documentation:
 - Files modified/created
 - Complete API endpoint specifications with curl examples
 - Frontend component documentation
-- Testing procedures (curl + Gotenberg examples)
+- Testing procedures (curl + MCP Playwright examples)
 - Database information
 - WebSocket message formats
 - Deployment notes
@@ -47,7 +47,7 @@ A new directory at project root containing standardized feature documentation:
 Added comprehensive section with:
 - Feature documentation directory reference
 - Sequential workflow phases
-- Testing requirements (explicit: NO Playwright, use Gotenberg)
+- Testing requirements (explicit: NO npx playwright test, use MCP Playwright browser tools)
 - Docker deployment rules
 - Git commit conventions
 - Critical DO/DON'T rules
@@ -73,10 +73,11 @@ touch features/my-feature.md
 
 # 3. Test with provided commands (from feature spec)
 curl -s http://localhost:8080/api/my-endpoint | jq .
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/my-route \
-  --form width=1280 --form height=1024 \
-  -o /tmp/test.png
+# Use MCP Playwright browser tools for UI testing:
+# - tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# - mcp_microsoft_pla_browser_navigate to http://localhost:3000/my-route
+# - mcp_microsoft_pla_browser_resize to 1280x1024
+# - mcp_microsoft_pla_browser_take_screenshot
 
 # 4. Deploy with docker compose (NOT npm dev or go run)
 docker compose down
@@ -97,13 +98,13 @@ git commit -m "feat: add my-feature
 ✅ **DO:**
 - Document features in `features/` directory
 - Test API with curl
-- Screenshot UI with Gotenberg (NOT Playwright)
+- Screenshot UI with MCP Playwright browser tools
 - Use docker compose for deployment
 - Create one commit per feature
 - Read feature specs before implementing
 
 ❌ **DON'T:**
-- Use Playwright (use Gotenberg instead)
+- Use npx playwright test (use MCP Playwright browser tools instead)
 - Start services directly (use docker compose)
 - Skip feature documentation
 - Make multiple unrelated changes in one commit
@@ -139,7 +140,7 @@ git commit -m "feat: add my-feature
    - GET /api/users/countries endpoint
    - CountryLeaderboardView.vue component
    - Testing procedures with curl
-   - Gotenberg screenshot examples
+   - MCP Playwright screenshot examples
 
 2. **[features/breakdown-charts.md](features/breakdown-charts.md)**
    - GET /api/stats/breakdown endpoint
@@ -169,20 +170,22 @@ curl -s "http://localhost:8080/api/endpoint?param=value" | jq .
 curl -s http://localhost:8080/api/endpoint | jq '.[0]'
 ```
 
-### UI Testing with Gotenberg
-```bash
-# Desktop (1280px)
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=1280 --form height=1024 \
-  -o /tmp/test.png
+### UI Testing with MCP Playwright
 
-# Mobile (720px)
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=720 --form height=2048 \
-  -o /tmp/test-mobile.png
+**Load MCP Playwright tools first:**
 ```
+tool_search_tool_regex with pattern: ^mcp_microsoft_pla_browser
+```
+
+**Desktop screenshot (1280px):**
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
+
+**Mobile screenshot (720px):**
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 ### Binary Testing
 ```bash
@@ -245,7 +248,7 @@ What does this do? Why was it built?
 
 ## Testing Procedures
 - curl examples for API
-- Gotenberg examples for UI
+- MCP Playwright examples for UI
 
 ## Database
 - Views used
@@ -297,7 +300,7 @@ git commit -m "fix: correct WebSocket message format
 
 - Fix connected_users payload structure
 - Update composable to handle count
-- Test with gotenberg screenshots"
+- Test with MCP Playwright screenshots"
 ```
 
 ---
@@ -338,7 +341,7 @@ git commit -m "fix: correct WebSocket message format
 3. Implement backend using spec
 4. Implement frontend using spec
 5. Test with curl examples from feature file
-6. Test with Gotenberg screenshot commands
+6. Test with MCP Playwright browser tools
 7. Deploy with docker compose
 8. Commit using conventional format
 
@@ -356,7 +359,7 @@ git commit -m "fix: correct WebSocket message format
 - Overview: Show recent actions by users
 - API: GET /api/users/{id}/activity
 - Component: UserActivityView.vue
-- Testing: Provide curl and Gotenberg examples
+- Testing: Provide curl and MCP Playwright examples
 ```
 
 **Step 2: Implement backend**
@@ -373,11 +376,11 @@ git commit -m "fix: correct WebSocket message format
 # From feature spec curl example
 curl -s http://localhost:8080/api/users/123/activity | jq .
 
-# From feature spec Gotenberg example
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/users/123/activity \
-  --form width=1280 --form height=1024 \
-  -o /tmp/activity.png
+# From feature spec MCP Playwright example
+# Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/users/123/activity
+# Resize: mcp_microsoft_pla_browser_resize to 1280x1024
+# Screenshot: mcp_microsoft_pla_browser_take_screenshot
 ```
 
 **Step 5: Deploy**
@@ -402,7 +405,7 @@ git commit -m "feat: add user activity log page
 
 **BEFORE committing feature:**
 - [ ] All curl API tests pass
-- [ ] Gotenberg screenshots look correct
+- [ ] MCP Playwright screenshots look correct
 - [ ] Docker build succeeds
 - [ ] Services start without errors
 - [ ] No errors in docker logs
@@ -412,7 +415,7 @@ git commit -m "feat: add user activity log page
 ### Prohibited Practices
 
 ❌ **DO NOT:**
-- Use Playwright (→ use Gotenberg instead)
+- Use npx playwright test (→ use MCP Playwright browser tools instead)
 - Run services directly (→ use docker compose)
 - Skip feature documentation (→ create features/[name].md first)
 - Test without curl/screenshots (→ follow testing procedures)
@@ -423,7 +426,7 @@ git commit -m "feat: add user activity log page
 ✅ **MUST:**
 - Document features in features/ directory
 - Test with curl (examples in feature specs)
-- Screenshot with Gotenberg (not Playwright)
+- Screenshot with MCP Playwright browser tools
 - Deploy with docker compose
 - Create one feature per commit
 - Use conventional commit format
@@ -449,14 +452,14 @@ The development workflow is now fully documented and automated:
 
 1. ✅ **AI knows how to develop features** (AGENT.md + DEVELOPMENT_WORKFLOW.md)
 2. ✅ **Features are pre-documented before coding** (features/ directory)
-3. ✅ **Testing is guided by feature specs** (curl + Gotenberg examples)
+3. ✅ **Testing is guided by feature specs** (curl + MCP Playwright examples)
 4. ✅ **Deployment is standardized** (docker compose commands)
 5. ✅ **Git history is clean** (one feature per commit)
 
 **Next steps:**
 - For new features, create `features/[name].md` first
 - Follow the workflow in DEVELOPMENT_WORKFLOW.md
-- Use curl and Gotenberg for testing (not Playwright)
+- Use curl and MCP Playwright browser tools for testing
 - Deploy with docker compose (not direct npm/go)
 - Commit per feature with conventional format
 

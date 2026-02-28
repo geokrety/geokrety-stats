@@ -346,21 +346,15 @@ PYTHON
 - Average interval ~10 seconds
 - Variation of ±1-2 seconds is normal
 
-### UI Testing with Gotenberg
+### UI Testing with MCP Playwright
+
+**Load MCP Playwright tools first:**
+Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Test 1: Footer Display (Connected)**
-```bash
-# Navigate to page and take screenshot
-# Footer should show user count
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/ \
-  --form width=1280 \
-  --form height=768 \
-  -o /tmp/footer-connected.png
-
-# Verify screenshot contains "online"
-file /tmp/footer-connected.png
-```
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x768
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] Footer visible at bottom
@@ -370,14 +364,9 @@ file /tmp/footer-connected.png
 - [ ] People icon rendered
 
 **Test 2: Mobile View**
-```bash
-# Mobile width screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/ \
-  --form width=720 \
-  --form height=1024 \
-  -o /tmp/footer-mobile.png
-```
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 720x1024
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] Footer still visible on mobile
@@ -386,18 +375,12 @@ curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
 - [ ] Touch-friendly height
 
 **Test 3: All Pages Show Footer**
-```bash
-# Check multiple pages
-for page in / /countries /stats; do
-  curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-    --form url=http://localhost:3000$page \
-    --form width=1280 --form height=768 \
-    -o /tmp/footer-$page.png
-done
+Test each page: `/`, `/countries`, `/stats`
 
-# All should have footer with user count
-ls -l /tmp/footer-*.png
-```
+For each page:
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000[page]`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x768
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] All pages have footer
@@ -433,11 +416,11 @@ for i in range(3):
 ws.close()
 PYTHON
 
-# 4. Take UI screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000 \
-  --form width=1280 --form height=768 \
-  -o /tmp/full-integration.png
+# 4. Take UI screenshot with MCP Playwright
+# Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000
+# Resize: mcp_microsoft_pla_browser_resize to 1280x768
+# Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
 # 5. Check logs
 docker compose logs leaderboard-api | grep -i "error\|ws" | head -10

@@ -131,34 +131,29 @@ make build
 - Output format is correct
 - Error handling works for edge cases
 
-#### 2.3 Test Frontend UI (Visual Testing with Gotenberg)
+#### 2.3 Test Frontend UI (Visual Testing with MCP Playwright)
 
-**DO NOT use Playwright.** Use Gotenberg (built-in service) for screenshots:
+**DO NOT use npx playwright test.** Use MCP Playwright browser tools for screenshots and interaction:
 
-```bash
-# Take screenshot of a page at http://localhost:3000
-curl --request POST \
-  http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/users/4559 \
-  --form width=720 \
-  --form height=2048 \
-  -o /tmp/gktest.png
+**Steps:**
+1. Load MCP Playwright tools: Use `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
+2. Navigate to page: `mcp_microsoft_pla_browser_navigate` with URL `http://localhost:3000/users/4559`
+3. Resize viewport (optional): `mcp_microsoft_pla_browser_resize` with width/height (e.g., 720x2048 for mobile, 1280x1024 for desktop)
+4. Take screenshot: `mcp_microsoft_pla_browser_take_screenshot`
+5. Interact if needed: `browser_click`, `browser_fill_form`, `browser_evaluate`, etc.
 
-# View screenshot
-file /tmp/gktest.png
-ls -lh /tmp/gktest.png
-
-# Take screenshot of new feature
-curl --request POST \
-  http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/countries \
-  --form width=720 \
-  --form height=2048 \
-  -o /tmp/gktest-countries.png
-```
+**Available MCP Playwright Tools:**
+- `browser_navigate` - Navigate to URL
+- `browser_resize` - Change viewport size
+- `browser_take_screenshot` - Capture page
+- `browser_click` - Click elements
+- `browser_fill_form` - Fill input fields
+- `browser_evaluate` - Run JavaScript
+- `browser_wait_for` - Wait for elements
+- `browser_snapshot` - Get page state
 
 **Verification Checklist:**
-- [ ] Layout is responsive (test with width=720 for mobile)
+- [ ] Layout is responsive (test with 720x2048 for mobile, 1280x1024 for desktop)
 - [ ] All text is visible and readable
 - [ ] Images/icons render correctly
 - [ ] Buttons and links are clickable
@@ -183,11 +178,11 @@ sleep 5
 # 3. Test API endpoint
 curl -s http://localhost:8080/api/health | jq .
 
-# 4. Take UI screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/path/to/feature \
-  --form width=1280 --form height=1024 \
-  -o /tmp/feature-test.png
+# 4. Take UI screenshot with MCP Playwright
+# Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/path/to/feature
+# Resize: mcp_microsoft_pla_browser_resize to 1280x1024
+# Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
 # 5. Verify with curl
 curl -s http://localhost:8080/api/feature-endpoint | jq .
@@ -267,7 +262,6 @@ docker compose down -v
 |---------|------|-----|
 | leaderboard-api | 8080 | http://localhost:8080 |
 | leaderboard-dashboard | 3000 | http://localhost:3000 |
-| gotenberg | 3001 | http://localhost:3001 |
 
 ---
 
@@ -370,19 +364,18 @@ curl -s http://localhost:8080/api/items/1 | jq .
 ```
 
 ### UI Testing
-```bash
-# Screenshot of list view
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/items \
-  --form width=1280 --form height=1024 \
-  -o /tmp/items-list.png
 
-# Screenshot of detail view
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/items/1 \
-  --form width=1280 --form height=1024 \
-  -o /tmp/items-detail.png
-```
+Use MCP Playwright browser tools for UI testing:
+
+**Screenshot list view:**
+1. Load tools: `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
+2. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/items`
+3. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
+4. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
+
+**Screenshot detail view:**
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/items/1`
+2. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 ## WebSocket Messages (if applicable)
 
@@ -554,7 +547,7 @@ Before committing, verify:
   - [ ] Runs without errors
 
 - [ ] **UI Testing**
-  - [ ] Screenshots taken with Gotenberg
+  - [ ] Screenshots taken with MCP Playwright
   - [ ] Layout is responsive (test multiple widths)
   - [ ] No JavaScript errors
   - [ ] Data displays correctly
@@ -598,11 +591,11 @@ docker compose restart
 # API test
 curl -s http://localhost:8080/api/endpoint | jq .
 
-# UI screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=1280 --form height=1024 \
-  -o /tmp/test.png
+# UI screenshot with MCP Playwright
+# Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/route
+# Resize: mcp_microsoft_pla_browser_resize to 1280x1024
+# Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
 # Binary build and run
 cd geokrety-stats && make build && ./bin/geokrety-stats --help
@@ -638,8 +631,8 @@ When working on new features, the AI will:
 
 2. **Follow this workflow** (from AGENT.md + this file)
    - Implements feature according to spec
-   - Tests with curl (not Playwright)
-   - Uses Gotenberg for screenshots
+   - Tests with curl (not npx playwright test)
+   - Uses MCP Playwright browser tools for screenshots
    - Tests binaries with make build
    - Rebuilds via docker compose
 
@@ -667,7 +660,7 @@ When working on new features, the AI will:
 ├─────────────────────────────────────────────────────────┤
 │ 4. Test with:                                           │
 │    • curl for API endpoints                             │
-│    • Gotenberg for UI screenshots                       │
+│    • MCP Playwright browser tools for UI screenshots    │
 │    • make build for binaries                            │
 │    • docker compose for integration                     │
 ├─────────────────────────────────────────────────────────┤
@@ -687,11 +680,12 @@ curl -s http://localhost:8080/api/endpoint | jq .
 ```
 
 **Need UI screenshot?**
-```bash
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/path --form width=1280 --form height=1024 \
-  -o /tmp/test.png
-```
+
+Use MCP Playwright browser tools:
+1. Load tools: `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
+2. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/path`
+3. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
+4. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Need to rebuild?**
 ```bash

@@ -362,19 +362,15 @@ curl -s "http://localhost:8080/api/stats/breakdown?limit=5" | jq '.top_users_by_
 - First returns 10
 - Second returns 5
 
-### UI Testing with Gotenberg
+### UI Testing with MCP Playwright
+
+**Load MCP Playwright tools first:**
+Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Test 1: Full Dashboard View**
-```bash
-# Capture entire dashboard
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/stats \
-  --form width=1280 \
-  --form height=2048 \
-  -o /tmp/stats-full.png
-
-file /tmp/stats-full.png
-```
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x2048
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] All 4 charts visible
@@ -384,14 +380,9 @@ file /tmp/stats-full.png
 - [ ] Loading state not shown
 
 **Test 2: Mobile Responsiveness**
-```bash
-# Mobile view
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/stats \
-  --form width=720 \
-  --form height=2048 \
-  -o /tmp/stats-mobile.png
-```
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] Charts stack vertically
@@ -400,21 +391,16 @@ curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
 - [ ] Touch-friendly sizes
 
 **Test 3: Chart-Specific Views**
-```bash
-# Desktop: Two-column layout
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/stats \
-  --form width=1280 \
-  --form height=1200 \
-  -o /tmp/stats-desktop.png
 
-# Tablet: Single column
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/stats \
-  --form width=900 \
-  --form height=2000 \
-  -o /tmp/stats-tablet.png
-```
+Desktop (two-column layout):
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1200
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
+
+Tablet (single column):
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 900x2000
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 ## Integration Testing
 
@@ -435,11 +421,11 @@ curl -s http://localhost:8080/api/stats/breakdown | \
 # 3. Test UI loads
 curl -s http://localhost:3000/stats | grep -c "svg" || echo "Charts loaded"
 
-# 4. Take full screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/stats \
-  --form width=1280 --form height=1500 \
-  -o /tmp/stats-integration.png
+# 4. Take full screenshot with MCP Playwright
+# Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/stats
+# Resize: mcp_microsoft_pla_browser_resize to 1280x1500
+# Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
 # 5. Check for errors
 docker compose logs leaderboard-api | grep -i error | head -5

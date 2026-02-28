@@ -489,20 +489,15 @@ curl -s http://localhost:8080/api/endpoint | jq .
 curl -s "http://localhost:8080/api/endpoint?param=value" | jq .
 ```
 
-#### Test UI with Gotenberg (NOT Playwright)
-```bash
-# Desktop screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=1280 --form height=1024 \
-  -o /tmp/test.png
+#### Test UI with MCP Playwright
+Use the MCP Playwright browser tools to navigate and take screenshots:
 
-# Mobile screenshot
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=720 --form height=2048 \
-  -o /tmp/test-mobile.png
-```
+1. **Navigate to page**: Use `mcp_microsoft_pla_browser_navigate` with URL `http://localhost:3000/route`
+2. **Resize viewport** (optional): Use `mcp_microsoft_pla_browser_resize` with `width` and `height` (e.g., 1280x1024 desktop, 720x2048 mobile)
+3. **Take screenshot**: Use `mcp_microsoft_pla_browser_take_screenshot` to capture the page
+4. **Available tools**: browser_navigate, browser_resize, browser_take_screenshot, browser_click, browser_fill_form, browser_evaluate, etc.
+
+**Note**: MCP Playwright tools must be loaded first using `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
 
 #### Test Binary Tools with make
 ```bash
@@ -556,7 +551,7 @@ make build
   - [ ] Error cases handled
 
 - [ ] **UI Testing**
-  - [ ] Screenshots taken with Gotenberg
+  - [ ] Screenshots taken with MCP Playwright
   - [ ] Responsive design verified (mobile + desktop)
   - [ ] No JavaScript errors in logs
 
@@ -575,19 +570,21 @@ make build
   - [ ] Docker images build successfully
   - [ ] Services start with `docker compose up`
   - [ ] No errors in logs
-  - [ ] Can verify with curl/Gotenberg
+  - [ ] Can verify with curl/MCP Playwright
 
 ---
 
 ## ❌ DON'Ts (Critical Rules)
 
-- ❌ **DO NOT use Playwright** - Use Gotenberg instead
+- ✅ **DO NOT use npx playwright test** - Use MCP Playwright tools instead
   ```bash
   # WRONG: Do not do this
   npx playwright test
 
-  # RIGHT: Use Gotenberg
-  curl --request POST http://localhost:3001/forms/chromium/screenshot/url ...
+  # RIGHT: Use MCP Playwright browser tools
+  # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+  # Navigate: mcp_microsoft_pla_browser_navigate
+  # Screenshot: mcp_microsoft_pla_browser_take_screenshot
   ```
 
 - ❌ **DO NOT start services directly** - Always use docker compose
@@ -609,7 +606,7 @@ make build
 - ❌ **DO NOT forget to test** - Test every endpoint and UI
   ```bash
   # WRONG: Assume it works
-  # RIGHT: Test with curl and Gotenberg
+  # RIGHT: Test with curl and MCP Playwright
   ```
 
 ---
@@ -618,7 +615,7 @@ make build
 
 - ✅ **Document features in `features/` directory**
 - ✅ **Test API with curl** - See examples in feature files
-- ✅ **Screenshot UI with Gotenberg** - Not Playwright
+- ✅ **Screenshot UI with MCP Playwright** - Not npx playwright test
 - ✅ **Build binaries with make build** - Check Makefile for usage
 - ✅ **Deploy with docker compose** - No direct npm/go run
 - ✅ **Commit per feature** - Logical, atomic commits
@@ -688,7 +685,7 @@ A feature is **production-ready** when:
 
 ✅ Documented in `features/[name].md` with API spec
 ✅ Backend implemented and tested with curl
-✅ Frontend implemented and tested with Gotenberg
+✅ Frontend implemented and tested with MCP Playwright
 ✅ All curl examples work as documented
 ✅ All components created/modified documented
 ✅ Docker images build without errors

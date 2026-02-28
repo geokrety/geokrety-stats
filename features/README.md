@@ -56,7 +56,7 @@ Document each component:
 ## Testing Procedures
 Include:
 - curl examples for API testing
-- Gotenberg screenshot commands
+- MCP Playwright browser tool commands
 - Expected results
 
 ## Database
@@ -98,7 +98,7 @@ The AI assistant will:
 
 2. **During Implementation**
    - Reference curl examples for testing
-   - Use Gotenberg for visual verification
+   - Use MCP Playwright browser tools for visual verification
    - Follow documented patterns
 
 3. **After Implementation**
@@ -136,20 +136,20 @@ curl -X POST http://localhost:8080/api/path \
   -d '{"key": "value"}' | jq .
 ```
 
-### UI Screenshot with Gotenberg
-```bash
-# Mobile view (720px wide)
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=720 --form height=2048 \
-  -o /tmp/mobile.png
+### UI Screenshot with MCP Playwright
 
-# Desktop view (1280px wide)
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=1280 --form height=1024 \
-  -o /tmp/desktop.png
-```
+**Load MCP Playwright tools first:**
+Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
+
+**Mobile view (720px wide):**
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
+
+**Desktop view (1280px wide):**
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 ## Docker Compose Quick Reference
 
@@ -171,15 +171,15 @@ docker compose ps
 
 ✅ **DO:**
 - Document all API endpoints in feature files
-- Use curl for API testing (not Playwright)
-- Use Gotenberg for UI screenshots (not Playwright)
+- Use curl for API testing
+- Use MCP Playwright browser tools for UI screenshots
 - Use docker compose for deployment (not direct npm/go run)
 - Use make build for geokrety-stats binary
 - Create one git commit per feature
 - Keep feature files updated with implementation details
 
 ❌ **DON'T:**
-- Use Playwright for testing
+- Use npx playwright test (use MCP Playwright browser tools instead)
 - Start frontend/backend directly (npm dev, go run)
 - Forget to document feature before/after implementation
 - Make multiple unrelated changes in one commit

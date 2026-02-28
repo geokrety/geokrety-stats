@@ -5,7 +5,7 @@ import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
 import { getMoveTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
-import { waypointExternalUrl, displayWaypoint, waypointTooltip } from '../composables/useWaypoint.js'
+import { waypointExternalUrl, displayWaypoint, waypointTooltip, waypointMapUrl } from '../composables/useWaypoint.js'
 import GkTypeBadge from '../components/GkTypeBadge.vue'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
@@ -277,7 +277,7 @@ watch(activeTab, (tab) => {
                 <td class="fw-semibold text-success">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
                 <td>
                   <a v-if="m.waypoint"
-                     :href="waypointMapUrl(m.waypoint)"
+                     :href="waypointExternalUrl(m.waypoint)"
                      target="_blank"
                      rel="noopener"
                      class="text-decoration-none font-monospace small"

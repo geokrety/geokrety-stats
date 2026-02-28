@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import LineChart from '../components/LineChart.vue'
@@ -11,6 +11,42 @@ const countries  = ref([])
 const breakdown  = ref([])
 const loading    = ref(false)
 const error      = ref(null)
+const countryFilter = ref('total_moves') // Filter for country chart
+
+const countryFilterOptions = [
+  { value: 'total_moves', label: '📊 All', key: 'total_moves' },
+  { value: 'drops', label: '📦 Drops', key: 'drops' },
+  { value: 'grabs', label: '🎯 Grabs', key: 'grabs' },
+  { value: 'dips', label: '💧 DIPs', key: 'dips' },
+  { value: 'seen', label: '👁️ Seen', key: 'seen' }
+]
+
+// Computed property to aggregate and sort countries
+const filteredCountries = computed(() => {
+  if (!countries.value.length) return []
+
+  // Ensure each country appears only once
+  const countryMap = new Map()
+  countries.value.forEach(row => {
+    const key = row.country || row.name
+    if (!countryMap.has(key)) {
+      countryMap.set(key, { ...row })
+    }
+  })
+
+  const filterKey = countryFilter.value
+  const sorted = Array.from(countryMap.values()).sort((a, b) => {
+    return (b[filterKey] || 0) - (a[filterKey] || 0)
+  })
+
+  return sorted
+})
+
+// Format integer by rounding
+const fmtInt = (num) => {
+  if (!num) return '0'
+  return Math.round(num).toLocaleString()
+}
 
 onMounted(async () => {
   loading.value = true
@@ -40,7 +76,13 @@ onMounted(async () => {
       </ol>
     </nav>
 
-    <h4 class="mb-4"><i class="bi bi-graph-up-arrow text-info me-2"></i>Global Statistics</h4>
+    <!-- Header -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <h2 class="mb-1"><i class="bi bi-graph-up-arrow text-info me-2"></i>Global Statistics</h2>
+        <p class="text-muted mb-0">System-wide performance and movement tracking</p>
+      </div>
+    </div>
 
     <div v-if="loading && !stats" class="text-center py-5">
       <div class="spinner-border"></div>
@@ -48,70 +90,84 @@ onMounted(async () => {
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else>
       <!-- KPI Cards -->
-      <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3 mb-4" v-if="stats">
+      <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-4" v-if="stats">
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
-              <div class="fs-2 fw-bold text-primary">
-                <span style="display: inline-block; white-space: nowrap;">{{ stats.total_moves?.toLocaleString() }}</span>
+              <div class="fs-2 fw-bold text-primary" title="All moves recorded in the system">
+                {{ fmtInt(stats.total_moves) }}
               </div>
               <div class="text-muted small">Total Moves</div>
-              <small class="d-block text-muted mt-1">All moves recorded in the system</small>
             </div>
           </div>
         </div>
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
-              <div class="fs-2 fw-bold text-success">
-                <span style="display: inline-block; white-space: nowrap;">{{ stats.total_points_awarded?.toLocaleString() }}</span>
+              <div class="fs-2 fw-bold text-success" title="Total gamification points awarded">
+                {{ fmtInt(stats.total_points_awarded) }}
               </div>
               <div class="text-muted small">Points Awarded</div>
-              <small class="d-block text-muted mt-1">Total gamification points</small>
             </div>
           </div>
         </div>
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
-              <div class="fs-2 fw-bold">
-                <span style="display: inline-block; white-space: nowrap;">{{ stats.total_users?.toLocaleString() }}</span>
+              <div class="fs-2 fw-bold" title="Registered users on platform">
+                {{ fmtInt(stats.total_users) }}
               </div>
               <div class="text-muted small">Total Users</div>
-              <small class="d-block text-muted mt-1">Registered users on platform</small>
             </div>
           </div>
         </div>
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
-              <div class="fs-2 fw-bold text-warning">
-                <span style="display: inline-block; white-space: nowrap;">{{ stats.scored_users?.toLocaleString() }}</span>
+              <div class="fs-2 fw-bold text-warning" title="Users who earned points">
+                {{ fmtInt(stats.scored_users) }}
               </div>
               <div class="text-muted small">Scored Users</div>
-              <small class="d-block text-muted mt-1">Users who earned points</small>
             </div>
           </div>
         </div>
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
-              <div class="fs-2 fw-bold text-info">
-                <span style="display: inline-block; white-space: nowrap;">{{ stats.total_gks?.toLocaleString() }}</span>
+              <div class="fs-2 fw-bold text-info" title="Total GeoKrety in circulation">
+                {{ fmtInt(stats.total_gks) }}
               </div>
               <div class="text-muted small">GeoKrety</div>
-              <small class="d-block text-muted mt-1">Total GeoKrety in circulation</small>
             </div>
           </div>
         </div>
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
-              <div class="fs-2 fw-bold text-danger">
-                <span style="display: inline-block; white-space: nowrap;">{{ stats.countries_reached?.toLocaleString() }}</span>
+              <div class="fs-2 fw-bold text-danger" title="Countries with GeoKrety">
+                {{ fmtInt(stats.countries_reached) }}
               </div>
               <div class="text-muted small">Countries</div>
-              <small class="d-block text-muted mt-1">Countries with GeoKrety</small>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card text-center shadow-sm h-100">
+            <div class="card-body py-3">
+              <div class="fs-2 fw-bold text-primary" title="Uploaded images count">
+                {{ fmtInt(stats.total_images || 0) }}
+              </div>
+              <div class="text-muted small">Images</div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card text-center shadow-sm h-100">
+            <div class="card-body py-3">
+              <div class="fs-2 fw-bold text-danger" title="Total loves given">
+                {{ fmtInt(stats.total_loves || 0) }}
+              </div>
+              <div class="text-muted small">❤️ Loves</div>
             </div>
           </div>
         </div>
@@ -155,17 +211,37 @@ onMounted(async () => {
         <div class="col-lg-6">
           <div class="card shadow-sm h-100">
             <div class="card-header">
-              <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <b>Top 20 Countries by Moves</b>
-                <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="btn btn-outline-secondary active">📊 All</button>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Filter country statistics">
+                  <template v-for="opt in countryFilterOptions" :key="opt.value">
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      :id="'countryFilter-' + opt.value"
+                      :value="opt.value"
+                      v-model="countryFilter"
+                    >
+                    <label class="btn btn-outline-secondary" :for="'countryFilter-' + opt.value">
+                      {{ opt.label }}
+                    </label>
+                  </template>
                 </div>
               </div>
             </div>
             <div class="card-body p-2">
-              <BarChart v-if="countries.length" :data="countries" x-key="country" y-key="total_moves" color="#ffc107" :height="320" />
+              <BarChart
+                v-if="filteredCountries.length"
+                :data="filteredCountries"
+                x-key="country"
+                :y-key="countryFilter"
+                color="#ffc107"
+                :height="320"
+              />
               <p v-else class="text-muted text-center py-3">No data.</p>
-              <small class="d-block text-muted text-center mt-2">Showing countries ranked by total moves executed</small>
+              <small class="d-block text-muted text-center mt-2">
+                Showing countries ranked by {{ countryFilterOptions.find(o => o.value === countryFilter)?.label || 'moves' }}
+              </small>
             </div>
           </div>
         </div>

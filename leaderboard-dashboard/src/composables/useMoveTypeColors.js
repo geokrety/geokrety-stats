@@ -89,3 +89,27 @@ export function getGkTypeBadgeClass(gkType) {
 
   return nameColors[typeName] || 'bg-secondary'
 }
+
+/**
+ * Get tooltip text for move types
+ */
+export function getMoveTypeTooltip(moveType) {
+  if (!moveType) return ''
+
+  const tooltips = {
+    'drop': 'Dropped at a location',
+    'grab': 'Picked up from a location',
+    'take': 'Picked up from a location',
+    'catch': 'Caught/found',
+    'dip': 'Visited without taking',
+    'seen': 'Seen in photo',
+    'move': 'Moved',
+    'recovered': 'Recovered by original owner',
+    'dropped': 'Dropped at a location',
+    'found': 'Found/picked up',
+    'dipped': 'Visited without taking',
+  }
+
+  const lowerType = typeof moveType === 'string' ? moveType.toLowerCase() : ''
+  return tooltips[lowerType] || 'Move action'
+}

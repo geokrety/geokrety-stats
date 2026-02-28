@@ -4,31 +4,23 @@
  */
 
 /**
- * Returns a link to the GeoKrety.org map centered on a waypoint.
+ * Returns a link to view waypoint on map (Vue route).
  * @param {string} waypoint - Waypoint code (e.g. "GC1A2B3")
  * @returns {string}
  */
 export function waypointMapUrl(waypoint) {
   if (!waypoint) return '#'
-  return `https://geokrety.org/mapa.php?wpt=${encodeURIComponent(waypoint)}`
+  return `/map/${encodeURIComponent(waypoint)}`
 }
 
 /**
- * Returns a link to OpenCachingMap or Geocaching.com depending on prefix.
- * GC → geocaching.com, OP/OK/OZ → opencaching, OX → opencaching.de
+ * Returns GeoKrety.org go2geo link for any waypoint.
  * @param {string} waypoint
  * @returns {string|null}
  */
 export function waypointExternalUrl(waypoint) {
   if (!waypoint) return null
-  const upper = waypoint.toUpperCase()
-  if (upper.startsWith('GC')) {
-    return `https://www.geocaching.com/geocache/${waypoint}`
-  }
-  if (upper.startsWith('OP') || upper.startsWith('OK') || upper.startsWith('OZ') || upper.startsWith('OX')) {
-    return `https://opencaching.pl/viewcache.php?wp=${waypoint}`
-  }
-  return null
+  return `https://geokrety.org/go2geo/${encodeURIComponent(waypoint)}`
 }
 
 /**

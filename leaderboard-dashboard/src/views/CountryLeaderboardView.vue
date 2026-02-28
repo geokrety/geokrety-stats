@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
+import { getMoveTypeTooltip } from '../composables/useMoveTypeColors.js'
 
-const countries = ref([])
+const countriesRaw = ref([])
 const loading = ref(false)
 const error = ref(null)
 const sortBy = ref('points')
@@ -21,6 +22,36 @@ const sortOptions = [
   { value: 'loves', label: '❤️ Loves' }
 ]
 
+// Computed property for sorted countries (avoids re-fetching API)
+const countries = computed(() => {
+  if (!countriesRaw.value.length) return []
+
+  return [...countriesRaw.value].sort((a, b) => {
+    switch (sortBy.value) {
+      case 'points':
+        return (b.total_points_awarded || 0) - (a.total_points_awarded || 0)
+      case 'avg_points':
+        return (b.avg_points_per_move || 0) - (a.avg_points_per_move || 0)
+      case 'moves':
+        return (b.total_moves || 0) - (a.total_moves || 0)
+      case 'users':
+        return (b.unique_users || 0) - (a.unique_users || 0)
+      case 'gks':
+        return (b.unique_gks || 0) - (a.unique_gks || 0)
+      case 'grabs':
+        return (b.grabs || 0) - (a.grabs || 0)
+      case 'drops':
+        return (b.drops || 0) - (a.drops || 0)
+      case 'dips':
+        return (b.dips || 0) - (a.dips || 0)
+      case 'loves':
+        return (b.total_loves || 0) - (a.total_loves || 0)
+      default:
+        return 0
+    }
+  })
+})
+
 async function loadCountries() {
   loading.value = true
   error.value = null
@@ -28,33 +59,7 @@ async function loadCountries() {
     const response = await fetch('/api/v1/stats/countries')
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const { data } = await response.json()
-
-    // Sort based on selection
-    const sorted = (data || []).sort((a, b) => {
-      switch (sortBy.value) {
-        case 'points':
-          return (b.total_points_awarded || 0) - (a.total_points_awarded || 0)
-        case 'avg_points':
-          return (b.avg_points_per_move || 0) - (a.avg_points_per_move || 0)
-        case 'moves':
-          return (b.total_moves || 0) - (a.total_moves || 0)
-        case 'users':
-          return (b.unique_users || 0) - (a.unique_users || 0)
-        case 'gks':
-          return (b.unique_gks || 0) - (a.unique_gks || 0)
-        case 'grabs':
-          return (b.grabs || 0) - (a.grabs || 0)
-        case 'drops':
-          return (b.drops || 0) - (a.drops || 0)
-        case 'dips':
-          return (b.dips || 0) - (a.dips || 0)
-        case 'loves':
-          return (b.total_loves || 0) - (a.total_loves || 0)
-        default:
-          return 0
-      }
-    })
-    countries.value = sorted
+    countriesRaw.value = data || []
   } catch (e) {
     error.value = e.message
   } finally {
@@ -63,10 +68,6 @@ async function loadCountries() {
 }
 
 onMounted(loadCountries)
-
-const handleSortChange = () => {
-  loadCountries()
-}
 
 const getMoveTypeIcon = (type) => {
   const icons = {
@@ -124,7 +125,6 @@ const formatFloat = (num, decimals = 2) => {
             :id="'sort' + opt.value"
             :value="opt.value"
             v-model="sortBy"
-            @change="handleSortChange"
           >
           <label class="btn btn-outline-primary btn-sm" :for="'sort' + opt.value">{{ opt.label }}</label>
         </template>
@@ -173,8 +173,10 @@ const formatFloat = (num, decimals = 2) => {
           <div class="card h-100 shadow-sm border-0">
             <div class="card-header bg-light d-flex align-items-center gap-2 border-0">
               <span class="fs-3">{{ getCountryFlag(country.country) }}</span>
-              <div>
-                <div class="fw-bold">{{ country.country.toUpperCase() }}</div>
+              <div style="flex: 1">
+                <RouterLink :to="`/country/${country.country}`" class="text-decoration-none" style="cursor: pointer">
+                  <div class="fw-bold">{{ country.country.toUpperCase() }}</div>
+                </RouterLink>
                 <div class="text-muted small">#{{ idx + 1 }}</div>
               </div>
             </div>
@@ -183,11 +185,11 @@ const formatFloat = (num, decimals = 2) => {
               <div class="row g-2 mb-3">
                 <div class="col-6">
                   <small class="text-muted d-block">Points</small>
-                  <div class="fw-bold fs-5 text-success">{{ formatFloat(country.total_points_awarded) }}</div>
+                  <div class="fw-bold fs-5 text-success">{{ formatInt(country.total_points_awarded) }}</div>
                 </div>
                 <div class="col-6">
                   <small class="text-muted d-block">Avg/Move</small>
-                  <div class="fw-bold fs-6 text-info">{{ formatFloat(country.avg_points_per_move, 1) }}</div>
+                  <div class="fw-bold fs-6 text-info">{{ formatFloat(country.avg_points_per_move, 2) }}</div>
                 </div>
                 <div class="col-6">
                   <small class="text-muted d-block">Moves</small>
@@ -211,23 +213,23 @@ const formatFloat = (num, decimals = 2) => {
               <div class="border-top pt-2">
                 <small class="text-muted d-block mb-2">Move Types</small>
                 <div class="row g-1 small">
-                  <div class="col-6">
+                  <div class="col-6" :title="getMoveTypeTooltip('drop')">
                     <span class="me-1">{{ getMoveTypeIcon('drops') }}</span>
                     <span class="text-muted">{{ formatInt(country.drops) }}</span>
                   </div>
-                  <div class="col-6">
+                  <div class="col-6" :title="getMoveTypeTooltip('grab')">
                     <span class="me-1">{{ getMoveTypeIcon('grabs') }}</span>
                     <span class="text-muted">{{ formatInt(country.grabs) }}</span>
                   </div>
-                  <div class="col-6">
+                  <div class="col-6" :title="getMoveTypeTooltip('dip')">
                     <span class="me-1">{{ getMoveTypeIcon('dips') }}</span>
                     <span class="text-muted">{{ formatInt(country.dips) }}</span>
                   </div>
-                  <div class="col-6">
+                  <div class="col-6" :title="getMoveTypeTooltip('seen')">
                     <span class="me-1">{{ getMoveTypeIcon('sees') }}</span>
                     <span class="text-muted">{{ formatInt(country.seen) }}</span>
                   </div>
-                  <div class="col-12" v-if="country.comments">
+                  <div class="col-12" v-if="country.comments" :title="getMoveTypeTooltip('comments')">
                     <span class="me-1">{{ getMoveTypeIcon('comments') }}</span>
                     <span class="text-muted">{{ formatInt(country.comments) }}</span>
                   </div>
@@ -248,10 +250,10 @@ const formatFloat = (num, decimals = 2) => {
               <th class="text-end">Points</th>
               <th class="text-end">Avg/Move</th>
               <th class="text-end">Moves</th>
-              <th class="text-end">📦</th>
-              <th class="text-end">🎯</th>
-              <th class="text-end">💧</th>
-              <th class="text-end">👁️</th>
+              <th class="text-end" :title="getMoveTypeTooltip('drop')">📦</th>
+              <th class="text-end" :title="getMoveTypeTooltip('grab')">🎯</th>
+              <th class="text-end" :title="getMoveTypeTooltip('dip')">💧</th>
+              <th class="text-end" :title="getMoveTypeTooltip('seen')">👁️</th>
               <th class="text-end">GeoKrety</th>
               <th class="text-end">Users</th>
               <th class="text-end" title="Total loves for GeoKrety that visited this country">❤️</th>
@@ -266,11 +268,13 @@ const formatFloat = (num, decimals = 2) => {
                 <span v-else>{{ idx + 1 }}</span>
               </td>
               <td>
-                <span class="me-2">{{ getCountryFlag(country.country) }}</span>
-                <strong>{{ country.country.toUpperCase() }}</strong>
+                <RouterLink :to="`/country/${country.country}`" class="text-decoration-none">
+                  <span class="me-2">{{ getCountryFlag(country.country) }}</span>
+                  <strong>{{ country.country.toUpperCase() }}</strong>
+                </RouterLink>
               </td>
-              <td class="text-end fw-bold text-success">{{ formatFloat(country.total_points_awarded) }}</td>
-              <td class="text-end fw-bold text-info small">{{ formatFloat(country.avg_points_per_move, 1) }}</td>
+              <td class="text-end fw-bold text-success">{{ formatInt(country.total_points_awarded) }}</td>
+              <td class="text-end fw-bold text-info small">{{ formatFloat(country.avg_points_per_move, 2) }}</td>
               <td class="text-end">{{ formatInt(country.total_moves) }}</td>
               <td class="text-end text-muted small">{{ formatInt(country.drops) }}</td>
               <td class="text-end text-muted small">{{ formatInt(country.grabs) }}</td>

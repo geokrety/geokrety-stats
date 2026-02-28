@@ -23,7 +23,7 @@ const props = defineProps({
 })
 
 const TYPE_MAP = {
-  0:  { icon: '🏷️', label: 'Traditional',  cls: 'bg-warning text-dark' },
+  0:  { icon: '🏷️', label: 'Traditional',  cls: 'bg-secondary' },
   1:  { icon: '📚', label: 'Book/CD/DVD',  cls: 'bg-info text-dark' },
   2:  { icon: '👤', label: 'Human',         cls: 'bg-primary' },
   3:  { icon: '🪙', label: 'Coin',          cls: 'bg-warning text-dark' },

@@ -192,19 +192,15 @@ curl -s http://localhost:8080/api/users/countries | jq '.[0]'
 }
 ```
 
-### UI Testing with Gotenberg
+### UI Testing with MCP Playwright
+
+**Load MCP Playwright tools first:**
+Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Test 1: Desktop View**
-```bash
-# Take desktop screenshot at 1280px width
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/countries \
-  --form width=1280 \
-  --form height=1024 \
-  -o /tmp/countries-desktop.png
-
-file /tmp/countries-desktop.png
-```
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/countries`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] Table displays correctly
@@ -214,16 +210,9 @@ file /tmp/countries-desktop.png
 - [ ] All columns visible
 
 **Test 2: Mobile View**
-```bash
-# Take mobile screenshot at 720px width
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/countries \
-  --form width=720 \
-  --form height=2048 \
-  -o /tmp/countries-mobile.png
-
-file /tmp/countries-mobile.png
-```
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/countries`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] Table responsive (scrollable if needed)
@@ -236,14 +225,12 @@ file /tmp/countries-mobile.png
 # Compare API data with UI display
 # Fetch top 3
 curl -s "http://localhost:8080/api/users/countries?limit=3" | jq '.[] | "\(.rank): \(.country) - \(.total_points) points"'
-
-# Take screenshot and verify numbers match
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/countries \
-  --form width=1280 \
-  --form height=768 \
-  -o /tmp/countries-verify.png
 ```
+
+Then use MCP Playwright to verify numbers match:
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/countries`
+2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x768
+3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Verification:**
 - [ ] All countries from API visible in table
@@ -266,11 +253,11 @@ sleep 5
 # 3. Test API
 curl -s http://localhost:8080/api/users/countries | jq '.[0]'
 
-# 4. Test UI
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/countries \
-  --form width=1280 --form height=1024 \
-  -o /tmp/final-test.png
+# 4. Test UI with MCP Playwright
+# Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
+# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/countries
+# Resize: mcp_microsoft_pla_browser_resize to 1280x1024
+# Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
 # 5. Verify logs clean
 docker compose logs leaderboard-api | grep -i error

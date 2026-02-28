@@ -8,7 +8,9 @@ const routes = [
   { path: '/geokrety', component: () => import('../views/GeokretyLeaderboardView.vue') },
   { path: '/geokrety/:id', component: () => import('../views/GeokretView.vue') },
   { path: '/countries', component: () => import('../views/CountryLeaderboardView.vue') },
+  { path: '/country/:country', component: () => import('../views/CountryDetailView.vue') },
   { path: '/stats', component: () => import('../views/StatsView.vue') },
+  { path: '/map/:waypoint?', component: () => import('../views/MapView.vue') },
 ]
 
 export default createRouter({
