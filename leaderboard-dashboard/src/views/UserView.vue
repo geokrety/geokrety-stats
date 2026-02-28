@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink, useRouter } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
+import { getMoveTypeBadgeClass, getGkTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
@@ -214,7 +215,7 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
                     <code class="text-muted small">{{ idToGkId(m.gk_id) }}</code>
                   </RouterLink>
                 </td>
-                <td><span class="badge bg-secondary">{{ m.type_name }}</span></td>
+                <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
                 <td class="text-end fw-semibold text-primary">{{ m.points?.toLocaleString() }}</td>
                 <td>{{ m.country }}</td>
               </tr>

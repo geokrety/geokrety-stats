@@ -46,7 +46,8 @@ const pages = computed(() => {
       </li>
     </ul>
     <p class="text-center text-muted small mt-1">
-      Page {{ page }} of {{ totalPages }} ({{ meta.total?.toLocaleString() }} total)
+      Page {{ page }} of {{ totalPages }}
+      <span v-if="meta.total">({{ meta.total?.toLocaleString() }} entries)</span>
     </p>
   </nav>
 </template>

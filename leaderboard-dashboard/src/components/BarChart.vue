@@ -45,7 +45,13 @@ function draw() {
     .select('.domain').remove()
   svg.selectAll('.tick line').attr('stroke', '#e9ecef').attr('stroke-dasharray', '3,3')
 
-  // Bars
+  // Bars with tooltip
+  const tooltip = d3.select(el).append('div')
+    .attr('class', 'position-absolute p-2 bg-dark text-white rounded small')
+    .style('pointer-events', 'none')
+    .style('display', 'none')
+    .attr('role', 'tooltip')
+
   svg.selectAll('rect')
     .data(props.data)
     .enter().append('rect')
@@ -55,6 +61,18 @@ function draw() {
     .attr('height', d => height - y(+d[props.yKey]))
     .attr('fill', props.color)
     .attr('rx', 2)
+    .on('mouseover', (event, d) => {
+      const xPos = x(d[props.xKey]) + x.bandwidth() / 2
+      const yPos = y(+d[props.yKey])
+      tooltip
+        .style('display', 'block')
+        .style('left', (margin.left + xPos - 40) + 'px')
+        .style('top', (margin.top + yPos - 30) + 'px')
+        .html(`<strong>${d[props.xKey]}</strong><br/>${(+d[props.yKey]).toLocaleString()}`)
+    })
+    .on('mouseout', () => {
+      tooltip.style('display', 'none')
+    })
 
   // X axis
   svg.append('g')

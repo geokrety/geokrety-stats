@@ -143,6 +143,55 @@ function draw() {
   svg.append('g')
     .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')))
     .selectAll('text').attr('font-size', '11px')
+
+  // Tooltip on hover
+  const tooltip = d3.select(el).append('div')
+    .attr('class', 'position-absolute p-2 bg-dark text-white rounded small')
+    .style('pointer-events', 'none')
+    .style('display', 'none')
+    .attr('role', 'tooltip')
+
+  const mouseMoveHandler = (event) => {
+    const [mouseX] = d3.pointer(event, svg.node())
+    const date = x.invert(mouseX)
+    
+    // Find the nearest data point
+    let nearest = null
+    let minDist = Infinity
+    displayData.forEach(d => {
+      const dDate = parseDate(d[props.xKey])
+      const dist = Math.abs(dDate - date)
+      if (dist < minDist) {
+        minDist = dist
+        nearest = d
+      }
+    })
+
+    if (nearest) {
+      const xPos = x(parseDate(nearest[props.xKey]))
+      const yPos = y(+nearest[props.yKey])
+      const dateStr = new Date(parseDate(nearest[props.xKey])).toLocaleDateString()
+      const value = +nearest[props.yKey]
+
+      tooltip
+        .style('display', 'block')
+        .style('left', (margin.left + xPos - 40) + 'px')
+        .style('top', (margin.top + yPos - 30) + 'px')
+        .html(`<strong>${dateStr}</strong><br/>${value.toLocaleString()}`)
+    }
+  }
+
+  const mouseOutHandler = () => {
+    tooltip.style('display', 'none')
+  }
+
+  svg.append('rect')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('fill', 'none')
+    .attr('pointer-events', 'all')
+    .on('mousemove', mouseMoveHandler)
+    .on('mouseout', mouseOutHandler)
 }
 
 onMounted(() => { setTimeout(draw, 50) })

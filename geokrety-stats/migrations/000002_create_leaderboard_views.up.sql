@@ -298,21 +298,31 @@ SELECT
     NOW()                                                            AS computed_at
 WITH DATA;
 
+-- Unique index for mv_global_stats (required for concurrent refresh)
+CREATE UNIQUE INDEX mv_global_stats_uniq_idx ON geokrety_stats.mv_global_stats ((1));
+
 -- ============================================================
--- REFRESH FUNCTION: refresh all views atomically
+-- REFRESH FUNCTION: refresh all views with intelligent timing
 -- ============================================================
 CREATE OR REPLACE FUNCTION geokrety_stats.refresh_leaderboard_views()
 RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
+    -- Core leaderboards (most queried, refresh concurrently)
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_all_time;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_daily;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_monthly;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_yearly;
+
+    -- User and GK stats (concurrent)
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_stats;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_gk_stats;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_points_daily;
+
+    -- User/GK country breakdowns (concurrent)
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_countries;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_gk_countries;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_global_stats;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_points_daily;
+
+    -- Single-row global stats (non-concurrent, single row so no contention)
+    REFRESH MATERIALIZED VIEW geokrety_stats.mv_global_stats;
 END;
 $$;

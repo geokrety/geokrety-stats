@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
+import { getMoveTypeBadgeClass, getGkTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
@@ -81,7 +82,7 @@ watch(() => route.params.id, (id) => { gkId.value = id; load(); loadMoves() })
             <span class="badge bg-dark" style="font-size: 0.8rem">{{ idToGkId(gk.gk_id) }}</span>
           </div>
           <p class="mb-0 text-muted small mt-1">
-            Type: <span class="badge bg-secondary">{{ gk.gk_type_name || 'unknown' }}</span>
+            Type: <span :class="`badge ${getGkTypeBadgeClass(gk.gk_type_name)}`">{{ gk.gk_type_name || 'unknown' }}</span>
             <span v-if="gk.missing" class="badge bg-danger ms-2">Missing</span>
           </p>
           <p class="mb-0 text-muted small">
@@ -223,7 +224,7 @@ watch(() => route.params.id, (id) => { gkId.value = id; load(); loadMoves() })
                 <td>
                   <RouterLink :to="`/users/${m.author_id}`">{{ m.author_username }}</RouterLink>
                 </td>
-                <td><span class="badge bg-secondary">{{ m.type_name }}</span></td>
+                <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
                 <td class="text-end fw-semibold text-success">{{ m.points?.toLocaleString() }}</td>
                 <td>{{ m.country }}</td>
               </tr>
