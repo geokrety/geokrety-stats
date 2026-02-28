@@ -111,7 +111,7 @@ type UserMove struct {
 type GeoKret struct {
 	GkID                int64      `json:"gk_id"`
 	Name                string     `json:"gk_name"`
-	TrackingCode        *string    `json:"tracking_code,omitempty"`
+	TrackingCode        *string    `json:"-"` // Never expose tracking code to frontend (security)
 	GkType              int        `json:"gk_type"`
 	Missing             bool       `json:"missing"`
 	Distance            int64      `json:"distance_km"`

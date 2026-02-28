@@ -374,15 +374,16 @@ func (h *Handler) UserRankHistory(c *gin.Context) {
 // fetchUser loads a full user stats profile by ID.
 func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error) {
 	const q = `
-		SELECT user_id, username, home_country, joined_at, last_login_at,
-		       total_points, rank_all_time, total_moves, total_drops, total_grabs,
-		       total_comments, total_seen, total_dips, distinct_gks_interacted,
-		       distinct_owners, countries_visited_count, caches_visited_count,
-		       km_contributed, active_days, first_move_at, last_move_at,
-		       pts_base, pts_relay, pts_rescuer, pts_chain, pts_country,
-		       pts_diversity, pts_handover, pts_reach
-		FROM geokrety_stats.mv_user_stats
-		WHERE user_id = $1`
+		SELECT us.user_id, us.username, us.home_country, us.joined_on_datetime, us.last_login_datetime,
+		       us.total_points, COALESCE(lb.rank, 0) AS rank, us.total_moves, us.total_drops, us.total_grabs,
+		       us.total_comments, us.total_seen, us.total_dips, us.distinct_gks_interacted,
+		       us.distinct_owners, us.countries_visited_count, 0 AS caches_visited,
+		       us.km_contributed, us.active_days, us.first_move_at, us.last_move_at,
+		       us.pts_base, us.pts_relay, us.pts_rescuer, us.pts_chain, us.pts_country,
+		       us.pts_diversity, us.pts_handover, us.pts_reach
+		FROM geokrety_stats.mv_user_stats us
+		LEFT JOIN geokrety_stats.mv_leaderboard_all_time lb ON lb.user_id = us.user_id
+		WHERE us.user_id = $1`
 
 	var u models.User
 	err := h.DB.QueryRow(ctx, q, id).Scan(

@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
+import { idToGkId } from '../composables/useGkId.js'
 import LineChart from '../components/LineChart.vue'
 import Pagination from '../components/Pagination.vue'
 
@@ -57,10 +58,12 @@ watch(() => route.params.id, (id) => { gkId.value = id; load(); loadMoves() })
       <div class="card-body d-flex align-items-center gap-4 flex-wrap">
         <div class="fs-1">🎯</div>
         <div class="flex-grow-1">
-          <h3 class="mb-1">{{ gk.name }}</h3>
-          <p class="mb-0 text-muted small">
-            Tracking: <code>{{ gk.tracking_code }}</code>
-            &ensp;|&ensp; Type: {{ gk.gk_type }}
+          <div class="d-flex align-items-center gap-2">
+            <h3 class="mb-0">{{ gk.name }}</h3>
+            <span class="badge bg-dark" style="font-size: 0.8rem">{{ idToGkId(gk.gk_id) }}</span>
+          </div>
+          <p class="mb-0 text-muted small mt-1">
+            Type: {{ gk.gk_type }}
             <span v-if="gk.missing" class="badge bg-danger ms-2">Missing</span>
           </p>
           <p class="mb-0 text-muted small">
