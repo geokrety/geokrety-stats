@@ -11,6 +11,8 @@ const gk = ref(null)
 const chains = ref([])
 const meta = ref({})
 const page = ref(1)
+const sortCol = ref('started')
+const sortOrder = ref('desc')
 const loading = ref(false)
 const error = ref(null)
 
@@ -22,7 +24,12 @@ async function loadChains() {
   loading.value = true
   error.value = null
   try {
-    const { items, meta: m } = await fetchList(`/geokrety/${gkId.value}/chains`, { page: page.value, per_page: 25 })
+    const { items, meta: m } = await fetchList(`/geokrety/${gkId.value}/chains`, {
+      page: page.value,
+      per_page: 25,
+      sort: sortCol.value,
+      order: sortOrder.value,
+    })
     chains.value = items
     meta.value = m
   } catch (e) {
@@ -37,13 +44,27 @@ onMounted(async () => {
   await loadChains()
 })
 
-watch(page, loadChains)
+watch([page, sortCol, sortOrder], loadChains)
 watch(() => route.params.id, async (id) => {
   gkId.value = id
   page.value = 1
   await loadGK()
   await loadChains()
 })
+
+function toggleSort(col) {
+  if (sortCol.value === col) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  sortCol.value = col
+  sortOrder.value = col === 'status' ? 'asc' : 'desc'
+}
+
+function sortIcon(col) {
+  if (sortCol.value !== col) return 'bi-sort-down'
+  return sortOrder.value === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt'
+}
 </script>
 
 <template>
@@ -69,13 +90,13 @@ watch(() => route.params.id, async (id) => {
         <table class="table table-sm table-hover mb-0 align-middle">
           <thead class="table-dark">
             <tr>
-              <th>Chain</th>
-              <th>Status</th>
-              <th class="d-none d-md-table-cell">Started</th>
-              <th class="d-none d-md-table-cell">Ended</th>
-              <th class="d-none d-md-table-cell">Last Active</th>
-              <th class="text-end">Members</th>
-              <th class="text-end">Points</th>
+              <th style="cursor:pointer" @click="toggleSort('chain')">Chain <i class="bi" :class="sortIcon('chain')"></i></th>
+              <th style="cursor:pointer" @click="toggleSort('status')">Status <i class="bi" :class="sortIcon('status')"></i></th>
+              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('started')">Started <i class="bi" :class="sortIcon('started')"></i></th>
+              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('ended')">Ended <i class="bi" :class="sortIcon('ended')"></i></th>
+              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('last_active')">Last Active <i class="bi" :class="sortIcon('last_active')"></i></th>
+              <th class="text-end" style="cursor:pointer" @click="toggleSort('members')">Members <i class="bi" :class="sortIcon('members')"></i></th>
+              <th class="text-end" style="cursor:pointer" @click="toggleSort('points')">Points <i class="bi" :class="sortIcon('points')"></i></th>
             </tr>
           </thead>
           <tbody>

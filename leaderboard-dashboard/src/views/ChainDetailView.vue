@@ -11,9 +11,13 @@ const chain = ref(null)
 const members = ref([])
 const membersMeta = ref({})
 const membersPage = ref(1)
+const membersSort = ref('position')
+const membersOrder = ref('asc')
 const moves = ref([])
 const movesMeta = ref({})
 const movesPage = ref(1)
+const movesSort = ref('date')
+const movesOrder = ref('desc')
 const loading = ref(false)
 const error = ref(null)
 
@@ -22,13 +26,23 @@ async function loadDetail() {
 }
 
 async function loadMembers() {
-  const { items, meta } = await fetchList(`/chains/${chainId.value}/members`, { page: membersPage.value, per_page: 25 })
+  const { items, meta } = await fetchList(`/chains/${chainId.value}/members`, {
+    page: membersPage.value,
+    per_page: 25,
+    sort: membersSort.value,
+    order: membersOrder.value,
+  })
   members.value = items
   membersMeta.value = meta
 }
 
 async function loadMoves() {
-  const { items, meta } = await fetchList(`/chains/${chainId.value}/moves`, { page: movesPage.value, per_page: 25 })
+  const { items, meta } = await fetchList(`/chains/${chainId.value}/moves`, {
+    page: movesPage.value,
+    per_page: 25,
+    sort: movesSort.value,
+    order: movesOrder.value,
+  })
   moves.value = items
   movesMeta.value = meta
 }
@@ -48,14 +62,37 @@ async function loadAll() {
 }
 
 onMounted(loadAll)
-watch(membersPage, loadMembers)
-watch(movesPage, loadMoves)
+watch([membersPage, membersSort, membersOrder], loadMembers)
+watch([movesPage, movesSort, movesOrder], loadMoves)
 watch(() => route.params.id, async (id) => {
   chainId.value = id
   membersPage.value = 1
   movesPage.value = 1
   await loadAll()
 })
+
+function toggleMembersSort(col) {
+  if (membersSort.value === col) {
+    membersOrder.value = membersOrder.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  membersSort.value = col
+  membersOrder.value = col === 'user' ? 'asc' : 'desc'
+}
+
+function toggleMovesSort(col) {
+  if (movesSort.value === col) {
+    movesOrder.value = movesOrder.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  movesSort.value = col
+  movesOrder.value = col === 'user' ? 'asc' : 'desc'
+}
+
+function sortIcon(activeCol, col, order) {
+  if (activeCol !== col) return 'bi-sort-down'
+  return order === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt'
+}
 </script>
 
 <template>
@@ -101,9 +138,9 @@ watch(() => route.params.id, async (id) => {
               <table class="table table-sm table-hover mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>#</th>
-                    <th>User</th>
-                    <th class="d-none d-md-table-cell">Joined</th>
+                    <th style="cursor:pointer" @click="toggleMembersSort('position')"># <i class="bi" :class="sortIcon(membersSort, 'position', membersOrder)"></i></th>
+                    <th style="cursor:pointer" @click="toggleMembersSort('user')">User <i class="bi" :class="sortIcon(membersSort, 'user', membersOrder)"></i></th>
+                    <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMembersSort('joined')">Joined <i class="bi" :class="sortIcon(membersSort, 'joined', membersOrder)"></i></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -114,7 +151,6 @@ watch(() => route.params.id, async (id) => {
                     <td>{{ member.position }}</td>
                     <td>
                       <RouterLink :to="`/users/${member.user_id}`">{{ member.username }}</RouterLink>
-                      <RouterLink :to="`/users/${member.user_id}/chains`" class="btn btn-xs btn-outline-secondary ms-2 py-0 px-1" style="font-size:0.75rem">chains</RouterLink>
                     </td>
                     <td class="d-none d-md-table-cell small text-muted">{{ member.joined_at?.slice(0, 10) || '—' }}</td>
                   </tr>
@@ -134,16 +170,15 @@ watch(() => route.params.id, async (id) => {
               <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th>Date</th>
-                    <th>User</th>
-                    <th class="d-none d-md-table-cell">Type</th>
-                    <th class="text-end">Chain pts</th>
-                    <th class="text-end">Links</th>
+                    <th style="cursor:pointer" @click="toggleMovesSort('date')">Date <i class="bi" :class="sortIcon(movesSort, 'date', movesOrder)"></i></th>
+                    <th style="cursor:pointer" @click="toggleMovesSort('user')">User <i class="bi" :class="sortIcon(movesSort, 'user', movesOrder)"></i></th>
+                    <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMovesSort('type')">Type <i class="bi" :class="sortIcon(movesSort, 'type', movesOrder)"></i></th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleMovesSort('chain_points')">Chain pts <i class="bi" :class="sortIcon(movesSort, 'chain_points', movesOrder)"></i></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="!moves.length">
-                    <td colspan="5" class="text-center text-muted py-3">No moves.</td>
+                    <td colspan="4" class="text-center text-muted py-3">No moves.</td>
                   </tr>
                   <tr v-for="move in moves" :key="move.move_id">
                     <td class="small text-muted">{{ move.moved_on?.slice(0, 10) || '—' }}</td>
@@ -153,9 +188,6 @@ watch(() => route.params.id, async (id) => {
                     </td>
                     <td class="d-none d-md-table-cell"><span class="badge bg-light text-dark border">{{ move.type_name }}</span></td>
                     <td class="text-end fw-semibold text-primary">{{ move.chain_points?.toFixed(2) }}</td>
-                    <td class="text-end">
-                      <RouterLink :to="`/moves/${move.move_id}/chains`" class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75rem">move</RouterLink>
-                    </td>
                   </tr>
                 </tbody>
               </table>

@@ -23,6 +23,7 @@ const yearValue = ref(route.query.year   || '')
 const page      = ref(Number(route.query.page) || 1)
 const perPage   = ref(100)
 const sortCol   = ref(route.query.sort   || 'points') // default to points as it's the leaderboard
+const sortOrder = ref(route.query.order  || 'desc')
 const loading   = ref(false)
 const error     = ref(null)
 const rows      = ref([])
@@ -54,10 +55,11 @@ async function load() {
   error.value   = null
   try {
     const { items, meta: m } = await fetchList('/leaderboard', {
-      period: effectivePeriod.value, 
-      page: page.value, 
+      period: effectivePeriod.value,
+      page: page.value,
       per_page: perPage.value,
       sort: sortCol.value,
+      order: sortOrder.value,
     })
     rows.value = items
     meta.value = m
@@ -72,11 +74,12 @@ async function load() {
   if (period.value !== 'all') q.period = period.value
   if (page.value > 1)   q.page   = page.value
   if (sortCol.value !== 'points') q.sort = sortCol.value
+  if (sortOrder.value !== 'desc') q.order = sortOrder.value
   router.replace({ query: q })
 }
 
 onMounted(() => { fetchYears(); load() })
-watch([period, yearValue, sortCol], () => { page.value = 1; load() })
+watch([period, yearValue, sortCol, sortOrder], () => { page.value = 1; load() })
 watch([page], load)
 
 function selectPeriod(p) { period.value = p; yearValue.value = '' }
@@ -98,6 +101,15 @@ function displayPoints(row) {
 
 function sortedRows() {
   return rows.value
+}
+
+function toggleSort(col) {
+  if (sortCol.value === col) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  sortCol.value = col
+  sortOrder.value = 'desc'
 }
 </script>
 
@@ -175,20 +187,20 @@ function sortedRows() {
             <tr>
               <th style="width:60px" title="Rank position for the selected time period">#</th>
               <th title="Username (click to view profile)">User</th>
-              <th class="text-end" style="cursor:pointer" :class="sortCol==='points' ? 'text-warning' : ''" @click="sortCol='points'" :title="'Total accumulated points for this period — click to sort'">
-                Points <i class="bi" :class="sortCol==='points' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              <th class="text-end" style="cursor:pointer" :class="sortCol==='points' ? 'text-warning' : ''" @click="toggleSort('points')" :title="'Total accumulated points for this period — click to sort'">
+                Points <i class="bi" :class="sortCol==='points' ? (sortOrder==='asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt') : 'bi-sort-down'"></i>
               </th>
-              <th class="text-end" style="cursor:pointer" :class="sortCol==='moves' ? 'text-warning' : ''" @click="sortCol='moves'" :title="'Number of moves logged in this period — click to sort'">
-                Moves <i class="bi" :class="sortCol==='moves' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              <th class="text-end" style="cursor:pointer" :class="sortCol==='moves' ? 'text-warning' : ''" @click="toggleSort('moves')" :title="'Number of moves logged in this period — click to sort'">
+                Moves <i class="bi" :class="sortCol==='moves' ? (sortOrder==='asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt') : 'bi-sort-down'"></i>
               </th>
-              <th class="text-end" style="cursor:pointer" :class="sortCol==='gks' ? 'text-warning' : ''" @click="sortCol='gks'" :title="'Number of distinct GeoKrety interacted with — click to sort'">
-                GKs <i class="bi" :class="sortCol==='gks' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              <th class="text-end" style="cursor:pointer" :class="sortCol==='gks' ? 'text-warning' : ''" @click="toggleSort('gks')" :title="'Number of distinct GeoKrety interacted with — click to sort'">
+                GKs <i class="bi" :class="sortCol==='gks' ? (sortOrder==='asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt') : 'bi-sort-down'"></i>
               </th>
-              <th class="text-end" style="cursor:pointer" :class="sortCol==='countries' ? 'text-warning' : ''" @click="sortCol='countries'" :title="'Number of unique countries visited — click to sort'">
-                Countries <i class="bi" :class="sortCol==='countries' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              <th class="text-end" style="cursor:pointer" :class="sortCol==='countries' ? 'text-warning' : ''" @click="toggleSort('countries')" :title="'Number of unique countries visited — click to sort'">
+                Countries <i class="bi" :class="sortCol==='countries' ? (sortOrder==='asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt') : 'bi-sort-down'"></i>
               </th>
-              <th class="text-end" style="cursor:pointer" :class="sortCol==='avg_points' ? 'text-warning' : ''" @click="sortCol='avg_points'" title="Average points earned per logged move (total_points ÷ total_moves) — click to sort">
-                Avg/move <i class="bi" :class="sortCol==='avg_points' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              <th class="text-end" style="cursor:pointer" :class="sortCol==='avg_points' ? 'text-warning' : ''" @click="toggleSort('avg_points')" title="Average points earned per logged move (total_points ÷ total_moves) — click to sort">
+                Avg/move <i class="bi" :class="sortCol==='avg_points' ? (sortOrder==='asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt') : 'bi-sort-down'"></i>
               </th>
             </tr>
           </thead>
@@ -211,9 +223,6 @@ function sortedRows() {
               <td>
                 <RouterLink :to="`/users/${row.user_id}`" class="text-decoration-none fw-semibold">
                   {{ row.username }}
-                </RouterLink>
-                <RouterLink :to="`/users/${row.user_id}/chains`" class="btn btn-xs btn-outline-secondary ms-2 py-0 px-1" style="font-size:0.75rem">
-                  chains
                 </RouterLink>
                 <span v-if="row.home_country" class="text-muted small ms-1" :title="`Home country: ${row.home_country.toUpperCase()}`">
                   {{ getCountryFlag(row.home_country) }} {{ row.home_country.toUpperCase() }}

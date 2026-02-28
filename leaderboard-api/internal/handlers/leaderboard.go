@@ -19,6 +19,10 @@ import (
 func (h *Handler) Leaderboard(c *gin.Context) {
 	period := c.DefaultQuery("period", "all")
 	sort := c.DefaultQuery("sort", "points")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
 	page, perPage, offset := parsePagination(c)
 
 	var (
@@ -29,29 +33,29 @@ func (h *Handler) Leaderboard(c *gin.Context) {
 
 	switch {
 	case period == "all":
-		entries, total, err = h.leaderboardAllTime(c.Request.Context(), offset, perPage, sort)
+		entries, total, err = h.leaderboardAllTime(c.Request.Context(), offset, perPage, sort, order)
 	case period == "today":
-		entries, total, err = h.leaderboardDay(c.Request.Context(), "today", offset, perPage, sort)
+		entries, total, err = h.leaderboardDay(c.Request.Context(), "today", offset, perPage, sort, order)
 	case period == "week":
-		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 7, offset, perPage, sort)
+		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 7, offset, perPage, sort, order)
 	case period == "month":
-		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 30, offset, perPage, sort)
+		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 30, offset, perPage, sort, order)
 	case period == "3months":
-		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 90, offset, perPage, sort)
+		entries, total, err = h.leaderboardPeriodDays(c.Request.Context(), 90, offset, perPage, sort, order)
 	case period == "year":
 		// Use actual current year from yearly materialized view
 		currentYear := time.Now().Year()
-		entries, total, err = h.leaderboardYear(c.Request.Context(), currentYear, offset, perPage, sort)
+		entries, total, err = h.leaderboardYear(c.Request.Context(), currentYear, offset, perPage, sort, order)
 	case len(period) == 7 && strings.ContainsRune(period, '-'):
 		// YYYY-MM – monthly board
-		entries, total, err = h.leaderboardMonth(c.Request.Context(), period, offset, perPage, sort)
+		entries, total, err = h.leaderboardMonth(c.Request.Context(), period, offset, perPage, sort, order)
 	case len(period) == 4:
 		// YYYY – yearly board
 		if yr, e := strconv.Atoi(period); e == nil {
-			entries, total, err = h.leaderboardYear(c.Request.Context(), yr, offset, perPage, sort)
+			entries, total, err = h.leaderboardYear(c.Request.Context(), yr, offset, perPage, sort, order)
 		}
 	default:
-		entries, total, err = h.leaderboardAllTime(c.Request.Context(), offset, perPage, sort)
+		entries, total, err = h.leaderboardAllTime(c.Request.Context(), offset, perPage, sort, order)
 	}
 
 	if err != nil {
@@ -71,23 +75,27 @@ func (h *Handler) Leaderboard(c *gin.Context) {
 }
 
 // leaderboardAllTime returns entries from the all-time materialized view.
-func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int, sort string) ([]models.LeaderboardEntry, int64, error) {
+func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int, sort string, order string) ([]models.LeaderboardEntry, int64, error) {
 	const countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_leaderboard_all_time`
 	var total int64
 	_ = h.DB.QueryRow(ctx, countQ).Scan(&total)
 
 	var orderBy string
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 	switch sort {
 	case "moves":
-		orderBy = "l.total_moves DESC, l.rank ASC"
+		orderBy = "l.total_moves " + dir + ", l.rank ASC"
 	case "gks":
-		orderBy = "l.distinct_gks DESC, l.rank ASC"
+		orderBy = "l.distinct_gks " + dir + ", l.rank ASC"
 	case "countries":
-		orderBy = "countries_count DESC, l.rank ASC"
+		orderBy = "countries_count " + dir + ", l.rank ASC"
 	case "avg_points":
-		orderBy = "(l.total_points / NULLIF(l.total_moves, 0)) DESC, l.rank ASC"
+		orderBy = "(l.total_points / NULLIF(l.total_moves, 0)) " + dir + ", l.rank ASC"
 	default:
-		orderBy = "l.rank ASC"
+		orderBy = "l.total_points " + dir + ", l.rank ASC"
 	}
 
 	q := `
@@ -121,23 +129,27 @@ func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int, sor
 }
 
 // leaderboardDay returns today's leaderboard.
-func (h *Handler) leaderboardDay(ctx context.Context, _ string, offset, limit int, sort string) ([]models.LeaderboardEntry, int64, error) {
+func (h *Handler) leaderboardDay(ctx context.Context, _ string, offset, limit int, sort string, order string) ([]models.LeaderboardEntry, int64, error) {
 	const countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_leaderboard_daily WHERE day = CURRENT_DATE`
 	var total int64
 	_ = h.DB.QueryRow(ctx, countQ).Scan(&total)
 
 	var orderBy string
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 	switch sort {
 	case "moves":
-		orderBy = "moves DESC, l.rank ASC"
+		orderBy = "moves " + dir + ", l.rank ASC"
 	case "gks":
-		orderBy = "gks DESC, l.rank ASC"
+		orderBy = "gks " + dir + ", l.rank ASC"
 	case "countries":
-		orderBy = "countries DESC, l.rank ASC"
+		orderBy = "countries " + dir + ", l.rank ASC"
 	case "avg_points":
-		orderBy = "(l.points_day / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, l.rank ASC"
+		orderBy = "(l.points_day / NULLIF(COALESCE(s.total_moves, 0), 0)) " + dir + ", l.rank ASC"
 	default:
-		orderBy = "l.rank ASC"
+		orderBy = "l.points_day " + dir + ", l.rank ASC"
 	}
 
 	q := `
@@ -172,7 +184,7 @@ func (h *Handler) leaderboardDay(ctx context.Context, _ string, offset, limit in
 }
 
 // leaderboardPeriodDays aggregates points over the last N days directly.
-func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, limit int, sort string) ([]models.LeaderboardEntry, int64, error) {
+func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, limit int, sort string, order string) ([]models.LeaderboardEntry, int64, error) {
 	const countQ = `
 		SELECT COUNT(DISTINCT user_id)
 		FROM geokrety_stats.user_points_log
@@ -181,17 +193,21 @@ func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, l
 	_ = h.DB.QueryRow(ctx, countQ, days).Scan(&total)
 
 	var orderBy string
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 	switch sort {
 	case "moves":
-		orderBy = "moves DESC, pts DESC"
+		orderBy = "moves " + dir + ", pts DESC"
 	case "gks":
-		orderBy = "gks DESC, pts DESC"
+		orderBy = "gks " + dir + ", pts DESC"
 	case "countries":
-		orderBy = "countries DESC, pts DESC"
+		orderBy = "countries " + dir + ", pts DESC"
 	case "avg_points":
-		orderBy = "(SUM(pl.points) / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, pts DESC"
+		orderBy = "(SUM(pl.points) / NULLIF(COALESCE(s.total_moves, 0), 0)) " + dir + ", pts DESC"
 	default:
-		orderBy = "pts DESC"
+		orderBy = "pts " + dir
 	}
 
 	q := `
@@ -229,23 +245,27 @@ func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, l
 }
 
 // leaderboardMonth returns the monthly leaderboard for a given YYYY-MM.
-func (h *Handler) leaderboardMonth(ctx context.Context, yearMonth string, offset, limit int, sort string) ([]models.LeaderboardEntry, int64, error) {
+func (h *Handler) leaderboardMonth(ctx context.Context, yearMonth string, offset, limit int, sort string, order string) ([]models.LeaderboardEntry, int64, error) {
 	const countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_leaderboard_monthly WHERE year_month = $1`
 	var total int64
 	_ = h.DB.QueryRow(ctx, countQ, yearMonth).Scan(&total)
 
 	var orderBy string
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 	switch sort {
 	case "moves":
-		orderBy = "moves DESC, l.rank ASC"
+		orderBy = "moves " + dir + ", l.rank ASC"
 	case "gks":
-		orderBy = "gks DESC, l.rank ASC"
+		orderBy = "gks " + dir + ", l.rank ASC"
 	case "countries":
-		orderBy = "countries DESC, l.rank ASC"
+		orderBy = "countries " + dir + ", l.rank ASC"
 	case "avg_points":
-		orderBy = "(l.points_month / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, l.rank ASC"
+		orderBy = "(l.points_month / NULLIF(COALESCE(s.total_moves, 0), 0)) " + dir + ", l.rank ASC"
 	default:
-		orderBy = "l.rank ASC"
+		orderBy = "l.points_month " + dir + ", l.rank ASC"
 	}
 
 	q := `
@@ -280,23 +300,27 @@ func (h *Handler) leaderboardMonth(ctx context.Context, yearMonth string, offset
 }
 
 // leaderboardYear returns the yearly leaderboard for a given year.
-func (h *Handler) leaderboardYear(ctx context.Context, year int, offset, limit int, sort string) ([]models.LeaderboardEntry, int64, error) {
+func (h *Handler) leaderboardYear(ctx context.Context, year int, offset, limit int, sort string, order string) ([]models.LeaderboardEntry, int64, error) {
 	const countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_leaderboard_yearly WHERE year = $1`
 	var total int64
 	_ = h.DB.QueryRow(ctx, countQ, year).Scan(&total)
 
 	var orderBy string
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 	switch sort {
 	case "moves":
-		orderBy = "moves DESC, l.rank ASC"
+		orderBy = "moves " + dir + ", l.rank ASC"
 	case "gks":
-		orderBy = "gks DESC, l.rank ASC"
+		orderBy = "gks " + dir + ", l.rank ASC"
 	case "countries":
-		orderBy = "countries DESC, l.rank ASC"
+		orderBy = "countries " + dir + ", l.rank ASC"
 	case "avg_points":
-		orderBy = "(l.points_year / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, l.rank ASC"
+		orderBy = "(l.points_year / NULLIF(COALESCE(s.total_moves, 0), 0)) " + dir + ", l.rank ASC"
 	default:
-		orderBy = "l.rank ASC"
+		orderBy = "l.points_year " + dir + ", l.rank ASC"
 	}
 
 	q := `
@@ -332,6 +356,6 @@ func (h *Handler) leaderboardYear(ctx context.Context, year int, offset, limit i
 
 // TopLeaderboard returns only the top N for WebSocket broadcasts.
 func (h *Handler) TopLeaderboard(ctx context.Context, n int) ([]models.LeaderboardEntry, error) {
-	entries, _, err := h.leaderboardAllTime(ctx, 0, n, "points")
+	entries, _, err := h.leaderboardAllTime(ctx, 0, n, "points", "desc")
 	return entries, err
 }

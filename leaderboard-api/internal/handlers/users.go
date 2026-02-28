@@ -355,15 +355,24 @@ func (h *Handler) UserPointsAwards(c *gin.Context) {
 	page, perPage, offset := parsePagination(c)
 	label := c.Query("label") // optional filter by label
 	sort := c.DefaultQuery("sort", "date")
+	order := c.DefaultQuery("order", "desc")
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 
 	var orderBy string
 	switch sort {
 	case "points":
-		orderBy = "points DESC, awarded_at DESC"
+		orderBy = "points " + dir + ", awarded_at DESC"
 	case "label":
-		orderBy = "label ASC, awarded_at DESC"
+		orderBy = "label " + dir + ", awarded_at DESC"
 	default:
-		orderBy = "awarded_at DESC"
+		orderBy = "awarded_at " + dir
 	}
 
 	type awardRow struct {

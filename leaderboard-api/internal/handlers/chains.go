@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strings"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,7 @@ func (h *Handler) ChainDetail(c *gin.Context) {
 		return
 	}
 
-	const q = `
+	q := `
 		SELECT
 			gc.id,
 			gc.gk_id,
@@ -37,10 +38,22 @@ func (h *Handler) ChainDetail(c *gin.Context) {
 			GROUP BY chain_id
 		) cm ON cm.chain_id = gc.id
 		LEFT JOIN (
-			SELECT chain_id, SUM(points)::float8 AS chain_points
-			FROM geokrety_stats.user_points_log
-			WHERE chain_id IS NOT NULL
-			GROUP BY chain_id
+			SELECT t.chain_id, SUM(t.points)::float8 AS chain_points
+			FROM (
+				SELECT upl.chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				WHERE upl.chain_id IS NOT NULL
+				UNION ALL
+				SELECT gc2.id AS chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				JOIN geokrety_stats.gk_chains gc2
+				  ON upl.chain_id IS NULL
+				 AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+				 AND upl.gk_id = gc2.gk_id
+				 AND upl.awarded_at >= gc2.started_at
+				 AND upl.awarded_at <= COALESCE(gc2.ended_at, gc2.chain_last_active)
+			) t
+			GROUP BY t.chain_id
 		) cp ON cp.chain_id = gc.id
 		WHERE gc.id = $1
 	`
@@ -76,18 +89,35 @@ func (h *Handler) ChainMembers(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "position")
+	order := strings.ToLower(c.DefaultQuery("order", "asc"))
+	if order != "asc" && order != "desc" {
+		order = "asc"
+	}
+	dir := "ASC"
+	if order == "desc" {
+		dir = "DESC"
+	}
+
+	orderBy := "cm.position " + dir
+	switch sort {
+	case "user":
+		orderBy = "username " + dir + ", cm.position ASC"
+	case "joined":
+		orderBy = "cm.joined_at " + dir + ", cm.position ASC"
+	}
 
 	const countQ = `SELECT COUNT(*) FROM geokrety_stats.gk_chain_members WHERE chain_id = $1`
 	var total int64
 	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
 
-	const q = `
+	q := `
 		SELECT cm.chain_id, cm.user_id, COALESCE(u.username, CONCAT('User #', cm.user_id::text)) AS username,
 		       cm.position, cm.joined_at
 		FROM geokrety_stats.gk_chain_members cm
 		LEFT JOIN geokrety.gk_users u ON u.id = cm.user_id
 		WHERE cm.chain_id = $1
-		ORDER BY cm.position ASC
+		ORDER BY ` + orderBy + `
 		LIMIT $2 OFFSET $3
 	`
 
@@ -126,6 +156,25 @@ func (h *Handler) ChainMoves(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "date")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
+
+	orderBy := "m.moved_on_datetime " + dir + ", m.id " + dir
+	switch sort {
+	case "user":
+		orderBy = "u.username " + dir + ", m.moved_on_datetime DESC"
+	case "type":
+		orderBy = "m.move_type " + dir + ", m.moved_on_datetime DESC"
+	case "chain_points":
+		orderBy = "chain_points " + dir + ", m.moved_on_datetime DESC"
+	}
 
 	const countQ = `
 		SELECT COUNT(*)
@@ -138,7 +187,7 @@ func (h *Handler) ChainMoves(c *gin.Context) {
 	var total int64
 	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
 
-	const q = `
+	q := `
 		SELECT
 			m.id,
 			m.author,
@@ -151,16 +200,25 @@ func (h *Handler) ChainMoves(c *gin.Context) {
 		FROM geokrety.gk_moves m
 		JOIN geokrety_stats.gk_chains gc ON gc.gk_id = m.geokret
 		LEFT JOIN geokrety.gk_users u ON u.id = m.author
-		LEFT JOIN (
-			SELECT move_id, SUM(points)::float8 AS chain_points
-			FROM geokrety_stats.user_points_log
-			WHERE chain_id = $1
-			GROUP BY move_id
-		) p ON p.move_id = m.id
+		LEFT JOIN LATERAL (
+			SELECT SUM(upl.points)::float8 AS chain_points
+			FROM geokrety_stats.user_points_log upl
+			WHERE upl.move_id = m.id
+			  AND (
+				upl.chain_id = gc.id
+				OR (
+					upl.chain_id IS NULL
+					AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+					AND upl.gk_id = gc.gk_id
+					AND upl.awarded_at >= gc.started_at
+					AND upl.awarded_at <= COALESCE(gc.ended_at, gc.chain_last_active)
+				)
+			  )
+		) p ON TRUE
 		WHERE gc.id = $1
 		  AND m.moved_on_datetime >= gc.started_at
 		  AND m.moved_on_datetime <= COALESCE(gc.ended_at, gc.chain_last_active)
-		ORDER BY m.moved_on_datetime DESC, m.id DESC
+		ORDER BY ` + orderBy + `
 		LIMIT $2 OFFSET $3
 	`
 
@@ -209,7 +267,7 @@ func (h *Handler) UserChains(c *gin.Context) {
 	var total int64
 	_ = h.DB.QueryRow(c.Request.Context(), countQ, userID).Scan(&total)
 
-	const q = `
+	q := `
 		SELECT
 			gc.id,
 			gc.gk_id,
@@ -235,10 +293,22 @@ func (h *Handler) UserChains(c *gin.Context) {
 			GROUP BY chain_id
 		) cm2 ON cm2.chain_id = gc.id
 		LEFT JOIN (
-			SELECT chain_id, SUM(points)::float8 AS chain_points
-			FROM geokrety_stats.user_points_log
-			WHERE chain_id IS NOT NULL
-			GROUP BY chain_id
+			SELECT t.chain_id, SUM(t.points)::float8 AS chain_points
+			FROM (
+				SELECT upl.chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				WHERE upl.chain_id IS NOT NULL
+				UNION ALL
+				SELECT gc3.id AS chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				JOIN geokrety_stats.gk_chains gc3
+				  ON upl.chain_id IS NULL
+				 AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+				 AND upl.gk_id = gc3.gk_id
+				 AND upl.awarded_at >= gc3.started_at
+				 AND upl.awarded_at <= COALESCE(gc3.ended_at, gc3.chain_last_active)
+			) t
+			GROUP BY t.chain_id
 		) cp ON cp.chain_id = gc.id
 		WHERE cm.user_id = $1
 		ORDER BY gc.started_at DESC, gc.id DESC
@@ -295,12 +365,37 @@ func (h *Handler) GeoKretChains(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "started")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
+
+	orderBy := "gc.started_at " + dir + ", gc.id " + dir
+	switch sort {
+	case "chain":
+		orderBy = "gc.id " + dir
+	case "status":
+		orderBy = "gc.status " + dir + ", gc.started_at DESC"
+	case "ended":
+		orderBy = "gc.ended_at " + dir + " NULLS LAST, gc.started_at DESC"
+	case "last_active":
+		orderBy = "gc.chain_last_active " + dir + ", gc.started_at DESC"
+	case "members":
+		orderBy = "member_count " + dir + ", gc.started_at DESC"
+	case "points":
+		orderBy = "chain_points " + dir + ", gc.started_at DESC"
+	}
 
 	const countQ = `SELECT COUNT(*) FROM geokrety_stats.gk_chains WHERE gk_id = $1`
 	var total int64
 	_ = h.DB.QueryRow(c.Request.Context(), countQ, gkID).Scan(&total)
 
-	const q = `
+	q := `
 		SELECT
 			gc.id,
 			gc.gk_id,
@@ -321,13 +416,25 @@ func (h *Handler) GeoKretChains(c *gin.Context) {
 			GROUP BY chain_id
 		) cm ON cm.chain_id = gc.id
 		LEFT JOIN (
-			SELECT chain_id, SUM(points)::float8 AS chain_points
-			FROM geokrety_stats.user_points_log
-			WHERE chain_id IS NOT NULL
-			GROUP BY chain_id
+			SELECT t.chain_id, SUM(t.points)::float8 AS chain_points
+			FROM (
+				SELECT upl.chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				WHERE upl.chain_id IS NOT NULL
+				UNION ALL
+				SELECT gc4.id AS chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				JOIN geokrety_stats.gk_chains gc4
+				  ON upl.chain_id IS NULL
+				 AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+				 AND upl.gk_id = gc4.gk_id
+				 AND upl.awarded_at >= gc4.started_at
+				 AND upl.awarded_at <= COALESCE(gc4.ended_at, gc4.chain_last_active)
+			) t
+			GROUP BY t.chain_id
 		) cp ON cp.chain_id = gc.id
 		WHERE gc.gk_id = $1
-		ORDER BY gc.started_at DESC, gc.id DESC
+		ORDER BY ` + orderBy + `
 		LIMIT $2 OFFSET $3
 	`
 
@@ -396,10 +503,26 @@ func (h *Handler) MoveChains(c *gin.Context) {
 			upl.move_id,
 			COALESCE(upl.move_chain_points, 0)::float8 AS move_chain_points
 		FROM (
-			SELECT chain_id, move_id, SUM(points)::float8 AS move_chain_points
-			FROM geokrety_stats.user_points_log
-			WHERE move_id = $1 AND chain_id IS NOT NULL
-			GROUP BY chain_id, move_id
+			SELECT
+				COALESCE(upl.chain_id, gc_match.id) AS chain_id,
+				upl.move_id,
+				SUM(upl.points)::float8 AS move_chain_points
+			FROM geokrety_stats.user_points_log upl
+			LEFT JOIN geokrety_stats.gk_chains gc_match
+			  ON upl.chain_id IS NULL
+			 AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+			 AND upl.gk_id = gc_match.gk_id
+			 AND upl.awarded_at >= gc_match.started_at
+			 AND upl.awarded_at <= COALESCE(gc_match.ended_at, gc_match.chain_last_active)
+			WHERE upl.move_id = $1
+			  AND (
+				upl.chain_id IS NOT NULL
+				OR (
+					upl.chain_id IS NULL
+					AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+				)
+			  )
+			GROUP BY COALESCE(upl.chain_id, gc_match.id), upl.move_id
 		) upl
 		JOIN geokrety_stats.gk_chains gc ON gc.id = upl.chain_id
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = gc.gk_id
@@ -409,10 +532,22 @@ func (h *Handler) MoveChains(c *gin.Context) {
 			GROUP BY chain_id
 		) cm ON cm.chain_id = gc.id
 		LEFT JOIN (
-			SELECT chain_id, SUM(points)::float8 AS chain_points
-			FROM geokrety_stats.user_points_log
-			WHERE chain_id IS NOT NULL
-			GROUP BY chain_id
+			SELECT t.chain_id, SUM(t.points)::float8 AS chain_points
+			FROM (
+				SELECT upl.chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				WHERE upl.chain_id IS NOT NULL
+				UNION ALL
+				SELECT gc5.id AS chain_id, upl.points
+				FROM geokrety_stats.user_points_log upl
+				JOIN geokrety_stats.gk_chains gc5
+				  ON upl.chain_id IS NULL
+				 AND upl.label IN ('chain_bonus', 'chain_bonus_owner')
+				 AND upl.gk_id = gc5.gk_id
+				 AND upl.awarded_at >= gc5.started_at
+				 AND upl.awarded_at <= COALESCE(gc5.ended_at, gc5.chain_last_active)
+			) t
+			GROUP BY t.chain_id
 		) cp ON cp.chain_id = gc.id
 		ORDER BY gc.started_at DESC, gc.id DESC
 	`

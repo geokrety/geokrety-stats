@@ -28,6 +28,12 @@ type ProgressTracker struct {
 	currentMoveDatetime    time.Time
 	logTypeCounts          map[int]int64 // counts by pipeline.LogType
 	lastSnapshotAt         time.Time
+	rateSamples            []rateSample
+}
+
+type rateSample struct {
+	at        time.Time
+	processed int64
 }
 
 // NewProgressTracker creates a new progress tracker.
@@ -143,6 +149,25 @@ func (pt *ProgressTracker) displayProgress() {
 	distinctGKCount := int64(len(pt.distinctGKIDs))
 	totalPoints := pt.totalPointsAwarded
 	currentMoveDate := pt.currentMoveDatetime
+	now := time.Now()
+	pt.rateSamples = append(pt.rateSamples, rateSample{at: now, processed: processed})
+	cutoff := now.Add(-1 * time.Minute)
+	trimIdx := 0
+	for trimIdx < len(pt.rateSamples) && pt.rateSamples[trimIdx].at.Before(cutoff) {
+		trimIdx++
+	}
+	if trimIdx > 0 {
+		pt.rateSamples = pt.rateSamples[trimIdx:]
+	}
+	var rate1m float64
+	if len(pt.rateSamples) >= 2 {
+		first := pt.rateSamples[0]
+		last := pt.rateSamples[len(pt.rateSamples)-1]
+		seconds := last.at.Sub(first.at).Seconds()
+		if seconds > 0 {
+			rate1m = float64(last.processed-first.processed) / seconds
+		}
+	}
 	pt.mu.Unlock()
 
 	rate := float64(processed) / elapsed.Seconds()
@@ -174,12 +199,13 @@ func (pt *ProgressTracker) displayProgress() {
 	skipped := pt.skipped.Load()
 
 	// Clear line and print status with additional metrics
-	fmt.Printf("\r\033[K[%s] Processed: %d | Skipped: %d | Errors: %d | Rate: %.1f/sec | GKs: %d | Points: %d%s%s%s\033[0m",
+	fmt.Printf("\r\033[K[%s] Processed: %d | Skipped: %d | Errors: %d | Rate: %.1f/sec | 1m: %.1f/sec | GKs: %d | Points: %d%s%s%s\033[0m",
 		formatDuration(elapsed),
 		processed,
 		skipped,
 		errors,
 		rate,
+		rate1m,
 		distinctGKCount,
 		totalPoints,
 		dateStr,

@@ -68,7 +68,6 @@ watch(() => route.params.id, (id) => {
               <td><RouterLink :to="`/chains/${chain.chain_id}`" class="fw-semibold">#{{ chain.chain_id }}</RouterLink></td>
               <td>
                 <RouterLink :to="`/geokrety/${chain.gk_id}`">{{ chain.gk_hex_id || chain.gk_name || `GK #${chain.gk_id}` }}</RouterLink>
-                <RouterLink :to="`/geokrety/${chain.gk_id}/chains`" class="btn btn-xs btn-outline-secondary ms-2 py-0 px-1" style="font-size:0.75rem">all chains</RouterLink>
               </td>
               <td><span class="badge" :class="chain.status === 'active' ? 'bg-success' : 'bg-secondary'">{{ chain.status }}</span></td>
               <td class="text-end text-primary fw-semibold">{{ chain.move_chain_points?.toFixed(2) }}</td>
