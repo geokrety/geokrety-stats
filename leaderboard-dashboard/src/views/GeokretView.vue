@@ -9,6 +9,7 @@ import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
 import RelatedUsersTab from '../components/RelatedUsersTab.vue'
+import PointsBreakdownChart from '../components/PointsBreakdownChart.vue'
 
 const route   = useRoute()
 const gkId    = ref(route.params.id)
