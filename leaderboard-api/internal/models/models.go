@@ -139,21 +139,22 @@ type GeoKret struct {
 
 // GkCountry is a country entry for a geokret.
 type GkCountry struct {
-	Country       string     `json:"country"`
-	FirstVisitedAt *time.Time `json:"first_visited_at,omitempty"`
+	Country    string `json:"country"`
+	MoveCount  int64  `json:"move_count"`
 }
 
 // GkMove is a single move for a geokret.
 type GkMove struct {
-	MoveID       int64      `json:"move_id"`
-	AuthorID     *int64     `json:"author_id,omitempty"`
-	AuthorName   string     `json:"author_name,omitempty"`
-	MoveType     int        `json:"move_type"`
-	MoveTypeName string     `json:"move_type_name"`
-	Country      *string    `json:"country,omitempty"`
-	Waypoint     *string    `json:"waypoint,omitempty"`
-	Distance     *int       `json:"distance,omitempty"`
-	MovedAt      *time.Time `json:"moved_at,omitempty"`
+	MoveID        int64       `json:"move_id"`
+	AuthorID      *int64      `json:"author_id,omitempty"`
+	AuthorUsername string      `json:"author_username,omitempty"`
+	MoveType      int         `json:"move_type"`
+	TypeName      string      `json:"type_name"`
+	Country       *string     `json:"country,omitempty"`
+	Waypoint      *string     `json:"waypoint,omitempty"`
+	Distance      *int        `json:"distance,omitempty"`
+	MovedOn       *time.Time  `json:"moved_on,omitempty"`
+	Points        *float64    `json:"points,omitempty"`
 }
 
 // ── Global Stats ─────────────────────────────────────────────────────────────

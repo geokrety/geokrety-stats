@@ -156,10 +156,11 @@ func (h *Handler) GeoKretCountries(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT country, first_visited_at
-		FROM geokrety_stats.mv_gk_countries
-		WHERE gk_id = $1
-		ORDER BY first_visited_at ASC`
+		SELECT country, COUNT(*) as move_count
+		FROM geokrety.gk_moves
+		WHERE geokret = $1 AND country IS NOT NULL
+		GROUP BY country
+		ORDER BY move_count DESC`
 
 	rows, err := h.DB.Query(c.Request.Context(), q, id)
 	if err != nil {
@@ -168,10 +169,10 @@ func (h *Handler) GeoKretCountries(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var out []models.GkCountry
+	out := make([]models.GkCountry, 0)
 	for rows.Next() {
 		var r models.GkCountry
-		if err := rows.Scan(&r.Country, &r.FirstVisitedAt); err != nil {
+		if err := rows.Scan(&r.Country, &r.MoveCount); err != nil {
 			errInternal(c, err)
 			return
 		}
@@ -195,9 +196,15 @@ func (h *Handler) GeoKretMoves(c *gin.Context) {
 
 	const q = `
 		SELECT m.id, m.author, u.username, m.move_type,
-		       m.country, m.waypoint, m.distance, m.moved_on_datetime
+		       m.country, m.waypoint, m.distance, m.moved_on_datetime,
+		       COALESCE(p.points, 0)::float8 as points
 		FROM geokrety.gk_moves m
 		LEFT JOIN geokrety.gk_users u ON u.id = m.author
+		LEFT JOIN (
+			SELECT move_id, SUM(points) as points
+			FROM geokrety_stats.user_points_log
+			GROUP BY move_id
+		) p ON p.move_id = m.id
 		WHERE m.geokret = $1
 		ORDER BY m.moved_on_datetime DESC
 		LIMIT $2 OFFSET $3`
@@ -209,19 +216,23 @@ func (h *Handler) GeoKretMoves(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var out []models.GkMove
+	out := make([]models.GkMove, 0)
 	for rows.Next() {
 		var r models.GkMove
 		var uname *string
+		var points float64
 		if err := rows.Scan(&r.MoveID, &r.AuthorID, &uname, &r.MoveType,
-			&r.Country, &r.Waypoint, &r.Distance, &r.MovedAt); err != nil {
+			&r.Country, &r.Waypoint, &r.Distance, &r.MovedOn, &points); err != nil {
 			errInternal(c, err)
 			return
 		}
 		if uname != nil {
-			r.AuthorName = *uname
+			r.AuthorUsername = *uname
 		}
-		r.MoveTypeName = moveTypeName(r.MoveType)
+		if points > 0 {
+			r.Points = &points
+		}
+		r.TypeName = moveTypeName(r.MoveType)
 		out = append(out, r)
 	}
 
@@ -337,7 +348,7 @@ func (h *Handler) GeoKretPointsTimeline(c *gin.Context) {
 		Points float64 `json:"points"`
 		Users  int64   `json:"users"`
 	}
-	var out []row
+	out := make([]row, 0)
 	for rows.Next() {
 		var r row
 		if err := rows.Scan(&r.Day, &r.Points, &r.Users); err != nil {
