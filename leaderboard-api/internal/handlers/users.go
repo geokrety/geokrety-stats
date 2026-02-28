@@ -465,6 +465,71 @@ func (h *Handler) UserRankHistory(c *gin.Context) {
 }
 
 // fetchUser loads a full user stats profile by ID.
+// UserRelatedUsers handles GET /api/v1/users/:id/related-users
+// Returns other users who have interacted with the same geokrety
+func (h *Handler) UserRelatedUsers(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		errNotFound(c, "invalid user id")
+		return
+	}
+	page, perPage, offset := parsePagination(c)
+
+	const countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_user_related_users WHERE user_id = $1`
+	var total int64
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+
+	const q = `
+		SELECT r.related_user_id, u.username, u.home_country,
+		       COALESCE(us.total_points, 0) total_points, COALESCE(us.total_moves, 0) total_moves,
+		       r.shared_geokrety_count
+		FROM geokrety_stats.mv_user_related_users r
+		JOIN geokrety.gk_users u ON u.id = r.related_user_id
+		LEFT JOIN geokrety_stats.mv_user_stats us ON us.user_id = r.related_user_id
+		WHERE r.user_id = $1
+		ORDER BY r.shared_geokrety_count DESC, us.total_points DESC NULLS LAST
+		LIMIT $2 OFFSET $3`
+
+	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	if err != nil {
+		errInternal(c, err)
+		return
+	}
+	defer rows.Close()
+
+	type row struct {
+		UserID              int64    `json:"user_id"`
+		Username            string   `json:"username"`
+		HomeCountry         *string  `json:"home_country,omitempty"`
+		TotalPoints         float64  `json:"total_points"`
+		TotalMoves          int64    `json:"total_moves"`
+		SharedGeokretyCount int64    `json:"shared_geokrety_count"`
+	}
+
+	var out []row
+	for rows.Next() {
+		var r row
+		if err := rows.Scan(&r.UserID, &r.Username, &r.HomeCountry, &r.TotalPoints, &r.TotalMoves, &r.SharedGeokretyCount); err != nil {
+			errInternal(c, err)
+			return
+		}
+		out = append(out, r)
+	}
+	if rows.Err() != nil {
+		errInternal(c, rows.Err())
+		return
+	}
+
+	hasNext := int64(offset+perPage) < total
+	ok(c, out, models.Meta{
+		Total:   total,
+		Page:    page,
+		PerPage: perPage,
+		HasNext: hasNext,
+		HasPrev: page > 1,
+	}, buildLinks(c, page, perPage, hasNext))
+}
+
 func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error) {
 	const q = `
 		SELECT us.user_id, us.username, us.home_country, us.joined_on_datetime, us.last_login_datetime,

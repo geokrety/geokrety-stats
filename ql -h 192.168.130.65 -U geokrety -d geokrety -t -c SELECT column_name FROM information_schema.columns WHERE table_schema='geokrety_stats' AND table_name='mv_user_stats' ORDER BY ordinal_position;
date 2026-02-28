@@ -1,0 +1,36 @@
+                    Materialized view "geokrety_stats.mv_user_stats"
+         Column          |            Type             | Collation | Nullable | Default 
+-------------------------+-----------------------------+-----------+----------+---------
+ user_id                 | bigint                      |           |          | 
+ username                | character varying(80)       |           |          | 
+ home_country            | character varying           |           |          | 
+ home_latitude           | double precision            |           |          | 
+ home_longitude          | double precision            |           |          | 
+ joined_on_datetime      | timestamp(0) with time zone |           |          | 
+ last_login_datetime     | timestamp(0) with time zone |           |          | 
+ total_points            | double precision            |           |          | 
+ total_moves             | bigint                      |           |          | 
+ total_drops             | bigint                      |           |          | 
+ total_grabs             | bigint                      |           |          | 
+ total_comments          | bigint                      |           |          | 
+ total_seen              | bigint                      |           |          | 
+ total_dips              | bigint                      |           |          | 
+ distinct_gks_interacted | bigint                      |           |          | 
+ distinct_owners         | bigint                      |           |          | 
+ countries_visited_count | bigint                      |           |          | 
+ km_contributed          | bigint                      |           |          | 
+ first_move_at           | timestamp with time zone    |           |          | 
+ last_move_at            | timestamp with time zone    |           |          | 
+ active_days             | bigint                      |           |          | 
+ pts_base                | double precision            |           |          | 
+ pts_relay               | double precision            |           |          | 
+ pts_rescuer             | double precision            |           |          | 
+ pts_chain               | double precision            |           |          | 
+ pts_country             | double precision            |           |          | 
+ pts_diversity           | double precision            |           |          | 
+ pts_handover            | double precision            |           |          | 
+ pts_reach               | double precision            |           |          | 
+Indexes:
+    "mv_user_stats_total_points_idx" btree (total_points DESC)
+    "mv_user_stats_user_id_idx" UNIQUE, btree (user_id)
+

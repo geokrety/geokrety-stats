@@ -90,6 +90,7 @@ func main() {
 		v1.GET("/users/:id", h.GetUser)
 		v1.GET("/users/:id/moves", h.UserMoves)
 		v1.GET("/users/:id/geokrety", h.UserGeokrety)
+		v1.GET("/users/:id/related-users", h.UserRelatedUsers)
 		v1.GET("/users/:id/countries", h.UserCountries)
 		v1.GET("/users/:id/points/timeline", h.UserPointsTimeline)
 		v1.GET("/users/:id/points/breakdown", h.UserPointsBreakdown)
@@ -102,6 +103,7 @@ func main() {
 		v1.GET("/geokrety/:id/moves", h.GeoKretMoves)
 		v1.GET("/geokrety/:id/countries", h.GeoKretCountries)
 		v1.GET("/geokrety/:id/holders", h.GeoKretHolderHistory)
+		v1.GET("/geokrety/:id/related-users", h.GeoKretRelatedUsers)
 		v1.GET("/geokrety/:id/points/timeline", h.GeoKretPointsTimeline)
 
 		// ── Global Stats ─────────────────────────────────────────────────

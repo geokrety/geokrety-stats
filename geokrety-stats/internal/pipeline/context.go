@@ -255,6 +255,7 @@ type FinalAward struct {
 	TotalPoints     float64
 	EventLogID      int64
 	GKID            int64
+	AwardedAt       time.Time // Timestamp of the event that triggered this award
 	Awards          []Award
 }
 

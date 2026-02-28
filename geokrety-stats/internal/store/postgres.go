@@ -647,9 +647,9 @@ func (s *pgStore) SaveAwards(ctx context.Context, awards []pipeline.FinalAward) 
 				INSERT INTO geokrety_stats.user_points_log
 					(user_id, points, reason, label, module_source, is_owner_reward,
 					 move_id, gk_id, awarded_at)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-			`, a.RecipientUserID, a.Points, a.Reason, a.Label, a.ModuleSource,
-				a.IsOwnerReward, fa.EventLogID, fa.GKID)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`, a.RecipientUserID, a.Points, a.Reason, a.Label, a.ModuleSource,
+			a.IsOwnerReward, fa.EventLogID, fa.GKID, fa.AwardedAt)
 			if err != nil {
 				return fmt.Errorf("inserting award: %w", err)
 			}
@@ -659,11 +659,11 @@ func (s *pgStore) SaveAwards(ctx context.Context, awards []pipeline.FinalAward) 
 		if fa.TotalPoints > 0 {
 			_, err := tx.Exec(ctx, `
 				INSERT INTO geokrety_stats.user_points_totals (user_id, total_points, last_updated_at)
-				VALUES ($1, $2, NOW())
-				ON CONFLICT (user_id) DO UPDATE
-				SET total_points = user_points_totals.total_points + $2,
-				    last_updated_at = NOW()
-			`, fa.RecipientUserID, fa.TotalPoints)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (user_id) DO UPDATE
+			SET total_points = user_points_totals.total_points + $2,
+			    last_updated_at = $3
+		`, fa.RecipientUserID, fa.TotalPoints, fa.AwardedAt)
 			if err != nil {
 				return fmt.Errorf("updating user total: %w", err)
 			}

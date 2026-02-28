@@ -8,6 +8,7 @@ import { getCountryFlag } from '../composables/useCountryFlags.js'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
+import RelatedUsersTab from '../components/RelatedUsersTab.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -60,7 +61,7 @@ async function loadMoves() {
 onMounted(() => {
   // Read tab from URL hash
   const hash = window.location.hash.slice(1)
-  if (hash && ['overview', 'moves', 'countries', 'breakdown'].includes(hash)) {
+  if (hash && ['overview', 'moves', 'countries', 'breakdown', 'related-users'].includes(hash)) {
     activeTab.value = hash
   }
   load()
@@ -140,6 +141,11 @@ watch(activeTab, (tab) => {
         <button class="nav-link" :class="{ active: activeTab === 'countries' }" @click="activeTab = 'countries'">
           <i class="bi bi-globe me-1"></i>Countries
           <span v-if="countries.length" class="badge bg-secondary ms-1">{{ countries.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" :class="{ active: activeTab === 'related-users' }" @click="activeTab = 'related-users'">
+          <i class="bi bi-people me-1"></i>Related Users
         </button>
       </li>
     </ul>
@@ -264,6 +270,14 @@ watch(activeTab, (tab) => {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Related Users tab -->
+    <div v-if="activeTab === 'related-users'">
+      <RelatedUsersTab
+        :endpoint="`/users/${userId}/related-users`"
+        title="Users who moved same GeoKrety"
+      />
     </div>
   </div>
 </template>

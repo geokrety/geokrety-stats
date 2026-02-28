@@ -84,6 +84,7 @@ func (c *PointsAggregator) Process(ctx context.Context, pipeCtx *pipeline.Contex
 			TotalPoints:     rounded,
 			EventLogID:      pipeCtx.Event.LogID,
 			GKID:            pipeCtx.Event.GKID,
+			AwardedAt:       pipeCtx.Event.LoggedAt,
 			Awards:          subAwards[k],
 		})
 	}

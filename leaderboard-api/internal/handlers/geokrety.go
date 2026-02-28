@@ -370,3 +370,73 @@ func (h *Handler) GeoKretPointsTimeline(c *gin.Context) {
 		HasPrev: page > 1,
 	}, buildLinks(c, page, perPage, hasNext))
 }
+
+// GeoKretRelatedUsers handles GET /api/v1/geokrety/:id/related-users
+// Returns users who have interacted with this geokrety
+func (h *Handler) GeoKretRelatedUsers(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		errNotFound(c, "invalid gk id")
+		return
+	}
+	page, perPage, offset := parsePagination(c)
+
+	const countQ = `
+		SELECT COUNT(*) FROM geokrety_stats.mv_geokrety_related_users WHERE geokret = $1`
+	var total int64
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+
+	const q = `
+		SELECT r.user_id, u.username, u.home_country,
+		       COALESCE(us.total_points, 0) total_points, COALESCE(us.total_moves, 0) total_moves,
+		       r.interaction_count,
+		       r.last_interaction
+		FROM geokrety_stats.mv_geokrety_related_users r
+		JOIN geokrety.gk_users u ON u.id = r.user_id
+		LEFT JOIN geokrety_stats.mv_user_stats us ON us.user_id = r.user_id
+		WHERE r.geokret = $1
+		ORDER BY r.interaction_count DESC, r.last_interaction DESC NULLS LAST
+		LIMIT $2 OFFSET $3`
+
+	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	if err != nil {
+		errInternal(c, err)
+		return
+	}
+	defer rows.Close()
+
+	type row struct {
+		UserID             int64       `json:"user_id"`
+		Username           string      `json:"username"`
+		HomeCountry        *string     `json:"home_country,omitempty"`
+		TotalPoints        float64     `json:"total_points"`
+		TotalMoves         int64       `json:"total_moves"`
+		InteractionCount   int64       `json:"interaction_count"`
+		LastInteraction    interface{} `json:"last_interaction,omitempty"`
+	}
+
+	var out []row
+	for rows.Next() {
+		var r row
+		if err := rows.Scan(&r.UserID, &r.Username, &r.HomeCountry, &r.TotalPoints,
+			&r.TotalMoves, &r.InteractionCount, &r.LastInteraction); err != nil {
+			errInternal(c, err)
+			return
+		}
+		out = append(out, r)
+	}
+	if rows.Err() != nil {
+		errInternal(c, rows.Err())
+		return
+	}
+
+	hasNext := int64(offset+perPage) < total
+	ok(c, out, models.Meta{
+		Total:   total,
+		Page:    page,
+		PerPage: perPage,
+		HasNext: hasNext,
+		HasPrev: page > 1,
+	}, buildLinks(c, page, perPage, hasNext))
+}
+
