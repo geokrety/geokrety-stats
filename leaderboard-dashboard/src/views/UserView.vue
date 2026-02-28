@@ -9,6 +9,7 @@ import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
 import RelatedUsersTab from '../components/RelatedUsersTab.vue'
+import PointsBreakdownChart from '../components/PointsBreakdownChart.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -171,6 +172,13 @@ watch(activeTab, (tab) => {
             :showRangeButtons="true"
           />
           <p v-else class="text-muted text-center py-3">No timeline data.</p>
+        </div>
+      </div>
+      <!-- Points breakdown chart -->
+      <div class="card mb-4 shadow-sm" v-if="breakdown.length">
+        <div class="card-header"><b>Points by Bonus Type</b></div>
+        <div class="card-body">
+          <PointsBreakdownChart :data="breakdown" :height="300" />
         </div>
       </div>
       <!-- Points breakdown table -->
