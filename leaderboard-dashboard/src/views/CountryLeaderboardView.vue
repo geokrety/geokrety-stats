@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
 import { getMoveTypeTooltip } from '../composables/useMoveTypeColors.js'
@@ -22,41 +22,14 @@ const sortOptions = [
   { value: 'loves', label: '❤️ Loves' }
 ]
 
-// Computed property for sorted countries (avoids re-fetching API)
-const countries = computed(() => {
-  if (!countriesRaw.value.length) return []
-
-  return [...countriesRaw.value].sort((a, b) => {
-    switch (sortBy.value) {
-      case 'points':
-        return (b.total_points_awarded || 0) - (a.total_points_awarded || 0)
-      case 'avg_points':
-        return (b.avg_points_per_move || 0) - (a.avg_points_per_move || 0)
-      case 'moves':
-        return (b.total_moves || 0) - (a.total_moves || 0)
-      case 'users':
-        return (b.unique_users || 0) - (a.unique_users || 0)
-      case 'gks':
-        return (b.unique_gks || 0) - (a.unique_gks || 0)
-      case 'grabs':
-        return (b.grabs || 0) - (a.grabs || 0)
-      case 'drops':
-        return (b.drops || 0) - (a.drops || 0)
-      case 'dips':
-        return (b.dips || 0) - (a.dips || 0)
-      case 'loves':
-        return (b.total_loves || 0) - (a.total_loves || 0)
-      default:
-        return 0
-    }
-  })
-})
+// Computed property for sorted countries (now handle sort on server side)
+const countries = computed(() => countriesRaw.value)
 
 async function loadCountries() {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch('/api/v1/stats/countries')
+    const response = await fetch(`/api/v1/stats/countries?sort=${sortBy.value}`)
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const { data } = await response.json()
     countriesRaw.value = data || []
@@ -68,6 +41,7 @@ async function loadCountries() {
 }
 
 onMounted(loadCountries)
+watch(sortBy, loadCountries)
 
 const getMoveTypeIcon = (type) => {
   const icons = {

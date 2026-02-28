@@ -84,6 +84,8 @@ func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int, sor
 		orderBy = "l.distinct_gks DESC, l.rank ASC"
 	case "countries":
 		orderBy = "countries_count DESC, l.rank ASC"
+	case "avg_points":
+		orderBy = "(l.total_points / NULLIF(l.total_moves, 0)) DESC, l.rank ASC"
 	default:
 		orderBy = "l.rank ASC"
 	}
@@ -132,6 +134,8 @@ func (h *Handler) leaderboardDay(ctx context.Context, _ string, offset, limit in
 		orderBy = "gks DESC, l.rank ASC"
 	case "countries":
 		orderBy = "countries DESC, l.rank ASC"
+	case "avg_points":
+		orderBy = "(l.points_day / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, l.rank ASC"
 	default:
 		orderBy = "l.rank ASC"
 	}
@@ -184,6 +188,8 @@ func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, l
 		orderBy = "gks DESC, pts DESC"
 	case "countries":
 		orderBy = "countries DESC, pts DESC"
+	case "avg_points":
+		orderBy = "(SUM(pl.points) / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, pts DESC"
 	default:
 		orderBy = "pts DESC"
 	}
@@ -236,6 +242,8 @@ func (h *Handler) leaderboardMonth(ctx context.Context, yearMonth string, offset
 		orderBy = "gks DESC, l.rank ASC"
 	case "countries":
 		orderBy = "countries DESC, l.rank ASC"
+	case "avg_points":
+		orderBy = "(l.points_month / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, l.rank ASC"
 	default:
 		orderBy = "l.rank ASC"
 	}
@@ -285,6 +293,8 @@ func (h *Handler) leaderboardYear(ctx context.Context, year int, offset, limit i
 		orderBy = "gks DESC, l.rank ASC"
 	case "countries":
 		orderBy = "countries DESC, l.rank ASC"
+	case "avg_points":
+		orderBy = "(l.points_year / NULLIF(COALESCE(s.total_moves, 0), 0)) DESC, l.rank ASC"
 	default:
 		orderBy = "l.rank ASC"
 	}

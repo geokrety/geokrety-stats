@@ -32,6 +32,7 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 		"loves":      "s.loves_count DESC",
 		"multiplier": "s.current_multiplier DESC",
 		"distance":   "s.distance DESC",
+		"avg_points": "(s.total_points_generated / NULLIF(s.total_moves, 0)) DESC",
 	}
 	sortParam := c.DefaultQuery("sort", "points")
 	orderBy, ok2 := sortMap[sortParam]

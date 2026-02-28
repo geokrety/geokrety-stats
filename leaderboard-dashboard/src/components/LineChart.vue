@@ -8,6 +8,8 @@ const props = defineProps({
   datasets:  { type: Array,  default: null }, // [{ key, label, color }]
   color:     { type: String, default: '#0d6efd' },
   height:    { type: Number, default: 200 },
+  type:      { type: String, default: 'line' }, // 'line' or 'area'
+  stacked:   { type: Boolean, default: false },
   startDate: { type: String, default: null },  // ISO date string, e.g. '2020-03-15'
   endDate:   { type: String, default: null },  // ISO date string, defaults to today
   showRangeButtons: { type: Boolean, default: false },
@@ -86,10 +88,15 @@ function draw() {
 
   const datasets = props.datasets || [{ key: props.yKey, label: '', color: props.color }]
 
+  let yDomainMax = 0
+  if (props.stacked) {
+    yDomainMax = d3.max(displayData, d => d3.sum(datasets, ds => +d[ds.key] || 0))
+  } else {
+    yDomainMax = d3.max(displayData, d => d3.max(datasets, ds => +d[ds.key] || 0))
+  }
+
   const y = d3.scaleLinear()
-    .domain([0, d3.max(displayData, d => {
-      return d3.max(datasets, ds => +d[ds.key])
-    }) * 1.1 || 1])
+    .domain([0, yDomainMax * 1.1 || 1])
     .nice()
     .range([height, 0])
 
@@ -100,81 +107,106 @@ function draw() {
     .select('.domain').remove()
   svg.selectAll('.grid line').attr('stroke', '#e9ecef').attr('stroke-dasharray', '3,3')
 
-  datasets.forEach(ds => {
-    // Area
+  if (props.stacked) {
+    const stack = d3.stack().keys(datasets.map(ds => ds.key))
+    const stackedData = stack(displayData)
+
     const area = d3.area()
-      .defined(d => !isNaN(+d[ds.key]))
-      .x(d => x(parseDate(d[props.xKey])))
-      .y0(height)
-      .y1(d => y(+d[ds.key]))
+      .x(d => x(parseDate(d.data[props.xKey])))
+      .y0(d => y(d[0]))
+      .y1(d => y(d[1]))
       .curve(d3.curveMonotoneX)
 
-    svg.append('path')
-      .datum(displayData)
-      .attr('fill', ds.color)
-      .attr('fill-opacity', 0.1)
+    svg.selectAll('.layer')
+      .data(stackedData)
+      .join('path')
+      .attr('class', 'layer')
+      .attr('fill', d => datasets.find(ds => ds.key === d.key).color)
+      .attr('fill-opacity', 0.6)
       .attr('d', area)
 
-    // Line
-    const line = d3.line()
-      .defined(d => !isNaN(+d[ds.key]))
-      .x(d => x(parseDate(d[props.xKey])))
-      .y(d => y(+d[ds.key]))
-      .curve(d3.curveMonotoneX)
-
-    svg.append('path')
-      .datum(displayData)
+    // Optional lines on top of stacked area
+    svg.selectAll('.layer-line')
+      .data(stackedData)
+      .join('path')
       .attr('fill', 'none')
-      .attr('stroke', ds.color)
-      .attr('stroke-width', 2)
-      .attr('d', line)
-  })
+      .attr('stroke', d => datasets.find(ds => ds.key === d.key).color)
+      .attr('stroke-width', 1)
+      .attr('d', d3.line()
+        .x(d => x(parseDate(d.data[props.xKey])))
+        .y(d => y(d[1]))
+        .curve(d3.curveMonotoneX)
+      )
+  } else {
+    datasets.forEach(ds => {
+      // Area
+      const area = d3.area()
+        .defined(d => !isNaN(+d[ds.key]))
+        .x(d => x(parseDate(d[props.xKey])))
+        .y0(height)
+        .y1(d => y(+d[ds.key]))
+        .curve(d3.curveMonotoneX)
 
-  // Legend if multiple datasets
-  if (datasets.length > 1) {
+      svg.append('path')
+        .datum(displayData)
+        .attr('fill', ds.color)
+        .attr('fill-opacity', 0.1)
+        .attr('d', area)
+
+      // Line
+      const line = d3.line()
+        .defined(d => !isNaN(+d[ds.key]))
+        .x(d => x(parseDate(d[props.xKey])))
+        .y(d => y(+d[ds.key]))
+        .curve(d3.curveMonotoneX)
+
+      svg.append('path')
+        .datum(displayData)
+        .attr('fill', 'none')
+        .attr('stroke', ds.color)
+        .attr('stroke-width', 2)
+        .attr('d', line)
+    })
+  }
+
+  // Legend
+  if (datasets.length > 0) {
     const legend = svg.append('g')
       .attr('font-family', 'sans-serif')
       .attr('font-size', 10)
       .selectAll('g')
       .data(datasets)
       .join('g')
-      .attr('transform', (d, i) => `translate(${i * 80}, -5)`)
+      .attr('transform', (d, i) => `translate(${i * 65}, -5)`)
 
     legend.append('rect')
       .attr('x', 0)
-      .attr('width', 12)
-      .attr('height', 8)
+      .attr('width', 10)
+      .attr('height', 10)
       .attr('fill', d => d.color)
 
     legend.append('text')
-      .attr('x', 16)
-      .attr('y', 4)
+      .attr('x', 14)
+      .attr('y', 5)
       .attr('dy', '0.35em')
-      .text(d => d.label)
-  }
+      .text(d => d.label || d.key)
+    }
 
-  // Smart x tick format based on range
-  const rangeMs = domainEnd - domainStart
-  const dayMs = 86400000
-  let xFormat, xTicks
-  if (rangeMs < 40 * dayMs) {
-    xFormat = d3.timeFormat('%b %d'); xTicks = 7
-  } else if (rangeMs < 200 * dayMs) {
-    xFormat = d3.timeFormat('%b %d'); xTicks = 6
-  } else if (rangeMs < 800 * dayMs) {
-    xFormat = d3.timeFormat('%b %Y'); xTicks = 8
-  } else {
-    xFormat = d3.timeFormat('%Y'); xTicks = 8
-  }
+    const dayMs = 24 * 60 * 60 * 1000
+    const rangeMs = domainEnd - domainStart
+    let xFormat = d3.timeFormat('%Y'); let xTicks = 8
 
-  svg.append('g')
-    .attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x).ticks(xTicks).tickFormat(xFormat))
-    .selectAll('text').attr('font-size', '11px')
+    if (rangeMs < 40 * dayMs) {
+      xFormat = d3.timeFormat('%b %d'); xTicks = 7
+    } else if (rangeMs < 200 * dayMs) {
+      xFormat = d3.timeFormat('%b %d'); xTicks = 6
+    } else if (rangeMs < 800 * dayMs) {
+      xFormat = d3.timeFormat('%b %Y'); xTicks = 8
+    }
 
-  svg.append('g')
-    .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')))
-    .selectAll('text').attr('font-size', '11px')
+    svg.append('g')
+      .attr('transform', `translate(0,${height})`)
+      .call(d3.axisBottom(x).ticks(xTicks).tickFormat(xFormat))
 
   // Tooltip on hover
   const tooltip = d3.select(el).append('div')

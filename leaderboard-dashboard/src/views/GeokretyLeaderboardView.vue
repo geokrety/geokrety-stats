@@ -19,6 +19,7 @@ const sortOptions = [
   { value: 'moves',      label: '🔄 Moves' },
   { value: 'users',      label: '👥 Users' },
   { value: 'countries',  label: '🌍 Countries' },
+  { value: 'avg_points', label: '📊 Avg/move' },
   { value: 'loves',      label: '❤️ Loves' },
   { value: 'multiplier', label: '✖️ Multiplier' },
 ]

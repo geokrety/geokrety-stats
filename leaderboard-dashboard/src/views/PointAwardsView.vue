@@ -11,26 +11,24 @@ const userId = ref(route.params.id)
 const user      = ref(null)
 const awards    = ref([])
 const meta      = ref({})
-const page      = ref(1)
+const page      = ref(Number(route.query.page) || 1)
+const perPage   = ref(50)
+const sortCol   = ref(route.query.sort || 'date')
 const loading   = ref(false)
 const error     = ref(null)
 
 // Optional label filter from query string
-const activeLabel = ref(route.query.label || '')
-const labelFilter = ref(activeLabel.value)
-
-// Unique labels derived from loaded awards for quick filter chips
-const availableLabels = ref([])
-
-async function loadUser() {
-  try { user.value = await fetchOne(`/users/${userId.value}`) } catch (_) {}
-}
+const labelFilter = ref(route.query.label || '')
 
 async function load() {
   loading.value = true
   error.value   = null
   try {
-    const params = { page: page.value, per_page: 50 }
+    const params = { 
+      page: page.value, 
+      per_page: perPage.value,
+      sort: sortCol.value,
+    }
     if (labelFilter.value) params.label = labelFilter.value
     const { items, meta: m } = await fetchList(`/users/${userId.value}/points/awards`, params)
     awards.value = items
@@ -50,10 +48,10 @@ async function load() {
 }
 
 onMounted(() => { loadUser(); load() })
-watch([page, labelFilter], load)
+watch([page, labelFilter, sortCol], load)
 watch(() => route.params.id, id => { userId.value = id; page.value = 1; loadUser(); load() })
 
-function setLabel(l) { labelFilter.value = l; activeLabel.value = l; page.value = 1 }
+function setLabel(l) { labelFilter.value = l; page.value = 1 }
 
 const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 'text-danger fw-semibold' : 'text-muted'
 </script>
@@ -108,11 +106,17 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
         <table class="table table-sm table-hover mb-0 align-middle">
           <thead class="table-dark">
             <tr>
-              <th>Date</th>
-              <th>Label</th>
+              <th style="cursor:pointer" @click="sortCol='date'" :class="sortCol==='date' ? 'text-warning' : ''">
+                Date <i class="bi" :class="sortCol==='date' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              </th>
+              <th style="cursor:pointer" @click="sortCol='label'" :class="sortCol==='label' ? 'text-warning' : ''">
+                Label <i class="bi" :class="sortCol==='label' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              </th>
               <th>Reason / Details</th>
               <th>GeoKret</th>
-              <th class="text-end">Points</th>
+              <th class="text-end" style="cursor:pointer" @click="sortCol='points'" :class="sortCol==='points' ? 'text-warning' : ''">
+                Points <i class="bi" :class="sortCol==='points' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
+              </th>
             </tr>
           </thead>
           <tbody>

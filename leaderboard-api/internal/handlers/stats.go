@@ -108,7 +108,32 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 
 // TopCountries handles GET /api/v1/stats/countries
 func (h *Handler) TopCountries(c *gin.Context) {
-	const q = `
+	sort := c.DefaultQuery("sort", "points")
+	var orderBy string
+	switch sort {
+	case "moves":
+		orderBy = "cs.total_moves DESC"
+	case "gks":
+		orderBy = "cs.unique_gks DESC"
+	case "users":
+		orderBy = "cs.unique_users DESC"
+	case "avg_points":
+		orderBy = "(cs.total_points_awarded / NULLIF(cs.total_moves, 0)) DESC"
+	case "drops":
+		orderBy = "cs.drops DESC"
+	case "grabs":
+		orderBy = "cs.grabs DESC"
+	case "dips":
+		orderBy = "cs.dips DESC"
+	case "seen":
+		orderBy = "cs.seen DESC"
+	case "comments":
+		orderBy = "cs.comments DESC"
+	default:
+		orderBy = "cs.total_points_awarded DESC"
+	}
+
+	q := `
 		SELECT cs.country, cs.total_moves, cs.unique_gks, cs.unique_users,
 		       cs.drops, cs.grabs, cs.dips, cs.comments, cs.seen,
 		       cs.total_points_awarded,
@@ -121,7 +146,7 @@ func (h *Handler) TopCountries(c *gin.Context) {
 		    JOIN geokrety.gk_geokrety g ON g.id = dm.geokret
 		    GROUP BY dm.country
 		) lv ON lv.country = cs.country
-		ORDER BY cs.total_points_awarded DESC
+		ORDER BY ` + orderBy + `
 		LIMIT 50`
 
 	rows, err := h.DB.Query(c.Request.Context(), q)
@@ -351,6 +376,7 @@ func (h *Handler) CountryMoveTypeEvolution(c *gin.Context) {
 			COUNT(*) FILTER (WHERE move_type = 1) AS grabs,
 			COUNT(*) FILTER (WHERE move_type = 5) AS dips,
 			COUNT(*) FILTER (WHERE move_type = 3) AS seen,
+			COUNT(*) FILTER (WHERE move_type = 2) AS comments,
 			COUNT(*) AS total_moves
 		FROM effective_moves
 		WHERE effective_country = $1
@@ -371,13 +397,14 @@ func (h *Handler) CountryMoveTypeEvolution(c *gin.Context) {
 		Grabs      int64  `json:"grabs"`
 		Dips       int64  `json:"dips"`
 		Seen       int64  `json:"seen"`
+		Comments   int64  `json:"comments"`
 		TotalMoves int64  `json:"total_moves"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
 		var t time.Time
-		if err := rows.Scan(&t, &r.Drops, &r.Grabs, &r.Dips, &r.Seen, &r.TotalMoves); err != nil {
+		if err := rows.Scan(&t, &r.Drops, &r.Grabs, &r.Dips, &r.Seen, &r.Comments, &r.TotalMoves); err != nil {
 			errInternal(c, err)
 			return
 		}

@@ -150,39 +150,30 @@ onMounted(loadCountryData)
 
       <!-- Country Evolution Charts -->
       <div class="row g-4 mb-2">
-        <div class="col-12 col-xl-6">
+        <div class="col-12">
           <div class="card shadow-sm h-100">
-            <div class="card-header border-0 bg-transparent py-3"><b>Activity Evolution (Drops & Grabs)</b></div>
+            <div class="card-header border-0 bg-transparent py-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <b>Move Types Evolution</b>
+                <span class="badge bg-light text-dark border">Stacked Area Chart</span>
+              </div>
+            </div>
             <div class="card-body pt-0">
               <LineChart
                 v-if="evolution.length"
                 :data="evolution"
                 x-key="month"
+                stacked
                 :datasets="[
                   { key: 'drops', label: 'Drops', color: '#0d6efd' },
-                  { key: 'grabs', label: 'Grabs', color: '#198754' }
+                  { key: 'grabs', label: 'Grabs', color: '#198754' },
+                  { key: 'dips', label: 'DIPs', color: '#ffc107' },
+                  { key: 'seen', label: 'Seen', color: '#6c757d' },
+                  { key: 'comments', label: 'Comments', color: '#f06292' }
                 ]"
-                :height="280"
+                :height="320"
               />
               <p v-else class="text-muted text-center py-3">No activity data for this country.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-xl-6">
-          <div class="card shadow-sm h-100">
-            <div class="card-header border-0 bg-transparent py-3"><b>Other Activity Evolution (DIPs & Seen)</b></div>
-            <div class="card-body pt-0">
-              <LineChart
-                v-if="evolution.length"
-                :data="evolution"
-                x-key="month"
-                :datasets="[
-                  { key: 'dips', label: 'DIPs', color: '#ffc107' },
-                  { key: 'seen', label: 'Seen', color: '#6c757d' }
-                ]"
-                :height="280"
-              />
-              <p v-else class="text-muted text-center py-3">No other activity data for this country.</p>
             </div>
           </div>
         </div>
@@ -214,6 +205,11 @@ onMounted(loadCountryData)
               <div class="fs-2 mb-2">👀</div>
               <div class="text-muted small" title="GeoKrety spotted but not taken or placed">Seen</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.seen) }}</div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
+              <div class="fs-2 mb-2">📝</div>
+              <div class="text-muted small" title="Log a comment about GeoKrety status">Comments</div>
+              <div class="fs-5 fw-bold">{{ formatInt(countryData.comments) }}</div>
             </div>
             <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
               <div class="fs-2 mb-2">❤️</div>

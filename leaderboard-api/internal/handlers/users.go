@@ -351,6 +351,17 @@ func (h *Handler) UserPointsAwards(c *gin.Context) {
 	}
 	page, perPage, offset := parsePagination(c)
 	label := c.Query("label") // optional filter by label
+	sort := c.DefaultQuery("sort", "date")
+
+	var orderBy string
+	switch sort {
+	case "points":
+		orderBy = "points DESC, awarded_at DESC"
+	case "label":
+		orderBy = "label ASC, awarded_at DESC"
+	default:
+		orderBy = "awarded_at DESC"
+	}
 
 	type awardRow struct {
 		ID        int64   `json:"id"`
@@ -374,7 +385,7 @@ func (h *Handler) UserPointsAwards(c *gin.Context) {
 			SELECT id, label, reason, points, move_id, gk_id, awarded_at::text
 			FROM geokrety_stats.user_points_log
 			WHERE user_id = $1 AND label = $2
-			ORDER BY awarded_at DESC
+			ORDER BY `+orderBy+`
 			LIMIT $3 OFFSET $4`, id, label, perPage, offset)
 		if qerr != nil {
 			errInternal(c, qerr)
@@ -397,7 +408,7 @@ func (h *Handler) UserPointsAwards(c *gin.Context) {
 			SELECT id, label, reason, points, move_id, gk_id, awarded_at::text
 			FROM geokrety_stats.user_points_log
 			WHERE user_id = $1
-			ORDER BY awarded_at DESC
+			ORDER BY `+orderBy+`
 			LIMIT $2 OFFSET $3`, id, perPage, offset)
 		if qerr != nil {
 			errInternal(c, qerr)

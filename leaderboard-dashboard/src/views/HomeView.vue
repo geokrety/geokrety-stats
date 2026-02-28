@@ -187,8 +187,8 @@ function sortedRows() {
               <th class="text-end" style="cursor:pointer" :class="sortCol==='countries' ? 'text-warning' : ''" @click="sortCol='countries'" :title="'Number of unique countries visited — click to sort'">
                 Countries <i class="bi" :class="sortCol==='countries' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
               </th>
-              <th class="text-end" title="Average points earned per logged move (total_points ÷ total_moves)">
-                Avg/move <i class="bi bi-info-circle text-secondary" style="font-size:0.75rem"></i>
+              <th class="text-end" style="cursor:pointer" :class="sortCol==='avg_points' ? 'text-warning' : ''" @click="sortCol='avg_points'" title="Average points earned per logged move (total_points ÷ total_moves) — click to sort">
+                Avg/move <i class="bi" :class="sortCol==='avg_points' ? 'bi-sort-down-alt' : 'bi-sort-down'"></i>
               </th>
             </tr>
           </thead>
@@ -201,12 +201,12 @@ function sortedRows() {
             <tr v-else-if="!rows.length && !loading">
               <td colspan="7" class="text-center text-secondary py-4">No data for this period.</td>
             </tr>
-            <tr v-for="row in sortedRows()" :key="row.user_id">
+            <tr v-for="(row, index) in rows" :key="row.user_id">
               <td :class="medalClass(row.rank)">
-                <span v-if="row.rank === 1">🥇</span>
-                <span v-else-if="row.rank === 2">🥈</span>
-                <span v-else-if="row.rank === 3">🥉</span>
-                <span v-else>{{ row.rank }}</span>
+                <span v-if="(meta.page-1)*meta.per_page + index + 1 === 1">🥇</span>
+                <span v-else-if="(meta.page-1)*meta.per_page + index + 1 === 2">🥈</span>
+                <span v-else-if="(meta.page-1)*meta.per_page + index + 1 === 3">🥉</span>
+                <span v-else>{{ (meta.page-1)*meta.per_page + index + 1 }}</span>
               </td>
               <td>
                 <RouterLink :to="`/users/${row.user_id}`" class="text-decoration-none fw-semibold">
