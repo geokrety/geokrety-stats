@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -237,6 +238,148 @@ func (h *Handler) AvailablePeriods(c *gin.Context) {
 	}
 
 	ok(c, gin.H{"months": months, "years": years}, models.Meta{}, nil)
+}
+
+// UserEvolution handles GET /api/v1/stats/evolution/users
+// Returns monthly cumulative user count since 2007
+func (h *Handler) UserEvolution(c *gin.Context) {
+	const q = `
+		WITH monthly_counts AS (
+			SELECT 
+				DATE_TRUNC('month', joined_on_datetime)::DATE AS month,
+				COUNT(*) AS created_count
+			FROM gk_users
+			WHERE joined_on_datetime >= '2007-01-01'
+			GROUP BY 1
+		)
+		SELECT 
+			month,
+			SUM(created_count) OVER (ORDER BY month) AS cumulative_users
+		FROM monthly_counts
+		ORDER BY month ASC
+	`
+
+	rows, err := h.DB.Query(c.Request.Context(), q)
+	if err != nil {
+		errInternal(c, err)
+		return
+	}
+	defer rows.Close()
+
+	type row struct {
+		Month           string `json:"month"`
+		CumulativeUsers int64  `json:"total_users"`
+	}
+	var out []row
+	for rows.Next() {
+		var r row
+		var t time.Time
+		if err := rows.Scan(&t, &r.CumulativeUsers); err != nil {
+			errInternal(c, err)
+			return
+		}
+		r.Month = t.Format("2006-01-02")
+		out = append(out, r)
+	}
+
+	ok(c, out, models.Meta{Total: int64(len(out))}, nil)
+}
+
+// GeoKretyEvolution handles GET /api/v1/stats/evolution/geokrety
+// Returns monthly creation count and in-cache count of geokrety since 2007
+func (h *Handler) GeoKretyEvolution(c *gin.Context) {
+	const q = `
+		WITH monthly_counts AS (
+			SELECT 
+				DATE_TRUNC('month', created_on_datetime)::DATE AS month,
+				COUNT(*) AS created_count
+			FROM gk_geokrety
+			WHERE created_on_datetime >= '2007-01-01'
+			GROUP BY 1
+		)
+		SELECT 
+			month,
+			created_count,
+			SUM(created_count) OVER (ORDER BY month) AS cumulative_gks
+		FROM monthly_counts
+		ORDER BY month ASC
+	`
+
+	rows, err := h.DB.Query(c.Request.Context(), q)
+	if err != nil {
+		errInternal(c, err)
+		return
+	}
+	defer rows.Close()
+
+	type row struct {
+		Month        string `json:"month"`
+		CreatedCount int64  `json:"created_count"`
+		CumulativeGk int64  `json:"total_gks"`
+	}
+	var out []row
+	for rows.Next() {
+		var r row
+		var t time.Time
+		if err := rows.Scan(&t, &r.CreatedCount, &r.CumulativeGk); err != nil {
+			errInternal(c, err)
+			return
+		}
+		r.Month = t.Format("2006-01-02")
+		out = append(out, r)
+	}
+
+	ok(c, out, models.Meta{Total: int64(len(out))}, nil)
+}
+
+// CountryMoveTypeEvolution handles GET /api/v1/stats/countries/:country/evolution/move-types
+// Returns monthly move types count for a specific country since 2007
+func (h *Handler) CountryMoveTypeEvolution(c *gin.Context) {
+	country := c.Param("country")
+
+	const q = `
+		SELECT 
+			DATE_TRUNC('month', moved_on_datetime)::DATE AS month,
+			COUNT(*) FILTER (WHERE move_type = 0) AS drops,
+			COUNT(*) FILTER (WHERE move_type = 1) AS grabs,
+			COUNT(*) FILTER (WHERE move_type = 3) AS dips,
+			COUNT(*) FILTER (WHERE move_type = 4) AS seen,
+			COUNT(*) AS total_moves
+		FROM gk_moves
+		WHERE country = $1
+		  AND moved_on_datetime >= '2007-01-01'
+		GROUP BY 1
+		ORDER BY month ASC
+	`
+
+	rows, err := h.DB.Query(c.Request.Context(), q, country)
+	if err != nil {
+		errInternal(c, err)
+		return
+	}
+	defer rows.Close()
+
+	type row struct {
+		Month      string `json:"month"`
+		Drops      int64  `json:"drops"`
+		Grabs      int64  `json:"grabs"`
+		Dips       int64  `json:"dips"`
+		Seen       int64  `json:"seen"`
+		TotalMoves int64  `json:"total_moves"`
+	}
+	var out []row
+	for rows.Next() {
+		var r row
+		var t time.Time
+		if err := rows.Scan(&t, &r.Drops, &r.Grabs, &r.Dips, &r.Seen, &r.TotalMoves); err != nil {
+			errInternal(c, err)
+			return
+		}
+		r.Month = t.Format("2006-01-02")
+		out = append(out, r)
+	}
+
+	ok(c, out, models.Meta{Total: int64(len(out))}, nil)
 }
 
 // parseInt parses an int with a default.

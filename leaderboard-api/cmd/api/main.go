@@ -113,6 +113,9 @@ func main() {
 		v1.GET("/stats/countries", h.TopCountries)
 		v1.GET("/stats/points/breakdown", h.PointsBreakdownGlobal)
 		v1.GET("/stats/periods", h.AvailablePeriods)
+		v1.GET("/stats/evolution/users", h.UserEvolution)
+		v1.GET("/stats/evolution/geokrety", h.GeoKretyEvolution)
+		v1.GET("/stats/countries/:country/evolution/move-types", h.CountryMoveTypeEvolution)
 	}
 
 	// ── Server ───────────────────────────────────────────────────────────────

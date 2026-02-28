@@ -7,6 +7,8 @@ import BarChart from '../components/BarChart.vue'
 
 const stats      = ref(null)
 const daily      = ref([])
+const usersEvolution = ref([])
+const gksEvolution   = ref([])
 const countries  = ref([])
 const breakdown  = ref([])
 const loading    = ref(false)
@@ -18,7 +20,9 @@ const countryFilterOptions = [
   { value: 'drops', label: '📦 Drops', key: 'drops' },
   { value: 'grabs', label: '🎯 Grabs', key: 'grabs' },
   { value: 'dips', label: '💧 DIPs', key: 'dips' },
-  { value: 'seen', label: '👁️ Seen', key: 'seen' }
+  { value: 'seen', label: '👁️ Seen', key: 'seen' },
+  { value: 'comments', label: '💬 Comments', key: 'comments' },
+  { value: 'archived', label: '📦 Archived', key: 'archived' }
 ]
 
 // Computed property to aggregate and sort countries
@@ -35,9 +39,11 @@ const filteredCountries = computed(() => {
   })
 
   const filterKey = countryFilter.value
-  const sorted = Array.from(countryMap.values()).sort((a, b) => {
-    return (b[filterKey] || 0) - (a[filterKey] || 0)
-  })
+  const sorted = Array.from(countryMap.values())
+    .filter(c => (c[filterKey] || 0) > 0)  // Remove zero values
+    .sort((a, b) => {
+      return (b[filterKey] || 0) - (a[filterKey] || 0)
+    })
 
   return sorted
 })
@@ -55,6 +61,10 @@ onMounted(async () => {
     stats.value     = await fetchOne('/stats')
     const da        = await fetchList('/stats/activity/daily', { days: 90 })
     daily.value     = da.items
+    const ue = await fetchList('/stats/evolution/users')
+    usersEvolution.value = ue.items
+    const ge = await fetchList('/stats/evolution/geokrety')
+    gksEvolution.value = ge.items
     const co        = await fetchList('/stats/countries')
     countries.value = co.items.slice(0, 20)
     const bd        = await fetchList('/stats/points/breakdown')
@@ -80,7 +90,7 @@ onMounted(async () => {
     <div class="card mb-4 shadow-sm">
       <div class="card-body">
         <h2 class="mb-1"><i class="bi bi-graph-up-arrow text-info me-2"></i>Global Statistics</h2>
-        <p class="text-muted mb-0">System-wide performance and movement tracking</p>
+        <p class="text-muted mb-0">All Time Statistics — System-wide performance and movement tracking since project inception</p>
       </div>
     </div>
 
@@ -168,6 +178,28 @@ onMounted(async () => {
                 {{ fmtInt(stats.total_loves || 0) }}
               </div>
               <div class="text-muted small">❤️ Loves</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evolution charts -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header"><b>User Growth</b></div>
+            <div class="card-body">
+              <LineChart v-if="usersEvolution.length" :data="usersEvolution" x-key="month" y-key="total_users" color="#0d6efd" :height="220" />
+              <p v-else class="text-muted text-center py-3">No user evolution data.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header"><b>GeoKrety Growth</b></div>
+            <div class="card-body">
+              <LineChart v-if="gksEvolution.length" :data="gksEvolution" x-key="month" y-key="total_gks" color="#198754" :height="220" />
+              <p v-else class="text-muted text-center py-3">No GeoKrety evolution data.</p>
             </div>
           </div>
         </div>

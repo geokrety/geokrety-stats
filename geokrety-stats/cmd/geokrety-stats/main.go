@@ -33,6 +33,8 @@ func main() {
 		replayStart   = flag.Int64("start-id", 0, "Replay moves with id >= start-id")
 		replayEnd     = flag.Int64("end-id", 0, "Replay moves with id <= end-id")
 		replayTruncate = flag.Bool("truncate", false, "Truncate stats schema before replay")
+		migrationUp   = flag.Bool("migration-up", false, "Apply all pending migrations and exit")
+		migrationDown = flag.Bool("migration-down", false, "Rollback all migrations and exit")
 	)
 	flag.Parse()
 
@@ -54,6 +56,22 @@ func main() {
 		log.Fatal().Err(err).Msg("database init failed")
 	}
 	defer db.Close()
+
+	// ── Migration mode ───────────────────────────────────────────────────────
+	if *migrationUp {
+		if err := db.Migrate("migrations"); err != nil {
+			log.Fatal().Err(err).Msg("migration up failed")
+		}
+		log.Info().Msg("migrations applied successfully")
+		return
+	}
+	if *migrationDown {
+		if err := db.MigrateDown("migrations"); err != nil {
+			log.Fatal().Err(err).Msg("migration down failed")
+		}
+		log.Info().Msg("migrations rolled back successfully")
+		return
+	}
 
 	s := store.New(db.Pool)
 

@@ -1,6 +1,6 @@
 # GeoKrety Points System - Improvements Status Report
 
-**Date**: 2026-02-28  
+**Date**: 2026-02-28
 **Status**: In Progress - Major Improvements Completed
 
 ---
@@ -12,7 +12,7 @@
 
 **Changes**:
 - Added `TotalImages` field to GlobalStats model
-- Added `TotalLoves` field to GlobalStats model  
+- Added `TotalLoves` field to GlobalStats model
 - Updated GlobalStats handler to query:
   - `geokrety.gk_images` for image count
   - `geokrety.gk_geokrety` SUM(loves_count) for loves total
@@ -61,7 +61,7 @@ These fields enable:
 ### 3. TopCountries Query Fix (Issue #1 - Partial)
 **Status**: ⚠️ **ATTEMPTED - NEEDS VERIFICATION**
 
-**Changes**: 
+**Changes**:
 - Corrected SELECT column order in TopCountries handler to match mv_country_summary view
 - Previously: `total_points_awarded` was in position 5
 - Now: Moved to position 10 after move type counts
@@ -85,7 +85,7 @@ The `grabs` field for all countries returns 0, despite:
 
 **Possible Root Causes**:
 1. **Migration 000004 Not Applied**: The database uses the older migration 000003 which has the WRONG move_type mappings. Migration 000004 should fix this but may not have been applied.
-   
+
 2. **View Refresh Issue**: MaterializedViews might not have been refreshed after migration 000004. The API calls `geokrety_stats.refresh_leaderboard_views()` every 15 minutes, but may not have run since migrations were applied.
 
 3. **Database Schema Mismatch**: The actual `gk_moves` table might have different move_type values than expected.
@@ -229,11 +229,11 @@ d. **Move Type Evolution Chart**:
 - ❌ End-to-end testing not performed
 
 ### Manual Testing Done
-✅ `/api/v1/stats` - Images/loves fields working  
-✅ `/api/v1/geokrety/{id}` - Country fields working  
-⚠️ `/api/v1/stats/countries` - Column order fixed, but grabs still 0  
-❌ `/api/v1/geokrety/{id}/points/log` - Not investigated  
-❌ UI changes - Not started  
+✅ `/api/v1/stats` - Images/loves fields working
+✅ `/api/v1/geokrety/{id}` - Country fields working
+⚠️ `/api/v1/stats/countries` - Column order fixed, but grabs still 0
+❌ `/api/v1/geokrety/{id}/points/log` - Not investigated
+❌ UI changes - Not started
 
 ---
 
@@ -248,7 +248,7 @@ d. **Move Type Evolution Chart**:
 # Commit 0a41f7c
 feat: add images/loves stats and country fields to GeoKret responses
 
-# Commit 79b55b1  
+# Commit 79b55b1
 fix: correct TopCountries SELECT column order
 ```
 
@@ -269,7 +269,7 @@ curl -s http://localhost:8080/api/v1/stats/countries | jq '.data[0] | {drops, gr
 ## 📋 NEXT STEPS / RECOMMENDATIONS
 
 ### Immediate
-1. **Investigate Grabs Issue**: 
+1. **Investigate Grabs Issue**:
    - Check database migration application status
    - Manually refresh materialized views if needed
    - Verify gk_moves table move_type values
@@ -280,7 +280,7 @@ curl -s http://localhost:8080/api/v1/stats/countries | jq '.data[0] | {drops, gr
    - Check which point awards are included/excluded
 
 ### Short-term (1-2 hours)
-3. Implement Issue #4 (points investigation) 
+3. Implement Issue #4 (points investigation)
 4. Implement Issue #3a-b (stats header and chart fixes)
 5. Test all endpoint changes
 
@@ -320,5 +320,5 @@ curl -s http://localhost:8080/api/v1/stats/countries | jq '.data[0] | {drops, gr
 
 ---
 
-**Last Updated**: 2026-02-28 14:20 UTC  
+**Last Updated**: 2026-02-28 14:20 UTC
 **Next Review**: After database migration verification
