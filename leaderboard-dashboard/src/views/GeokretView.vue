@@ -238,7 +238,7 @@ watch(activeTab, (tab) => {
                   <RouterLink :to="`/users/${m.author_id}`">{{ m.author_username }}</RouterLink>
                 </td>
                 <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
-                <td class="text-end fw-semibold text-success">{{ m.points?.toLocaleString() }}</td>
+                <td class="text-end fw-semibold text-success">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
                 <td>
                   <span v-if="m.country" :title="`Country: ${m.country}`">
                     {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}

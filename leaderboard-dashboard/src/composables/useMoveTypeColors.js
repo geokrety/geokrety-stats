@@ -1,21 +1,28 @@
 /**
  * Map move type names to Bootstrap badge colors
+ * Handles both API format (drop, grab, take, etc.) and display format
  */
 export function getMoveTypeBadgeClass(typeName) {
   if (!typeName) return 'bg-secondary'
 
+  const lowerType = typeof typeName === 'string' ? typeName.toLowerCase() : typeName
+
+  // API format move types (from backend: drop, grab, take, etc.)
   const typeColors = {
-    'Move': 'bg-primary',
-    'Seen': 'bg-info',
-    'Recovered': 'bg-success',
-    'Grabbed': 'bg-warning text-dark',
-    'Dropped': 'bg-danger',
-    'Archived': 'bg-secondary',
-    'Found': 'bg-success',
-    'Dipped': 'bg-info',
+    'drop': 'bg-danger',
+    'grab': 'bg-warning text-dark',
+    'take': 'bg-info',
+    'catch': 'bg-success',
+    'dip': 'bg-primary',
+    'seen': 'bg-secondary',
+    'move': 'bg-primary',
+    'recovered': 'bg-success',
+    'dropped': 'bg-danger',
+    'found': 'bg-success',
+    'dipped': 'bg-info',
   }
 
-  return typeColors[typeName] || 'bg-secondary'
+  return typeColors[lowerType] || 'bg-secondary'
 }
 
 /**

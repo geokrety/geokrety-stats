@@ -50,6 +50,8 @@ function draw() {
     .attr('class', 'position-absolute p-2 bg-dark text-white rounded small')
     .style('pointer-events', 'none')
     .style('display', 'none')
+    .style('z-index', '1000')
+    .style('white-space', 'nowrap')
     .attr('role', 'tooltip')
 
   svg.selectAll('rect')
@@ -64,11 +66,25 @@ function draw() {
     .on('mouseover', (event, d) => {
       const xPos = x(d[props.xKey]) + x.bandwidth() / 2
       const yPos = y(+d[props.yKey])
+      
       tooltip
-        .style('display', 'block')
-        .style('left', (margin.left + xPos - 40) + 'px')
-        .style('top', (margin.top + yPos - 30) + 'px')
         .html(`<strong>${d[props.xKey]}</strong><br/>${(+d[props.yKey]).toLocaleString()}`)
+        .style('display', 'block')
+
+      // Position tooltip above bar but ensure it doesn't go off-screen
+      const tooltipWidth = tooltip.node().offsetWidth || 120
+      const tooltipHeight = tooltip.node().offsetHeight || 50
+      let left = margin.left + xPos - tooltipWidth / 2
+      let top = margin.top + yPos - tooltipHeight - 8
+      
+      // Keep tooltip within bounds
+      if (left < 0) left = 0
+      if (left + tooltipWidth > el.clientWidth) left = el.clientWidth - tooltipWidth
+      if (top < 0) top = margin.top + yPos + 8
+      
+      tooltip
+        .style('left', left + 'px')
+        .style('top', top + 'px')
     })
     .on('mouseout', () => {
       tooltip.style('display', 'none')
@@ -94,5 +110,5 @@ watch(() => props.data, draw, { deep: true })
 </script>
 
 <template>
-  <div ref="container" style="width:100%;" :style="{ height: height + 'px' }"></div>
+  <div ref="container" style="width:100%; position: relative;" :style="{ height: height + 'px' }"></div>
 </template>

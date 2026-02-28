@@ -229,7 +229,7 @@ watch(activeTab, (tab) => {
                   </RouterLink>
                 </td>
                 <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
-                <td class="text-end fw-semibold text-primary">{{ m.points?.toLocaleString() }}</td>
+                <td class="text-end fw-semibold text-primary">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
                 <td>
                   <span v-if="m.country" :title="`Country: ${m.country}`">
                     {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}
