@@ -71,7 +71,7 @@ onMounted(loadCountryData)
           <div class="d-flex align-items-center gap-3">
             <span class="fs-1">{{ getCountryFlag(country) }}</span>
             <div>
-              <h1 class="mb-1">{{ country }}</h1>
+              <h1 class="mb-1">{{ country }} - {{ countryData?.country_name || country }}</h1>
               <p class="text-muted mb-0">Country activity and statistics</p>
             </div>
           </div>
@@ -83,7 +83,7 @@ onMounted(loadCountryData)
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm border-0">
             <div class="card-body">
-              <div class="text-muted small mb-2">Total Points</div>
+              <div class="text-muted small mb-2" title="Points awarded for all moves involving GeoKrety that visited this country">Total Points</div>
               <div class="fs-3 fw-bold text-success">{{ formatInt(countryData.total_points_awarded) }}</div>
               <div class="text-muted small mt-2">from {{ formatInt(countryData.total_moves) }} moves</div>
             </div>
@@ -93,8 +93,8 @@ onMounted(loadCountryData)
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm border-0">
             <div class="card-body">
-              <div class="text-muted small mb-2">Avg Points per Move</div>
-              <div class="fs-3 fw-bold text-info">{{ formatFloat(countryData.avg_points_per_move, 2) }}</div>
+              <div class="text-muted small mb-2" title="Average points awarded by GeoKrety that visited this country">Avg Points per Move</div>
+              <div class="fs-3 fw-bold text-info">{{ formatFloat(countryData.avg_points_per_move, 4) }}</div>
               <div class="text-muted small mt-2">based on {{ formatInt(countryData.total_moves) }} total moves</div>
             </div>
           </div>
@@ -103,9 +103,9 @@ onMounted(loadCountryData)
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm border-0">
             <div class="card-body">
-              <div class="text-muted small mb-2">Active Participants</div>
+              <div class="text-muted small mb-2" title="Number of distinct users who made moves involving GeoKrety that visited this country">Active Participants</div>
               <div class="fs-3 fw-bold text-primary">{{ formatInt(countryData.unique_users) }}</div>
-              <div class="text-muted small mt-2">{{ formatInt(countryData.unique_gks) }} unique GeoKrety</div>
+              <div class="text-muted small mt-2">{{ formatInt(countryData.unique_gks) }} unique GeoKrety involved</div>
             </div>
           </div>
         </div>

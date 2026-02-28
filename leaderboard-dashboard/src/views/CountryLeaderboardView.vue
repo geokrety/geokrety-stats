@@ -189,7 +189,7 @@ const formatFloat = (num, decimals = 2) => {
                 </div>
                 <div class="col-6">
                   <small class="text-muted d-block">Avg/Move</small>
-                  <div class="fw-bold fs-6 text-info">{{ formatFloat(country.avg_points_per_move, 2) }}</div>
+                  <div class="fw-bold fs-6 text-info">{{ formatFloat(country.avg_points_per_move, 4) }}</div>
                 </div>
                 <div class="col-6">
                   <small class="text-muted d-block">Moves</small>
@@ -274,7 +274,7 @@ const formatFloat = (num, decimals = 2) => {
                 </RouterLink>
               </td>
               <td class="text-end fw-bold text-success">{{ formatInt(country.total_points_awarded) }}</td>
-              <td class="text-end fw-bold text-info small">{{ formatFloat(country.avg_points_per_move, 2) }}</td>
+              <td class="text-end fw-bold text-info small">{{ formatFloat(country.avg_points_per_move, 4) }}</td>
               <td class="text-end">{{ formatInt(country.total_moves) }}</td>
               <td class="text-end text-muted small">{{ formatInt(country.drops) }}</td>
               <td class="text-end text-muted small">{{ formatInt(country.grabs) }}</td>

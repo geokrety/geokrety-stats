@@ -97,17 +97,19 @@ export function getMoveTypeTooltip(moveType) {
   if (!moveType) return ''
 
   const tooltips = {
-    'drop': 'Dropped at a location',
-    'grab': 'Picked up from a location',
-    'take': 'Picked up from a location',
-    'catch': 'Caught/found',
+    'drop': 'Left in a cache',
+    'grab': 'Taken from a cache',
+    'take': 'Taken from a cache',
+    'catch': 'Found in a cache',
     'dip': 'Visited without taking',
-    'seen': 'Seen in photo',
+    'seen': 'Encountered but not taken',
     'move': 'Moved',
     'recovered': 'Recovered by original owner',
-    'dropped': 'Dropped at a location',
-    'found': 'Found/picked up',
+    'dropped': 'Left in a cache',
+    'found': 'Taken from cache',
     'dipped': 'Visited without taking',
+    'comment': 'Just a comment: no physical move',
+    'archive': 'Missing for long time',
   }
 
   const lowerType = typeof moveType === 'string' ? moveType.toLowerCase() : ''
