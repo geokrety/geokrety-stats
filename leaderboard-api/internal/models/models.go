@@ -33,15 +33,16 @@ type Links struct {
 // ── Leaderboard ──────────────────────────────────────────────────────────────
 
 type LeaderboardEntry struct {
-	Rank          int64   `json:"rank"`
-	UserID        int64   `json:"user_id"`
-	Username      string  `json:"username"`
-	HomeCountry   *string `json:"home_country,omitempty"`
-	TotalPoints   float64 `json:"total_points"`
-	DistinctGKs   int64   `json:"distinct_gks,omitempty"`
-	TotalMoves    int64   `json:"total_moves,omitempty"`
-	LastActive    *time.Time `json:"last_active,omitempty"`
-	PointsPeriod  float64 `json:"points_period,omitempty"`
+	Rank               int64      `json:"rank"`
+	UserID             int64      `json:"user_id"`
+	Username           string     `json:"username"`
+	HomeCountry        *string    `json:"home_country,omitempty"`
+	TotalPoints        float64    `json:"total_points"`
+	GkCount            int64      `json:"gk_count,omitempty"`
+	MoveCount          int64      `json:"move_count,omitempty"`
+	LastActive         *time.Time `json:"last_active,omitempty"`
+	AvgPointsPerMove   float64    `json:"avg_points_per_move,omitempty"`
+	PointsPeriod       float64    `json:"points_period,omitempty"`
 }
 
 // ── User ─────────────────────────────────────────────────────────────────────
@@ -95,15 +96,16 @@ type UserCountry struct {
 
 // UserMove is a single move entry.
 type UserMove struct {
-	MoveID       int64      `json:"move_id"`
-	GkID         int64      `json:"gk_id"`
-	GkName       string     `json:"gk_name,omitempty"`
-	MoveType     int        `json:"move_type"`
-	MoveTypeName string     `json:"move_type_name"`
-	Country      *string    `json:"country,omitempty"`
-	Waypoint     *string    `json:"waypoint,omitempty"`
-	Distance     *int       `json:"distance,omitempty"`
-	MovedAt      *time.Time `json:"moved_at,omitempty"`
+	MoveID   int64       `json:"move_id"`
+	GkID     int64       `json:"gk_id"`
+	GkName   string      `json:"gk_name,omitempty"`
+	MoveType int         `json:"move_type"`
+	TypeName string      `json:"type_name"`
+	Country  *string     `json:"country,omitempty"`
+	Waypoint *string     `json:"waypoint,omitempty"`
+	Distance *int        `json:"distance,omitempty"`
+	MovedOn  *time.Time  `json:"moved_on,omitempty"`
+	Points   *float64    `json:"points,omitempty"`
 }
 
 // ── GeoKret ──────────────────────────────────────────────────────────────────

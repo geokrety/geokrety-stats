@@ -89,8 +89,11 @@ func (h *Handler) leaderboardAllTime(ctx context.Context, offset, limit int) ([]
 	for rows.Next() {
 		var e models.LeaderboardEntry
 		if err := rows.Scan(&e.UserID, &e.Username, &e.HomeCountry,
-			&e.TotalPoints, &e.Rank, &e.DistinctGKs, &e.TotalMoves, &e.LastActive); err != nil {
+			&e.TotalPoints, &e.Rank, &e.GkCount, &e.MoveCount, &e.LastActive); err != nil {
 			return nil, 0, err
+		}
+		if e.MoveCount > 0 {
+			e.AvgPointsPerMove = e.TotalPoints / float64(e.MoveCount)
 		}
 		out = append(out, e)
 	}
