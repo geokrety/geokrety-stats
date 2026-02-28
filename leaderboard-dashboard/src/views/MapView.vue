@@ -123,7 +123,7 @@ onMounted(initMap)
 <template>
   <div>
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item active" aria-current="page">Waypoint Map</li>
@@ -134,7 +134,7 @@ onMounted(initMap)
     <div class="card mb-3 shadow-sm">
       <div class="card-body">
         <h4 class="mb-2">🗺️ Waypoint Map Viewer</h4>
-        <p class="text-muted mb-3">Enter a waypoint code (e.g., GC1A2B3, OK1234) to view on map</p>
+        <p class="text-muted mb-2">Enter a waypoint code (e.g., GC1A2B3, OK1234) to view on map</p>
 
         <!-- Search Form -->
         <div class="input-group">

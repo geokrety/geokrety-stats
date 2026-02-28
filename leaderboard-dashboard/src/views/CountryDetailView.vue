@@ -87,7 +87,7 @@ onMounted(loadCountryData)
 <template>
   <div>
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item"><RouterLink to="/countries">Countries</RouterLink></li>
@@ -116,11 +116,11 @@ onMounted(loadCountryData)
       </div>
 
       <!-- Key Statistics -->
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-2">
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm border-0">
             <div class="card-body">
-              <div class="text-muted small mb-2" title="Points awarded for all moves involving GeoKrety that visited this country">Total Points</div>
+              <div class="text-muted small mb-2" title="Total points earned by all GeoKrety that visited this country">Total Points</div>
               <div class="fs-3 fw-bold text-success">{{ formatInt(countryData.total_points_awarded) }}</div>
               <div class="text-muted small mt-2">from {{ formatInt(countryData.total_moves) }} moves</div>
             </div>
@@ -130,7 +130,7 @@ onMounted(loadCountryData)
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm border-0">
             <div class="card-body">
-              <div class="text-muted small mb-2" title="Average points awarded by GeoKrety that visited this country">Avg Points per Move</div>
+              <div class="text-muted small mb-2" title="Average points earned per move in this country">Avg Points per Move</div>
               <div class="fs-3 fw-bold text-info">{{ formatFloat(countryData.avg_points_per_move, 4) }}</div>
               <div class="text-muted small mt-2">based on {{ formatInt(countryData.total_moves) }} total moves</div>
             </div>
@@ -140,7 +140,7 @@ onMounted(loadCountryData)
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm border-0">
             <div class="card-body">
-              <div class="text-muted small mb-2" title="Number of distinct users who made moves involving GeoKrety that visited this country">Active Participants</div>
+              <div class="text-muted small mb-2" title="Total number of distinct users who interacted with GeoKrety in this country">Active Participants</div>
               <div class="fs-3 fw-bold text-primary">{{ formatInt(countryData.unique_users) }}</div>
               <div class="text-muted small mt-2">{{ formatInt(countryData.unique_gks) }} unique GeoKrety involved</div>
             </div>
@@ -149,7 +149,7 @@ onMounted(loadCountryData)
       </div>
 
       <!-- Country Evolution Charts -->
-      <div class="row g-4 mb-4">
+      <div class="row g-4 mb-2">
         <div class="col-md-6">
           <div class="card shadow-sm h-100">
             <div class="card-header"><b>Drops Evolution</b></div>
@@ -171,33 +171,33 @@ onMounted(loadCountryData)
       </div>
 
       <!-- Move Type Breakdown -->
-      <div class="card shadow-sm mb-4">
+      <div class="card shadow-sm mb-2">
         <div class="card-header bg-light">
           <h5 class="mb-0">Move Type Breakdown</h5>
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
+            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
               <div class="fs-2 mb-2">🌳</div>
               <div class="text-muted small" title="GeoKrety placed into a cache">Drops</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.drops) }}</div>
             </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
+            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
               <div class="fs-2 mb-2">🚀</div>
               <div class="text-muted small" title="GeoKrety taken from a cache or person">Grabs</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.grabs) }}</div>
             </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
+            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
               <div class="fs-2 mb-2">🥾</div>
               <div class="text-muted small" title="Virtual carry - GeoKrety held digitally without physical cache">DIPs</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.dips) }}</div>
             </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
+            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
               <div class="fs-2 mb-2">👀</div>
               <div class="text-muted small" title="GeoKrety spotted but not taken or placed">Seen</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.seen) }}</div>
             </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
+            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
               <div class="fs-2 mb-2">❤️</div>
               <div class="text-muted small" title="Favorite/love marks given to GeoKrety">Loves</div>
               <div class="fs-5 fw-bold text-danger">{{ formatInt(countryData.total_loves) }}</div>
@@ -214,13 +214,13 @@ onMounted(loadCountryData)
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <div class="mb-3">
+              <div class="mb-2">
                 <div class="text-muted small" title="Count of distinct GeoKrety that visited this country or were born in this country">Unique GeoKrety</div>
                 <div class="fs-5 fw-bold">{{ formatInt(countryData.unique_gks) }}</div>
               </div>
             </div>
             <div class="col-md-6">
-              <div class="mb-3">
+              <div class="mb-2">
                 <div class="text-muted small" title="Count of distinct users who made moves with GeoKrety in this country">Unique Users</div>
                 <div class="fs-5 fw-bold">{{ formatInt(countryData.unique_users) }}</div>
               </div>

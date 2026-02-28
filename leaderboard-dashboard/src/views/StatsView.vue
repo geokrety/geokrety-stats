@@ -60,7 +60,10 @@ onMounted(async () => {
   try {
     stats.value     = await fetchOne('/stats')
     const da        = await fetchList('/stats/activity/daily', { days: 90 })
-    daily.value     = da.items
+    daily.value     = (da.items || []).map(d => ({
+      day: d.day,
+      total_moves: d.total_moves
+    }))
     const ue = await fetchList('/stats/evolution/users')
     usersEvolution.value = ue.items
     const ge = await fetchList('/stats/evolution/geokrety')
@@ -79,7 +82,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item active" aria-current="page">Statistics</li>
@@ -100,7 +103,7 @@ onMounted(async () => {
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else>
       <!-- KPI Cards -->
-      <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-4" v-if="stats">
+      <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3 mb-4" v-if="stats">
         <div class="col">
           <div class="card text-center shadow-sm h-100">
             <div class="card-body py-3">
@@ -184,7 +187,7 @@ onMounted(async () => {
       </div>
 
       <!-- Evolution charts -->
-      <div class="row g-4 mb-4">
+      <div class="row g-4 mb-2">
         <div class="col-md-6">
           <div class="card shadow-sm h-100">
             <div class="card-header"><b>User Growth</b></div>
@@ -243,21 +246,27 @@ onMounted(async () => {
         <div class="col-lg-6">
           <div class="card shadow-sm h-100">
             <div class="card-header">
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <b>Top 20 Countries by Moves</b>
-                <div class="btn-group btn-group-sm" role="group" aria-label="Filter country statistics">
-                  <template v-for="opt in countryFilterOptions" :key="opt.value">
-                    <input
-                      type="radio"
-                      class="btn-check"
-                      :id="'countryFilter-' + opt.value"
-                      :value="opt.value"
-                      v-model="countryFilter"
-                    >
-                    <label class="btn btn-outline-secondary" :for="'countryFilter-' + opt.value">
-                      {{ opt.label }}
-                    </label>
-                  </template>
+              <div class="container-fluid p-0">
+                <div class="row align-items-center g-2">
+                  <div class="col-12 col-sm-auto">
+                    <b class="text-nowrap">Top 20 Countries</b>
+                  </div>
+                  <div class="col-12 col-sm">
+                    <div class="btn-group btn-group-sm w-100 w-sm-auto overflow-auto d-flex d-sm-inline-flex" role="group" aria-label="Filter country statistics">
+                      <template v-for="opt in countryFilterOptions" :key="opt.value">
+                        <input
+                          type="radio"
+                          class="btn-check"
+                          :id="'countryFilter-' + opt.value"
+                          :value="opt.value"
+                          v-model="countryFilter"
+                        >
+                        <label class="btn btn-outline-secondary flex-fill text-nowrap" :for="'countryFilter-' + opt.value">
+                          {{ opt.label }}
+                        </label>
+                      </template>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -281,13 +290,13 @@ onMounted(async () => {
         <div class="col-lg-6">
           <div class="card shadow-sm h-100">
             <div class="card-header"><b>Points Breakdown by Type</b></div>
-            <div class="table-responsive" style="max-height:360px; overflow-y:auto">
+            <div class="table-responsive border-0 mb-0" style="max-height:360px; overflow-y:auto">
               <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light sticky-top">
                   <tr>
-                    <th>Reward Type</th>
-                    <th class="text-end">Points</th>
-                    <th class="text-end d-none d-sm-table-cell">Count</th>
+                    <th title="Type of activity or bonus that awarded points">Reward Type</th>
+                    <th class="text-end" title="Total points awarded for this type globally">Points</th>
+                    <th class="text-end d-none d-sm-table-cell" title="Number of times this reward was triggered">Count</th>
                   </tr>
                 </thead>
                 <tbody>

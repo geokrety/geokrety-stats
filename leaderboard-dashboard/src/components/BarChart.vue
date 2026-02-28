@@ -26,6 +26,8 @@ function draw() {
     .append('svg')
     .attr('width', '100%')
     .attr('height', props.height)
+    .attr('viewBox', `0 0 ${el.clientWidth} ${props.height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`)
 

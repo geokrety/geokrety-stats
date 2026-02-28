@@ -56,7 +56,7 @@ const fmtFloat = (v, d = 2) => (v !== null && v !== undefined) ? Number(v).toFix
 <template>
   <div>
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item active" aria-current="page">GeoKrety</li>
@@ -100,7 +100,7 @@ const fmtFloat = (v, d = 2) => (v !== null && v !== undefined) ? Number(v).toFix
       <!-- Top pagination -->
       <Pagination v-if="meta.total" :meta="meta" v-model:page="page" class="mb-2" />
 
-      <div class="table-responsive">
+      <div class="table-responsive border-0 mb-0">
         <table class="table table-hover table-sm align-middle border">
           <thead class="table-dark">
             <tr>

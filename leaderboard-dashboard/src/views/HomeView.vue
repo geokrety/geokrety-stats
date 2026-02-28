@@ -21,8 +21,8 @@ const route  = useRoute()
 const period    = ref(route.query.period || 'all')
 const yearValue = ref(route.query.year   || '')
 const page      = ref(Number(route.query.page) || 1)
-const perPage   = ref(25)
-const sortCol   = ref(route.query.sort   || 'rank')  // rank|points|moves
+const perPage   = ref(100)
+const sortCol   = ref(route.query.sort   || 'points') // default to points as it's the leaderboard
 const loading   = ref(false)
 const error     = ref(null)
 const rows      = ref([])
@@ -54,7 +54,10 @@ async function load() {
   error.value   = null
   try {
     const { items, meta: m } = await fetchList('/leaderboard', {
-      period: effectivePeriod.value, page: page.value, per_page: perPage.value,
+      period: effectivePeriod.value, 
+      page: page.value, 
+      per_page: perPage.value,
+      sort: sortCol.value,
     })
     rows.value = items
     meta.value = m
@@ -68,11 +71,12 @@ async function load() {
   if (yearValue.value)  q.year   = yearValue.value
   if (period.value !== 'all') q.period = period.value
   if (page.value > 1)   q.page   = page.value
+  if (sortCol.value !== 'points') q.sort = sortCol.value
   router.replace({ query: q })
 }
 
 onMounted(() => { fetchYears(); load() })
-watch([period, yearValue], () => { page.value = 1; load() })
+watch([period, yearValue, sortCol], () => { page.value = 1; load() })
 watch([page], load)
 
 function selectPeriod(p) { period.value = p; yearValue.value = '' }
@@ -88,34 +92,24 @@ function medalClass(rank) {
 // Helper: get the displayed points value for a row
 function displayPoints(row) {
   // For period-based views, the API returns `points_period` (not total_points)
-  if (isPeriodMode.value && row.points_period) return row.points_period
+  if (isPeriodMode.value && row.points_period !== undefined) return row.points_period
   return row.total_points
 }
 
-const sortOptions = [
-  { key: 'rank',     label: 'Rank',        title: 'Sort by overall rank' },
-  { key: 'points',   label: 'Points',      title: 'Sort by total points' },
-  { key: 'moves',    label: 'Moves',       title: 'Sort by number of moves' },
-  { key: 'gks',      label: 'GKs',         title: 'Sort by number of GeoKrety interacted with' },
-  { key: 'countries',label: 'Countries',   title: 'Sort by countries visited' },
-]
-
 function sortedRows() {
-  if (sortCol.value === 'rank' || !rows.value.length) return rows.value
-  return [...rows.value].sort((a, b) => {
-    switch (sortCol.value) {
-      case 'points':    return (displayPoints(b) || 0) - (displayPoints(a) || 0)
-      case 'moves':     return (b.move_count || 0) - (a.move_count || 0)
-      case 'gks':       return (b.gk_count || 0) - (a.gk_count || 0)
-      case 'countries': return (b.countries_count || 0) - (a.countries_count || 0)
-      default:          return (a.rank || 0) - (b.rank || 0)
-    }
-  })
+  return rows.value
 }
 </script>
 
 <template>
   <div>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-2">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">Home</li>
+      </ol>
+    </nav>
+
     <!-- Header card -->
     <div class="card mb-4 shadow-sm">
       <div class="card-body">
@@ -125,40 +119,47 @@ function sortedRows() {
     </div>
 
     <!-- Controls row -->
-    <div class="d-flex align-items-center justify-content-end mb-3 flex-wrap gap-2">
-      <div class="d-flex gap-2 align-items-center flex-wrap">
-        <!-- Live badge -->
-        <span v-if="connected" class="badge bg-success"><i class="bi bi-broadcast me-1"></i>Live</span>
-        <!-- Period selector -->
-        <div class="btn-group btn-group-sm" role="group">
-          <button
-            v-for="p in PERIODS" :key="p.value"
-            class="btn"
-            :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
-            @click="selectPeriod(p.value)"
-          >
-            <span v-if="p.value === 'year'">📅 Year</span>
-            <span v-else>{{ p.label }}</span>
-          </button>
-        </div>
-        <!-- Year dropdown selector -->
-        <div v-if="availableYears.length" class="dropdown">
-          <button
-            class="btn btn-sm"
-            :class="yearValue ? 'btn-info' : 'btn-outline-secondary'"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            {{ yearValue ? `${yearValue} 📅` : 'Select Year...' }}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" style="max-height: 300px; overflow-y: auto;">
-            <li v-for="y in availableYears" :key="y">
-              <a href="#" class="dropdown-item" :class="yearValue === y ? 'active' : ''" @click.prevent="selectYear(y)">
-                {{ y }}
-              </a>
-            </li>
-          </ul>
+    <div class="d-flex align-items-center justify-content-end mb-2">
+      <div class="container-fluid p-0">
+        <div class="row align-items-center g-2">
+          <div v-if="connected" class="col-auto">
+            <span class="badge bg-success"><i class="bi bi-broadcast me-1"></i>Live</span>
+          </div>
+          <div class="col">
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+              <!-- Period selector -->
+              <div class="btn-group btn-group-sm overflow-auto d-flex" role="group">
+                <button
+                  v-for="p in PERIODS" :key="p.value"
+                  class="btn flex-fill text-nowrap"
+                  :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
+                  @click="selectPeriod(p.value)"
+                >
+                  <span v-if="p.value === 'year'">📅 Year</span>
+                  <span v-else>{{ p.label }}</span>
+                </button>
+              </div>
+              <!-- Year dropdown selector -->
+              <div v-if="availableYears.length" class="dropdown">
+                <button
+                  class="btn btn-sm w-100"
+                  :class="yearValue ? 'btn-info' : 'btn-outline-secondary'"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  {{ yearValue ? `${yearValue} 📅` : 'Select Year...' }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="max-height: 300px; overflow-y: auto;">
+                  <li v-for="y in availableYears" :key="y">
+                    <a href="#" class="dropdown-item" :class="yearValue === y ? 'active' : ''" @click.prevent="selectYear(y)">
+                      {{ y }}
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -168,7 +169,7 @@ function sortedRows() {
 
     <!-- Table -->
     <div class="card shadow-sm">
-      <div class="table-responsive">
+      <div class="table-responsive border-0 mb-0">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-dark">
             <tr>

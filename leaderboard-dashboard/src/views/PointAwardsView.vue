@@ -61,9 +61,9 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
 <template>
   <div>
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><RouterLink to="/">Leaderboard</RouterLink></li>
+        <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item">
           <RouterLink v-if="user" :to="`/users/${userId}`">{{ user.username }}</RouterLink>
           <span v-else>User #{{ userId }}</span>
@@ -73,7 +73,7 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
     </nav>
 
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
       <h4 class="mb-0">
         <i class="bi bi-list-stars text-warning me-2"></i>
         Point Awards
@@ -104,7 +104,7 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
 
     <!-- Table -->
     <div class="card shadow-sm">
-      <div class="table-responsive">
+      <div class="table-responsive border-0 mb-0">
         <table class="table table-sm table-hover mb-0 align-middle">
           <thead class="table-dark">
             <tr>

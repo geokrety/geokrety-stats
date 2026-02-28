@@ -6,43 +6,53 @@ import { useLiveStats } from './composables/useWebSocket.js'
 const route = useRoute()
 const { connected, stats, connectedUsers } = useLiveStats()
 
+const navMenu = ref(null)
+
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
+
+const closeMenu = () => {
+  const collapseElement = document.getElementById('navmenu')
+  if (collapseElement && collapseElement.classList.contains('show')) {
+    const bsCollapse = bootstrap.Collapse.getInstance(collapseElement) || new bootstrap.Collapse(collapseElement)
+    bsCollapse.hide()
+  }
+}
 </script>
 
 <template>
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <RouterLink class="navbar-brand fw-bold" to="/">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+    <div class="container-fluid px-2 px-md-4">
+      <RouterLink class="navbar-brand fw-bold" to="/" @click="closeMenu">
         <i class="bi bi-geo-alt-fill text-warning me-1"></i> GeoKrety Leaderboard
       </RouterLink>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navmenu">
+      <div class="collapse navbar-collapse" id="navmenu" ref="navMenu">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <RouterLink class="nav-link" :class="{ active: isActive('/') && route.path === '/' }" to="/">
+            <RouterLink class="nav-link px-3" :class="{ active: isActive('/') && route.path === '/' }" to="/" @click="closeMenu">
               <i class="bi bi-trophy me-1"></i>Leaderboard
             </RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" :class="{ active: isActive('/geokrety') && route.path.startsWith('/geokrety') && !route.params.id }" to="/geokrety">
+            <RouterLink class="nav-link px-3" :class="{ active: isActive('/geokrety') && route.path.startsWith('/geokrety') && !route.params.id }" to="/geokrety" @click="closeMenu">
               <i class="bi bi-gift me-1"></i>GeoKrety
             </RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" :class="{ active: isActive('/countries') }" to="/countries">
+            <RouterLink class="nav-link px-3" :class="{ active: isActive('/countries') }" to="/countries" @click="closeMenu">
               <i class="bi bi-globe me-1"></i>Countries
             </RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" :class="{ active: isActive('/stats') }" to="/stats">
+            <RouterLink class="nav-link px-3" :class="{ active: isActive('/stats') }" to="/stats" @click="closeMenu">
               <i class="bi bi-graph-up me-1"></i>Statistics
             </RouterLink>
           </li>
         </ul>
-        <span class="navbar-text small">
+        <span class="navbar-text small px-3">
           <span v-if="connected" class="text-success">
             <i class="bi bi-wifi me-1"></i>Live
           </span>
@@ -59,7 +69,7 @@ const isActive = (path) => route.path === path || route.path.startsWith(path + '
   </nav>
 
   <!-- Main content -->
-  <main class="container-xl py-3">
+  <main class="container-fluid py-3 px-1 px-md-4" style="overflow-x: hidden;">
     <RouterView />
   </main>
 

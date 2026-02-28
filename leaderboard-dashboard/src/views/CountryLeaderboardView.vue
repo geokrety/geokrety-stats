@@ -98,7 +98,7 @@ const formatFloat = (num, decimals = 2) => {
 <template>
   <div>
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item active" aria-current="page">Countries</li>
@@ -139,7 +139,7 @@ const formatFloat = (num, decimals = 2) => {
     <div v-else-if="countries.length === 0" class="alert alert-info">No countries data available.</div>
     <div v-else>
       <!-- View Mode Selector -->
-      <div class="mb-3">
+      <div class="mb-2">
         <div class="btn-group" role="group">
           <input
             type="radio"
@@ -182,7 +182,7 @@ const formatFloat = (num, decimals = 2) => {
             </div>
             <div class="card-body">
               <!-- Key Stats -->
-              <div class="row g-2 mb-3">
+              <div class="row g-2 mb-2">
                 <div class="col-6">
                   <small class="text-muted d-block">Points</small>
                   <div class="fw-bold fs-5 text-success">{{ formatInt(country.total_points_awarded) }}</div>
@@ -241,22 +241,22 @@ const formatFloat = (num, decimals = 2) => {
       </div>
 
       <!-- Table View -->
-      <div v-else-if="viewMode === 'table'" class="table-responsive">
+      <div v-else-if="viewMode === 'table'" class="table-responsive border-0 mb-0">
         <table class="table table-hover table-sm align-middle border">
           <thead class="table-light sticky-top">
             <tr>
-              <th style="width: 60px">#</th>
-              <th>Country</th>
-              <th class="text-end">Points</th>
-              <th class="text-end d-none d-md-table-cell text-nowrap">Avg/Move</th>
-              <th class="text-end d-none d-sm-table-cell">Moves</th>
+              <th style="width: 60px" title="Rank position based on current sort">#</th>
+              <th title="Country name">Country</th>
+              <th class="text-end" title="Total points earned in this country">Points</th>
+              <th class="text-end d-none d-md-table-cell text-nowrap" title="Average points earned per move in this country">Avg/Move</th>
+              <th class="text-end d-none d-sm-table-cell" title="Total number of recorded moves in this country">Moves</th>
               <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('drop')">🌳</th>
               <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('grab')">🚀</th>
               <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('dip')">🥾</th>
               <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('seen')">👀</th>
-              <th class="text-end d-none d-md-table-cell">GeoKrety</th>
-              <th class="text-end d-none d-md-table-cell">Users</th>
-              <th class="text-end">❤️</th>
+              <th class="text-end d-none d-md-table-cell" title="Number of distinct GeoKrety that visited this country">GeoKrety</th>
+              <th class="text-end d-none d-md-table-cell" title="Number of distinct users who made moves in this country">Users</th>
+              <th class="text-end" title="Total loves given to GeoKrety that visited this country">❤️</th>
             </tr>
           </thead>
           <tbody>

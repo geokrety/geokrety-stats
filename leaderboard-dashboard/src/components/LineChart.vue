@@ -74,6 +74,8 @@ function draw() {
     .append('svg')
     .attr('width', '100%')
     .attr('height', props.height)
+    .attr('viewBox', `0 0 ${totalWidth} ${props.height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`)
 
@@ -156,7 +158,7 @@ function draw() {
   const mouseMoveHandler = (event) => {
     const [mouseX] = d3.pointer(event, svg.node())
     const date = x.invert(mouseX)
-    
+
     // Find the nearest data point
     let nearest = null
     let minDist = Infinity
@@ -184,12 +186,12 @@ function draw() {
       const tooltipHeight = tooltip.node().offsetHeight || 50
       let left = margin.left + xPos - tooltipWidth / 2
       let top = margin.top + yPos - tooltipHeight - 8
-      
+
       // Keep tooltip within bounds
       if (left < 0) left = 0
       if (left + tooltipWidth > totalWidth) left = totalWidth - tooltipWidth
       if (top < 0) top = margin.top + yPos + 8
-      
+
       tooltip
         .style('left', left + 'px')
         .style('top', top + 'px')

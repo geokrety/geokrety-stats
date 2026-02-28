@@ -83,51 +83,57 @@ watch(activeTab, (tab) => {
   <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
   <div v-else-if="user">
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><RouterLink to="/">Leaderboard</RouterLink></li>
+        <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
         <li class="breadcrumb-item active" aria-current="page">{{ user.username }}</li>
       </ol>
     </nav>
 
     <!-- User header -->
     <div class="card mb-4 shadow-sm">
-      <div class="card-body d-flex align-items-center gap-4 flex-wrap">
-        <div class="fs-1">👤</div>
-        <div class="flex-grow-1">
-          <h3 class="mb-1">{{ user.username }}</h3>
-          <p class="text-muted mb-0 small">
-            User #{{ user.user_id }}
-            <span v-if="user.joined_at"> &mdash; joined {{ user.joined_at?.slice(0, 10) }}</span>
-          </p>
-        </div>
-        <div class="row g-3 text-center">
-          <div class="col">
-            <div class="fw-bold text-primary fs-4">{{ user.total_points?.toLocaleString() }}</div>
-            <div class="text-muted small">Total Points</div>
+      <div class="card-body">
+        <div class="row align-items-center g-3">
+          <div class="col-auto">
+            <div class="fs-1">👤</div>
           </div>
           <div class="col">
-            <div class="fw-bold fs-5">{{ user.rank_all_time?.toLocaleString() || '—' }}</div>
-            <div class="text-muted small">Rank</div>
+            <h3 class="mb-1 text-break">{{ user.username }}</h3>
+            <p class="text-muted mb-0 small text-nowrap">
+              User #{{ user.user_id }}
+              <span v-if="user.joined_at" class="d-none d-sm-inline"> &mdash; joined {{ user.joined_at?.slice(0, 10) }}</span>
+            </p>
           </div>
-          <div class="col">
-            <div class="fw-bold fs-5">{{ user.total_moves?.toLocaleString() }}</div>
-            <div class="text-muted small">Moves</div>
-          </div>
-          <div class="col">
-            <div class="fw-bold fs-5">{{ user.distinct_gks?.toLocaleString() }}</div>
-            <div class="text-muted small">GeoKrety</div>
-          </div>
-          <div class="col">
-            <div class="fw-bold fs-5">{{ user.countries_count?.toLocaleString() }}</div>
-            <div class="text-muted small">Countries</div>
+          <div class="col-12 col-lg-auto mt-lg-0 mt-3 border-top pt-3 border-lg-top-0 pt-lg-0">
+            <div class="row g-3 text-center justify-content-center">
+              <div class="col-4 col-sm-auto mb-2">
+                <div class="fw-bold text-primary fs-4">{{ user.total_points?.toLocaleString() }}</div>
+                <div class="text-muted small">Points</div>
+              </div>
+              <div class="col-4 col-sm-auto mb-2">
+                <div class="fw-bold fs-5">{{ user.rank_all_time?.toLocaleString() || '—' }}</div>
+                <div class="text-muted small">Rank</div>
+              </div>
+              <div class="col-4 col-sm-auto mb-2">
+                <div class="fw-bold fs-5">{{ user.total_moves?.toLocaleString() }}</div>
+                <div class="text-muted small">Moves</div>
+              </div>
+              <div class="col-6 col-sm-auto mb-2">
+                <div class="fw-bold fs-5">{{ user.distinct_gks?.toLocaleString() }}</div>
+                <div class="text-muted small">GeoKrety</div>
+              </div>
+              <div class="col-6 col-sm-auto mb-2">
+                <div class="fw-bold fs-5">{{ user.countries_count?.toLocaleString() }}</div>
+                <div class="text-muted small">Countries</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3">
+    <ul class="nav nav-tabs mb-2">
       <li class="nav-item">
         <button class="nav-link" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">
           <i class="bi bi-bar-chart-line me-1"></i>Overview
@@ -184,14 +190,14 @@ watch(activeTab, (tab) => {
       <!-- Points breakdown table -->
       <div class="card shadow-sm">
         <div class="card-header"><b>Points Breakdown</b></div>
-        <div class="table-responsive">
+        <div class="table-responsive border-0 mb-0">
           <table class="table table-sm table-hover mb-0 align-middle">
             <thead class="table-light">
               <tr>
-                <th>Source</th>
-                <th class="text-end">Points</th>
-                <th class="text-end d-none d-sm-table-cell">Count</th>
-                <th class="text-end" style="width: 50px"></th>
+                <th title="Activity or bonus type that awarded points to this user">Source</th>
+                <th class="text-end" title="Total points earned from this source">Points</th>
+                <th class="text-end d-none d-sm-table-cell" title="Number of times this reward was earned by the user">Count</th>
+                <th class="text-end" style="width: 50px" title="Actions (View details)"></th>
               </tr>
             </thead>
             <tbody>
@@ -222,15 +228,15 @@ watch(activeTab, (tab) => {
     <!-- Moves tab -->
     <div v-if="activeTab === 'moves'">
       <div class="card shadow-sm border-0">
-        <div class="table-responsive">
+        <div class="table-responsive border-0 mb-0">
           <table class="table table-hover table-sm mb-0 align-middle border">
             <thead class="table-dark">
               <tr>
-                <th class="ps-3">Date</th>
-                <th>GeoKret</th>
-                <th class="d-none d-md-table-cell">Type</th>
-                <th class="text-end">Points</th>
-                <th class="d-none d-sm-table-cell pe-3">Country</th>
+                <th class="ps-3" title="Date the user logged the move">Date</th>
+                <th title="GeoKret that was moved">GeoKret</th>
+                <th class="d-none d-md-table-cell" title="Type of activity logged (Drop, Grab, Dip, etc.)">Type</th>
+                <th class="text-end" title="Total points earned by the user for this move">Points</th>
+                <th class="d-none d-sm-table-cell pe-3" title="Country where the activity took place">Country</th>
               </tr>
             </thead>
             <tbody>
@@ -263,7 +269,7 @@ watch(activeTab, (tab) => {
 
     <!-- Countries tab -->
     <div v-if="activeTab === 'countries'">
-      <div class="card shadow-sm mb-3">
+      <div class="card shadow-sm mb-2">
         <div class="card-header"><b>Countries visited</b></div>
         <div class="card-body p-2">
           <WorldMap v-if="countries.length" :countries="countries" :height="380" />
