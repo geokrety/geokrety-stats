@@ -57,9 +57,21 @@ async function loadMoves() {
   moveMeta.value = meta
 }
 
-onMounted(() => { load(); loadMoves() })
+onMounted(() => {
+  // Read tab from URL hash
+  const hash = window.location.hash.slice(1)
+  if (hash && ['overview', 'moves', 'countries', 'breakdown'].includes(hash)) {
+    activeTab.value = hash
+  }
+  load()
+  loadMoves()
+})
 watch(movePage, loadMoves)
 watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
+watch(activeTab, (tab) => {
+  // Update URL hash when tab changes
+  window.location.hash = tab
+})
 </script>
 
 <template>
@@ -218,7 +230,11 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
                 </td>
                 <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
                 <td class="text-end fw-semibold text-primary">{{ m.points?.toLocaleString() }}</td>
-                <td>{{ m.country }}</td>
+                <td>
+                  <span v-if="m.country" :title="`Country: ${m.country}`">
+                    {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>

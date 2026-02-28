@@ -63,8 +63,8 @@ services:
       context: ./leaderboard-dashboard
       dockerfile: Dockerfile
     restart: unless-stopped
-    # depends_on:
-    #   leaderboard-api:
+    depends_on:
+      - leaderboard-api
     #     condition: service_healthy
     ports:
       - "3000:80"
