@@ -90,6 +90,7 @@ func main() {
 		v1.GET("/users/:id", h.GetUser)
 		v1.GET("/users/:id/moves", h.UserMoves)
 		v1.GET("/users/:id/geokrety", h.UserGeokrety)
+		v1.GET("/users/:id/chains", h.UserChains)
 		v1.GET("/users/:id/related-users", h.UserRelatedUsers)
 		v1.GET("/users/:id/countries", h.UserCountries)
 		v1.GET("/users/:id/points/timeline", h.UserPointsTimeline)
@@ -101,11 +102,18 @@ func main() {
 		v1.GET("/geokrety", h.ListGeokrety)
 		v1.GET("/geokrety/:id", h.GetGeoKret)
 		v1.GET("/geokrety/:id/moves", h.GeoKretMoves)
+		v1.GET("/geokrety/:id/chains", h.GeoKretChains)
 		v1.GET("/geokrety/:id/countries", h.GeoKretCountries)
 		v1.GET("/geokrety/:id/holders", h.GeoKretHolderHistory)
 		v1.GET("/geokrety/:id/related-users", h.GeoKretRelatedUsers)
 		v1.GET("/geokrety/:id/points/timeline", h.GeoKretPointsTimeline)
 		v1.GET("/geokrety/:id/points/log", h.GeoKretPointsLog)
+
+		// ── Chains ───────────────────────────────────────────────────────
+		v1.GET("/chains/:id", h.ChainDetail)
+		v1.GET("/chains/:id/members", h.ChainMembers)
+		v1.GET("/chains/:id/moves", h.ChainMoves)
+		v1.GET("/moves/:id/chains", h.MoveChains)
 
 		// ── Global Stats ─────────────────────────────────────────────────
 		v1.GET("/stats", h.GlobalStats)

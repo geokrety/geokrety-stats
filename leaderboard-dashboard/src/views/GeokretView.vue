@@ -174,6 +174,11 @@ watch(activeTab, (tab) => {
                 <div class="text-muted" style="font-size: 0.65rem">Mult.</div>
               </div>
             </div>
+            <div class="text-center mt-2">
+              <RouterLink :to="`/geokrety/${gkId}/chains`" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-link-45deg me-1"></i>Chains
+              </RouterLink>
+            </div>
           </div>
         </div>
       </div>
@@ -287,6 +292,7 @@ watch(activeTab, (tab) => {
                 <th title="User who logged the move">Author</th>
                 <th class="d-none d-md-table-cell" title="Type of the move (Drop, Grab, Dip, etc.)">Type</th>
                 <th class="text-end" title="Points awarded for this move (including bonuses)">Points</th>
+                <th class="text-end" title="Chain links related to this move">Chain</th>
                 <th class="d-none d-sm-table-cell" title="Wayoint/Cache where the GeoKret was placed or seen">Waypoint</th>
                 <th class="d-none d-lg-table-cell pe-3" title="Country where the move took place">Country</th>
               </tr>
@@ -305,6 +311,16 @@ watch(activeTab, (tab) => {
                   <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span>
                 </td>
                 <td class="text-end fw-bold text-success">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
+                <td class="text-end">
+                  <RouterLink
+                    v-if="m.chain_id"
+                    :to="`/moves/${m.move_id}/chains`"
+                    class="btn btn-xs btn-outline-secondary py-0 px-1"
+                    style="font-size:0.75rem"
+                    @click.stop
+                  >view</RouterLink>
+                  <span v-else class="text-muted small">—</span>
+                </td>
                 <td class="d-none d-sm-table-cell">
                   <a v-if="m.waypoint"
                      :href="waypointExternalUrl(m.waypoint)"

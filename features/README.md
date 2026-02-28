@@ -87,6 +87,11 @@ Include:
 **Status:** Complete
 **Description:** Real-time display of active dashboard users
 
+### Chain Details Navigation
+**File:** [chain-details-navigation.md](chain-details-navigation.md)
+**Status:** Complete
+**Description:** Chain detail pages and cross-links from users, GeoKrety, and moves views
+
 ## How AI Uses These Files
 
 The AI assistant will:

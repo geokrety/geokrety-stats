@@ -127,6 +127,9 @@ const fmtFloat = (v, d = 2) => (v !== null && v !== undefined) ? Number(v).toFix
                 <div class="fw-semibold text-truncate" style="max-width: 200px">
                   {{ gk.gk_name || `GK #${gk.gk_id}` }}
                 </div>
+                <RouterLink :to="`/geokrety/${gk.gk_id}/chains`" class="btn btn-xs btn-outline-secondary py-0 px-1 mt-1" style="font-size:0.75rem" @click.stop>
+                  chains
+                </RouterLink>
                 <div class="d-md-none small text-muted mt-1">
                   {{ fmt(gk.total_moves) }} moves • {{ fmt(gk.distinct_users) }} users
                 </div>

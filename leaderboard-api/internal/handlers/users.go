@@ -186,11 +186,12 @@ func (h *Handler) UserMoves(c *gin.Context) {
 	const q = `
 		SELECT m.id, m.geokret, g.name, m.move_type,
 		       m.country, m.waypoint, m.distance, m.moved_on_datetime,
-		       COALESCE(p.points, 0)::float8 as points
+		       COALESCE(p.points, 0)::float8 as points,
+		       p.chain_id
 		FROM geokrety.gk_moves m
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = m.geokret
 		LEFT JOIN (
-			SELECT move_id, SUM(points) as points
+			SELECT move_id, SUM(points) as points, MAX(chain_id) as chain_id
 			FROM geokrety_stats.user_points_log
 			GROUP BY move_id
 		) p ON p.move_id = m.id
@@ -210,8 +211,9 @@ func (h *Handler) UserMoves(c *gin.Context) {
 		var r models.UserMove
 		var gkName *string
 		var points float64
+		var chainID *int64
 		if err := rows.Scan(&r.MoveID, &r.GkID, &gkName, &r.MoveType,
-			&r.Country, &r.Waypoint, &r.Distance, &r.MovedOn, &points); err != nil {
+			&r.Country, &r.Waypoint, &r.Distance, &r.MovedOn, &points, &chainID); err != nil {
 			errInternal(c, err)
 			return
 		}
@@ -221,6 +223,7 @@ func (h *Handler) UserMoves(c *gin.Context) {
 		if points > 0 {
 			r.Points = &points
 		}
+		r.ChainID = chainID
 		r.TypeName = moveTypeName(r.MoveType)
 		out = append(out, r)
 	}

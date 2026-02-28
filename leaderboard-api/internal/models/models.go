@@ -107,6 +107,7 @@ type UserMove struct {
 	Distance *int        `json:"distance,omitempty"`
 	MovedOn  *time.Time  `json:"moved_on,omitempty"`
 	Points   *float64    `json:"points,omitempty"`
+	ChainID  *int64      `json:"chain_id,omitempty"`
 }
 
 // ── GeoKret ──────────────────────────────────────────────────────────────────
@@ -167,6 +168,44 @@ type GkMove struct {
 	Distance      *int        `json:"distance,omitempty"`
 	MovedOn       *time.Time  `json:"moved_on,omitempty"`
 	Points        *float64    `json:"points,omitempty"`
+	ChainID       *int64      `json:"chain_id,omitempty"`
+}
+
+type ChainSummary struct {
+	ChainID             int64      `json:"chain_id"`
+	GkID                int64      `json:"gk_id"`
+	GkHexID             string     `json:"gk_hex_id"`
+	GkName              string     `json:"gk_name"`
+	Status              string     `json:"status"`
+	StartedAt           time.Time  `json:"started_at"`
+	EndedAt             *time.Time `json:"ended_at,omitempty"`
+	ChainLastActive     time.Time  `json:"chain_last_active"`
+	EndReason           *string    `json:"end_reason,omitempty"`
+	MemberCount         int64      `json:"member_count"`
+	ChainPoints         float64    `json:"chain_points"`
+	HasUserCompletion   bool       `json:"has_user_completion,omitempty"`
+	MoveID              *int64     `json:"move_id,omitempty"`
+	MoveChainPoints     *float64   `json:"move_chain_points,omitempty"`
+}
+
+type ChainMember struct {
+	ChainID   int64      `json:"chain_id"`
+	UserID    int64      `json:"user_id"`
+	Username  string     `json:"username"`
+	Position  int        `json:"position"`
+	JoinedAt  *time.Time `json:"joined_at,omitempty"`
+}
+
+type ChainMove struct {
+	MoveID         int64      `json:"move_id"`
+	AuthorID       *int64     `json:"author_id,omitempty"`
+	AuthorUsername *string    `json:"author_username,omitempty"`
+	MoveType       int        `json:"move_type"`
+	TypeName       string     `json:"type_name"`
+	Country        *string    `json:"country,omitempty"`
+	Waypoint       *string    `json:"waypoint,omitempty"`
+	MovedOn        *time.Time `json:"moved_on,omitempty"`
+	ChainPoints    float64    `json:"chain_points"`
 }
 
 // ── Global Stats ─────────────────────────────────────────────────────────────

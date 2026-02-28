@@ -127,6 +127,11 @@ watch(activeTab, (tab) => {
                 <div class="text-muted small">Countries</div>
               </div>
             </div>
+            <div class="text-center mt-2">
+              <RouterLink :to="`/users/${userId}/chains`" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-link-45deg me-1"></i>Chains
+              </RouterLink>
+            </div>
           </div>
         </div>
       </div>
@@ -236,6 +241,7 @@ watch(activeTab, (tab) => {
                 <th title="GeoKret that was moved">GeoKret</th>
                 <th class="d-none d-md-table-cell" title="Type of activity logged (Drop, Grab, Dip, etc.)">Type</th>
                 <th class="text-end" title="Total points earned by the user for this move">Points</th>
+                <th class="text-end" title="Chain links related to this move">Chain</th>
                 <th class="d-none d-sm-table-cell pe-3" title="Country where the activity took place">Country</th>
               </tr>
             </thead>
@@ -254,6 +260,16 @@ watch(activeTab, (tab) => {
                   <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span>
                 </td>
                 <td class="text-end fw-bold text-primary">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
+                <td class="text-end">
+                  <RouterLink
+                    v-if="m.chain_id"
+                    :to="`/moves/${m.move_id}/chains`"
+                    class="btn btn-xs btn-outline-secondary py-0 px-1"
+                    style="font-size:0.75rem"
+                    @click.stop
+                  >view</RouterLink>
+                  <span v-else class="text-muted small">—</span>
+                </td>
                 <td class="d-none d-sm-table-cell pe-3">
                   <span v-if="m.country" :title="`Country: ${m.country}`" class="text-nowrap small text-muted">
                     {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}

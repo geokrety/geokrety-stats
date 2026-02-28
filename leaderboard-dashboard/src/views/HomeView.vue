@@ -212,6 +212,9 @@ function sortedRows() {
                 <RouterLink :to="`/users/${row.user_id}`" class="text-decoration-none fw-semibold">
                   {{ row.username }}
                 </RouterLink>
+                <RouterLink :to="`/users/${row.user_id}/chains`" class="btn btn-xs btn-outline-secondary ms-2 py-0 px-1" style="font-size:0.75rem">
+                  chains
+                </RouterLink>
                 <span v-if="row.home_country" class="text-muted small ms-1" :title="`Home country: ${row.home_country.toUpperCase()}`">
                   {{ getCountryFlag(row.home_country) }} {{ row.home_country.toUpperCase() }}
                 </span>
