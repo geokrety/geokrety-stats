@@ -105,6 +105,7 @@ func main() {
 		v1.GET("/geokrety/:id/holders", h.GeoKretHolderHistory)
 		v1.GET("/geokrety/:id/related-users", h.GeoKretRelatedUsers)
 		v1.GET("/geokrety/:id/points/timeline", h.GeoKretPointsTimeline)
+		v1.GET("/geokrety/:id/points/log", h.GeoKretPointsLog)
 
 		// ── Global Stats ─────────────────────────────────────────────────
 		v1.GET("/stats", h.GlobalStats)

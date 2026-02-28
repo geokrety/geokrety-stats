@@ -10,10 +10,11 @@ import (
 	"github.com/geokrety/leaderboard-api/internal/models"
 )
 
-// gkHexID converts a numeric GeoKret ID to its public GKXXXX format.
-// Example: 4660 → "GK1234"
-func gkHexID(id int64) string {
-	return fmt.Sprintf("GK%04X", id)
+// gkHexID converts a numeric GeoKrety public ID (gkid column) to its GKXXXX format.
+// The gkid column is the actual public ID (different from internal id).
+// Example: 15598 → "GK3CEE"
+func gkHexID(publicID int64) string {
+	return fmt.Sprintf("GK%04X", publicID)
 }
 
 // ListGeokrety handles GET /api/v1/geokrety
@@ -24,26 +25,26 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 
 	// Map frontend sort key → SQL ORDER BY expression
 	sortMap := map[string]string{
-		"points":     "total_points_generated DESC",
-		"moves":      "total_moves DESC",
-		"users":      "distinct_users DESC",
-		"countries":  "countries_count DESC",
-		"loves":      "loves_count DESC",
-		"multiplier": "current_multiplier DESC",
-		"distance":   "distance DESC",
+		"points":     "s.total_points_generated DESC",
+		"moves":      "s.total_moves DESC",
+		"users":      "s.distinct_users DESC",
+		"countries":  "s.countries_count DESC",
+		"loves":      "s.loves_count DESC",
+		"multiplier": "s.current_multiplier DESC",
+		"distance":   "s.distance DESC",
 	}
 	sortParam := c.DefaultQuery("sort", "points")
 	orderBy, ok2 := sortMap[sortParam]
 	if !ok2 {
-		orderBy = "total_points_generated DESC"
+		orderBy = "s.total_points_generated DESC"
 	}
 
 	baseSelect := `
-		SELECT gk_id, name, gk_type, missing, distance,
-		       owner_id, owner_username, holder_id, holder_username,
-		       in_cache, is_non_collectible, is_parked, loves_count,
-		       total_moves, distinct_users, countries_count,
-		       total_points_generated, current_multiplier, last_move_at`
+		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.gk_type, s.missing, s.distance,
+		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
+		       s.in_cache, s.is_non_collectible, s.is_parked, s.loves_count,
+		       s.total_moves, s.distinct_users, s.countries_count,
+		       s.total_points_generated, s.current_multiplier, s.last_move_at`
 
 	var (
 		countQ, listQ string
@@ -51,19 +52,21 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 		listArgs      []interface{}
 	)
 
+	fromClause := `
+		FROM geokrety_stats.mv_gk_stats s
+		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id`
+
 	if search != "" {
 		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats WHERE name ILIKE $1`
-		listQ = baseSelect + `
-			FROM geokrety_stats.mv_gk_stats
-			WHERE name ILIKE $1
+		listQ = baseSelect + fromClause + `
+			WHERE s.name ILIKE $1
 			ORDER BY ` + orderBy + `
 			LIMIT $2 OFFSET $3`
 		countArgs = []interface{}{"%" + search + "%"}
 		listArgs = []interface{}{"%" + search + "%", perPage, offset}
 	} else {
 		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats`
-		listQ = baseSelect + `
-			FROM geokrety_stats.mv_gk_stats
+		listQ = baseSelect + fromClause + `
 			ORDER BY ` + orderBy + `
 			LIMIT $1 OFFSET $2`
 		countArgs = nil
@@ -111,7 +114,8 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 	var out []row
 	for dbRows.Next() {
 		var r row
-		if err := dbRows.Scan(&r.GkID, &r.Name, &r.GkType, &r.Missing, &r.Distance,
+		var publicGkID int64
+		if err := dbRows.Scan(&r.GkID, &publicGkID, &r.Name, &r.GkType, &r.Missing, &r.Distance,
 			&r.OwnerID, &r.OwnerUsername, &r.HolderID, &r.HolderUsername,
 			&r.InCache, &r.IsNonCollectible, &r.IsParked, &r.LovesCount,
 			&r.TotalMoves, &r.DistinctUsers, &r.CountriesCount,
@@ -120,7 +124,7 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 			return
 		}
 		r.GkTypeName = gkTypeName(r.GkType)
-		r.GkHexID = gkHexID(r.GkID)
+		r.GkHexID = gkHexID(publicGkID)
 		out = append(out, r)
 	}
 
@@ -143,20 +147,22 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT gk_id, name, tracking_code, gk_type, missing, distance, caches_count,
-		       created_on_datetime, born_on_datetime,
-		       owner_id, owner_username, holder_id, holder_username,
-		       in_cache, is_non_collectible, is_parked, loves_count,
-		       total_moves, total_drops, total_grabs, total_seen, total_dips,
-		       distinct_users, countries_count, caches_count_distinct,
-		       total_points_generated, users_awarded, current_multiplier,
-		       first_move_at, last_move_at
-		FROM geokrety_stats.mv_gk_stats
-		WHERE gk_id = $1`
+		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.tracking_code, s.gk_type, s.missing, s.distance, s.caches_count,
+		       s.created_on_datetime, s.born_on_datetime,
+		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
+		       s.in_cache, s.is_non_collectible, s.is_parked, s.loves_count,
+		       s.total_moves, s.total_drops, s.total_grabs, s.total_seen, s.total_dips,
+		       s.distinct_users, s.countries_count, s.caches_count_distinct,
+		       s.total_points_generated, s.users_awarded, s.current_multiplier,
+		       s.first_move_at, s.last_move_at
+		FROM geokrety_stats.mv_gk_stats s
+		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id
+		WHERE s.gk_id = $1`
 
 	var g models.GeoKret
+	var publicGkID int64
 	err = h.DB.QueryRow(c.Request.Context(), q, id).Scan(
-		&g.GkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+		&g.GkID, &publicGkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 		&g.CreatedAt, &g.BornAt,
 		&g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
 		&g.InCache, &g.IsNonCollectible, &g.IsParked, &g.LovesCount,
@@ -168,11 +174,11 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	if err != nil {
 		// fallback to raw table (no stats)
 		const fallback = `
-			SELECT id, name, tracking_code, type, missing, distance, caches_count,
+			SELECT id, gkid, name, tracking_code, type, missing, distance, caches_count,
 			       created_on_datetime, born_on_datetime
 			FROM geokrety.gk_geokrety WHERE id = $1`
 		err2 := h.DB.QueryRow(c.Request.Context(), fallback, id).Scan(
-			&g.GkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+			&g.GkID, &publicGkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 			&g.CreatedAt, &g.BornAt,
 		)
 		if err2 != nil {
@@ -182,7 +188,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		g.CurrentMultiplier = 1.0
 	}
 
-	g.GkHexID = gkHexID(g.GkID)
+	g.GkHexID = gkHexID(publicGkID)
 	g.GkTypeName = gkTypeName(g.GkType)
 	ok(c, g, models.Meta{}, nil)
 }
@@ -469,6 +475,69 @@ func (h *Handler) GeoKretRelatedUsers(c *gin.Context) {
 
 	hasNext := int64(offset+perPage) < total
 	ok(c, out, models.Meta{
+		Total:   total,
+		Page:    page,
+		PerPage: perPage,
+		HasNext: hasNext,
+		HasPrev: page > 1,
+	}, buildLinks(c, page, perPage, hasNext))
+}
+
+// GeoKretPointsLog handles GET /api/v1/geokrety/:id/points/log
+// Returns detailed point award entries for a given GeoKret.
+func (h *Handler) GeoKretPointsLog(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		errNotFound(c, "invalid gk id")
+		return
+	}
+	page, perPage, offset := parsePagination(c)
+
+	const countQ = `SELECT COUNT(*) FROM geokrety_stats.user_points_log WHERE gk_id = $1`
+	var total int64
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+
+	const q = `
+		SELECT pl.id, pl.user_id, u.username, pl.move_id, pl.label, pl.points, pl.awarded_at
+		FROM geokrety_stats.user_points_log pl
+		LEFT JOIN geokrety.gk_users u ON u.id = pl.user_id
+		WHERE pl.gk_id = $1
+		ORDER BY pl.awarded_at DESC
+		LIMIT $2 OFFSET $3`
+
+	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	if err != nil {
+		errInternal(c, err)
+		return
+	}
+	defer rows.Close()
+
+	type row struct {
+		ID        int64      `json:"id"`
+		UserID    int64      `json:"user_id"`
+		Username  *string    `json:"username,omitempty"`
+		MoveID    *int64     `json:"move_id,omitempty"`
+		Label     string     `json:"label"`
+		Points    float64    `json:"points"`
+		AwardedAt *time.Time `json:"awarded_at,omitempty"`
+	}
+
+	out2 := make([]row, 0)
+	for rows.Next() {
+		var r row
+		if err := rows.Scan(&r.ID, &r.UserID, &r.Username, &r.MoveID, &r.Label, &r.Points, &r.AwardedAt); err != nil {
+			errInternal(c, err)
+			return
+		}
+		out2 = append(out2, r)
+	}
+	if rows.Err() != nil {
+		errInternal(c, rows.Err())
+		return
+	}
+
+	hasNext := int64(offset+perPage) < total
+	ok(c, out2, models.Meta{
 		Total:   total,
 		Page:    page,
 		PerPage: perPage,

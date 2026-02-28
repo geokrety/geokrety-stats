@@ -17,7 +17,8 @@ const sortOptions = [
   { value: 'gks', label: 'GeoKrety Count' },
   { value: 'grabs', label: 'Grabs' },
   { value: 'drops', label: 'Drops' },
-  { value: 'dips', label: 'DIPs' }
+  { value: 'dips', label: 'DIPs' },
+  { value: 'loves', label: '❤️ Loves' }
 ]
 
 async function loadCountries() {
@@ -47,6 +48,8 @@ async function loadCountries() {
           return (b.drops || 0) - (a.drops || 0)
         case 'dips':
           return (b.dips || 0) - (a.dips || 0)
+        case 'loves':
+          return (b.total_loves || 0) - (a.total_loves || 0)
         default:
           return 0
       }
@@ -198,6 +201,10 @@ const formatFloat = (num, decimals = 2) => {
                   <small class="text-muted d-block">Users</small>
                   <div class="fw-bold fs-5">{{ formatInt(country.unique_users) }}</div>
                 </div>
+                <div class="col-6">
+                  <small class="text-muted d-block" title="Total loves given to GeoKrety that visited this country">❤️ Loves</small>
+                  <div class="fw-bold fs-5 text-danger">{{ formatInt(country.total_loves) }}</div>
+                </div>
               </div>
 
               <!-- Move Type Breakdown -->
@@ -247,6 +254,7 @@ const formatFloat = (num, decimals = 2) => {
               <th class="text-end">👁️</th>
               <th class="text-end">GeoKrety</th>
               <th class="text-end">Users</th>
+              <th class="text-end" title="Total loves for GeoKrety that visited this country">❤️</th>
             </tr>
           </thead>
           <tbody>
@@ -270,6 +278,7 @@ const formatFloat = (num, decimals = 2) => {
               <td class="text-end text-muted small">{{ formatInt(country.seen) }}</td>
               <td class="text-end">{{ formatInt(country.unique_gks) }}</td>
               <td class="text-end">{{ formatInt(country.unique_users) }}</td>
+              <td class="text-end text-danger fw-semibold">{{ formatInt(country.total_loves) }}</td>
             </tr>
           </tbody>
         </table>
