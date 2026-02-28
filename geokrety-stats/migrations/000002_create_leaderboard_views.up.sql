@@ -12,6 +12,7 @@ SELECT
     u.home_country,
     COALESCE(t.total_points, 0)                 AS total_points,
     RANK() OVER (ORDER BY COALESCE(t.total_points, 0) DESC) AS rank,
+    COUNT(DISTINCT m.geokret)                   AS distinct_gks,
     COUNT(DISTINCT m.id)                        AS total_moves,
     MAX(m.moved_on_datetime)                    AS last_active
 FROM geokrety.gk_users u
@@ -158,7 +159,6 @@ WITH DATA;
 
 CREATE UNIQUE INDEX ON geokrety_stats.mv_user_stats (user_id);
 CREATE INDEX ON geokrety_stats.mv_user_stats (total_points DESC);
-CREATE INDEX ON geokrety_stats.mv_user_stats (rank_all_time);
 
 -- ============================================================
 -- GK STATS SUMMARY: per-geokret stats
