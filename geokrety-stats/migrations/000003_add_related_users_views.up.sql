@@ -34,22 +34,22 @@ CREATE INDEX ON geokrety_stats.mv_geokrety_related_users (geokret, interaction_c
 CREATE INDEX ON geokrety_stats.mv_geokrety_related_users (user_id);
 
 -- Update refresh function to include new materialized views
-DROP FUNCTION geokrety_stats.refresh_materialized_views();
+DROP FUNCTION IF EXISTS geokrety_stats.refresh_leaderboard_views();
 
-CREATE FUNCTION geokrety_stats.refresh_materialized_views() RETURNS void AS $$
+CREATE FUNCTION geokrety_stats.refresh_leaderboard_views() RETURNS void AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_global_stats;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_all_time;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_daily;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_monthly;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_leaderboard_yearly;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_stats;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_geokrety_stats;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_daily_points;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_country_stats;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_bonus_breakdown;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_daily_points;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_geokrety_daily_points;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_year_stats;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_geokrety_year_stats;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_gk_stats;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_countries;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_gk_countries;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_points_daily;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_user_related_users;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geokrety_stats.mv_geokrety_related_users;
-    RAISE NOTICE 'All materialized views refreshed successfully at %', NOW();
+    REFRESH MATERIALIZED VIEW geokrety_stats.mv_global_stats;
+    RAISE NOTICE 'All leaderboard views refreshed successfully at %', NOW();
 END;
 $$ LANGUAGE plpgsql;
