@@ -51,10 +51,12 @@ func (c *ContextLoader) Process(ctx context.Context, pipeCtx *pipeline.Context, 
 	if gk.Holder != nil {
 		currentHolder = *gk.Holder
 	}
-	previousHolder, err := c.store.GetGKPreviousHolder(ctx, event.GKID)
-	if err != nil {
-		return fmt.Errorf("loading previous holder for GK %d: %w", event.GKID, err)
-	}
+	// TODO – load previous holder efficiently (see store method comment)
+	previousHolder := int64(0)
+	// previousHolder, err := c.store.GetGKPreviousHolder(ctx, event.GKID)
+	// if err != nil {
+	// 	return fmt.Errorf("loading previous holder for GK %d: %w", event.GKID, err)
+	// }
 
 	// 3 – GK multiplier state
 	multiplier, lastMultAt, holderID, holderAcquiredAt, err := c.store.GetGKMultiplierState(ctx, event.GKID)
