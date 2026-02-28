@@ -72,10 +72,10 @@ touch features/my-feature.md
 # - Update feature spec with final details
 
 # 3. Test with provided commands (from feature spec)
-curl -s http://localhost:8080/api/my-endpoint | jq .
+curl -s http://<hostip>:8080/api/my-endpoint | jq .
 # Use MCP Playwright browser tools for UI testing:
 # - tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# - mcp_microsoft_pla_browser_navigate to http://localhost:3000/my-route
+# - mcp_microsoft_pla_browser_navigate to http://<hostip>:3000/my-route
 # - mcp_microsoft_pla_browser_resize to 1280x1024
 # - mcp_microsoft_pla_browser_take_screenshot
 
@@ -161,13 +161,13 @@ git commit -m "feat: add my-feature
 ### API Testing with curl
 ```bash
 # Basic endpoint test
-curl -s http://localhost:8080/api/endpoint | jq .
+curl -s http://<hostip>:8080/api/endpoint | jq .
 
 # With query parameters
-curl -s "http://localhost:8080/api/endpoint?param=value" | jq .
+curl -s "http://<hostip>:8080/api/endpoint?param=value" | jq .
 
 # Pretty print first result
-curl -s http://localhost:8080/api/endpoint | jq '.[0]'
+curl -s http://<hostip>:8080/api/endpoint | jq '.[0]'
 ```
 
 ### UI Testing with MCP Playwright
@@ -178,12 +178,12 @@ tool_search_tool_regex with pattern: ^mcp_microsoft_pla_browser
 ```
 
 **Desktop screenshot (1280px):**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/route`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Mobile screenshot (720px):**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/route`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -374,11 +374,11 @@ git commit -m "fix: correct WebSocket message format
 **Step 4: Test**
 ```bash
 # From feature spec curl example
-curl -s http://localhost:8080/api/users/123/activity | jq .
+curl -s http://<hostip>:8080/api/users/123/activity | jq .
 
 # From feature spec MCP Playwright example
 # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/users/123/activity
+# Navigate: mcp_microsoft_pla_browser_navigate to http://<hostip>:3000/users/123/activity
 # Resize: mcp_microsoft_pla_browser_resize to 1280x1024
 # Screenshot: mcp_microsoft_pla_browser_take_screenshot
 ```

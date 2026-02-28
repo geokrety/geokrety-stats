@@ -102,6 +102,12 @@ onMounted(async () => {
     </div>
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else>
+      <div class="alert alert-info py-2 small mb-4 shadow-sm border-0 d-flex align-items-center">
+        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+        <span>
+          Metrics are updated daily at 00:00 UTC based on materialized views in the <code>geokrety_stats</code> schema.
+        </span>
+      </div>
       <!-- KPI Cards -->
       <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3 mb-4" v-if="stats">
         <div class="col">

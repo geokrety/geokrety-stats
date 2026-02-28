@@ -301,7 +301,7 @@ PYTHON
 **Test 1: Verify API is WebSocket-enabled**
 ```bash
 # Check API health
-curl -s http://localhost:8080/api/health | jq .
+curl -s http://<hostip>:8080/api/health | jq .
 
 # Should respond with 200
 # Confirms API is running and healthy
@@ -352,7 +352,7 @@ PYTHON
 Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Test 1: Footer Display (Connected)**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x768
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -364,7 +364,7 @@ Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 - [ ] People icon rendered
 
 **Test 2: Mobile View**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 720x1024
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -378,7 +378,7 @@ Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 Test each page: `/`, `/countries`, `/stats`
 
 For each page:
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000[page]`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000[page]`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x768
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -398,7 +398,7 @@ docker compose up -d
 sleep 5
 
 # 2. Verify API running
-curl -s http://localhost:8080/api/health | jq .
+curl -s http://<hostip>:8080/api/health | jq .
 
 # 3. Test WebSocket
 python3 << 'PYTHON'
@@ -418,7 +418,7 @@ PYTHON
 
 # 4. Take UI screenshot with MCP Playwright
 # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000
+# Navigate: mcp_microsoft_pla_browser_navigate to http://<hostip>:3000
 # Resize: mcp_microsoft_pla_browser_resize to 1280x768
 # Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
@@ -482,7 +482,7 @@ docker compose up -d
 ### Verification After Deploy
 ```bash
 # 1. Check API health
-curl -s http://localhost:8080/api/health | jq .
+curl -s http://<hostip>:8080/api/health | jq .
 
 # 2. Test WebSocket
 python3 << 'PYTHON'
@@ -500,7 +500,7 @@ except Exception as e:
 PYTHON
 
 # 3. Check UI
-curl -s http://localhost:3000 | grep -o "bi-people-fill" && echo "✓ Footer component loaded"
+curl -s http://<hostip>:3000 | grep -o "bi-people-fill" && echo "✓ Footer component loaded"
 ```
 
 ## Known Issues / Limitations

@@ -125,13 +125,13 @@ The AI assistant will:
 ### API Testing
 ```bash
 # Basic request
-curl -s http://localhost:8080/api/path | jq .
+curl -s http://<hostip>:8080/api/path | jq .
 
 # With query parameters
-curl -s "http://localhost:8080/api/path?param=value" | jq .
+curl -s "http://<hostip>:8080/api/path?param=value" | jq .
 
 # POST with JSON
-curl -X POST http://localhost:8080/api/path \
+curl -X POST http://<hostip>:8080/api/path \
   -H 'Content-Type: application/json' \
   -d '{"key": "value"}' | jq .
 ```
@@ -142,12 +142,12 @@ curl -X POST http://localhost:8080/api/path \
 Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Mobile view (720px wide):**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/route`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Desktop view (1280px wide):**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/route`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/route`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 

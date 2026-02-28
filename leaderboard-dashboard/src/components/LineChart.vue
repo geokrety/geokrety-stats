@@ -166,6 +166,20 @@ function draw() {
         .attr('stroke', ds.color)
         .attr('stroke-width', 2)
         .attr('d', line)
+
+      // Dots
+      svg.selectAll(`.dot-${ds.key}`)
+        .data(displayData.filter(d => !isNaN(+d[ds.key])))
+        .join('circle')
+        .attr('class', `dot-${ds.key} data-dot`)
+        .attr('cx', d => x(parseDate(d[props.xKey])))
+        .attr('cy', d => y(+d[ds.key]))
+        .attr('r', 4)
+        .attr('fill', ds.color)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 1)
+        .style('opacity', 0)
+        .style('pointer-events', 'none')
     })
   }
 
@@ -205,8 +219,13 @@ function draw() {
     }
 
     svg.append('g')
+      .attr('class', 'x-axis')
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(x).ticks(xTicks).tickFormat(xFormat))
+
+    svg.append('g')
+      .attr('class', 'y-axis')
+      .call(d3.axisLeft(y).ticks(6))
 
   // Tooltip on hover
   const tooltip = d3.select(el).append('div')
@@ -265,11 +284,17 @@ function draw() {
       tooltip
         .style('left', left + 'px')
         .style('top', top + 'px')
+
+      // Show/Hide dots based on nearest data point
+      svg.selectAll('.data-dot').style('opacity', d => {
+        return parseDate(d[props.xKey]).getTime() === parseDate(nearest[props.xKey]).getTime() ? 1 : 0
+      })
     }
   }
 
   const mouseOutHandler = () => {
     tooltip.style('display', 'none')
+    svg.selectAll('.data-dot').style('opacity', 0)
   }
 
   svg.append('rect')

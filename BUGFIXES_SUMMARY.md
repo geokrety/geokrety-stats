@@ -22,7 +22,7 @@
 
 **Verification:**
 ```bash
-curl -s http://localhost:8080/api/v1/stats/countries | jq '.data[0]'
+curl -s http://<hostip>:8080/api/v1/stats/countries | jq '.data[0]'
 # Returns total_points_awarded showing points are now visible
 ```
 
@@ -96,14 +96,14 @@ Created optimized materialized views to pre-aggregate data:
 ### Manual Testing
 ```bash
 # Test 1: Country stats with move-type breakdown
-curl -s http://localhost:8080/api/v1/stats/countries | jq '.data[0]'
+curl -s http://<hostip>:8080/api/v1/stats/countries | jq '.data[0]'
 
 # Test 2: Verify materialized views
 PGPASSWORD=geokrety psql -h 192.168.130.65 -U geokrety -d geokrety -c \
   "SELECT matviewname FROM pg_matviews WHERE schemaname = 'geokrety_stats'"
 
 # Test 3: Daily activity with move types
-curl -s http://localhost:8080/api/v1/stats/activity/daily | jq '.data[0]'
+curl -s http://<hostip>:8080/api/v1/stats/activity/daily | jq '.data[0]'
 
 # Test 4: WebSocket user count (visit http://192.168.130.65:3000)
 # Should show "X users online" (not 0) in footer
@@ -112,8 +112,8 @@ curl -s http://localhost:8080/api/v1/stats/activity/daily | jq '.data[0]'
 ### URL Endpoints
 - **Dashboard:** http://192.168.130.65:3000/
 - **Countries Leaderboard:** http://192.168.130.65:3000/countries
-- **API Countries:** http://localhost:8080/api/v1/stats/countries
-- **API Daily Activity:** http://localhost:8080/api/v1/stats/activity/daily
+- **API Countries:** http://<hostip>:8080/api/v1/stats/countries
+- **API Daily Activity:** http://<hostip>:8080/api/v1/stats/activity/daily
 
 ---
 

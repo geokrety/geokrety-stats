@@ -33,7 +33,7 @@ Returns paginated list of countries ranked by total points.
 
 **Method:** `GET`
 
-**URL:** `http://localhost:8080/api/users/countries`
+**URL:** `http://<hostip>:8080/api/users/countries`
 
 **Query Parameters:**
 | Parameter | Type | Default | Description |
@@ -75,13 +75,13 @@ Returns paginated list of countries ranked by total points.
 **Example Request:**
 ```bash
 # Get top 50 countries
-curl -s http://localhost:8080/api/users/countries | jq .
+curl -s http://<hostip>:8080/api/users/countries | jq .
 
 # Get top 10 countries with pagination
-curl -s "http://localhost:8080/api/users/countries?limit=10&offset=0" | jq .
+curl -s "http://<hostip>:8080/api/users/countries?limit=10&offset=0" | jq .
 
 # Get countries 51-100
-curl -s "http://localhost:8080/api/users/countries?limit=50&offset=50" | jq .
+curl -s "http://<hostip>:8080/api/users/countries?limit=50&offset=50" | jq .
 ```
 
 ## Frontend Components
@@ -143,7 +143,7 @@ const fetchCountries = async () => {
 **Test 1: Basic Request**
 ```bash
 # Fetch top 50 countries
-curl -s http://localhost:8080/api/users/countries | jq '.' | head -30
+curl -s http://<hostip>:8080/api/users/countries | jq '.' | head -30
 ```
 
 **Expected Result:**
@@ -155,10 +155,10 @@ curl -s http://localhost:8080/api/users/countries | jq '.' | head -30
 **Test 2: Pagination**
 ```bash
 # Get first 10
-curl -s "http://localhost:8080/api/users/countries?limit=10" | jq '.[].country'
+curl -s "http://<hostip>:8080/api/users/countries?limit=10" | jq '.[].country'
 
 # Get next 10
-curl -s "http://localhost:8080/api/users/countries?limit=10&offset=10" | jq '.[].country'
+curl -s "http://<hostip>:8080/api/users/countries?limit=10&offset=10" | jq '.[].country'
 ```
 
 **Expected Result:**
@@ -169,7 +169,7 @@ curl -s "http://localhost:8080/api/users/countries?limit=10&offset=10" | jq '.[]
 **Test 3: Count Verification**
 ```bash
 # Verify count of results
-curl -s "http://localhost:8080/api/users/countries?limit=50" | jq 'length'
+curl -s "http://<hostip>:8080/api/users/countries?limit=50" | jq 'length'
 ```
 
 **Expected Result:**
@@ -178,7 +178,7 @@ curl -s "http://localhost:8080/api/users/countries?limit=50" | jq 'length'
 **Test 4: Data Format**
 ```bash
 # Check individual country data
-curl -s http://localhost:8080/api/users/countries | jq '.[0]'
+curl -s http://<hostip>:8080/api/users/countries | jq '.[0]'
 ```
 
 **Expected Result:**
@@ -198,7 +198,7 @@ curl -s http://localhost:8080/api/users/countries | jq '.[0]'
 Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Test 1: Desktop View**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/countries`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/countries`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -210,7 +210,7 @@ Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 - [ ] All columns visible
 
 **Test 2: Mobile View**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/countries`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/countries`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -224,11 +224,11 @@ Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 ```bash
 # Compare API data with UI display
 # Fetch top 3
-curl -s "http://localhost:8080/api/users/countries?limit=3" | jq '.[] | "\(.rank): \(.country) - \(.total_points) points"'
+curl -s "http://<hostip>:8080/api/users/countries?limit=3" | jq '.[] | "\(.rank): \(.country) - \(.total_points) points"'
 ```
 
 Then use MCP Playwright to verify numbers match:
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/countries`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/countries`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x768
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -251,11 +251,11 @@ docker compose up -d
 sleep 5
 
 # 3. Test API
-curl -s http://localhost:8080/api/users/countries | jq '.[0]'
+curl -s http://<hostip>:8080/api/users/countries | jq '.[0]'
 
 # 4. Test UI with MCP Playwright
 # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/countries
+# Navigate: mcp_microsoft_pla_browser_navigate to http://<hostip>:3000/countries
 # Resize: mcp_microsoft_pla_browser_resize to 1280x1024
 # Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
@@ -335,10 +335,10 @@ docker compose up -d
 ### Verification After Deploy
 ```bash
 # Check API responds
-curl -s http://localhost:8080/api/users/countries | jq '.[0]'
+curl -s http://<hostip>:8080/api/users/countries | jq '.[0]'
 
 # Check UI loads
-curl -s http://localhost:3000/countries | grep -i "leaderboard"
+curl -s http://<hostip>:3000/countries | grep -i "leaderboard"
 
 # Check for errors
 docker compose logs leaderboard-api | grep -i error

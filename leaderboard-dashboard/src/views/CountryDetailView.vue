@@ -159,20 +159,24 @@ onMounted(loadCountryData)
               </div>
             </div>
             <div class="card-body pt-0">
-              <LineChart
-                v-if="evolution.length"
-                :data="evolution"
-                x-key="month"
-                stacked
-                :datasets="[
-                  { key: 'drops', label: 'Drops', color: '#0d6efd' },
-                  { key: 'grabs', label: 'Grabs', color: '#198754' },
-                  { key: 'dips', label: 'DIPs', color: '#ffc107' },
-                  { key: 'seen', label: 'Seen', color: '#6c757d' },
-                  { key: 'comments', label: 'Comments', color: '#f06292' }
-                ]"
-                :height="320"
-              />
+              <template v-if="evolution.length">
+                <LineChart
+                  :data="evolution"
+                  x-key="month"
+                  stacked
+                  :datasets="[
+                    { key: 'drops', label: 'Drops', color: '#0d6efd' },
+                    { key: 'grabs', label: 'Grabs', color: '#198754' },
+                    { key: 'dips', label: 'DIPs', color: '#ffc107' },
+                    { key: 'seen', label: 'Seen', color: '#6c757d' },
+                    { key: 'comments', label: 'Comments', color: '#f06292' }
+                  ]"
+                  :height="320"
+                />
+                <p class="text-muted small mt-2">
+                  Monthly evolution of move types. Stacked areas show the relative volume of each activity.
+                </p>
+              </template>
               <p v-else class="text-muted text-center py-3">No activity data for this country.</p>
             </div>
           </div>

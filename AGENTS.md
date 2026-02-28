@@ -483,16 +483,16 @@ Use template from: [features/README.md](features/README.md)
 #### Test API Endpoints with curl
 ```bash
 # Quick test
-curl -s http://localhost:8080/api/endpoint | jq .
+curl -s http://<hostip>:8080/api/endpoint | jq .
 
 # Full example from feature spec
-curl -s "http://localhost:8080/api/endpoint?param=value" | jq .
+curl -s "http://<hostip>:8080/api/endpoint?param=value" | jq .
 ```
 
 #### Test UI with MCP Playwright
 Use the MCP Playwright browser tools to navigate and take screenshots:
 
-1. **Navigate to page**: Use `mcp_microsoft_pla_browser_navigate` with URL `http://localhost:3000/route`
+1. **Navigate to page**: Use `mcp_microsoft_pla_browser_navigate` with URL `http://<hostip>:3000/route`
 2. **Resize viewport** (optional): Use `mcp_microsoft_pla_browser_resize` with `width` and `height` (e.g., 1280x1024 desktop, 720x2048 mobile)
 3. **Take screenshot**: Use `mcp_microsoft_pla_browser_take_screenshot` to capture the page
 4. **Available tools**: browser_navigate, browser_resize, browser_take_screenshot, browser_click, browser_fill_form, browser_evaluate, etc.
@@ -645,19 +645,7 @@ docker compose up -d leaderboard-api
 ### Testing
 ```bash
 # API test
-curl -s http://localhost:8080/api/endpoint | jq .
-
-# UI screenshot (desktop)
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=1280 --form height=1024 \
-  -o /tmp/test.png
-
-# UI screenshot (mobile)
-curl --request POST http://localhost:3001/forms/chromium/screenshot/url \
-  --form url=http://localhost:3000/route \
-  --form width=720 --form height=2048 \
-  -o /tmp/test-mobile.png
+curl -s http://<hostip>:8080/api/endpoint | jq .
 
 # Binary build & run
 cd geokrety-stats && make build && ./bin/geokrety-stats --help

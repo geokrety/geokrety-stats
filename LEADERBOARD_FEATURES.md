@@ -356,8 +356,8 @@ docker compose up -d
 ```
 
 ### Verification
-- Frontend: http://localhost:3000
-- API: http://localhost:8080
+- Frontend: http://<hostip>:3000
+- API: http://<hostip>:8080
 - Check logs: `docker compose logs -f leaderboard-dashboard`
 
 ---

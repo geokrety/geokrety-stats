@@ -255,13 +255,13 @@ fix: correct TopCountries SELECT column order
 **How to Test**:
 ```bash
 # Test images/loves via /stats endpoint
-curl -s http://localhost:8080/api/v1/stats | jq '.data | {total_images, total_loves}'
+curl -s http://<hostip>:8080/api/v1/stats | jq '.data | {total_images, total_loves}'
 
 # Test country fields via /geokrety endpoint
-curl -s http://localhost:8080/api/v1/geokrety/4940 | jq '.data | {owner_home_country, holder_home_country, cache_country}'
+curl -s http://<hostip>:8080/api/v1/geokrety/4940 | jq '.data | {owner_home_country, holder_home_country, cache_country}'
 
 # Test countries (grabs issue debug)
-curl -s http://localhost:8080/api/v1/stats/countries | jq '.data[0] | {drops, grabs, dips}'
+curl -s http://<hostip>:8080/api/v1/stats/countries | jq '.data[0] | {drops, grabs, dips}'
 ```
 
 ---

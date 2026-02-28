@@ -88,18 +88,18 @@ Add to `features/[feature-name].md`:
 **Quick API Test Template:**
 ```bash
 # Test basic endpoint
-curl -s http://localhost:8080/api/endpoint | jq .
+curl -s http://<hostip>:8080/api/endpoint | jq .
 
 # Test with query parameters
-curl -s "http://localhost:8080/api/endpoint?param=value" | jq .
+curl -s "http://<hostip>:8080/api/endpoint?param=value" | jq .
 
 # Test POST/PUT with JSON
-curl -X POST http://localhost:8080/api/endpoint \
+curl -X POST http://<hostip>:8080/api/endpoint \
   -H 'Content-Type: application/json' \
   -d '{"key": "value"}' | jq .
 
 # Test with headers
-curl -s -H 'Authorization: Bearer token' http://localhost:8080/api/endpoint | jq .
+curl -s -H 'Authorization: Bearer token' http://<hostip>:8080/api/endpoint | jq .
 ```
 
 **Important:**
@@ -137,7 +137,7 @@ make build
 
 **Steps:**
 1. Load MCP Playwright tools: Use `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
-2. Navigate to page: `mcp_microsoft_pla_browser_navigate` with URL `http://localhost:3000/users/4559`
+2. Navigate to page: `mcp_microsoft_pla_browser_navigate` with URL `http://<hostip>:3000/users/4559`
 3. Resize viewport (optional): `mcp_microsoft_pla_browser_resize` with width/height (e.g., 720x2048 for mobile, 1280x1024 for desktop)
 4. Take screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 5. Interact if needed: `browser_click`, `browser_fill_form`, `browser_evaluate`, etc.
@@ -176,16 +176,16 @@ docker compose up -d
 sleep 5
 
 # 3. Test API endpoint
-curl -s http://localhost:8080/api/health | jq .
+curl -s http://<hostip>:8080/api/health | jq .
 
 # 4. Take UI screenshot with MCP Playwright
 # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/path/to/feature
+# Navigate: mcp_microsoft_pla_browser_navigate to http://<hostip>:3000/path/to/feature
 # Resize: mcp_microsoft_pla_browser_resize to 1280x1024
 # Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
 # 5. Verify with curl
-curl -s http://localhost:8080/api/feature-endpoint | jq .
+curl -s http://<hostip>:8080/api/feature-endpoint | jq .
 
 # 6. Check logs for errors
 docker compose logs [service-name] | tail -20
@@ -260,8 +260,8 @@ docker compose down -v
 
 | Service | Port | URL |
 |---------|------|-----|
-| leaderboard-api | 8080 | http://localhost:8080 |
-| leaderboard-dashboard | 3000 | http://localhost:3000 |
+| leaderboard-api | 8080 | http://<hostip>:8080 |
+| leaderboard-dashboard | 3000 | http://<hostip>:3000 |
 
 ---
 
@@ -357,10 +357,10 @@ GET /api/items/:id
 ### API Testing
 ```bash
 # Test list endpoint
-curl -s http://localhost:8080/api/items | jq .
+curl -s http://<hostip>:8080/api/items | jq .
 
 # Test get endpoint
-curl -s http://localhost:8080/api/items/1 | jq .
+curl -s http://<hostip>:8080/api/items/1 | jq .
 ```
 
 ### UI Testing
@@ -369,12 +369,12 @@ Use MCP Playwright browser tools for UI testing:
 
 **Screenshot list view:**
 1. Load tools: `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
-2. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/items`
+2. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/items`
 3. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
 4. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 **Screenshot detail view:**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/items/1`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/items/1`
 2. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 ## WebSocket Messages (if applicable)
@@ -589,11 +589,11 @@ docker compose restart
 ### Testing
 ```bash
 # API test
-curl -s http://localhost:8080/api/endpoint | jq .
+curl -s http://<hostip>:8080/api/endpoint | jq .
 
 # UI screenshot with MCP Playwright
 # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/route
+# Navigate: mcp_microsoft_pla_browser_navigate to http://<hostip>:3000/route
 # Resize: mcp_microsoft_pla_browser_resize to 1280x1024
 # Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
@@ -676,14 +676,14 @@ When working on new features, the AI will:
 
 **Need to test API?**
 ```bash
-curl -s http://localhost:8080/api/endpoint | jq .
+curl -s http://<hostip>:8080/api/endpoint | jq .
 ```
 
 **Need UI screenshot?**
 
 Use MCP Playwright browser tools:
 1. Load tools: `tool_search_tool_regex` with pattern `^mcp_microsoft_pla_browser`
-2. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/path`
+2. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/path`
 3. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1024
 4. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 

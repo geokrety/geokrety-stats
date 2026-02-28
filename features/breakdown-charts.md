@@ -42,7 +42,7 @@ Returns aggregate statistics for visualization in breakdown charts.
 
 **Method:** `GET`
 
-**URL:** `http://localhost:8080/api/stats/breakdown`
+**URL:** `http://<hostip>:8080/api/stats/breakdown`
 
 **Query Parameters:**
 | Parameter | Type | Default | Description |
@@ -130,16 +130,16 @@ Returns aggregate statistics for visualization in breakdown charts.
 **Example Requests:**
 ```bash
 # Get default top 20 users
-curl -s http://localhost:8080/api/stats/breakdown | jq .
+curl -s http://<hostip>:8080/api/stats/breakdown | jq .
 
 # Get top 10 users
-curl -s "http://localhost:8080/api/stats/breakdown?limit=10" | jq .
+curl -s "http://<hostip>:8080/api/stats/breakdown?limit=10" | jq .
 
 # Pretty print first user
-curl -s http://localhost:8080/api/stats/breakdown | jq '.top_users_by_points[0]'
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.top_users_by_points[0]'
 
 # List all usernames
-curl -s http://localhost:8080/api/stats/breakdown | jq '.top_users_by_points[].username'
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.top_users_by_points[].username'
 ```
 
 ## Frontend Components
@@ -291,7 +291,7 @@ const fetchStats = async () => {
 **Test 1: Basic Request**
 ```bash
 # Get default stats
-curl -s http://localhost:8080/api/stats/breakdown | jq '.' | head -50
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.' | head -50
 ```
 
 **Expected Result:**
@@ -302,7 +302,7 @@ curl -s http://localhost:8080/api/stats/breakdown | jq '.' | head -50
 **Test 2: Data Structure Verification**
 ```bash
 # Check top user structure
-curl -s http://localhost:8080/api/stats/breakdown | jq '.top_users_by_points[0]'
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.top_users_by_points[0]'
 ```
 
 **Expected Result:**
@@ -318,7 +318,7 @@ curl -s http://localhost:8080/api/stats/breakdown | jq '.top_users_by_points[0]'
 **Test 3: Cost Data Verification**
 ```bash
 # Check cost structure
-curl -s http://localhost:8080/api/stats/breakdown | jq '.event_costs[0]'
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.event_costs[0]'
 ```
 
 **Expected Result:**
@@ -335,7 +335,7 @@ curl -s http://localhost:8080/api/stats/breakdown | jq '.event_costs[0]'
 **Test 4: Event Count Verification**
 ```bash
 # Check event counts
-curl -s http://localhost:8080/api/stats/breakdown | jq '.event_counts[0]'
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.event_counts[0]'
 ```
 
 **Expected Result:**
@@ -352,10 +352,10 @@ curl -s http://localhost:8080/api/stats/breakdown | jq '.event_counts[0]'
 **Test 5: Limit Parameter**
 ```bash
 # Get top 10 users
-curl -s "http://localhost:8080/api/stats/breakdown?limit=10" | jq '.top_users_by_points | length'
+curl -s "http://<hostip>:8080/api/stats/breakdown?limit=10" | jq '.top_users_by_points | length'
 
 # Get top 5 users
-curl -s "http://localhost:8080/api/stats/breakdown?limit=5" | jq '.top_users_by_points | length'
+curl -s "http://<hostip>:8080/api/stats/breakdown?limit=5" | jq '.top_users_by_points | length'
 ```
 
 **Expected Result:**
@@ -368,7 +368,7 @@ curl -s "http://localhost:8080/api/stats/breakdown?limit=5" | jq '.top_users_by_
 Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 
 **Test 1: Full Dashboard View**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/stats`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x2048
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -380,7 +380,7 @@ Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 - [ ] Loading state not shown
 
 **Test 2: Mobile Responsiveness**
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/stats`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 720x2048
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -393,12 +393,12 @@ Use `tool_search_tool_regex` with pattern: `^mcp_microsoft_pla_browser`
 **Test 3: Chart-Specific Views**
 
 Desktop (two-column layout):
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/stats`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 1280x1200
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
 Tablet (single column):
-1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://localhost:3000/stats`
+1. Navigate: `mcp_microsoft_pla_browser_navigate` to `http://<hostip>:3000/stats`
 2. Resize: `mcp_microsoft_pla_browser_resize` to 900x2000
 3. Screenshot: `mcp_microsoft_pla_browser_take_screenshot`
 
@@ -413,17 +413,17 @@ docker compose up -d
 sleep 5
 
 # 2. Test API
-curl -s http://localhost:8080/api/stats/breakdown | \
+curl -s http://<hostip>:8080/api/stats/breakdown | \
   jq '{users: (.top_users_by_points | length), costs: (.event_costs | length), counts: (.event_counts | length)}'
 
 # Expected: {"users": 20, "costs": 20, "counts": 20}
 
 # 3. Test UI loads
-curl -s http://localhost:3000/stats | grep -c "svg" || echo "Charts loaded"
+curl -s http://<hostip>:3000/stats | grep -c "svg" || echo "Charts loaded"
 
 # 4. Take full screenshot with MCP Playwright
 # Load tools: tool_search_tool_regex with pattern ^mcp_microsoft_pla_browser
-# Navigate: mcp_microsoft_pla_browser_navigate to http://localhost:3000/stats
+# Navigate: mcp_microsoft_pla_browser_navigate to http://<hostip>:3000/stats
 # Resize: mcp_microsoft_pla_browser_resize to 1280x1500
 # Screenshot: mcp_microsoft_pla_browser_take_screenshot
 
@@ -511,10 +511,10 @@ docker compose up -d
 ### Verification After Deploy
 ```bash
 # Test API endpoint
-curl -s http://localhost:8080/api/stats/breakdown | jq '.top_users_by_points | length'
+curl -s http://<hostip>:8080/api/stats/breakdown | jq '.top_users_by_points | length'
 
 # Test UI route loads
-curl -s http://localhost:3000/stats | grep -o "<title>[^<]*</title>"
+curl -s http://<hostip>:3000/stats | grep -o "<title>[^<]*</title>"
 
 # Check for errors
 docker compose logs leaderboard-api | tail -10

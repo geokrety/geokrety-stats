@@ -370,7 +370,7 @@ spec:
               key: amqp-url
         livenessProbe:
           exec:
-            command: ["wget", "--spider", "http://localhost:8080/health"]
+            command: ["wget", "--spider", "http://<hostip>:8080/health"]
           initialDelaySeconds: 10
           periodSeconds: 30
 ```
