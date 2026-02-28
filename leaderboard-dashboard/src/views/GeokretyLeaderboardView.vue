@@ -1,39 +1,38 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { fetchList } from '../composables/useApi.js'
+import GkTypeBadge from '../components/GkTypeBadge.vue'
 import Pagination from '../components/Pagination.vue'
 
-const page = ref(1)
+const page    = ref(1)
 const perPage = ref(50)
 const loading = ref(false)
-const error = ref(null)
+const error   = ref(null)
 const geokrety = ref([])
-const meta = ref({})
-const sortBy = ref('points')
+const meta    = ref({})
+const sortBy  = ref('points')
 
 const sortOptions = [
-  { value: 'points', label: 'Points Generated' },
-  { value: 'moves', label: 'Total Moves' },
-  { value: 'users', label: 'Distinct Users' },
-  { value: 'countries', label: 'Countries' },
+  { value: 'points',     label: '🏆 Points' },
+  { value: 'moves',      label: '🔄 Moves' },
+  { value: 'users',      label: '👥 Users' },
+  { value: 'countries',  label: '🌍 Countries' },
+  { value: 'loves',      label: '❤️ Loves' },
+  { value: 'multiplier', label: '✖️ Multiplier' },
 ]
 
 async function loadGeokrety() {
   loading.value = true
-  error.value = null
+  error.value   = null
   try {
-    const params = new URLSearchParams({
+    const { items, meta: m } = await fetchList('/geokrety', {
       page: page.value,
       per_page: perPage.value,
+      sort: sortBy.value,
     })
-    const response = await fetch(`http://localhost:8080/api/v1/geokrety?${params}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (!response.ok) throw new Error(`API error: ${response.status}`)
-    const json = await response.json()
-    geokrety.value = json.data || []
-    meta.value = json.meta || {}
+    geokrety.value = items
+    meta.value     = m
   } catch (e) {
     error.value = e.message
   } finally {
@@ -42,39 +41,15 @@ async function loadGeokrety() {
 }
 
 onMounted(loadGeokrety)
-
 watch(page, loadGeokrety)
 
-const handleSort = () => {
+function handleSort() {
   page.value = 1
   loadGeokrety()
 }
 
-const getGkTypeColor = (typeName) => {
-  if (!typeName) return 'bg-secondary'
-  const lower = typeName.toLowerCase()
-  if (lower.includes('traditional') || lower.includes('car')) return 'bg-primary'
-  if (lower.includes('moving') || lower.includes('human')) return 'bg-success'
-  if (lower.includes('evo')) return 'bg-info'
-  return 'bg-secondary'
-}
-
-const getGkTypeIcon = (typeName) => {
-  if (!typeName) return '❓'
-  const lower = typeName.toLowerCase()
-  if (lower.includes('traditional') || lower.includes('car')) return '🚗'
-  if (lower.includes('moving') || lower.includes('human')) return '👤'
-  if (lower.includes('evo')) return '🎮'
-  return '❓'
-}
-
-const formatInt = (value) => {
-  return value ? parseInt(value).toLocaleString() : '0'
-}
-
-const formatFloat = (value, decimals = 2) => {
-  return value ? parseFloat(value).toFixed(decimals) : '0.00'
-}
+const fmt = (v) => (v !== null && v !== undefined) ? Number(v).toLocaleString() : '—'
+const fmtFloat = (v, d = 2) => (v !== null && v !== undefined) ? Number(v).toFixed(d) : '—'
 </script>
 
 <template>
@@ -87,100 +62,106 @@ const formatFloat = (value, decimals = 2) => {
       </ol>
     </nav>
 
-    <!-- Header -->
+    <!-- Header card -->
     <div class="card mb-4 shadow-sm">
       <div class="card-body">
         <h2 class="mb-1">🎁 GeoKrety Database</h2>
-        <p class="text-muted mb-0">Browse all GeoKrety items and their movement statistics</p>
+        <p class="text-muted mb-0">Browse all GeoKrety items ranked by movement statistics</p>
       </div>
     </div>
 
-    <!-- Controls -->
+    <!-- Sort controls -->
     <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
-      <span class="text-muted">Sort by:</span>
-      <div class="btn-group btn-group-sm" role="group">
+      <span class="text-muted small fw-semibold">Sort by:</span>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Sort options">
         <template v-for="opt in sortOptions" :key="opt.value">
           <input
-            type="radio"
-            class="btn-check"
-            name="sortBtnradio"
-            :id="'sort' + opt.value"
+            type="radio" class="btn-check" name="gkSort"
+            :id="'gksort-' + opt.value"
             :value="opt.value"
             v-model="sortBy"
             @change="handleSort"
           >
-          <label class="btn btn-outline-primary" :for="'sort' + opt.value">{{ opt.label }}</label>
+          <label class="btn btn-outline-primary" :for="'gksort-' + opt.value">{{ opt.label }}</label>
         </template>
       </div>
-      <span class="text-muted ms-auto small">Showing {{ geokrety.length }} of {{ meta.total || 0 }} GeoKrety</span>
+      <span class="text-muted ms-auto small">{{ meta.total || 0 }} GeoKrety total</span>
     </div>
 
-    <!-- Loading / Error / Content -->
+    <!-- Loading / Error / Empty -->
     <div v-if="loading && !geokrety.length" class="text-center py-5">
       <div class="spinner-border"></div>
     </div>
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else-if="geokrety.length === 0" class="alert alert-info">No GeoKrety found.</div>
-    <div v-else class="table-responsive">
-      <table class="table table-hover table-sm align-middle border">
-        <thead class="table-light sticky-top">
-          <tr>
-            <th style="width: 80px">ID</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Owner</th>
-            <th class="text-end">Moves</th>
-            <th class="text-end">Users</th>
-            <th class="text-end">Countries</th>
-            <th class="text-end">Points</th>
-            <th class="text-end">Multiplier</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="gk in geokrety" :key="gk.gk_id" class="table-row-link">
-            <td>
-              <RouterLink :to="`/geokrety/${gk.gk_id}`" class="text-decoration-none fw-bold text-primary">
-                {{ formatInt(gk.gk_id) }}
-              </RouterLink>
-            </td>
-            <td>
-              <RouterLink :to="`/geokrety/${gk.gk_id}`" class="text-decoration-none fw-semibold d-block">
-                {{ gk.gk_name || `GK #${gk.gk_id}` }}
-              </RouterLink>
-              <small v-if="gk.tracking_code" class="text-muted">{{ gk.tracking_code }}</small>
-            </td>
-            <td>
-              <span :class="['badge', getGkTypeColor(gk.gk_type_name)]">
-                {{ getGkTypeIcon(gk.gk_type_name) }} {{ gk.gk_type_name || 'Unknown' }}
-              </span>
-            </td>
-            <td>
-              <RouterLink v-if="gk.owner_id" :to="`/users/${gk.owner_id}`" class="text-decoration-none">
-                {{ gk.owner_username || 'Unknown' }}
-              </RouterLink>
-              <span v-else class="text-muted">—</span>
-            </td>
-            <td class="text-end fw-bold">{{ formatInt(gk.total_moves) }}</td>
-            <td class="text-end">{{ formatInt(gk.distinct_users) }}</td>
-            <td class="text-end">{{ formatInt(gk.countries_count) }}</td>
-            <td class="text-end fw-bold text-success">{{ formatFloat(gk.total_points_generated) }}</td>
-            <td class="text-end">{{ formatFloat(gk.current_multiplier, 2) }}x</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
 
-    <!-- Pagination -->
-    <Pagination v-if="meta.total" :meta="meta" :page="page" @update:page="page = $event" class="mt-3" />
+    <template v-else>
+      <!-- Top pagination -->
+      <Pagination v-if="meta.total" :meta="meta" v-model:page="page" class="mb-2" />
+
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle border">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 90px" title="Public GeoKret ID (GKHEXID)">ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Owner</th>
+              <th title="Current holder: person or cache">Status</th>
+              <th class="text-end" title="Total Moves">Moves</th>
+              <th class="text-end" title="Distinct users who moved it">Users</th>
+              <th class="text-end" title="Countries visited">Countries</th>
+              <th class="text-end" title="Points generated by this GeoKret">Points</th>
+              <th class="text-end" title="Current points multiplier">×</th>
+              <th class="text-end" title="Loves / Favourites">❤️</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="gk in geokrety" :key="gk.gk_id">
+              <td>
+                <RouterLink :to="`/geokrety/${gk.gk_id}`" class="text-decoration-none fw-bold text-primary">
+                  GK{{ gk.gk_hex_id || gk.gk_id }}
+                </RouterLink>
+              </td>
+              <td>
+                <RouterLink :to="`/geokrety/${gk.gk_id}`" class="text-decoration-none fw-semibold">
+                  {{ gk.gk_name || `GK #${gk.gk_id}` }}
+                </RouterLink>
+              </td>
+              <td>
+                <GkTypeBadge :gk-type="gk.gk_type" :type-name="gk.gk_type_name" />
+              </td>
+              <td>
+                <RouterLink v-if="gk.owner_id" :to="`/users/${gk.owner_id}`" class="text-decoration-none">
+                  {{ gk.owner_username || '—' }}
+                </RouterLink>
+                <span v-else class="text-muted">—</span>
+              </td>
+              <td>
+                <span v-if="gk.in_cache" class="badge bg-success" title="In cache">🏦 Cache</span>
+                <span v-else-if="gk.holder_username" class="badge bg-secondary" :title="`Held by ${gk.holder_username}`">
+                  👤 {{ gk.holder_username }}
+                </span>
+                <span v-else class="text-muted small">—</span>
+              </td>
+              <td class="text-end fw-bold">{{ fmt(gk.total_moves) }}</td>
+              <td class="text-end">{{ fmt(gk.distinct_users) }}</td>
+              <td class="text-end">{{ fmt(gk.countries_count) }}</td>
+              <td class="text-end fw-bold text-success">{{ fmtFloat(gk.total_points_generated) }}</td>
+              <td class="text-end text-muted small">{{ fmtFloat(gk.current_multiplier) }}×</td>
+              <td class="text-end text-danger">{{ fmt(gk.loves_count) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom pagination -->
+      <Pagination v-if="meta.total" :meta="meta" v-model:page="page" class="mt-3" />
+    </template>
   </div>
 </template>
 
 <style scoped>
-.table-row-link tbody tr {
-  cursor: pointer;
-}
-
-.table-row-link tbody tr:hover {
-  background-color: rgba(0, 123, 255, 0.05);
-}
+tbody tr { cursor: pointer; }
+tbody tr:hover { background-color: rgba(0, 123, 255, 0.04); }
 </style>

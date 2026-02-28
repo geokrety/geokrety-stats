@@ -69,7 +69,10 @@ watch(liveTop, (live) => {
 })
 
 function selectPeriod(p) { period.value = p; yearValue.value = '' }
-function selectYear(y)   { yearValue.value = y; period.value = '' }
+function selectYear(y)   {
+  if (!y) { yearValue.value = ''; return }
+  yearValue.value = y; period.value = ''
+}
 
 function medalClass(rank) {
   if (rank === 1) return 'text-warning fw-bold'
@@ -81,48 +84,46 @@ function medalClass(rank) {
 
 <template>
   <div>
-    <!-- Header row -->
-    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-      <h4 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Leaderboard</h4>
-      <div class="d-flex gap-2 align-items-center flex-wrap">
-        <!-- Live badge -->
-        <span v-if="connected" class="badge bg-success"><i class="bi bi-broadcast me-1"></i>Live</span>
-        <!-- Period selector -->
-        <div class="btn-group btn-group-sm" role="group">
-          <button
-            v-for="p in PERIODS" :key="p.value"
-            class="btn"
-            :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
-            @click="selectPeriod(p.value)"
-          >
-            <span v-if="p.value === 'year'">📅 Year</span>
-            <span v-else>{{ p.label }}</span>
-          </button>
+    <!-- Header card -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h2 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Leaderboard</h2>
+          <p class="text-muted mb-0 small">Points earned by players across all GeoKrety moves</p>
         </div>
-        <!-- Year dropdown selector -->
-        <div v-if="availableYears.length" class="dropdown">
-          <button
-            class="btn btn-sm"
-            :class="yearValue ? 'btn-info' : 'btn-outline-secondary'"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            {{ yearValue ? `${yearValue} 📅` : 'Select Year...' }}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" style="max-height: 300px; overflow-y: auto;">
-            <li v-for="y in availableYears" :key="y">
-              <a href="#" class="dropdown-item" :class="yearValue === y ? 'active' : ''" @click.prevent="selectYear(y)">
-                {{ y }}
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span v-if="connected" class="badge bg-success fs-6"><i class="bi bi-broadcast me-1"></i>Live</span>
       </div>
+    </div>
+
+    <!-- Period + Year controls -->
+    <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Period selector">
+        <button
+          v-for="p in PERIODS" :key="p.value"
+          class="btn"
+          :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
+          @click="selectPeriod(p.value)"
+        >{{ p.label }}</button>
+      </div>
+      <!-- Native year select (replaces broken Bootstrap dropdown) -->
+      <select
+        v-if="availableYears.length"
+        class="form-select form-select-sm"
+        style="width: auto"
+        :value="yearValue"
+        @change="selectYear($event.target.value)"
+        :title="'Filter by specific year'">
+        <option value="">📅 Specific Year…</option>
+        <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
+      </select>
+      <span class="text-muted ms-auto small">{{ meta.total || 0 }} players</span>
     </div>
 
     <!-- Error -->
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
+    <!-- Top pagination -->
+    <Pagination v-if="meta.total > perPage" :meta="meta" v-model:page="page" class="mb-2" />
 
     <!-- Table -->
     <div class="card shadow-sm">
@@ -180,7 +181,7 @@ function medalClass(rank) {
       </div>
     </div>
 
-    <!-- Pagination -->
+    <!-- Bottom Pagination -->
     <Pagination v-if="meta.total" :meta="meta" v-model:page="page" class="mt-3" />
   </div>
 </template>

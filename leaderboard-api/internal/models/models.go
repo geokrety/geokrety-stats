@@ -113,19 +113,22 @@ type UserMove struct {
 
 type GeoKret struct {
 	GkID                int64      `json:"gk_id"`
-	Name                string     `json:"gk_name"`
-	TrackingCode        *string    `json:"-"` // Never expose tracking code to frontend (security)
-	GkType              int        `json:"gk_type"`
-	GkTypeName          string     `json:"gk_type_name"`
-	Missing             bool       `json:"missing"`
-	Distance            int64      `json:"distance_km"`
-	CachesCount         int        `json:"caches_count"`
-	CreatedAt           *time.Time `json:"created_at,omitempty"`
-	BornAt              *time.Time `json:"born_at,omitempty"`
-	OwnerID             *int64     `json:"owner_id,omitempty"`
-	OwnerUsername       *string    `json:"owner_username,omitempty"`
-	HolderID            *int64     `json:"holder_id,omitempty"`
-	HolderUsername      *string    `json:"holder_username,omitempty"`
+    GkHexID             string     `json:"gk_hex_id,omitempty"` // Public GeoKrety ID formatted as GKXXXX (hex)
+    Name                string     `json:"gk_name"`
+    TrackingCode        *string    `json:"-"` // Never expose tracking code to frontend (security)
+    GkType              int        `json:"gk_type"`
+    GkTypeName          string     `json:"gk_type_name"`
+    Missing             bool       `json:"missing"`
+    Distance            int64      `json:"distance_km"`
+    CachesCount         int        `json:"caches_count"`
+    LovesCount          int        `json:"loves_count"`
+    CreatedAt           *time.Time `json:"created_at,omitempty"`
+    BornAt              *time.Time `json:"born_at,omitempty"`
+    OwnerID             *int64     `json:"owner_id,omitempty"`
+    OwnerUsername       *string    `json:"owner_username,omitempty"`
+    HolderID            *int64     `json:"holder_id,omitempty"`
+    HolderUsername      *string    `json:"holder_username,omitempty"`
+	InCache             bool       `json:"in_cache"`
 	TotalMoves          int64      `json:"total_moves"`
 	TotalDrops          int64      `json:"total_drops"`
 	TotalGrabs          int64      `json:"total_grabs"`

@@ -33,7 +33,7 @@ func (h *Handler) ServeWS(hub *wsHub.Hub) gin.HandlerFunc {
 		// Push current snapshot immediately upon connection
 		go func() {
 			time.Sleep(100 * time.Millisecond)
-			if entries, err := h.TopLeaderboard(context.Background(), 10); err == nil {
+			if entries, err := h.TopLeaderboard(context.Background(), 25); err == nil {
 				hub.Broadcast(models.WSMessage{Type: "leaderboard_snapshot", Payload: entries})
 			}
 			stats := h.computeGlobalStatsFallback(context.Background())
@@ -75,7 +75,7 @@ func (h *Handler) StartBroadcaster(ctx context.Context, hub *wsHub.Hub, interval
 			if hub.ClientCount() == 0 {
 				continue
 			}
-			entries, err := h.TopLeaderboard(ctx, 10)
+			entries, err := h.TopLeaderboard(ctx, 25)
 			if err != nil {
 				log.Error().Err(err).Msg("ws: leaderboard broadcast failed")
 				continue

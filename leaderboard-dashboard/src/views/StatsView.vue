@@ -1,9 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import LineChart from '../components/LineChart.vue'
-import BarChart from '../components/BarChart.vue'
 
 const stats      = ref(null)
 const daily      = ref([])
@@ -11,6 +10,37 @@ const countries  = ref([])
 const breakdown  = ref([])
 const loading    = ref(false)
 const error      = ref(null)
+const chartKey   = ref('moves')   // currently displayed metric for daily chart
+const countrySort = ref('total_moves')  // column for countries table sort
+const countrySortDir = ref('desc')
+
+const dailyMetrics = [
+  { key: 'moves',    label: 'All Moves', color: '#0dcaf0' },
+  { key: 'drops',    label: 'Drops',     color: '#dc3545' },
+  { key: 'grabs',    label: 'Grabs',     color: '#ffc107' },
+  { key: 'dips',     label: 'Dips',      color: '#0d6efd' },
+  { key: 'seen',     label: 'Seen',      color: '#6c757d' },
+]
+
+const currentMetric = computed(() => dailyMetrics.find(m => m.key === chartKey.value) || dailyMetrics[0])
+
+const sortedCountries = computed(() => {
+  const arr = [...countries.value]
+  return arr.sort((a, b) => {
+    const va = Number(a[countrySort.value] || 0)
+    const vb = Number(b[countrySort.value] || 0)
+    return countrySortDir.value === 'desc' ? vb - va : va - vb
+  })
+})
+
+function toggleCountrySort(col) {
+  if (countrySort.value === col) {
+    countrySortDir.value = countrySortDir.value === 'desc' ? 'asc' : 'desc'
+  } else {
+    countrySort.value = col
+    countrySortDir.value = 'desc'
+  }
+}
 
 onMounted(async () => {
   loading.value = true
@@ -19,8 +49,8 @@ onMounted(async () => {
     stats.value     = await fetchOne('/stats')
     const da        = await fetchList('/stats/activity/daily', { days: 90 })
     daily.value     = da.items
-    const co        = await fetchList('/stats/countries')
-    countries.value = co.items.slice(0, 20)
+    const co        = await fetchList('/stats/countries', { per_page: 50 })
+    countries.value = co.items
     const bd        = await fetchList('/stats/points/breakdown')
     breakdown.value = bd.items
   } catch (e) {
@@ -120,31 +150,37 @@ onMounted(async () => {
       <!-- Daily activity chart -->
       <div class="card mb-4 shadow-sm">
         <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <b>Daily Activity (Last 90 Days)</b>
-            <small class="text-muted">Total moves per day across all regions</small>
+            <!-- Move type filter buttons -->
+            <div class="btn-group btn-group-sm" role="group" aria-label="Chart metric">
+              <template v-for="m in dailyMetrics" :key="m.key">
+                <input type="radio" class="btn-check" name="dailyMetric" :id="'dm-'+m.key" :value="m.key" v-model="chartKey">
+                <label class="btn btn-outline-secondary" :for="'dm-'+m.key">{{ m.label }}</label>
+              </template>
+            </div>
           </div>
         </div>
         <div class="card-body">
-          <LineChart v-if="daily.length" :data="daily" x-key="day" y-key="total_moves" color="#0dcaf0" :height="220" />
+          <LineChart v-if="daily.length" :data="daily" x-key="day" :y-key="chartKey" :color="currentMetric.color" :height="220" />
           <p v-else class="text-muted text-center py-3">No data.</p>
           <hr class="my-3" />
           <div class="row g-3 text-center small">
             <div class="col-6 col-md-3">
-              <div class="text-muted">Total Days</div>
+              <div class="text-muted">Active Days</div>
               <div class="fw-bold">{{ daily.length }}</div>
             </div>
             <div class="col-6 col-md-3">
-              <div class="text-muted">Avg Moves/Day</div>
-              <div class="fw-bold">{{ (daily.reduce((sum, d) => sum + (d.total_moves || 0), 0) / (daily.length || 1)).toFixed(0).toLocaleString() }}</div>
+              <div class="text-muted">Avg/Day</div>
+              <div class="fw-bold">{{ (daily.reduce((s, d) => s + (d[chartKey] || 0), 0) / (daily.length || 1)).toFixed(0) }}</div>
             </div>
             <div class="col-6 col-md-3">
               <div class="text-muted">Peak Day</div>
-              <div class="fw-bold">{{ Math.max(...daily.map(d => d.total_moves || 0)).toLocaleString() }}</div>
+              <div class="fw-bold">{{ Math.max(...daily.map(d => d[chartKey] || 0)).toLocaleString() }}</div>
             </div>
             <div class="col-6 col-md-3">
               <div class="text-muted">Total Period</div>
-              <div class="fw-bold">{{ daily.reduce((sum, d) => sum + (d.total_moves || 0), 0).toLocaleString() }}</div>
+              <div class="fw-bold">{{ daily.reduce((s, d) => s + (d[chartKey] || 0), 0).toLocaleString() }}</div>
             </div>
           </div>
         </div>
@@ -154,18 +190,40 @@ onMounted(async () => {
         <!-- Top countries -->
         <div class="col-lg-6">
           <div class="card shadow-sm h-100">
-            <div class="card-header">
-              <div class="d-flex justify-content-between align-items-center">
-                <b>Top 20 Countries by Moves</b>
-                <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="btn btn-outline-secondary active">📊 All</button>
-                </div>
-              </div>
-            </div>
-            <div class="card-body p-2">
-              <BarChart v-if="countries.length" :data="countries" x-key="country" y-key="total_moves" color="#ffc107" :height="320" />
-              <p v-else class="text-muted text-center py-3">No data.</p>
-              <small class="d-block text-muted text-center mt-2">Showing countries ranked by total moves executed</small>
+            <div class="card-header"><b>Top 20 Countries by Moves</b></div>
+            <div class="table-responsive" style="max-height:370px; overflow-y:auto">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Country</th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleCountrySort('total_moves')" title="Sort by moves">
+                      Moves <span v-if="countrySort==='total_moves'">{{ countrySortDir==='desc' ? '▼' : '▲' }}</span>
+                    </th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleCountrySort('total_points_awarded')" title="Sort by points">
+                      Points <span v-if="countrySort==='total_points_awarded'">{{ countrySortDir==='desc' ? '▼' : '▲' }}</span>
+                    </th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleCountrySort('unique_users')" title="Sort by users">
+                      Users <span v-if="countrySort==='unique_users'">{{ countrySortDir==='desc' ? '▼' : '▲' }}</span>
+                    </th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleCountrySort('drops')" title="Drops">
+                      Drops <span v-if="countrySort==='drops'">{{ countrySortDir==='desc' ? '▼' : '▲' }}</span>
+                    </th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleCountrySort('dips')" title="Dips">
+                      Dips <span v-if="countrySort==='dips'">{{ countrySortDir==='desc' ? '▼' : '▲' }}</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="c in sortedCountries" :key="c.country">
+                    <td class="fw-semibold">{{ c.country?.toUpperCase() }}</td>
+                    <td class="text-end">{{ Number(c.total_moves||0).toLocaleString() }}</td>
+                    <td class="text-end text-success">{{ Number(c.total_points_awarded||0).toLocaleString() }}</td>
+                    <td class="text-end">{{ Number(c.unique_users||0).toLocaleString() }}</td>
+                    <td class="text-end text-danger small">{{ Number(c.drops||0).toLocaleString() }}</td>
+                    <td class="text-end text-primary small">{{ Number(c.dips||0).toLocaleString() }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

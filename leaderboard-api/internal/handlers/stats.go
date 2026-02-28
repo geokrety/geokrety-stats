@@ -59,7 +59,7 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 		       total_moves AS moves,
 		       active_users,
 		       active_gks,
-		       drops, grabs, dips, comments, sees
+		       drops, grabs, dips, comments, seen
 		FROM geokrety_stats.mv_daily_activity
 		WHERE activity_date >= CURRENT_DATE - (interval '1 day' * $1)
 		ORDER BY activity_date DESC`
@@ -80,13 +80,13 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 		Grabs       int64  `json:"grabs"`
 		Dips        int64  `json:"dips"`
 		Comments    int64  `json:"comments"`
-		Sees        int64  `json:"sees"`
+		Seen        int64  `json:"seen"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
 		if err := rows.Scan(&r.Day, &r.Moves, &r.ActiveUsers, &r.ActiveGKs,
-			&r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees); err != nil {
+			&r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Seen); err != nil {
 			errInternal(c, err)
 			return
 		}
@@ -100,7 +100,7 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 func (h *Handler) TopCountries(c *gin.Context) {
 	const q = `
 		SELECT country, total_moves, unique_gks, unique_users,
-		       total_points_awarded, drops, grabs, dips, comments, sees,
+		       total_points_awarded, drops, grabs, dips, comments, seen,
 		       CASE WHEN total_moves > 0 THEN ROUND(total_points_awarded::NUMERIC / total_moves, 2) ELSE 0 END AS avg_points_per_move
 		FROM geokrety_stats.mv_country_summary
 		ORDER BY total_points_awarded DESC
@@ -123,14 +123,14 @@ func (h *Handler) TopCountries(c *gin.Context) {
 		Grabs                int64   `json:"grabs"`
 		Dips                 int64   `json:"dips"`
 		Comments             int64   `json:"comments"`
-		Sees                 int64   `json:"sees"`
+		Seen                 int64   `json:"seen"`
 		AvgPointsPerMove     float64 `json:"avg_points_per_move"`
 	}
 	var out []row
 	for rows.Next() {
 		var r row
 		if err := rows.Scan(&r.Country, &r.TotalMoves, &r.UniqueGks, &r.UniqueUsers,
-			&r.TotalPointsAwarded, &r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Sees, &r.AvgPointsPerMove); err != nil {
+			&r.TotalPointsAwarded, &r.Drops, &r.Grabs, &r.Dips, &r.Comments, &r.Seen, &r.AvgPointsPerMove); err != nil {
 			errInternal(c, err)
 			return
 		}
