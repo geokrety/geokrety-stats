@@ -675,17 +675,39 @@ func (s *pgStore) SaveAwards(ctx context.Context, awards []pipeline.FinalAward) 
 
 // ---- Historical replay ----
 
-// GetMoveIDsPage returns a page of gk_moves IDs in ascending order for replay.
+// GetMoveIDsPage returns a page of gk_moves IDs in chronological order for replay.
+// Uses keyset pagination on (moved_on_datetime, id) to ensure consistent ordering.
 func (s *pgStore) GetMoveIDsPage(
 	ctx context.Context,
 	afterID, maxID int64,
 	startDate, endDate *time.Time,
 	limit int,
 ) ([]int64, error) {
-	// Build dynamic WHERE clause.
-	args := []interface{}{afterID, limit}
-	where := "id > $1"
-	argIdx := 3
+	// Get the pagination cursor: datetime and id of the last move from previous page
+	var afterDatetime *time.Time
+	if afterID > 0 {
+		err := s.pool.QueryRow(ctx,
+			`SELECT moved_on_datetime FROM geokrety.gk_moves WHERE id = $1`,
+			afterID,
+		).Scan(&afterDatetime)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("fetching pagination cursor: %w", err)
+		}
+	}
+
+	// Build dynamic WHERE clause using keyset pagination.
+	// Pattern: (datetime > cursor_datetime) OR (datetime = cursor_datetime AND id > cursor_id)
+	args := []interface{}{limit}
+	where := "TRUE"
+	argIdx := 2
+
+	// Keyset pagination on (moved_on_datetime, id)
+	if afterDatetime != nil {
+		where += fmt.Sprintf(` AND (moved_on_datetime > $%d OR (moved_on_datetime = $%d AND id > $%d))`,
+			argIdx, argIdx, argIdx+1)
+		args = append(args, *afterDatetime, afterID)
+		argIdx += 2
+	}
 
 	if maxID > 0 {
 		where += fmt.Sprintf(" AND id <= $%d", argIdx)
@@ -704,7 +726,7 @@ func (s *pgStore) GetMoveIDsPage(
 	}
 
 	query := fmt.Sprintf(
-		`SELECT id FROM geokrety.gk_moves WHERE %s ORDER BY id ASC LIMIT $2`,
+		`SELECT id FROM geokrety.gk_moves WHERE %s ORDER BY moved_on_datetime ASC, id ASC LIMIT $1`,
 		where,
 	)
 

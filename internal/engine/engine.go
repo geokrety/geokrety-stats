@@ -18,9 +18,21 @@ import (
 
 // Engine runs the scoring pipeline for individual GeoKret moves.
 type Engine struct {
-	runner *pipeline.Runner
-	store  store.Store
-	cfg    config.StatsConfig
+	runner              *pipeline.Runner
+	store               store.Store
+	cfg                 config.StatsConfig
+	suppressVerboseLog  bool // suppress individual move scored logs (useful during replay)
+	progressCallback    func(*MoveResult) // optional callback for progress tracking
+	skipCallback        func(int) // optional callback when move is skipped (halt), receives logType
+}
+
+// MoveResult holds result data from processing a move.
+type MoveResult struct {
+	MoveID   int64
+	GKID     int64
+	Awards   int
+	LoggedAt time.Time
+	LogType  int
 }
 
 // New builds an Engine with all 15 scoring computers wired up.
@@ -43,6 +55,21 @@ func New(s store.Store, cfg config.StatsConfig) *Engine {
 		computers.NewPointsAggregator(s, cfg),
 	)
 	return &Engine{runner: runner, store: s, cfg: cfg}
+}
+
+// SetSuppressVerboseLog controls whether individual move logs are printed.
+func (e *Engine) SetSuppressVerboseLog(suppress bool) {
+	e.suppressVerboseLog = suppress
+}
+
+// SetProgressCallback sets an optional callback for move result tracking.
+func (e *Engine) SetProgressCallback(cb func(*MoveResult)) {
+	e.progressCallback = cb
+}
+
+// SetSkipCallback sets an optional callback for skipped moves (halts).
+func (e *Engine) SetSkipCallback(cb func(int)) {
+	e.skipCallback = cb
 }
 
 // ProcessMove loads a gk_moves row and runs the full scoring pipeline.
@@ -93,15 +120,34 @@ func (e *Engine) ProcessMove(ctx context.Context, moveID int64) error {
 			Str("reason", result.HaltReason).
 			Dur("duration", elapsed).
 			Msg("pipeline halted (move not scored)")
+
+		// Call skip callback if set
+		if e.skipCallback != nil {
+			e.skipCallback(int(event.LogType))
+		}
 		return nil
 	}
 
-	log.Info().
-		Int64("move_id", moveID).
-		Int64("gk_id", event.GKID).
-		Int("awards", len(result.FinalAwards)).
-		Dur("duration", elapsed).
-		Msg("move scored")
+	// Call progress callback if set.
+	if e.progressCallback != nil {
+		e.progressCallback(&MoveResult{
+			MoveID:   moveID,
+			GKID:     event.GKID,
+			Awards:   len(result.FinalAwards),
+			LoggedAt: event.LoggedAt,
+			LogType:  int(event.LogType),
+		})
+	}
+
+	// Log move result if verbose logging is not suppressed.
+	if !e.suppressVerboseLog {
+		log.Info().
+			Int64("move_id", moveID).
+			Int64("gk_id", event.GKID).
+			Int("awards", len(result.FinalAwards)).
+			Dur("duration", elapsed).
+			Msg("move scored")
+	}
 
 	return nil
 }

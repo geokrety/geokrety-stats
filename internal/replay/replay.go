@@ -34,16 +34,36 @@ type Options struct {
 // Handler is called for each move_id.
 type Handler func(ctx context.Context, moveID int64) error
 
+// ErrorRecorder records when a move fails to process.
+type ErrorRecorder interface {
+	RecordError()
+}
+
+// ProgressCallback is called with move result data.
+type ProgressCallback func(moveID int64, gkID int64, awards int, loggedAt time.Time)
+
 // Runner replays historical gk_moves rows and scores them via handler.
 type Runner struct {
-	store   store.Store
-	cfg     config.ReplayConfig
-	handler Handler
+	store              store.Store
+	cfg                config.ReplayConfig
+	handler            Handler
+	progressCallback   ProgressCallback
+	errorRecorder      ErrorRecorder
 }
 
 // New creates a new Replay runner.
 func New(s store.Store, cfg config.ReplayConfig, handler Handler) *Runner {
 	return &Runner{store: s, cfg: cfg, handler: handler}
+}
+
+// SetProgressCallback sets the optional progress callback function.
+func (r *Runner) SetProgressCallback(cb ProgressCallback) {
+	r.progressCallback = cb
+}
+
+// SetErrorRecorder sets the optional error recorder.
+func (r *Runner) SetErrorRecorder(rec ErrorRecorder) {
+	r.errorRecorder = rec
 }
 
 // Run replays all moves matching opts.
@@ -75,12 +95,18 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 		afterID-- // GetMoveIDsPage uses >, so adjust
 	}
 
-	processed := 0
-	errors := 0
+	var processed int64
+	var errors int64
+	isInterrupted := false
 
 	for {
 		ids, err := r.store.GetMoveIDsPage(ctx, afterID, opts.EndID, opts.StartDate, opts.EndDate, batchSize)
 		if err != nil {
+			// Check if context was cancelled (Ctrl+C).
+			if ctx.Err() != nil {
+				isInterrupted = true
+				break
+			}
 			return fmt.Errorf("fetching move IDs (after %d): %w", afterID, err)
 		}
 		if len(ids) == 0 {
@@ -90,6 +116,9 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 		for _, id := range ids {
 			if err := r.handler(ctx, id); err != nil {
 				log.Error().Int64("move_id", id).Err(err).Msg("replay: move processing error")
+				if r.errorRecorder != nil {
+					r.errorRecorder.RecordError()
+				}
 				errors++
 			} else {
 				processed++
@@ -97,25 +126,26 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 			afterID = id // next page starts after this id
 		}
 
-		log.Info().
-			Int64("last_id", afterID).
-			Int("processed", processed).
-			Int("errors", errors).
-			Msg("replay: batch done")
-
 		// Yield between batches according to config.
 		if r.cfg.BatchDelay > 0 {
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				isInterrupted = true
+				break
 			case <-time.After(r.cfg.BatchDelay):
 			}
 		} else {
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				isInterrupted = true
+				break
 			default:
 			}
+		}
+
+		// Break outer loop if interrupted
+		if isInterrupted {
+			break
 		}
 
 		if len(ids) < batchSize {
@@ -123,10 +153,15 @@ func (r *Runner) Run(ctx context.Context, db dbTruncator, opts Options) error {
 		}
 	}
 
+	// Report completion
 	log.Info().
-		Int("processed", processed).
-		Int("errors", errors).
+		Int64("processed", processed).
+		Int64("errors", errors).
 		Msg("replay: complete")
+
+	if isInterrupted {
+		return fmt.Errorf("replay interrupted by user")
+	}
 
 	return nil
 }

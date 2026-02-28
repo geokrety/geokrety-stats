@@ -110,20 +110,50 @@ func runReplay(
 		Bool("truncate", truncate).
 		Msg("starting historical replay")
 
+	// Create progress tracker
+	tracker := replay.NewProgressTracker(500 * time.Millisecond)
+
+	// Configure engine for replay mode: suppress verbose logs and set progress callback
+	eng.SetSuppressVerboseLog(true)
+	eng.SetProgressCallback(func(result *engine.MoveResult) {
+		tracker.RecordMoveResult(result.MoveID, result.GKID, result.Awards, result.LoggedAt, result.LogType)
+	})
+	eng.SetSkipCallback(func(logType int) {
+		tracker.RecordSkipped(logType)
+	})
+
 	runner := replay.New(s, cfg.Replay, func(ctx context.Context, moveID int64) error {
 		return eng.ProcessMove(ctx, moveID)
 	})
 
+	// Set progress tracking callbacks on runner
+	runner.SetErrorRecorder(tracker)
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	start := time.Now()
+	// Start progress display
+	stopProgress := tracker.Start(ctx)
+
+	// Run replay
 	if err := runner.Run(ctx, db, opts); err != nil {
+		// Stop progress display and show summary
+		stats := stopProgress()
+		fmt.Print("\r\033[K")
+		fmt.Print(stats)
+
+		// Silently exit on interrupt
+		if ctx.Err() != nil {
+			os.Exit(130)
+		}
 		log.Error().Err(err).Msg("replay failed")
 		os.Exit(1)
 	}
 
-	log.Info().Dur("elapsed", time.Since(start)).Msg("replay completed successfully")
+	// Stop progress display and show summary
+	stats := stopProgress()
+	fmt.Print("\r\033[K")
+	fmt.Print(stats)
 }
 
 // setupLogging configures zerolog based on the log config.
