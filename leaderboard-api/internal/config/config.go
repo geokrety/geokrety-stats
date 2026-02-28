@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -47,12 +49,12 @@ func Load() *Config {
 	viper.AddConfigPath("/etc/leaderboard-api")
 	_ = viper.ReadInConfig()
 
-	dsn := viper.GetString("database.dsn")
+	dsn := os.Getenv("GK_STATS_DB_URL")
 	if dsn == "" {
-		dsn = viper.GetString("API_DATABASE_DSN")
+		dsn = viper.GetString("database.dsn")
 	}
 	if dsn == "" {
-		log.Warn().Msg("No DATABASE_DSN set; using default local postgres")
+		log.Warn().Msg("No GK_STATS_DB_URL set; using default local postgres")
 		dsn = "postgres://postgres:postgres@localhost:5432/geokrety?sslmode=disable"
 	}
 

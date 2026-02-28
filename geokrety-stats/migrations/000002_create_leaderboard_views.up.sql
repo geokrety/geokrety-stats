@@ -12,13 +12,11 @@ SELECT
     u.home_country,
     COALESCE(t.total_points, 0)                 AS total_points,
     RANK() OVER (ORDER BY COALESCE(t.total_points, 0) DESC) AS rank,
-    COUNT(DISTINCT h.gk_id)                     AS distinct_gks,
     COUNT(DISTINCT m.id)                        AS total_moves,
     MAX(m.moved_on_datetime)                    AS last_active
 FROM geokrety.gk_users u
 LEFT JOIN geokrety_stats.user_points_totals t   ON t.user_id = u.id
 LEFT JOIN geokrety.gk_moves m                   ON m.author  = u.id
-LEFT JOIN geokrety_stats.user_move_history h    ON h.user_id = u.id
 WHERE COALESCE(t.total_points, 0) > 0
 GROUP BY u.id, u.username, u.home_country, t.total_points
 WITH DATA;
@@ -115,7 +113,6 @@ SELECT
     u.joined_on_datetime,
     u.last_login_datetime,
     COALESCE(t.total_points, 0)                                 AS total_points,
-    COALESCE(all_t.rank, 0)                                     AS rank_all_time,
 
     -- move counts
     COUNT(DISTINCT m.id)                                        AS total_moves,
@@ -131,9 +128,6 @@ SELECT
 
     -- countries
     COUNT(DISTINCT m.country) FILTER (WHERE m.country IS NOT NULL) AS countries_visited_count,
-
-    -- waypoints / caches
-    COUNT(DISTINCT m.waypoint) FILTER (WHERE m.waypoint IS NOT NULL) AS caches_visited_count,
 
     -- distance (total km of GKs moved with drops)
     COALESCE(SUM(m.distance) FILTER (WHERE m.move_type = 0), 0) AS km_contributed,
@@ -155,14 +149,11 @@ SELECT
 
 FROM geokrety.gk_users u
 LEFT JOIN geokrety_stats.user_points_totals t       ON t.user_id = u.id
-LEFT JOIN geokrety_stats.mv_leaderboard_all_time all_t ON all_t.user_id = u.id
 LEFT JOIN geokrety.gk_moves m                       ON m.author  = u.id
 LEFT JOIN geokrety.gk_geokrety gk                   ON gk.id     = m.geokret
 LEFT JOIN geokrety_stats.user_points_log pl         ON pl.user_id = u.id
-WHERE COALESCE(t.total_points, 0) > 0
-   OR COUNT(DISTINCT m.id) > 0
 GROUP BY u.id, u.username, u.home_country, u.home_latitude, u.home_longitude,
-         u.joined_on_datetime, u.last_login_datetime, t.total_points, all_t.rank
+         u.joined_on_datetime, u.last_login_datetime, t.total_points
 WITH DATA;
 
 CREATE UNIQUE INDEX ON geokrety_stats.mv_user_stats (user_id);
