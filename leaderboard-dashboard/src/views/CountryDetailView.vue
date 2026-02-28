@@ -178,22 +178,22 @@ onMounted(loadCountryData)
         <div class="card-body">
           <div class="row">
             <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
-              <div class="fs-2 mb-2">📦</div>
+              <div class="fs-2 mb-2">🌳</div>
               <div class="text-muted small" title="GeoKrety placed into a cache">Drops</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.drops) }}</div>
             </div>
             <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
-              <div class="fs-2 mb-2">🎯</div>
+              <div class="fs-2 mb-2">🚀</div>
               <div class="text-muted small" title="GeoKrety taken from a cache or person">Grabs</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.grabs) }}</div>
             </div>
             <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
-              <div class="fs-2 mb-2">💧</div>
+              <div class="fs-2 mb-2">🥾</div>
               <div class="text-muted small" title="Virtual carry - GeoKrety held digitally without physical cache">DIPs</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.dips) }}</div>
             </div>
             <div class="col-6 col-md-4 col-lg-2 text-center mb-3">
-              <div class="fs-2 mb-2">👁️</div>
+              <div class="fs-2 mb-2">👀</div>
               <div class="text-muted small" title="GeoKrety spotted but not taken or placed">Seen</div>
               <div class="fs-5 fw-bold">{{ formatInt(countryData.seen) }}</div>
             </div>

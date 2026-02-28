@@ -71,11 +71,11 @@ onMounted(loadCountries)
 
 const getMoveTypeIcon = (type) => {
   const icons = {
-    drops: '📦',
-    grabs: '🎯',
-    dips: '💧',
+    drops: '🌳',
+    grabs: '🚀',
+    dips: '🥾',
     comments: '💬',
-    sees: '👁️'
+    sees: '👀'
   }
   return icons[type] || '•'
 }
@@ -114,8 +114,8 @@ const formatFloat = (num, decimals = 2) => {
     </div>
 
     <!-- Sort Options -->
-    <div class="mb-3 d-flex gap-2 flex-wrap">
-      <span class="text-muted align-self-center">Sort by:</span>
+    <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+      <span class="text-muted small fw-semibold">Sort by:</span>
       <div class="btn-group flex-wrap" role="group">
         <template v-for="opt in sortOptions" :key="opt.value">
           <input
@@ -245,43 +245,43 @@ const formatFloat = (num, decimals = 2) => {
         <table class="table table-hover table-sm align-middle border">
           <thead class="table-light sticky-top">
             <tr>
-              <th style="width: 60px">Rank</th>
+              <th style="width: 60px">#</th>
               <th>Country</th>
               <th class="text-end">Points</th>
-              <th class="text-end">Avg/Move</th>
-              <th class="text-end">Moves</th>
-              <th class="text-end" :title="getMoveTypeTooltip('drop')">📦</th>
-              <th class="text-end" :title="getMoveTypeTooltip('grab')">🎯</th>
-              <th class="text-end" :title="getMoveTypeTooltip('dip')">💧</th>
-              <th class="text-end" :title="getMoveTypeTooltip('seen')">👁️</th>
-              <th class="text-end">GeoKrety</th>
-              <th class="text-end">Users</th>
-              <th class="text-end" title="Total loves for GeoKrety that visited this country">❤️</th>
+              <th class="text-end d-none d-md-table-cell text-nowrap">Avg/Move</th>
+              <th class="text-end d-none d-sm-table-cell">Moves</th>
+              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('drop')">🌳</th>
+              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('grab')">🚀</th>
+              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('dip')">🥾</th>
+              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('seen')">👀</th>
+              <th class="text-end d-none d-md-table-cell">GeoKrety</th>
+              <th class="text-end d-none d-md-table-cell">Users</th>
+              <th class="text-end">❤️</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(country, idx) in countries" :key="country.country">
+            <tr v-for="(country, idx) in countries" :key="country.country" @click="$router.push(`/country/${country.country}`)" style="cursor: pointer">
               <td class="fw-bold">
                 <span v-if="idx < 3" class="badge" :class="idx === 0 ? 'bg-warning text-dark' : idx === 1 ? 'bg-secondary' : 'bg-info'">
                   {{ idx + 1 }}
                 </span>
-                <span v-else>{{ idx + 1 }}</span>
+                <span v-else class="text-muted small">{{ idx + 1 }}</span>
               </td>
               <td>
-                <RouterLink :to="`/country/${country.country}`" class="text-decoration-none">
-                  <span class="me-2">{{ getCountryFlag(country.country) }}</span>
-                  <strong>{{ country.country.toUpperCase() }}</strong>
-                </RouterLink>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fs-5">{{ getCountryFlag(country.country) }}</span>
+                  <strong class="text-truncate" style="max-width: 120px">{{ country.country.toUpperCase() }}</strong>
+                </div>
               </td>
               <td class="text-end fw-bold text-success">{{ formatInt(country.total_points_awarded) }}</td>
-              <td class="text-end fw-bold text-info small">{{ formatFloat(country.avg_points_per_move, 4) }}</td>
-              <td class="text-end">{{ formatInt(country.total_moves) }}</td>
-              <td class="text-end text-muted small">{{ formatInt(country.drops) }}</td>
-              <td class="text-end text-muted small">{{ formatInt(country.grabs) }}</td>
-              <td class="text-end text-muted small">{{ formatInt(country.dips) }}</td>
-              <td class="text-end text-muted small">{{ formatInt(country.seen) }}</td>
-              <td class="text-end">{{ formatInt(country.unique_gks) }}</td>
-              <td class="text-end">{{ formatInt(country.unique_users) }}</td>
+              <td class="text-end fw-bold text-info small d-none d-md-table-cell">{{ formatFloat(country.avg_points_per_move, 3) }}</td>
+              <td class="text-end d-none d-sm-table-cell">{{ formatInt(country.total_moves) }}</td>
+              <td class="text-end text-muted small d-none d-lg-table-cell">{{ formatInt(country.drops) }}</td>
+              <td class="text-end text-muted small d-none d-lg-table-cell">{{ formatInt(country.grabs) }}</td>
+              <td class="text-end text-muted small d-none d-lg-table-cell">{{ formatInt(country.dips) }}</td>
+              <td class="text-end text-muted small d-none d-lg-table-cell">{{ formatInt(country.seen) }}</td>
+              <td class="text-end d-none d-md-table-cell">{{ formatInt(country.unique_gks) }}</td>
+              <td class="text-end d-none d-md-table-cell">{{ formatInt(country.unique_users) }}</td>
               <td class="text-end text-danger fw-semibold">{{ formatInt(country.total_loves) }}</td>
             </tr>
           </tbody>

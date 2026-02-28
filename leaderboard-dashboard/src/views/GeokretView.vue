@@ -105,7 +105,7 @@ watch(activeTab, (tab) => {
     <!-- GK Header -->
     <div class="card mb-4 shadow-sm">
       <div class="card-body d-flex align-items-center gap-4 flex-wrap">
-        <div class="fs-1">🎯</div>
+        <div class="fs-1">🐢</div>
         <div class="flex-grow-1">
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <h3 class="mb-0">{{ gk.gk_name }}</h3>
@@ -270,40 +270,47 @@ watch(activeTab, (tab) => {
 
     <!-- Moves -->
     <div v-if="activeTab === 'moves'">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm border-0">
         <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0 align-middle">
+          <table class="table table-hover table-sm mb-0 align-middle border">
             <thead class="table-dark">
               <tr>
-                <th title="Date of the move">Date</th>
-                <th title="User who performed this move">User</th>
-                <th title="Move type (drop, grab, dip, seen, comment)">Type</th>
-                <th title="Points awarded for this move">Points</th>
-                <th title="Waypoint / cache code">Waypoint</th>
-                <th title="Country where the move occurred">Country</th>
+                <th class="ps-3">Date</th>
+                <th>Author</th>
+                <th class="d-none d-md-table-cell">Type</th>
+                <th class="text-end">Points</th>
+                <th class="d-none d-sm-table-cell">Waypoint</th>
+                <th class="d-none d-lg-table-cell pe-3">Country</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="m in moves" :key="m.move_id">
-                <td class="small text-muted">{{ m.moved_on?.slice(0, 10) }}</td>
+              <tr v-for="m in moves" :key="m.move_id" @click="$router.push(`/users/${m.author_id}`)" style="cursor: pointer">
+                <td class="small text-muted ps-3">{{ m.moved_on?.slice(0, 10) }}</td>
                 <td>
-                  <RouterLink :to="`/users/${m.author_id}`">{{ m.author_username }}</RouterLink>
+                  <div class="fw-bold text-truncate" style="max-width: 140px">{{ m.author_username }}</div>
+                  <div class="d-md-none small">
+                    <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`" style="font-size:0.7rem">{{ m.type_name }}</span>
+                    <span v-if="m.waypoint" class="text-muted ms-1 small font-monospace">@{{ displayWaypoint(m.waypoint) }}</span>
+                  </div>
                 </td>
-                <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
-                <td class="fw-semibold text-success">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
-                <td>
+                <td class="d-none d-md-table-cell">
+                  <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span>
+                </td>
+                <td class="text-end fw-bold text-success">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
+                <td class="d-none d-sm-table-cell">
                   <a v-if="m.waypoint"
                      :href="waypointExternalUrl(m.waypoint)"
                      target="_blank"
                      rel="noopener"
+                     @click.stop
                      class="text-decoration-none font-monospace small"
                      :title="waypointTooltip(m.waypoint)">
                     {{ displayWaypoint(m.waypoint) }}
                   </a>
-                  <span v-else class="text-muted">—</span>
+                  <span v-else class="text-muted small">—</span>
                 </td>
-                <td>
-                  <span v-if="m.country" :title="`Country: ${m.country}`">
+                <td class="d-none d-lg-table-cell pe-3">
+                  <span v-if="m.country" :title="`Country: ${m.country}`" class="text-nowrap small text-muted">
                     {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}
                   </span>
                 </td>
@@ -351,32 +358,36 @@ watch(activeTab, (tab) => {
         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
         No points recorded for this GeoKret yet.
       </div>
-      <div v-else class="card shadow-sm">
+      <div v-else class="card shadow-sm border-0">
         <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0">
+          <table class="table table-hover table-sm mb-0 align-middle border">
             <thead class="table-dark">
               <tr>
-                <th title="Date when points were awarded">Date</th>
-                <th title="User who received these points">User</th>
-                <th title="Type of reward awarded">Reward Type</th>
-                <th class="text-end" title="Points awarded for this action">Points</th>
+                <th class="ps-3">Date</th>
+                <th>User</th>
+                <th class="d-none d-md-table-cell">Reward</th>
+                <th class="text-end pe-3">Points</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="p in pointsLog" :key="p.id">
-                <td class="small text-muted text-nowrap">{{ p.awarded_at?.slice(0, 10) }}</td>
+              <tr v-for="p in pointsLog" :key="p.id" @click="$router.push(`/users/${p.user_id}`)" style="cursor: pointer">
+                <td class="small text-muted text-nowrap ps-3">{{ p.awarded_at?.slice(0, 10) }}</td>
                 <td>
-                  <RouterLink :to="`/users/${p.user_id}`" class="text-decoration-none">
-                    {{ p.username || p.user_id }}
-                  </RouterLink>
+                  <div class="fw-bold">{{ p.username || p.user_id }}</div>
+                  <div class="d-md-none small mt-1">
+                    <span class="badge bg-light text-dark border overflow-hidden text-truncate" style="max-width: 150px">
+                      {{ (p.label || p.module_source || '—').replace(/_/g, ' ') }}
+                    </span>
+                    <span v-if="p.is_owner_reward" class="badge bg-warning text-dark ms-1">Owner</span>
+                  </div>
                 </td>
-                <td>
+                <td class="d-none d-md-table-cell">
                   <span class="badge bg-light text-dark border" :title="p.reason || ''">
                     {{ (p.label || p.module_source || '—').replace(/_/g, ' ') }}
                   </span>
                   <span v-if="p.is_owner_reward" class="badge bg-warning text-dark ms-1" title="Owner reward">Owner</span>
                 </td>
-                <td class="text-end fw-semibold" :class="p.points >= 0 ? 'text-success' : 'text-danger'">
+                <td class="text-end fw-bold pe-3" :class="p.points >= 0 ? 'text-success' : 'text-danger'">
                   {{ p.points >= 0 ? '+' : '' }}{{ p.points?.toLocaleString() }}
                 </td>
               </tr>

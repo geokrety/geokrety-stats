@@ -1,0 +1,50 @@
+                        List of tables
+  Schema  |              Name               | Type  |  Owner   
+----------+---------------------------------+-------+----------
+ geokrety | gk_account_activation           | table | geokrety
+ geokrety | gk_awards                       | table | geokrety
+ geokrety | gk_awards_group                 | table | geokrety
+ geokrety | gk_awards_won                   | table | geokrety
+ geokrety | gk_email_activation             | table | geokrety
+ geokrety | gk_email_revalidate             | table | geokrety
+ geokrety | gk_geokrety                     | table | geokrety
+ geokrety | gk_geokrety_legacy              | table | geokrety
+ geokrety | gk_geokrety_rating              | table | geokrety
+ geokrety | gk_labels                       | table | geokrety
+ geokrety | gk_loves                        | table | geokrety
+ geokrety | gk_mails                        | table | geokrety
+ geokrety | gk_moves                        | table | geokrety
+ geokrety | gk_moves_comments               | table | geokrety
+ geokrety | gk_news                         | table | geokrety
+ geokrety | gk_news_comments                | table | geokrety
+ geokrety | gk_news_comments_access         | table | geokrety
+ geokrety | gk_owner_codes                  | table | geokrety
+ geokrety | gk_password_tokens              | table | geokrety
+ geokrety | gk_pictures                     | table | geokrety
+ geokrety | gk_races                        | table | geokrety
+ geokrety | gk_races_participants           | table | geokrety
+ geokrety | gk_rate_limit_overrides         | table | geokrety
+ geokrety | gk_site_settings                | table | geokrety
+ geokrety | gk_site_settings_parameters     | table | geokrety
+ geokrety | gk_social_auth_providers        | table | geokrety
+ geokrety | gk_statistics_counters          | table | geokrety
+ geokrety | gk_statistics_daily_counters    | table | geokrety
+ geokrety | gk_users                        | table | geokrety
+ geokrety | gk_users_authentication_history | table | geokrety
+ geokrety | gk_users_settings               | table | geokrety
+ geokrety | gk_users_settings_parameters    | table | geokrety
+ geokrety | gk_users_social_auth            | table | geokrety
+ geokrety | gk_users_username_history       | table | geokrety
+ geokrety | gk_watched                      | table | geokrety
+ geokrety | gk_waypoints_country            | table | geokrety
+ geokrety | gk_waypoints_gc                 | table | geokrety
+ geokrety | gk_waypoints_oc                 | table | geokrety
+ geokrety | gk_waypoints_sync               | table | geokrety
+ geokrety | gk_waypoints_types              | table | geokrety
+ geokrety | gk_yearly_ranking               | table | geokrety
+ geokrety | phinxlog                        | table | geokrety
+ geokrety | schema_migrations               | table | geokrety
+ geokrety | scripts                         | table | geokrety
+ geokrety | sessions                        | table | geokrety
+(45 rows)
+

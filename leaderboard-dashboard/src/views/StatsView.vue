@@ -17,10 +17,10 @@ const countryFilter = ref('total_moves') // Filter for country chart
 
 const countryFilterOptions = [
   { value: 'total_moves', label: '📊 All', key: 'total_moves' },
-  { value: 'drops', label: '📦 Drops', key: 'drops' },
-  { value: 'grabs', label: '🎯 Grabs', key: 'grabs' },
-  { value: 'dips', label: '💧 DIPs', key: 'dips' },
-  { value: 'seen', label: '👁️ Seen', key: 'seen' },
+  { value: 'drops', label: '🌳 Drops', key: 'drops' },
+  { value: 'grabs', label: '🚀 Grabs', key: 'grabs' },
+  { value: 'dips', label: '🥾 DIPs', key: 'dips' },
+  { value: 'seen', label: '👀 Seen', key: 'seen' },
   { value: 'comments', label: '💬 Comments', key: 'comments' },
   { value: 'archived', label: '📦 Archived', key: 'archived' }
 ]
@@ -282,26 +282,26 @@ onMounted(async () => {
           <div class="card shadow-sm h-100">
             <div class="card-header"><b>Points Breakdown by Type</b></div>
             <div class="table-responsive" style="max-height:360px; overflow-y:auto">
-              <table class="table table-sm mb-0">
+              <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light sticky-top">
                   <tr>
                     <th>Reward Type</th>
                     <th class="text-end">Points</th>
-                    <th class="text-end">Count</th>
+                    <th class="text-end d-none d-sm-table-cell">Count</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="b in breakdown" :key="b.label">
                     <td>
-                      <span class="badge bg-light text-dark">{{ b.label.replace(/_/g, ' ') }}</span>
+                      <span class="badge bg-light text-dark border fw-medium text-truncate d-inline-block" style="max-width: 180px">{{ b.label.replace(/_/g, ' ') }}</span>
                     </td>
-                    <td class="text-end">{{ b.points?.toLocaleString() }}</td>
-                    <td class="text-end">{{ b.count?.toLocaleString() }}</td>
+                    <td class="text-end fw-bold text-success">{{ b.points?.toLocaleString() }}</td>
+                    <td class="text-end d-none d-sm-table-cell text-muted">{{ b.count?.toLocaleString() }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <small class="d-block text-muted text-center mt-2">Distribution of awarded points by reward type</small>
+            <small class="d-block text-muted text-center mt-2 p-1">Distribution of awarded points by reward type</small>
           </div>
         </div>
       </div>

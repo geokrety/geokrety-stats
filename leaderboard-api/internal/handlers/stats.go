@@ -13,23 +13,19 @@ import (
 func (h *Handler) GlobalStats(c *gin.Context) {
 	const q = `
 		SELECT total_users, total_gks, total_moves, scored_users,
-		       total_points_awarded, countries_reached, total_km, computed_at
+		       total_points_awarded, countries_reached, total_km, 
+		       total_images, total_loves, computed_at
 		FROM geokrety_stats.mv_global_stats`
 
 	var s models.GlobalStats
 	err := h.DB.QueryRow(c.Request.Context(), q).Scan(
 		&s.TotalUsers, &s.TotalGKs, &s.TotalMoves, &s.ScoredUsers,
-		&s.TotalPointsAwarded, &s.CountriesReached, &s.TotalKm, &s.ComputedAt,
+		&s.TotalPointsAwarded, &s.CountriesReached, &s.TotalKm,
+		&s.TotalImages, &s.TotalLoves, &s.ComputedAt,
 	)
 	if err != nil {
 		// fallback to direct count
 		s = h.computeGlobalStatsFallback(c.Request.Context())
-	} else {
-		// Always compute images and loves (not in view)
-		_ = h.DB.QueryRow(c.Request.Context(),
-			`SELECT COALESCE(COUNT(*), 0) FROM geokrety.gk_images`).Scan(&s.TotalImages)
-		_ = h.DB.QueryRow(c.Request.Context(),
-			`SELECT COALESCE(SUM(loves_count), 0) FROM geokrety.gk_geokrety`).Scan(&s.TotalLoves)
 	}
 	ok(c, s, models.Meta{}, nil)
 }
@@ -49,9 +45,11 @@ func (h *Handler) computeGlobalStatsFallback(ctx context.Context) models.GlobalS
 	_ = h.DB.QueryRow(ctx,
 		`SELECT COALESCE(SUM(distance),0) FROM geokrety.gk_geokrety`).Scan(&s.TotalKm)
 	_ = h.DB.QueryRow(ctx,
-		`SELECT COALESCE(COUNT(*), 0) FROM geokrety.gk_images`).Scan(&s.TotalImages)
+		`SELECT COUNT(*) FROM geokrety.gk_pictures`).Scan(&s.TotalImages)
 	_ = h.DB.QueryRow(ctx,
 		`SELECT COALESCE(SUM(loves_count), 0) FROM geokrety.gk_geokrety`).Scan(&s.TotalLoves)
+	now := time.Now()
+	s.ComputedAt = &now
 	return s
 }
 

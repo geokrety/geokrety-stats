@@ -185,20 +185,20 @@ watch(activeTab, (tab) => {
       <div class="card shadow-sm">
         <div class="card-header"><b>Points Breakdown</b></div>
         <div class="table-responsive">
-          <table class="table table-sm mb-0">
+          <table class="table table-sm table-hover mb-0 align-middle">
             <thead class="table-light">
               <tr>
                 <th>Source</th>
                 <th class="text-end">Points</th>
-                <th class="text-end">Count</th>
-                <th></th>
+                <th class="text-end d-none d-sm-table-cell">Count</th>
+                <th class="text-end" style="width: 50px"></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="b in breakdown" :key="b.source">
-                <td>{{ b.source }}</td>
-                <td class="text-end">{{ b.points?.toLocaleString() }}</td>
-                <td class="text-end">{{ b.count?.toLocaleString() }}</td>
+              <tr v-for="b in breakdown" :key="b.source" @click="$router.push(`/users/${userId}/awards?label=${encodeURIComponent(b.source)}`)" style="cursor: pointer">
+                <td class="fw-medium">{{ b.source }}</td>
+                <td class="text-end fw-bold text-success">{{ b.points?.toLocaleString() }}</td>
+                <td class="text-end d-none d-sm-table-cell text-muted">{{ b.count?.toLocaleString() }}</td>
                 <td class="text-end">
                   <RouterLink
                     :to="`/users/${userId}/awards?label=${encodeURIComponent(b.source)}`"
@@ -212,7 +212,7 @@ watch(activeTab, (tab) => {
           </table>
         </div>
         <div class="card-footer text-end">
-          <RouterLink :to="`/users/${userId}/awards`" class="btn btn-sm btn-outline-primary">
+          <RouterLink :to="`/users/${userId}/awards`" class="btn btn-sm btn-outline-primary shadow-sm">
             <i class="bi bi-list-stars me-1"></i>View all point awards
           </RouterLink>
         </div>
@@ -221,31 +221,35 @@ watch(activeTab, (tab) => {
 
     <!-- Moves tab -->
     <div v-if="activeTab === 'moves'">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm border-0">
         <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0 align-middle">
+          <table class="table table-hover table-sm mb-0 align-middle border">
             <thead class="table-dark">
               <tr>
-                <th>Date</th>
+                <th class="ps-3">Date</th>
                 <th>GeoKret</th>
-                <th>Type</th>
+                <th class="d-none d-md-table-cell">Type</th>
                 <th class="text-end">Points</th>
-                <th>Country</th>
+                <th class="d-none d-sm-table-cell pe-3">Country</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="m in moves" :key="m.move_id">
-                <td class="small text-muted">{{ m.moved_on?.slice(0, 10) }}</td>
+              <tr v-for="m in moves" :key="m.move_id" @click="$router.push(`/geokrety/${m.gk_id}`)" style="cursor: pointer">
+                <td class="small text-muted ps-3">{{ m.moved_on?.slice(0, 10) }}</td>
                 <td>
-                  <RouterLink :to="`/geokrety/${m.gk_id}`">
-                    <span v-if="m.gk_name">{{ m.gk_name }}</span>
-                    <code class="text-muted small">{{ idToGkId(m.gk_id) }}</code>
-                  </RouterLink>
+                  <div class="fw-bold text-truncate" style="max-width: 150px">
+                    {{ m.gk_name || idToGkId(m.gk_id) }}
+                  </div>
+                  <div class="d-md-none small">
+                    <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`" style="font-size:0.7rem">{{ m.type_name }}</span>
+                  </div>
                 </td>
-                <td><span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span></td>
-                <td class="text-end fw-semibold text-primary">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
-                <td>
-                  <span v-if="m.country" :title="`Country: ${m.country}`">
+                <td class="d-none d-md-table-cell">
+                  <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span>
+                </td>
+                <td class="text-end fw-bold text-primary">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
+                <td class="d-none d-sm-table-cell pe-3">
+                  <span v-if="m.country" :title="`Country: ${m.country}`" class="text-nowrap small text-muted">
                     {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}
                   </span>
                 </td>
