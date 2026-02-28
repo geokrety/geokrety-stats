@@ -60,7 +60,7 @@ func (h *Handler) DailyActivity(c *gin.Context) {
 		       COUNT(DISTINCT author) AS active_users,
 		       COUNT(DISTINCT geokret) AS active_gks
 		FROM geokrety.gk_moves
-		WHERE moved_on_datetime >= NOW() - ($1 || ' days')::interval
+		WHERE moved_on_datetime >= NOW() - (interval '1 day' * $1)
 		GROUP BY DATE(moved_on_datetime AT TIME ZONE 'UTC')
 		ORDER BY day DESC`
 

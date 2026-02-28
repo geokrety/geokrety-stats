@@ -132,7 +132,7 @@ func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, l
 	const countQ = `
 		SELECT COUNT(DISTINCT user_id)
 		FROM geokrety_stats.user_points_log
-		WHERE awarded_at >= NOW() - ($1 || ' days')::interval`
+		WHERE awarded_at >= NOW() - (interval '1 day' * $1)`
 	var total int64
 	_ = h.DB.QueryRow(ctx, countQ, days).Scan(&total)
 
@@ -141,7 +141,7 @@ func (h *Handler) leaderboardPeriodDays(ctx context.Context, days int, offset, l
 		       RANK() OVER (ORDER BY SUM(pl.points) DESC) AS rank
 		FROM geokrety.gk_users u
 		JOIN geokrety_stats.user_points_log pl ON pl.user_id = u.id
-		WHERE pl.awarded_at >= NOW() - ($1 || ' days')::interval
+		WHERE pl.awarded_at >= NOW() - (interval '1 day' * $1)
 		GROUP BY u.id, u.username
 		ORDER BY pts DESC
 		LIMIT $2 OFFSET $3`
