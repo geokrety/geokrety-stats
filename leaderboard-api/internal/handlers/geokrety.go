@@ -163,7 +163,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		LEFT JOIN geokrety.gk_users o ON o.id = s.owner_id
 		LEFT JOIN geokrety.gk_users h ON h.id = s.holder_id
 		LEFT JOIN LATERAL (
-			SELECT country FROM geokrety.gk_moves 
+			SELECT country FROM geokrety.gk_moves
 			WHERE geokret = $1 AND country IS NOT NULL
 			ORDER BY moved_on_datetime DESC LIMIT 1
 		) m ON TRUE
@@ -198,7 +198,6 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		}
 		g.CurrentMultiplier = 1.0
 	}
-
 
 	g.GkHexID = gkHexID(publicGkID)
 	g.GkTypeName = gkTypeName(g.GkType)

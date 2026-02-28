@@ -122,10 +122,24 @@ watch(activeTab, (tab) => {
             Owner:
             <RouterLink v-if="gk.owner_id" :to="`/users/${gk.owner_id}`">{{ gk.owner_username }}</RouterLink>
             <span v-else>—</span>
+            <span v-if="gk.owner_home_country" class="ms-1" :title="`Home country: ${gk.owner_home_country.toUpperCase()}`">
+              {{ getCountryFlag(gk.owner_home_country) }}
+            </span>
             &ensp;|&ensp;
-            Holder:
-            <RouterLink v-if="gk.holder_id" :to="`/users/${gk.holder_id}`">{{ gk.holder_username }}</RouterLink>
-            <span v-else>—</span>
+            <span v-if="gk.in_cache" class="fw-semibold">
+              <span class="badge bg-success">🏦 In Cache</span>
+              <span v-if="gk.cache_country" class="ms-1" :title="`Cache location: ${gk.cache_country.toUpperCase()}`">
+                {{ getCountryFlag(gk.cache_country) }}
+              </span>
+            </span>
+            <span v-else>
+              Holder:
+              <RouterLink v-if="gk.holder_id" :to="`/users/${gk.holder_id}`">{{ gk.holder_username }}</RouterLink>
+              <span v-else>—</span>
+              <span v-if="gk.holder_home_country" class="ms-1" :title="`Home country: ${gk.holder_home_country.toUpperCase()}`">
+                {{ getCountryFlag(gk.holder_home_country) }}
+              </span>
+            </span>
           </p>
         </div>
         <div class="row g-3 text-center">
@@ -167,6 +181,7 @@ watch(activeTab, (tab) => {
       <li class="nav-item">
         <button class="nav-link" :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">
           <i class="bi bi-list-ul me-1"></i>Moves
+          <span v-if="moveMeta.total" class="badge bg-secondary ms-1">{{ moveMeta.total.toLocaleString() }}</span>
         </button>
       </li>
       <li class="nav-item">
@@ -178,6 +193,7 @@ watch(activeTab, (tab) => {
       <li class="nav-item">
         <button class="nav-link" :class="{ active: activeTab === 'related-users' }" @click="activeTab = 'related-users'">
           <i class="bi bi-people me-1"></i>Movers
+          <span v-if="gk?.distinct_users" class="badge bg-secondary ms-1">{{ gk.distinct_users.toLocaleString() }}</span>
         </button>
       </li>
       <li class="nav-item">
