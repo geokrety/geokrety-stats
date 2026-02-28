@@ -1,0 +1,39 @@
+                    Materialized view "geokrety_stats.mv_gk_stats"
+         Column         |            Type             | Collation | Nullable | Default 
+------------------------+-----------------------------+-----------+----------+---------
+ gk_id                  | bigint                      |           |          | 
+ name                   | character varying(75)       |           |          | 
+ tracking_code          | character varying(9)        |           |          | 
+ gk_type                | smallint                    |           |          | 
+ missing                | boolean                     |           |          | 
+ distance               | bigint                      |           |          | 
+ caches_count           | integer                     |           |          | 
+ created_on_datetime    | timestamp(0) with time zone |           |          | 
+ born_on_datetime       | timestamp with time zone    |           |          | 
+ owner_username         | character varying(80)       |           |          | 
+ owner_id               | bigint                      |           |          | 
+ holder_username        | character varying(80)       |           |          | 
+ holder_id              | bigint                      |           |          | 
+ in_cache               | boolean                     |           |          | 
+ is_non_collectible     | boolean                     |           |          | 
+ is_parked              | boolean                     |           |          | 
+ loves_count            | integer                     |           |          | 
+ total_moves            | bigint                      |           |          | 
+ total_drops            | bigint                      |           |          | 
+ total_grabs            | bigint                      |           |          | 
+ total_seen             | bigint                      |           |          | 
+ total_dips             | bigint                      |           |          | 
+ distinct_users         | bigint                      |           |          | 
+ countries_count        | bigint                      |           |          | 
+ caches_count_distinct  | bigint                      |           |          | 
+ total_points_generated | double precision            |           |          | 
+ users_awarded          | bigint                      |           |          | 
+ current_multiplier     | double precision            |           |          | 
+ first_move_at          | timestamp with time zone    |           |          | 
+ last_move_at           | timestamp with time zone    |           |          | 
+Indexes:
+    "mv_gk_stats_gk_id_idx" UNIQUE, btree (gk_id)
+    "mv_gk_stats_loves_count_idx" btree (loves_count DESC)
+    "mv_gk_stats_owner_id_idx" btree (owner_id)
+    "mv_gk_stats_total_points_generated_idx" btree (total_points_generated DESC)
+
