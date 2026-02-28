@@ -5,6 +5,7 @@ const routes = [
   { path: '/', component: HomeView },
   { path: '/users/:id', component: () => import('../views/UserView.vue') },
   { path: '/users/:id/awards', component: () => import('../views/PointAwardsView.vue') },
+  { path: '/geokrety', component: () => import('../views/GeokretyLeaderboardView.vue') },
   { path: '/geokrety/:id', component: () => import('../views/GeokretView.vue') },
   { path: '/countries', component: () => import('../views/CountryLeaderboardView.vue') },
   { path: '/stats', component: () => import('../views/StatsView.vue') },

@@ -94,16 +94,29 @@ function medalClass(rank) {
             class="btn"
             :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
             @click="selectPeriod(p.value)"
-          >{{ p.label }}</button>
+          >
+            <span v-if="p.value === 'year'">📅 Year</span>
+            <span v-else>{{ p.label }}</span>
+          </button>
         </div>
-        <!-- Year selector -->
-        <div v-if="availableYears.length" class="btn-group btn-group-sm" role="group">
+        <!-- Year dropdown selector -->
+        <div v-if="availableYears.length" class="dropdown">
           <button
-            v-for="y in availableYears.slice(0, 6)" :key="y"
-            class="btn"
-            :class="yearValue === y ? 'btn-info' : 'btn-outline-secondary'"
-            @click="selectYear(y)"
-          >{{ y }}</button>
+            class="btn btn-sm"
+            :class="yearValue ? 'btn-info' : 'btn-outline-secondary'"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {{ yearValue ? `${yearValue} 📅` : 'Select Year...' }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" style="max-height: 300px; overflow-y: auto;">
+            <li v-for="y in availableYears" :key="y">
+              <a href="#" class="dropdown-item" :class="yearValue === y ? 'active' : ''" @click.prevent="selectYear(y)">
+                {{ y }}
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

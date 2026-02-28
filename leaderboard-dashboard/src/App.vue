@@ -27,6 +27,11 @@ const isActive = (path) => route.path === path || route.path.startsWith(path + '
             </RouterLink>
           </li>
           <li class="nav-item">
+            <RouterLink class="nav-link" :class="{ active: isActive('/geokrety') && route.path.startsWith('/geokrety') && !route.params.id }" to="/geokrety">
+              <i class="bi bi-gift me-1"></i>GeoKrety
+            </RouterLink>
+          </li>
+          <li class="nav-item">
             <RouterLink class="nav-link" :class="{ active: isActive('/countries') }" to="/countries">
               <i class="bi bi-globe me-1"></i>Countries
             </RouterLink>
