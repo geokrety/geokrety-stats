@@ -63,6 +63,7 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 		Name                string   `json:"gk_name"`
 		TrackingCode        *string  `json:"tracking_code,omitempty"`
 		GkType              int      `json:"gk_type"`
+		GkTypeName          string   `json:"gk_type_name"`
 		Missing             bool     `json:"missing"`
 		Distance            int64    `json:"distance_km"`
 		OwnerID             *int64   `json:"owner_id,omitempty"`
@@ -87,6 +88,7 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 			errInternal(c, err)
 			return
 		}
+		r.GkTypeName = gkTypeName(r.GkType)
 		out = append(out, r)
 	}
 
@@ -144,6 +146,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		g.CurrentMultiplier = 1.0
 	}
 
+	g.GkTypeName = gkTypeName(g.GkType)
 	ok(c, g, models.Meta{}, nil)
 }
 

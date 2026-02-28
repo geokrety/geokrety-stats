@@ -71,7 +71,7 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
             <div class="text-muted small">Total Points</div>
           </div>
           <div class="col">
-            <div class="fw-bold fs-5">{{ user.rank?.toLocaleString() }}</div>
+            <div class="fw-bold fs-5">{{ user.rank_all_time?.toLocaleString() || '—' }}</div>
             <div class="text-muted small">Rank</div>
           </div>
           <div class="col">
@@ -79,7 +79,7 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
             <div class="text-muted small">Moves</div>
           </div>
           <div class="col">
-            <div class="fw-bold fs-5">{{ user.gk_count?.toLocaleString() }}</div>
+            <div class="fw-bold fs-5">{{ user.distinct_gks?.toLocaleString() }}</div>
             <div class="text-muted small">GeoKrety</div>
           </div>
           <div class="col">
@@ -130,7 +130,7 @@ watch(() => route.params.id, (id) => { userId.value = id; load(); loadMoves() })
             <tbody>
               <tr v-for="b in breakdown" :key="b.source">
                 <td>{{ b.source }}</td>
-                <td class="text-end">{{ b.total_points?.toLocaleString() }}</td>
+                <td class="text-end">{{ b.points?.toLocaleString() }}</td>
                 <td class="text-end">{{ b.count?.toLocaleString() }}</td>
               </tr>
             </tbody>

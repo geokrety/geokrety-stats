@@ -115,6 +115,7 @@ type GeoKret struct {
 	Name                string     `json:"gk_name"`
 	TrackingCode        *string    `json:"-"` // Never expose tracking code to frontend (security)
 	GkType              int        `json:"gk_type"`
+	GkTypeName          string     `json:"gk_type_name"`
 	Missing             bool       `json:"missing"`
 	Distance            int64      `json:"distance_km"`
 	CachesCount         int        `json:"caches_count"`

@@ -106,3 +106,27 @@ func moveTypeName(t int) string {
 		return "unknown"
 	}
 }
+
+// gkTypeName maps gk_type int to human-readable name.
+func gkTypeName(t int) string {
+	switch t {
+	case 0:
+		return "standard"
+	case 1:
+		return "special"
+	default:
+		return "unknown"
+	}
+	// # TODO
+	//     public const GEOKRETY_TYPE_TRADITIONAL = 0;
+    // public const GEOKRETY_TYPE_BOOK_CD_DVD = 1;
+    // public const GEOKRETY_TYPE_HUMAN = 2;
+    // public const GEOKRETY_TYPE_COIN = 3;
+    // public const GEOKRETY_TYPE_KRETYPOST = 4;
+    // public const GEOKRETY_TYPE_PEBBLE = 5;
+    // public const GEOKRETY_TYPE_CAR = 6;
+    // public const GEOKRETY_TYPE_PLAYING_CARD = 7;
+    // public const GEOKRETY_TYPE_DOG_TAG = 8;
+    // public const GEOKRETY_TYPE_JIGSAW = 9;
+    // public const GEOKRETY_TYPE_EASTER_EGG = 10;
+}

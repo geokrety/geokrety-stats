@@ -63,7 +63,7 @@ watch(() => route.params.id, (id) => { gkId.value = id; load(); loadMoves() })
             <span class="badge bg-dark" style="font-size: 0.8rem">{{ idToGkId(gk.gk_id) }}</span>
           </div>
           <p class="mb-0 text-muted small mt-1">
-            Type: {{ gk.gk_type }}
+            Type: {{ gk.gk_type_name || 'unknown' }}
             <span v-if="gk.missing" class="badge bg-danger ms-2">Missing</span>
           </p>
           <p class="mb-0 text-muted small">
