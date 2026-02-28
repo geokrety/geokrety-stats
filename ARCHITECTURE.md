@@ -4,7 +4,7 @@
 
 A Go daemon that processes GeoKrety moves (historical and real-time) through a 15-stage scoring pipeline, computing and persisting user & GK statistics to PostgreSQL.
 
-**Key Numbers**: 
+**Key Numbers**:
 - 15 sequential scoring computers
 - ~6000 lines of production code
 - 16 tables in `geokrety_stats` schema
@@ -19,7 +19,7 @@ Event (move_id)
     ↓
 [Runner] invokes sequentially:
     ↓
-[Computer 00: EventGuard] 
+[Computer 00: EventGuard]
   • Validate event (not anonymous, not duplicate, scoreable)
   • Halt if invalid → no awards
     ↓
@@ -27,7 +27,7 @@ Event (move_id)
   • Load from DB: GK history, user state, chains, multipliers
   • Fetch all state needed for downstream computers
     ↓
-[Computers 02-09: Scoring] 
+[Computers 02-09: Scoring]
   • Compute base points, penalties, bonuses
   • Accumulate in shared Award list
     ↓
@@ -327,7 +327,7 @@ type Scheduler struct {
   -config path     Override config file location
 ```
 
-**Daemon Mode**: 
+**Daemon Mode**:
 1. Loads config
 2. Initializes DB + migrations
 3. Starts AMQP client (blocking loop)
@@ -356,13 +356,13 @@ type Scheduler struct {
 func TestEventGuard_HaltsOnAnonymous(t *testing.T) {
     guard := computers.NewEventGuard(mockStore(), testCfg())
     ctx := context.Background()
-    
+
     evt := testEvent(0, 123, pipeline.LogTypeDrop)  // UserID=0 (anonymous)
     pipeCtx := testCtx(evt, 456, 1.0)
     acc := pipeline.NewAccumulator()
-    
+
     err := guard.Process(ctx, pipeCtx, acc)
-    
+
     assert.True(t, computers.IsHalt(err))  // Should halt
     assert.Len(t, acc.Awards, 0)          // No awards generated
 }
@@ -394,7 +394,7 @@ type MockStore struct {
     // Configurable per test
     IsEventProcessedFn func(...) bool
     GetGKFn            func(...) (*GK, error)
-    
+
     // Recorded calls
     RecordedAwards     []Award
     SaveAwardsCalled   bool

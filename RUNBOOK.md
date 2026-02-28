@@ -201,18 +201,18 @@ Then run with:
 ### Metrics to Monitor
 ```sql
 -- Moves processed today
-SELECT COUNT(*) FROM geokrety_stats.processed_events 
+SELECT COUNT(*) FROM geokrety_stats.processed_events
 WHERE inserted_at > NOW() - INTERVAL '1 day';
 
 -- Points awarded today
-SELECT SUM(points) FROM geokrety_stats.user_points_log 
+SELECT SUM(points) FROM geokrety_stats.user_points_log
 WHERE inserted_at > NOW() - INTERVAL '1 day';
 
 -- Queue of moves waiting to be processed
 -- (if using AMQP, check RabbitMQ admin panel)
 
 -- Chains active but approaching expiry
-SELECT COUNT(*) FROM geokrety_stats.gk_chains 
+SELECT COUNT(*) FROM geokrety_stats.gk_chains
 WHERE ended_at IS NULL AND last_active_at < NOW() - INTERVAL '50 days';
 ```
 
@@ -225,8 +225,8 @@ WHERE ended_at IS NULL AND last_active_at < NOW() - INTERVAL '50 days';
 
 **View expired chains**:
 ```sql
-SELECT id, gk_id, ended_at FROM geokrety_stats.gk_chains 
-WHERE ended_at IS NOT NULL 
+SELECT id, gk_id, ended_at FROM geokrety_stats.gk_chains
+WHERE ended_at IS NOT NULL
 ORDER BY ended_at DESC LIMIT 10;
 ```
 

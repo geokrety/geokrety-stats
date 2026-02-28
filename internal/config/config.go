@@ -2,6 +2,9 @@ package config
 
 import (
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -227,11 +230,35 @@ func Load(cfgFile string) (*Config, error) {
 	v.BindEnv("amqp.password", "GK_RABBITMQ_PASS", "GK_STATS_AMQP_PASSWORD") //nolint:errcheck
 	v.BindEnv("amqp.vhost", "GK_RABBITMQ_VHOST", "GK_STATS_AMQP_VHOST")     //nolint:errcheck
 
+	// Support full URL env vars (parsed into individual fields)
+	v.BindEnv("db_url", "GK_STATS_DB_URL", "GK_STATS_DATABASE_URL")           //nolint:errcheck
+	v.BindEnv("amqp_url", "GK_STATS_AMQP_URL")                               //nolint:errcheck
+
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("reading config file: %w", err)
 		}
 		// Config file not found is OK — use defaults + env vars
+	}
+
+	// Parse GK_STATS_DB_URL or GK_STATS_DATABASE_URL if provided
+	// Check environment variables directly (viper binding may not work reliably)
+	dbURL := os.Getenv("GK_STATS_DB_URL")
+	if dbURL == "" {
+		dbURL = os.Getenv("GK_STATS_DATABASE_URL")
+	}
+	if dbURL != "" {
+		if err := parsePostgresURL(v, dbURL); err != nil {
+			return nil, fmt.Errorf("parsing GK_STATS_DB_URL: %w", err)
+		}
+	}
+
+	// Parse GK_STATS_AMQP_URL if provided
+	amqpURL := os.Getenv("GK_STATS_AMQP_URL")
+	if amqpURL != "" {
+		if err := parseAMQPURL(v, amqpURL); err != nil {
+			return nil, fmt.Errorf("parsing GK_STATS_AMQP_URL: %w", err)
+		}
 	}
 
 	var cfg Config
@@ -317,4 +344,101 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("maintenance.multiplier_decay_schedule", "0 0 2 * * *")   // daily at 2am
 	v.SetDefault("maintenance.prune_schedule", "0 0 3 * * *")              // daily at 3am
 	v.SetDefault("maintenance.processed_event_retention_days", 30)
+}
+
+// parsePostgresURL parses a PostgreSQL connection URL and sets database config values.
+func parsePostgresURL(v *viper.Viper, dbURL string) error {
+	// Handle both postgresql:// and postgres:// schemes
+	if !strings.HasPrefix(dbURL, "postgresql://") && !strings.HasPrefix(dbURL, "postgres://") {
+		return fmt.Errorf("invalid PostgreSQL URL scheme (must start with postgresql:// or postgres://)")
+	}
+
+	// Replace postgres:// with postgresql:// for net/url parsing
+	if strings.HasPrefix(dbURL, "postgres://") {
+		dbURL = "postgresql://" + dbURL[11:]
+	}
+
+	u, err := url.Parse(dbURL)
+	if err != nil {
+		return fmt.Errorf("parsing URL: %w", err)
+	}
+
+	// Extract host and port
+	host := u.Hostname()
+	if host == "" {
+		host = "localhost"
+	}
+	v.Set("database.host", host)
+
+	port := 5432 // PostgreSQL default
+	if p := u.Port(); p != "" {
+		if portNum, err := strconv.Atoi(p); err == nil {
+			port = portNum
+		}
+	}
+	v.Set("database.port", port)
+
+	// Extract credentials
+	if u.User != nil {
+		v.Set("database.user", u.User.Username())
+		if password, ok := u.User.Password(); ok {
+			v.Set("database.password", password)
+		}
+	}
+
+	// Extract database name from path (e.g., /geokrety)
+	if path := strings.TrimPrefix(u.Path, "/"); path != "" {
+		v.Set("database.dbname", path)
+	}
+
+	// Extract sslmode from query params
+	if q := u.Query().Get("sslmode"); q != "" {
+		v.Set("database.sslmode", q)
+	}
+
+	return nil
+}
+
+// parseAMQPURL parses an AMQP connection URL and sets amqp config values.
+func parseAMQPURL(v *viper.Viper, amqpURL string) error {
+	if !strings.HasPrefix(amqpURL, "amqp://") && !strings.HasPrefix(amqpURL, "amqps://") {
+		return fmt.Errorf("invalid AMQP URL scheme (must start with amqp:// or amqps://)")
+	}
+
+	u, err := url.Parse(amqpURL)
+	if err != nil {
+		return fmt.Errorf("parsing URL: %w", err)
+	}
+
+	// Extract host and port
+	host := u.Hostname()
+	if host == "" {
+		host = "localhost"
+	}
+	v.Set("amqp.host", host)
+
+	port := 5672 // AMQP default (5671 for amqps)
+	if p := u.Port(); p != "" {
+		if portNum, err := strconv.Atoi(p); err == nil {
+			port = portNum
+		}
+	} else if strings.HasPrefix(amqpURL, "amqps://") {
+		port = 5671
+	}
+	v.Set("amqp.port", port)
+
+	// Extract credentials
+	if u.User != nil {
+		v.Set("amqp.user", u.User.Username())
+		if password, ok := u.User.Password(); ok {
+			v.Set("amqp.password", password)
+		}
+	}
+
+	// Extract vhost from path (e.g., /myvhost)
+	if path := u.Path; path != "" && path != "/" {
+		v.Set("amqp.vhost", path)
+	}
+
+	return nil
 }

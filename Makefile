@@ -11,9 +11,9 @@ GOFLAGS   ?=
 .DEFAULT_GOAL := help
 
 .PHONY: help build test lint run replay \
-        run_2010 run_2011 run_2012 run_2013 run_2014 \
-        run_2015 run_2016 run_2017 run_2018 run_2019 \
-        run_2020 run_2021 run_2022 run_2023 run_2024 \
+        replay_2010 replay_2011 replay_2012 replay_2013 replay_2014 \
+        replay_2015 replay_2016 replay_2017 replay_2018 replay_2019 \
+        replay_2020 replay_2021 replay_2022 replay_2023 replay_2024 \
         tidy clean
 
 ## help: Show this help message.
@@ -62,9 +62,9 @@ replay: build
 
 # ── Per-year replay targets ────────────────────────────────────────────────────
 define YEAR_TARGET
-.PHONY: run_$(1)
-## run_$(1): Replay all moves from $(1). Wipes stats schema first.
-run_$(1): build
+.PHONY: replay_$(1)
+## replay_$(1): Replay all moves from $(1). Wipes stats schema first.
+replay_$(1): build
 	$(BUILD_DIR)/$(BINARY) -replay -year $(1) -truncate
 endef
 

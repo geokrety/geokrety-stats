@@ -79,6 +79,7 @@ func (s *pgStore) GetGK(ctx context.Context, gkID int64) (*GKRow, error) {
 	return r, err
 }
 
+// TODO such query is really un-efficace. We should maintain a separate table with the previous holder to avoid doing this complex query on every move.
 func (s *pgStore) GetGKPreviousHolder(ctx context.Context, gkID int64) (int64, error) {
 	// The "previous holder" is the holder just before the current holder.
 	// We look at the 2 most recent GRAB moves on this GK and take the second one.
