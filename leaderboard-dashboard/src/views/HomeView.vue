@@ -129,9 +129,6 @@ function toggleSort(col) {
     <div class="d-flex align-items-center justify-content-end mb-2">
       <div class="container-fluid p-0">
         <div class="row align-items-center g-2">
-          <div v-if="connected" class="col-auto">
-            <span class="badge bg-success"><i class="bi bi-broadcast me-1"></i>Live</span>
-          </div>
           <div class="col">
             <div class="d-flex flex-wrap gap-2 justify-content-end">
               <!-- Period selector -->

@@ -4,10 +4,12 @@ import { RouterLink, useRoute } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { getMoveTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
-import { gkAvatarUrl } from '../composables/useAvatarUrl.js'
+import { gkAvatarUrl, userAvatarUrl } from '../composables/useAvatarUrl.js'
 import Pagination from '../components/Pagination.vue'
 import PointsValue from '../components/PointsValue.vue'
 import GkTypeBadge from '../components/GkTypeBadge.vue'
+import MoveTypeBadge from '../components/MoveTypeBadge.vue'
+import VTooltip from '../components/VTooltip.vue'
 
 const route = useRoute()
 const chainId = ref(route.params.id)

@@ -121,6 +121,49 @@ th[style*="cursor:pointer"] i.bi-sort-down-alt::before {
   letter-spacing: 0.02em;
 }
 
+/* Navbar animations and styles */
+.navbar-stats-value {
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  cursor: help;
+}
+
+.stats-update-pulse {
+  animation: navbar-pulse-bg 1s ease-out;
+  color: #fff !important;
+  font-weight: bold;
+}
+
+@keyframes navbar-pulse-bg {
+  0% { background: rgba(13, 110, 253, 0.5); transform: scale(1.05); }
+  100% { background: transparent; transform: scale(1); }
+}
+
+.pulse-wifi {
+  animation: wifi-pulse 2s infinite;
+}
+
+@keyframes wifi-pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.x-small {
+  font-size: 0.7rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hover-bg-opacity:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .app-main .table thead.table-dark,
 .app-main .table thead.table-light {
   --bs-table-bg: color-mix(in srgb, var(--bs-body-bg) 88%, var(--gk-accent) 12%);

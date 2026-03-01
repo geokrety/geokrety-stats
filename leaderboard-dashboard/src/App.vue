@@ -1,14 +1,22 @@
 <script setup>
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useLiveStats } from './composables/useWebSocket.js'
+import VTooltip from './components/VTooltip.vue'
 
 const route = useRoute()
-const { connected, stats, connectedUsers } = useLiveStats()
+const { connected, enabled, stats, connectedUsers, lastUpdate, toggleEnabled } = useLiveStats()
 const THEME_KEY = 'gk-dashboard-theme'
 
 const navMenu = ref(null)
 const currentTheme = ref('light')
+const pulseEffect = ref(false)
+
+// Trigger visual pulse when stats update
+watch(lastUpdate, () => {
+  pulseEffect.value = true
+  setTimeout(() => { pulseEffect.value = false }, 1000)
+})
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 
@@ -80,21 +88,69 @@ onMounted(() => {
         <span class="navbar-text small px-3">
           <button
             type="button"
-            class="btn btn-sm btn-outline-secondary theme-toggle-btn me-2"
-            :aria-label="`Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} theme`"
+            class="btn btn-sm theme-toggle-btn me-2"
+            :class="currentTheme === 'dark' ? 'btn-outline-warning' : 'btn-outline-secondary'"
+            :title="`Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} theme`"
             @click="toggleTheme"
           >
             <i class="bi" :class="currentTheme === 'dark' ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
           </button>
-          <span v-if="connected" class="text-success">
-            <i class="bi bi-wifi me-1"></i>Live
-          </span>
-          <span v-else class="text-secondary">
-            <i class="bi bi-wifi-off me-1"></i>Offline
-          </span>
+          
+          <v-tooltip :text="`Real-time sync: ${enabled ? 'Enabled' : 'Disabled'}. Click to toggle.`">
+            <template #activator="{ props }">
+              <span 
+                v-bind="props"
+                class="me-2 cursor-pointer" 
+                style="cursor: pointer;"
+                @click="toggleEnabled"
+              >
+                <span v-if="connected" class="text-success fw-bold">
+                  <i class="bi bi-broadcast me-1 pulse-wifi"></i>Live
+                </span>
+                <span v-else-if="!enabled" class="text-muted opacity-50">
+                  <i class="bi bi-broadcast me-1"></i>Offline
+                </span>
+                <span v-else class="text-secondary small">
+                  <i class="bi bi-wifi-off me-1"></i>Connecting...
+                </span>
+              </span>
+            </template>
+          </v-tooltip>
+
           <template v-if="stats">
             &ensp;|&ensp;
-            <span class="text-light">{{ stats.total_moves?.toLocaleString() }} moves</span>
+            <v-tooltip>
+              <template #activator="{ props }">
+                <span 
+                  v-bind="props" 
+                  class="navbar-stats-value" 
+                  :class="{'stats-update-pulse': pulseEffect}"
+                >
+                  <i class="bi bi-activity text-info me-1"></i>
+                  <span class="fw-semibold">{{ stats.total_moves?.toLocaleString() }}</span> <span class="d-none d-md-inline">moves</span>
+                </span>
+              </template>
+              <div class="text-start p-2" style="min-width: 200px">
+                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom border-white border-opacity-25">
+                  <span class="small fw-bold"><i class="bi bi-speedometer2 me-1"></i>Site Real-time Stats</span>
+                </div>
+                <div class="d-flex justify-content-between my-2">
+                   <span class="small text-white opacity-75">Users Connected:</span>
+                   <span class="badge bg-success p-1 ms-3">{{ connectedUsers }}</span>
+                </div>
+                <div class="d-flex justify-content-between my-2">
+                   <span class="small text-white opacity-75">Total Points:</span>
+                   <span class="small fw-bold ms-3">{{ stats.total_points?.toLocaleString() }}</span>
+                </div>
+                <div class="d-flex justify-content-between my-2">
+                   <span class="small text-white opacity-75">GKs Tracked:</span>
+                   <span class="small fw-bold ms-3">{{ stats.total_geokrety?.toLocaleString() }}</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1 pt-1 opacity-50 x-small fst-italic border-top border-white border-opacity-25">
+                   Last update: {{ new Date(lastUpdate).toLocaleTimeString() }}
+                </div>
+              </div>
+            </v-tooltip>
           </template>
         </span>
       </div>
