@@ -1,4 +1,5 @@
 ---
+
 description: Geokrety point system - development workflow instructions for backend, frontend, database, testing, and documentation
 applyTo: '**'
 ---
@@ -34,18 +35,19 @@ For every feature, bugfix, refactor, or improvement:
    * `AGENT.md`
    * Relevant files in `features/`
 2. Create or update a feature spec in `features/[feature-name].md`
-3. Implement backend if required
+3. Implement backend if required (create new handlers, models, migrations)
 4. Implement frontend if required
 5. Update documentation
 6. Build via Docker Compose (never local direct execution)
 7. Test API with curl
-8. Test UI with MCP Playwright tools
+8. Test UI with MCP Playwright or Serena MCP tools
 9. Validate database behavior
 10. Check logs
 11. Iterate until no issues remain
 12. Commit using conventional commit format
 13. Rebuild and re-test
 14. Final verification
+15. Commit final changes
 
 If something fails:
 
@@ -102,6 +104,7 @@ user="geokrety"
 password="geokrety"
 ```
 
+
 You must:
 
 * Validate queries
@@ -138,17 +141,21 @@ Use:
 curl -s http://<hostip>:8080/api/... | jq .
 ```
 
+
 Never assume endpoint correctness without testing.
 
 ---
 
-# UI Testing Requirements (MCP Playwright Mandatory)
+# UI Testing Requirements (MCP Playwright & Serena MCP Mandatory)
 
 Do NOT use:
 
 * npx playwright test
+* Local browser testing
 
-You MUST use MCP Playwright browser tools:
+You MUST use either **MCP Playwright** or **Serena MCP browser tools** for automated interaction, validation, and screenshots.
+
+### MCP Playwright Workflow
 
 Workflow:
 
@@ -158,13 +165,16 @@ Workflow:
 2. Navigate:
    mcp_microsoft_pla_browser_navigate
 
-3. Resize:
+3. Resize viewport:
 
    * Mobile: 720x2048
    * Desktop: 1280x1024
 
 4. Screenshot:
+
+```
    mcp_microsoft_pla_browser_take_screenshot
+```
 
 5. Validate:
 
@@ -177,6 +187,28 @@ Workflow:
    * Dark/light theme consistency
 
 Repeat until layout is correct.
+
+### MCP Serena Workflow
+Workflow:
+1. Load tools via tool_search using pattern:
+   `serena` or `mcp_serena`
+2. Start server / activate project:
+   mcp_serena_activate_project (point to repo root)
+3. Consult files & symbols:
+* Find symbol: mcp_serena_find_symbol
+* Read file:   mcp_serena_read_file
+* List files:  mcp_serena_list_dir
+* Search text: mcp_serena_search_files
+4. When to use Serena:
+* Before writing or editing code → read relevant files first
+* When unsure of a function/class signature → find_symbol
+* When exploring an unfamiliar module → list_dir + read_file
+* When looking for usages or patterns → search_files
+5. Validate before proceeding:
+* Confirm file path exists
+* Confirm symbol name matches exactly
+* Do not assume structure — always consult first
+Repeat file consultation whenever scope changes or new modules are involved.
 
 ---
 
@@ -218,7 +250,7 @@ It must include:
 * API endpoints
 * Request/response examples
 * Frontend components
-* Testing instructions (curl + MCP)
+* Testing instructions (curl + MCP/Serena)
 * Database notes
 * Deployment notes
 * Known limitations
@@ -314,7 +346,7 @@ The result must:
 * Be documented
 * Be reproducible via Docker
 * Be testable via curl
-* Be visually validated via MCP
+* Be visually validated via MCP or Serena MCP
 
 ---
 
@@ -345,7 +377,7 @@ A task is complete only when:
 * Docker build succeeds
 * Containers run without error
 * API tested and validated
-* UI tested via MCP screenshots
+* UI tested via MCP or Serena MCP screenshots
 * Database verified
 * Logs clean
 * Commit performed
