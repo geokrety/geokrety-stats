@@ -1,0 +1,455 @@
+{
+    "input": {
+        "end_id": 349316,
+        "gk_count": 1,
+        "start_id": 90767,
+        "move_count": 18,
+        "author_count": 9,
+        "move_type_counts": [
+            {
+                "count": 9,
+                "move_type": "0"
+            },
+            {
+                "count": 7,
+                "move_type": "1"
+            },
+            {
+                "count": 2,
+                "move_type": "5"
+            }
+        ]
+    },
+    "output": {
+        "chains": {
+            "chains_rows": 1,
+            "status_counts": [
+                {
+                    "count": 1,
+                    "status": "ended"
+                }
+            ],
+            "chain_members_rows": 3,
+            "chain_completions_rows": 6
+        },
+        "user_points": {
+            "log_rows": 33,
+            "top_users": [
+                {
+                    "user_id": 12810,
+                    "total_points": 27.030
+                },
+                {
+                    "user_id": 11925,
+                    "total_points": 18.000
+                },
+                {
+                    "user_id": 11777,
+                    "total_points": 17.010
+                },
+                {
+                    "user_id": 13994,
+                    "total_points": 17.000
+                },
+                {
+                    "user_id": 8871,
+                    "total_points": 13.000
+                },
+                {
+                    "user_id": 3288,
+                    "total_points": 9.750
+                },
+                {
+                    "user_id": 7618,
+                    "total_points": 8.130
+                },
+                {
+                    "user_id": 8552,
+                    "total_points": 6.100
+                },
+                {
+                    "user_id": 20118,
+                    "total_points": 5.030
+                }
+            ],
+            "sample_log": [
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus",
+                    "points": 9.000,
+                    "move_id": 0,
+                    "user_id": 11777,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus",
+                    "points": 9.000,
+                    "move_id": 0,
+                    "user_id": 11925,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus",
+                    "points": 9.000,
+                    "move_id": 0,
+                    "user_id": 12810,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_dropper",
+                    "points": 1.000,
+                    "move_id": 91118,
+                    "user_id": 3288,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.059,
+                    "move_id": 91118,
+                    "user_id": 7618,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_mover",
+                    "points": 2.000,
+                    "move_id": 91118,
+                    "user_id": 7618,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.074,
+                    "move_id": 91131,
+                    "user_id": 7618,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.103,
+                    "move_id": 113905,
+                    "user_id": 8552,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 114113,
+                    "user_id": 8552,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "rescuer_owner",
+                    "points": 1.000,
+                    "move_id": 203588,
+                    "user_id": 3288,
+                    "chain_id": 0,
+                    "module_source": "07_rescuer_bonus",
+                    "is_owner_reward": true
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 203588,
+                    "user_id": 13994,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "rescuer_grabber",
+                    "points": 2.000,
+                    "move_id": 203588,
+                    "user_id": 13994,
+                    "chain_id": 0,
+                    "module_source": "07_rescuer_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 211127,
+                    "user_id": 13994,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 212012,
+                    "user_id": 8871,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_dropper",
+                    "points": 1.000,
+                    "move_id": 213137,
+                    "user_id": 8871,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.013,
+                    "move_id": 213137,
+                    "user_id": 12810,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_mover",
+                    "points": 2.000,
+                    "move_id": 213137,
+                    "user_id": 12810,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus_owner",
+                    "points": 6.750,
+                    "move_id": 240677,
+                    "user_id": 3288,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": true
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus",
+                    "points": 9.000,
+                    "move_id": 240677,
+                    "user_id": 8871,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.022,
+                    "move_id": 240677,
+                    "user_id": 12810,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus",
+                    "points": 9.000,
+                    "move_id": 240677,
+                    "user_id": 12810,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "chain_bonus",
+                    "points": 9.000,
+                    "move_id": 240677,
+                    "user_id": 13994,
+                    "chain_id": 0,
+                    "module_source": "11_chain_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 242239,
+                    "user_id": 11925,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_mover",
+                    "points": 2.000,
+                    "move_id": 242239,
+                    "user_id": 11925,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_dropper",
+                    "points": 1.000,
+                    "move_id": 242239,
+                    "user_id": 12810,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.004,
+                    "move_id": 243597,
+                    "user_id": 11925,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.008,
+                    "move_id": 246692,
+                    "user_id": 11777,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_mover",
+                    "points": 2.000,
+                    "move_id": 246692,
+                    "user_id": 11777,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "relay_dropper",
+                    "points": 1.000,
+                    "move_id": 246692,
+                    "user_id": 11925,
+                    "chain_id": 0,
+                    "module_source": "06_relay_bonus",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 249499,
+                    "user_id": 11777,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "rescuer_owner",
+                    "points": 1.000,
+                    "move_id": 349316,
+                    "user_id": 3288,
+                    "chain_id": 0,
+                    "module_source": "07_rescuer_bonus",
+                    "is_owner_reward": true
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "base_move",
+                    "points": 3.030,
+                    "move_id": 349316,
+                    "user_id": 20118,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 10987,
+                    "label": "rescuer_grabber",
+                    "points": 2.000,
+                    "move_id": 349316,
+                    "user_id": 20118,
+                    "chain_id": 0,
+                    "module_source": "07_rescuer_bonus",
+                    "is_owner_reward": false
+                }
+            ],
+            "totals_rows": 9,
+            "sum_log_points": 121.062,
+            "module_breakdown": [
+                {
+                    "rows": 14,
+                    "points_sum": 42.312,
+                    "module_source": "02_base_move_points"
+                },
+                {
+                    "rows": 8,
+                    "points_sum": 12.000,
+                    "module_source": "06_relay_bonus"
+                },
+                {
+                    "rows": 4,
+                    "points_sum": 6.000,
+                    "module_source": "07_rescuer_bonus"
+                },
+                {
+                    "rows": 7,
+                    "points_sum": 60.750,
+                    "module_source": "11_chain_bonus"
+                }
+            ],
+            "sum_total_points": 121.050,
+            "owner_reward_rows": 3
+        },
+        "state_tables": {
+            "gk_multiplier_state_rows": 1,
+            "gk_countries_visited_rows": 0,
+            "user_owner_gk_counts_rows": 8,
+            "user_monthly_diversity_rows": 0,
+            "user_monthly_diversity_drops_rows": 0,
+            "user_waypoint_monthly_counts_rows": 0,
+            "user_monthly_diversity_owners_rows": 0,
+            "user_monthly_diversity_countries_rows": 0
+        },
+        "processed_events": {
+            "rows": 17,
+            "pipeline_result_counts": [
+                {
+                    "count": 17,
+                    "result": "ok"
+                }
+            ]
+        }
+    },
+    "fixture_name": "rescuer_20"
+}

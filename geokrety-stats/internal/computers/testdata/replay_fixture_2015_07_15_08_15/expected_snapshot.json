@@ -1,0 +1,63 @@
+{
+    "end_id": 4768455,
+    "tables": {
+        "gk_chains": {
+            "checksum": "f53a6d6718cc4eafd1e240419f3451e9",
+            "row_count": 2399
+        },
+        "user_points_log": {
+            "checksum": "598be64747c4f1a8211e3a6f7ef43f8d",
+            "row_count": 3582
+        },
+        "gk_chain_members": {
+            "checksum": "2d1ff67269fd0aac4f2bd8abef92e174",
+            "row_count": 2648
+        },
+        "processed_events": {
+            "checksum": "34b94b3efef459fc03b5fed008af5e37",
+            "row_count": 22259
+        },
+        "user_points_totals": {
+            "checksum": "7234a09816477a5208a61f0cbe7b8ad5",
+            "row_count": 1023
+        },
+        "gk_multiplier_state": {
+            "checksum": "a69287dcf0d1ceb476d1ef5f2298d09c",
+            "row_count": 3196
+        },
+        "gk_chain_completions": {
+            "checksum": "5334a8f3be2cfbd1cd8d7443d06f0278",
+            "row_count": 71
+        },
+        "gk_countries_visited": {
+            "checksum": "40ad576e066f67550f268ddfd134e412",
+            "row_count": 336
+        },
+        "user_owner_gk_counts": {
+            "checksum": "fa0133a6825a6884bf363d95c9e97dec",
+            "row_count": 1941
+        },
+        "user_monthly_diversity": {
+            "checksum": "e5f5dc1b6234415f27d86ffd2e68e4b8",
+            "row_count": 505
+        },
+        "user_monthly_diversity_drops": {
+            "checksum": "4ccb110f51214ded495e4edaee559d58",
+            "row_count": 536
+        },
+        "user_waypoint_monthly_counts": {
+            "checksum": "ac9c35fd55987cf768c88082aa878b09",
+            "row_count": 1187
+        },
+        "user_monthly_diversity_owners": {
+            "checksum": "fa2c1adf6fd74340e4676062f8a77b53",
+            "row_count": 911
+        },
+        "user_monthly_diversity_countries": {
+            "checksum": "e80681cde3ace7eeebe6d3c6fed0fc9e",
+            "row_count": 6
+        }
+    },
+    "start_id": 714879,
+    "fixture_window": "2015-07-15_to_2015-08-15"
+}

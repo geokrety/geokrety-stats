@@ -1,0 +1,13 @@
+{
+    "label": "Focused rescuer-bonus sample",
+    "end_id": 349316,
+    "end_ts": "2013-06-22T07:40:00+00:00",
+    "gk_count": 1,
+    "start_id": 90767,
+    "start_ts": "2010-11-11T11:00:00+00:00",
+    "source_db": "geokrety",
+    "move_count": 18,
+    "author_count": 9,
+    "fixture_name": "rescuer_20",
+    "move_type_count": 3
+}

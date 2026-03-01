@@ -1,0 +1,266 @@
+{
+    "input": {
+        "end_id": 1062183,
+        "gk_count": 73,
+        "start_id": 1059865,
+        "move_count": 100,
+        "author_count": 37,
+        "move_type_counts": [
+            {
+                "count": 21,
+                "move_type": "0"
+            },
+            {
+                "count": 15,
+                "move_type": "1"
+            },
+            {
+                "count": 64,
+                "move_type": "5"
+            }
+        ]
+    },
+    "output": {
+        "chains": {
+            "chains_rows": 20,
+            "status_counts": [
+                {
+                    "count": 20,
+                    "status": "ended"
+                }
+            ],
+            "chain_members_rows": 20,
+            "chain_completions_rows": 0
+        },
+        "user_points": {
+            "log_rows": 14,
+            "top_users": [
+                {
+                    "user_id": 10370,
+                    "total_points": 6.030
+                },
+                {
+                    "user_id": 3949,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 4432,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 20178,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 27555,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 28979,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 29109,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 32670,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 33058,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 34719,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 35029,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 35903,
+                    "total_points": 3.000
+                },
+                {
+                    "user_id": 35957,
+                    "total_points": 3.000
+                }
+            ],
+            "sample_log": [
+                {
+                    "gk_id": 53187,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1059881,
+                    "user_id": 10370,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 53187,
+                    "label": "base_move",
+                    "points": 3.030,
+                    "move_id": 1059882,
+                    "user_id": 10370,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 59220,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1059890,
+                    "user_id": 3949,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 60857,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1059891,
+                    "user_id": 35903,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 40636,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1059928,
+                    "user_id": 34719,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 47144,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1060458,
+                    "user_id": 35957,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 53064,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061078,
+                    "user_id": 4432,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 21213,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061159,
+                    "user_id": 20178,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 56544,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061190,
+                    "user_id": 33058,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 59468,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061319,
+                    "user_id": 29109,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 44719,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061519,
+                    "user_id": 28979,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 50470,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061734,
+                    "user_id": 35029,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 50230,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1061792,
+                    "user_id": 32670,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                },
+                {
+                    "gk_id": 59337,
+                    "label": "base_move",
+                    "points": 3.000,
+                    "move_id": 1062183,
+                    "user_id": 27555,
+                    "chain_id": 0,
+                    "module_source": "02_base_move_points",
+                    "is_owner_reward": false
+                }
+            ],
+            "totals_rows": 13,
+            "sum_log_points": 42.030,
+            "module_breakdown": [
+                {
+                    "rows": 14,
+                    "points_sum": 42.030,
+                    "module_source": "02_base_move_points"
+                }
+            ],
+            "sum_total_points": 42.030,
+            "owner_reward_rows": 0
+        },
+        "state_tables": {
+            "gk_multiplier_state_rows": 59,
+            "gk_countries_visited_rows": 0,
+            "user_owner_gk_counts_rows": 13,
+            "user_monthly_diversity_rows": 13,
+            "user_monthly_diversity_drops_rows": 8,
+            "user_waypoint_monthly_counts_rows": 8,
+            "user_monthly_diversity_owners_rows": 13,
+            "user_monthly_diversity_countries_rows": 0
+        },
+        "processed_events": {
+            "rows": 85,
+            "pipeline_result_counts": [
+                {
+                    "count": 85,
+                    "result": "ok"
+                }
+            ]
+        }
+    },
+    "fixture_name": "realistic_100"
+}

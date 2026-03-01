@@ -1,0 +1,13 @@
+{
+    "label": "Realistic one-day activity sample",
+    "end_id": 1062183,
+    "end_ts": "2017-02-24T23:04:00+00:00",
+    "gk_count": 73,
+    "start_id": 1059865,
+    "start_ts": "2017-02-24T00:21:00+00:00",
+    "source_db": "geokrety",
+    "move_count": 100,
+    "author_count": 37,
+    "fixture_name": "realistic_100",
+    "move_type_count": 3
+}

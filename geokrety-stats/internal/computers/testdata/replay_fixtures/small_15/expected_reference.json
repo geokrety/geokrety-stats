@@ -1,0 +1,69 @@
+{
+    "input": {
+        "end_id": 846180,
+        "gk_count": 12,
+        "start_id": 846138,
+        "move_count": 15,
+        "author_count": 5,
+        "move_type_counts": [
+            {
+                "count": 3,
+                "move_type": "1"
+            },
+            {
+                "count": 1,
+                "move_type": "2"
+            },
+            {
+                "count": 1,
+                "move_type": "3"
+            },
+            {
+                "count": 10,
+                "move_type": "5"
+            }
+        ]
+    },
+    "output": {
+        "chains": {
+            "chains_rows": 0,
+            "status_counts": [
+            ],
+            "chain_members_rows": 0,
+            "chain_completions_rows": 0
+        },
+        "user_points": {
+            "log_rows": 0,
+            "top_users": [
+            ],
+            "sample_log": [
+            ],
+            "totals_rows": 0,
+            "sum_log_points": 0,
+            "module_breakdown": [
+            ],
+            "sum_total_points": 0,
+            "owner_reward_rows": 0
+        },
+        "state_tables": {
+            "gk_multiplier_state_rows": 7,
+            "gk_countries_visited_rows": 0,
+            "user_owner_gk_counts_rows": 0,
+            "user_monthly_diversity_rows": 0,
+            "user_monthly_diversity_drops_rows": 0,
+            "user_waypoint_monthly_counts_rows": 0,
+            "user_monthly_diversity_owners_rows": 0,
+            "user_monthly_diversity_countries_rows": 0
+        },
+        "processed_events": {
+            "rows": 9,
+            "pipeline_result_counts": [
+                {
+                    "count": 9,
+                    "result": "ok"
+                }
+            ]
+        }
+    },
+    "fixture_name": "small_15"
+}

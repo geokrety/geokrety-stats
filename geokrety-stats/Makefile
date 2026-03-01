@@ -14,7 +14,8 @@ GOFLAGS   ?=
         replay_2010 replay_2011 replay_2012 replay_2013 replay_2014 \
         replay_2015 replay_2016 replay_2017 replay_2018 replay_2019 \
         replay_2020 replay_2021 replay_2022 replay_2023 replay_2024 \
-        tidy clean
+	fixtures_extract fixtures_refresh_refs fixtures_refresh_one fixtures_test \
+	tidy clean
 
 ## help: Show this help message.
 help:
@@ -36,6 +37,26 @@ build:
 ## test: Run all unit tests.
 test:
 	$(GO) test ./... -v -timeout 120s
+
+## fixtures_extract: Extract all replay fixture input CSVs from source DB.
+fixtures_extract: build
+	./scripts/replay_fixtures.sh extract-all
+
+## fixtures_refresh_refs: Regenerate all expected fixture reference JSON files.
+fixtures_refresh_refs: build
+	./scripts/replay_fixtures.sh refresh-all
+
+## fixtures_refresh_one: Regenerate one fixture reference JSON (use FIXTURE=name).
+fixtures_refresh_one: build
+	@if [ -z "$(FIXTURE)" ]; then \
+		echo "Usage: make fixtures_refresh_one FIXTURE=<fixture_name>"; \
+		exit 1; \
+	fi
+	./scripts/replay_fixtures.sh refresh-one $(FIXTURE)
+
+## fixtures_test: Run integration replay fixture tests against expected references.
+fixtures_test:
+	GK_RUN_REPLAY_FIXTURE_TEST=1 $(GO) test -tags=integration ./internal/computers -run TestReplayFixturesAgainstReferenceJSON -count=1 -v
 
 ## lint: Run go vet (add golangci-lint for stricter checks).
 lint:

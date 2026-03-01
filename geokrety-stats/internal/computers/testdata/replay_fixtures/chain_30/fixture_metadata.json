@@ -1,0 +1,13 @@
+{
+    "label": "Single-GK chain-heavy sample",
+    "end_id": 268260,
+    "end_ts": "2012-10-13T17:25:00+00:00",
+    "gk_count": 1,
+    "start_id": 92501,
+    "start_ts": "2010-11-24T11:00:00+00:00",
+    "source_db": "geokrety",
+    "move_count": 30,
+    "author_count": 23,
+    "fixture_name": "chain_30",
+    "move_type_count": 3
+}
