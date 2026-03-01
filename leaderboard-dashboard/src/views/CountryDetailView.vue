@@ -103,15 +103,61 @@ onMounted(loadCountryData)
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else-if="!countryData" class="alert alert-info">Country data not available.</div>
     <div v-else>
-      <!-- Header -->
-      <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex align-items-center gap-3">
-            <span class="fs-1">{{ getCountryFlag(country) }}</span>
-            <div>
-              <h1 class="mb-1">{{ getFullCountryName(country) }}</h1>
-              <p class="text-muted mb-0">Code: {{ country }} — Country activity and statistics</p>
+      <!-- Hero Header -->
+      <div class="row g-4 mb-4">
+        <div class="col-12 col-xl-8">
+          <div class="card shadow-sm h-100 border-0 bg-primary-subtle text-primary-emphasis">
+            <div class="card-body d-flex align-items-center p-4">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-4 me-4 d-none d-sm-block">
+                <span class="fs-1">{{ getCountryFlag(country) }}</span>
+              </div>
+              <div>
+                <nav aria-label="breadcrumb" class="mb-1">
+                  <ol class="breadcrumb breadcrumb-sm mb-0">
+                    <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
+                    <li class="breadcrumb-item"><RouterLink to="/countries">Countries</RouterLink></li>
+                    <li class="breadcrumb-item active text-primary-emphasis opacity-75" aria-current="page">{{ country }}</li>
+                  </ol>
+                </nav>
+                <h1 class="display-5 fw-bold mb-1">{{ getFullCountryName(country) }}</h1>
+                <div class="d-flex flex-wrap gap-2 align-items-center opacity-75">
+                  <span class="badge bg-primary text-white border-0 px-2 py-1">ISO: {{ country }}</span>
+                  <span class="text-nowrap"><i class="bi bi-info-circle me-1"></i>Country activity and statistics</span>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Highlights card -->
+        <div class="col-12 col-xl-4">
+          <div class="card shadow-sm h-100 border-0 bg-primary text-white overflow-hidden pointer-event">
+            <div class="card-body p-4 position-relative z-1">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="opacity-75 small text-uppercase fw-bold letter-spacing">Quick Stats</div>
+                <i class="bi bi-lightning-charge fs-4 opacity-50"></i>
+              </div>
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="display-6 fw-bold mb-0 lh-1">{{ formatInt(countryData.total_points_awarded) }}</div>
+                  <div class="small opacity-75 mt-1">Total Points</div>
+                </div>
+                <div class="col-6">
+                  <div class="display-6 fw-bold mb-0 lh-1">{{ formatInt(countryData.unique_users) }}</div>
+                  <div class="small opacity-75 mt-1">Participants</div>
+                </div>
+                <div class="col-12 pt-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="flex-grow-1 bg-white bg-opacity-20 rounded-pill" style="height: 6px;">
+                      <div class="bg-white rounded-pill" :style="{ width: '100%', height: '100%', opacity: 0.8 }"></div>
+                    </div>
+                  </div>
+                  <div class="small opacity-75 mt-2">Active across {{ formatInt(countryData.unique_gks) }} unique GeoKrety</div>
+                </div>
+              </div>
+            </div>
+            <!-- Decorative circle -->
+            <div class="position-absolute end-0 bottom-0 translate-middle-x translate-middle-y bg-white bg-opacity-10 rounded-circle" style="width: 200px; height: 200px; margin-right: -100px; margin-bottom: -100px;"></div>
           </div>
         </div>
       </div>

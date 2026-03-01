@@ -288,77 +288,71 @@ watch(() => route.params.id, async (id) => {
       </ol>
     </nav>
 
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <div class="row align-items-center g-3">
-          <div class="col-auto">
-            <img v-if="gkAvatarUrl(gk.avatar)" :src="gkAvatarUrl(gk.avatar)" :alt="`${gk.gk_name} avatar`" class="gk-avatar" />
-            <div v-else class="fs-1">🐢</div>
-          </div>
-
-          <div class="col">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h3 class="mb-0 text-break d-flex align-items-center gap-2">
-                <span v-if="gkMedal" class="display-6 lh-1">{{ gkMedal }}</span>
-                <span>{{ gk.gk_name }}</span>
-              </h3>
-              <span class="badge bg-dark" style="font-size: 0.8rem">{{ gk.gk_hex_id || idToGkId(gk.gk_id) }}</span>
-              <span v-if="gk.missing" class="badge bg-danger">⚠️ Missing</span>
-              <span v-if="gk.is_non_collectible" class="badge bg-warning text-dark" title="Non-transferable (sealed) GeoKret">🔒 Sealed</span>
-              <span v-if="gk.is_parked" class="badge bg-info text-dark" title="Parked GeoKret">🅿️ Parked</span>
-            </div>
-
-            <p class="mb-0 text-muted small mt-1">
-              Type: <GkTypeBadge :gk-type="gk.gk_type" :type-name="gk.gk_type_name" />
-              <span v-if="gk.loves_count" class="ms-2">❤️ {{ gk.loves_count.toLocaleString() }} loves</span>
-            </p>
-
-            <p class="mb-0 text-muted small">
-              Owner:
-              <RouterLink v-if="gk.owner_id" :to="`/users/${gk.owner_id}`">{{ gk.owner_username }}</RouterLink>
-              <span v-else>—</span>
-              <span v-if="gk.owner_home_country" class="ms-1" :title="`Home country: ${gk.owner_home_country.toUpperCase()}`">{{ getCountryFlag(gk.owner_home_country) }}</span>
-            </p>
-
-            <p class="mb-0 text-muted small">
-              Status:
-              <span class="badge bg-secondary ms-1">{{ statusText }}</span>
-              <span v-if="gk.in_cache && gk.cache_country" class="ms-1" :title="`Cache location: ${gk.cache_country.toUpperCase()}`">{{ getCountryFlag(gk.cache_country) }}</span>
-              <span v-else-if="!gk.in_cache && gk.holder_home_country" class="ms-1" :title="`Holder country: ${gk.holder_home_country.toUpperCase()}`">{{ getCountryFlag(gk.holder_home_country) }}</span>
-            </p>
-          </div>
-
-          <div class="col-12 col-xl-7 mt-xl-0 mt-3 border-top pt-3 pt-xl-0 border-xl-top-0">
-            <div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-2 text-center justify-content-center">
-              <div class="col">
-                <div class="fw-bold text-success fs-5"><PointsValue :value="gk.total_points_generated" /></div>
-                <div class="text-muted small">Points Generated</div>
+    <!-- Hero Header Component-like structure -->
+    <div class="row mb-4 g-3 align-items-stretch">
+      <div class="col-12 col-lg-8">
+        <div class="card h-100 shadow-sm border-0 bg-dark text-white overflow-hidden hero-card">
+          <div class="card-body p-4 position-relative d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center gap-4 flex-wrap flex-md-nowrap">
+              <div class="flex-shrink-0 hero-avatar-container">
+                <img v-if="gkAvatarUrl(gk.avatar)" :src="gkAvatarUrl(gk.avatar)"
+                     class="rounded hero-avatar"
+                     style="width: 100px; height: 100px; object-fit: cover; border: 3px solid rgba(255,255,255,0.2)"
+                     @error="e => e.target.src = '/gk-default.png'" />
+                <div v-else class="hero-avatar d-flex align-items-center justify-content-center bg-secondary rounded" style="width: 100px; height: 100px; font-size: 3rem;">🐢</div>
               </div>
-              <div class="col">
-                <div class="fw-bold fs-5">{{ gk.total_moves?.toLocaleString() }}</div>
-                <div class="text-muted small">Moves</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5">{{ gk.distance_km?.toLocaleString() }} km</div>
-                <div class="text-muted small">Distance</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5">{{ gk.countries_count?.toLocaleString() }}</div>
-                <div class="text-muted small">Countries</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5">{{ gk.distinct_caches?.toLocaleString() }}</div>
-                <div class="text-muted small">Places</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5">{{ Number(gk.current_multiplier || 1).toFixed(2) }}×</div>
-                <div class="text-muted small">Multiplier</div>
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                  <h2 class="mb-0 fw-bold">{{ gkMedal }} {{ gk.gk_name }}</h2>
+                  <span class="badge bg-light text-dark opacity-75" style="font-size: 0.8rem">{{ gk.gk_hex_id || idToGkId(gk.gk_id) }}</span>
+                  <span v-if="gk.missing" class="badge bg-danger">⚠️ Missing</span>
+                  <span v-if="gk.is_non_collectible" class="badge bg-warning text-dark" title="Non-transferable (sealed) GeoKret">🔒 Sealed</span>
+                </div>
+                <div class="fs-5 mb-3 opacity-75 d-flex align-items-center gap-2 flex-wrap">
+                  <GkTypeBadge :gk-type="gk.gk_type" :type-name="gk.gk_type_name" />
+                  <span v-if="gk.loves_count" class="opacity-75 small">❤️ {{ gk.loves_count.toLocaleString() }}</span>
+                  <span class="opacity-50 mx-1">·</span>
+                  <span class="badge bg-secondary">{{ statusText }}</span>
+                </div>
+                <div class="d-flex gap-4 flex-wrap opacity-75 small">
+                  <div class="d-flex align-items-center gap-2" v-if="gk.owner_id">
+                    <i class="bi bi-person-fill text-primary"></i> Owner:
+                    <RouterLink :to="`/users/${gk.owner_id}`" class="text-white text-decoration-none hover-underline"><b>{{ gk.owner_username }}</b></RouterLink>
+                    <span v-if="gk.owner_home_country" :title="`Home country: ${gk.owner_home_country.toUpperCase()}`">{{ getCountryFlag(gk.owner_home_country) }}</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2" v-if="gk.born_at">
+                    <i class="bi bi-calendar-check text-info"></i> Born: <b>{{ gk.born_at.slice(0, 10) }}</b>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="text-center mt-2">
-              <RouterLink :to="`/geokrety/${gkId}/chains`" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-link-45deg me-1"></i>Chains
-              </RouterLink>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <div class="card h-100 shadow-sm border-0 bg-primary text-white text-center d-flex flex-column justify-content-center p-3 overflow-hidden">
+          <div class="position-absolute top-0 end-0 p-3 opacity-25">
+            <i class="bi bi-gift" style="font-size: 5rem; transform: rotate(-15deg); display: block;"></i>
+          </div>
+          <div class="position-relative">
+            <div class="display-5 fw-bold mb-0">
+              <PointsValue :value="gk.total_points_generated" />
+            </div>
+            <div class="text-uppercase small opacity-75 ls-1 fw-semibold mb-3">Total Points Generated</div>
+            <div class="row g-2 border-top border-white border-opacity-25 pt-3">
+              <div class="col-4 px-1">
+                <div class="h5 mb-0 fw-bold">{{ gk.total_moves?.toLocaleString() || 0 }}</div>
+                <div class="x-small text-uppercase opacity-75">Moves</div>
+              </div>
+              <div class="col-4 px-1">
+                <div class="h5 mb-0 fw-bold">{{ gk.countries_count?.toLocaleString() || 0 }}</div>
+                <div class="x-small text-uppercase opacity-75">Countries</div>
+              </div>
+              <div class="col-4 px-1">
+                <div class="h5 mb-0 fw-bold">{{ Number(gk.current_multiplier || 1).toFixed(2) }}×</div>
+                <div class="x-small text-uppercase opacity-75">Mult.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -471,14 +465,62 @@ watch(() => route.params.id, async (id) => {
       <div class="card shadow-sm border-0">
         <div class="table-responsive border-0 mb-0">
           <table class="table table-hover table-sm mb-0 align-middle border">
-            <thead class="table-dark">
+            <thead class="table-dark text-nowrap">
               <tr>
-                <th class="ps-3" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'date')" :class="moveSortCol==='date' ? 'text-warning' : ''" title="Move date">Date <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'date')"></i></th>
-                <th style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'author', ['author'])" :class="moveSortCol==='author' ? 'text-warning' : ''" title="Move author">Author <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'author')"></i></th>
-                <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'type')" :class="moveSortCol==='type' ? 'text-warning' : ''" title="Move type">Type <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'type')"></i></th>
-                <th class="d-none d-sm-table-cell" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'country', ['country'])" :class="moveSortCol==='country' ? 'text-warning' : ''" title="Country">Country <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'country')"></i></th>
-                <th class="d-none d-lg-table-cell" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'waypoint', ['waypoint'])" :class="moveSortCol==='waypoint' ? 'text-warning' : ''" title="Waypoint identifier">Waypoint <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'waypoint')"></i></th>
-                <th class="text-end pe-3" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'points')" :class="moveSortCol==='points' ? 'text-warning' : ''" title="Points awarded for this move">Points <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'points')"></i></th>
+                <th class="ps-3" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'date')">
+                  <v-tooltip text="Date the move was performed">
+                    <template #activator="{ props }">
+                      <span v-bind="props" :class="moveSortCol==='date' ? 'text-warning' : ''">
+                        Date <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'date')" style="font-size: 0.75rem"></i>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                </th>
+                <th style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'author', ['author'])">
+                  <v-tooltip text="The user who logged this move">
+                    <template #activator="{ props }">
+                      <span v-bind="props" :class="moveSortCol==='author' ? 'text-warning' : ''">
+                        Author <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'author')" style="font-size: 0.75rem"></i>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                </th>
+                <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'type')">
+                  <v-tooltip text="The type of the log (e.g., Drop, Grab, Seen)">
+                    <template #activator="{ props }">
+                      <span v-bind="props" :class="moveSortCol==='type' ? 'text-warning' : ''">
+                        Type <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'type')" style="font-size: 0.75rem"></i>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                </th>
+                <th class="d-none d-sm-table-cell" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'country', ['country'])">
+                  <v-tooltip text="The country where the log was recorded">
+                    <template #activator="{ props }">
+                      <span v-bind="props" :class="moveSortCol==='country' ? 'text-warning' : ''">
+                        Country <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'country')" style="font-size: 0.75rem"></i>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                </th>
+                <th class="d-none d-lg-table-cell" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'waypoint', ['waypoint'])">
+                  <v-tooltip text="The cache or POI identifier (e.g., GC12345)">
+                    <template #activator="{ props }">
+                      <span v-bind="props" :class="moveSortCol==='waypoint' ? 'text-warning' : ''">
+                        Waypoint <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'waypoint')" style="font-size: 0.75rem"></i>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                </th>
+                <th class="text-end pe-3" style="cursor:pointer" @click="toggleSort(moveSortCol, moveSortOrder, 'points')">
+                  <v-tooltip text="Points awarded specifically for this move">
+                    <template #activator="{ props }">
+                      <span v-bind="props" :class="moveSortCol==='points' ? 'text-warning' : ''">
+                        Points <i class="bi" :class="sortIcon(moveSortCol, moveSortOrder, 'points')" style="font-size: 0.75rem"></i>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                </th>
               </tr>
             </thead>
             <tbody>

@@ -394,59 +394,66 @@ watch(() => route.params.id, async (id) => {
       </ol>
     </nav>
 
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <div class="row align-items-center g-3">
-          <div class="col-auto">
-            <img
-              v-if="userAvatarUrl(user.avatar)"
-              :src="userAvatarUrl(user.avatar)"
-              :alt="`${user.username} avatar`"
-              class="user-avatar"
-            />
-            <div v-else class="user-avatar-placeholder">👤</div>
-          </div>
-          <div class="col">
-            <h3 class="mb-1 text-break d-flex align-items-center gap-2">
-              <span v-if="userMedal" class="display-6 lh-1">{{ userMedal }}</span>
-              <span>{{ user.username }}</span>
-            </h3>
-            <p class="text-muted mb-0 small text-nowrap">
-              User #{{ user.user_id }}
-              <span v-if="joinedYear" class="d-none d-sm-inline"> &mdash; joined {{ joinedYear }}</span>
-            </p>
-          </div>
-          <div class="col-12 col-xl-7 mt-xl-0 mt-3 border-top pt-3 pt-xl-0 border-xl-top-0">
-            <div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-2 text-center justify-content-center">
-              <div class="col">
-                <div class="fw-bold text-primary fs-5" title="Total points including bonus rewards"><PointsValue :value="displayTotalPoints" :digits="3" /></div>
-                <div class="text-muted small">Points</div>
+    <!-- Hero Header -->
+    <div class="row mb-4 g-3 align-items-stretch">
+      <div class="col-12 col-lg-8">
+        <div class="card h-100 shadow-sm border-0 bg-dark text-white overflow-hidden hero-card">
+          <div class="card-body p-4 position-relative d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center gap-4 flex-wrap flex-md-nowrap">
+              <div class="flex-shrink-0 hero-avatar-container">
+                <img v-if="userAvatarUrl(user.avatar)" :src="userAvatarUrl(user.avatar)"
+                     class="rounded hero-avatar"
+                     style="width: 100px; height: 100px; object-fit: cover; border: 3px solid rgba(255,255,255,0.2)"
+                     @error="e => e.target.src = '/user-default.png'" />
+                <div v-else class="hero-avatar d-flex align-items-center justify-content-center bg-secondary rounded" style="width: 100px; height: 100px; font-size: 3rem;">👤</div>
               </div>
-              <div class="col">
-                <div class="fw-bold fs-5" title="All-time rank on the leaderboard">{{ user.rank_all_time?.toLocaleString() || '—' }}</div>
-                <div class="text-muted small">Rank</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5" title="Moves this user logged">{{ user.total_moves?.toLocaleString() }}</div>
-                <div class="text-muted small">Moves</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5" title="Distinct GeoKrety this user has interacted with">{{ user.distinct_gks?.toLocaleString() }}</div>
-                <div class="text-muted small">GeoKrety</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5" title="Countries visited by this user">{{ user.countries_count?.toLocaleString() }}</div>
-                <div class="text-muted small">Countries</div>
-              </div>
-              <div class="col">
-                <div class="fw-bold fs-5" title="Average points per move across the user history"><PointsValue :value="avgPointsPerMove" :digits="3" /></div>
-                <div class="text-muted small">Avg/Move</div>
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                  <h2 class="mb-0 fw-bold">{{ userMedal }} {{ user.username }}</h2>
+                  <span class="badge bg-light text-dark opacity-75" style="font-size: 0.8rem">User #{{ user.user_id }}</span>
+                </div>
+                <div class="fs-5 mb-3 opacity-75 d-flex align-items-center gap-2 flex-wrap" v-if="joinedYear">
+                  <i class="bi bi-calendar-check-fill text-info small"></i> Joined in {{ joinedYear }}
+                </div>
+                <div class="d-flex gap-4 flex-wrap opacity-75 small">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i> Rank: <b>#{{ user.rank_all_time?.toLocaleString() || '—' }}</b>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-geo-fill text-success"></i> Moves: <b>{{ user.total_moves?.toLocaleString() }}</b>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="text-center mt-2">
-              <RouterLink :to="`/users/${userId}/chains`" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-link-45deg me-1"></i>Chains
-              </RouterLink>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <div class="card h-100 shadow-sm border-0 bg-primary text-white text-center d-flex flex-column justify-content-center p-3 overflow-hidden">
+          <div class="position-absolute top-0 end-0 p-3 opacity-25">
+            <i class="bi bi-person-badge" style="font-size: 5rem; transform: rotate(-15deg); display: block;"></i>
+          </div>
+          <div class="position-relative">
+            <div class="display-5 fw-bold mb-0">
+              <PointsValue :value="displayTotalPoints" />
+            </div>
+            <div class="text-uppercase small opacity-75 ls-1 fw-semibold mb-3">Total Points Earned</div>
+            <div class="row g-2 border-top border-white border-opacity-25 pt-3">
+              <div class="col-4 px-1">
+                <div class="h5 mb-0 fw-bold">{{ user.distinct_gks?.toLocaleString() || 0 }}</div>
+                <div class="x-small text-uppercase opacity-75">GeoKrety</div>
+              </div>
+              <div class="col-4 px-1">
+                <div class="h5 mb-0 fw-bold">{{ user.countries_count?.toLocaleString() || 0 }}</div>
+                <div class="x-small text-uppercase opacity-75">Countries</div>
+              </div>
+              <div class="col-4 px-1">
+                <div class="h5 mb-0 fw-bold">
+                  <PointsValue :value="avgPointsPerMove" :digits="2" />
+                </div>
+                <div class="x-small text-uppercase opacity-75">Avg/Move</div>
+              </div>
             </div>
           </div>
         </div>

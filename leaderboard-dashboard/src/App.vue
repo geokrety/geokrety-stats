@@ -39,12 +39,15 @@ const applyTheme = (theme) => {
 }
 
 const toggleTheme = () => {
-  applyTheme(currentTheme.value === 'dark' ? 'light' : 'dark')
+  const nextTheme = currentTheme.value === 'dark' ? 'light' : 'dark'
+  applyTheme(nextTheme)
 }
 
 onMounted(() => {
-  const htmlTheme = document.documentElement.getAttribute('data-bs-theme')
-  currentTheme.value = htmlTheme === 'dark' ? 'dark' : 'light'
+  const savedTheme = localStorage.getItem(THEME_KEY)
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light')
+  applyTheme(initialTheme)
 })
 </script>
 
@@ -140,15 +143,15 @@ onMounted(() => {
                   <span class="small fw-bold"><i class="bi bi-speedometer2 me-1"></i>Site Real-time Stats</span>
                 </div>
                 <div class="d-flex justify-content-between my-2">
-                   <span class="small text-white opacity-75">Users Connected:</span>
+                   <span class="small opacity-75">Users Connected:</span>
                    <span class="badge bg-success p-1 ms-3">{{ connectedUsers }}</span>
                 </div>
                 <div class="d-flex justify-content-between my-2">
-                   <span class="small text-white opacity-75">Total Points:</span>
+                   <span class="small opacity-75">Total Points:</span>
                    <span class="small fw-bold ms-3">{{ stats.total_points_awarded?.toLocaleString() }}</span>
                 </div>
                 <div class="d-flex justify-content-between my-2">
-                   <span class="small text-white opacity-75">GKs Tracked:</span>
+                   <span class="small opacity-75">GKs Tracked:</span>
                    <span class="small fw-bold ms-3">{{ stats.total_gks?.toLocaleString() }}</span>
                 </div>
                 <div class="d-flex justify-content-between mt-1 pt-1 opacity-50 x-small fst-italic border-top border-white border-opacity-25">

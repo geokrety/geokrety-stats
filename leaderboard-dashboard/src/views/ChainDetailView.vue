@@ -210,7 +210,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="Position of the user in the chain sequence">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            # <i class="bi" :class="sortIcon(membersSort, 'position', membersOrder)"></i>
+                            # <i class="bi" :class="sortIcon(membersSort, 'position', membersOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
@@ -219,7 +219,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="The username of the chain participant">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            User <i class="bi" :class="sortIcon(membersSort, 'user', membersOrder)"></i>
+                            User <i class="bi" :class="sortIcon(membersSort, 'user', membersOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
@@ -228,7 +228,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="The date this user joined the chain">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            Joined <i class="bi" :class="sortIcon(membersSort, 'joined', membersOrder)"></i>
+                            Joined <i class="bi" :class="sortIcon(membersSort, 'joined', membersOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
@@ -275,7 +275,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="Date the move was performed">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            Date <i class="bi" :class="sortIcon(movesSort, 'date', movesOrder)"></i>
+                            Date <i class="bi" :class="sortIcon(movesSort, 'date', movesOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
@@ -284,7 +284,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="The user who logged this move">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            User <i class="bi" :class="sortIcon(movesSort, 'user', movesOrder)"></i>
+                            User <i class="bi" :class="sortIcon(movesSort, 'user', movesOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
@@ -293,7 +293,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="The type of the log (e.g., Drop, Grab, Seen)">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            Type <i class="bi" :class="sortIcon(movesSort, 'type', movesOrder)"></i>
+                            Type <i class="bi" :class="sortIcon(movesSort, 'type', movesOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
@@ -302,7 +302,7 @@ function sortIcon(activeCol, col, order) {
                       <v-tooltip text="Points awarded specifically for this chain completion">
                         <template #activator="{ props }">
                           <span v-bind="props">
-                            Chain pts <i class="bi" :class="sortIcon(movesSort, 'chain_points', movesOrder)"></i>
+                            Chain pts <i class="bi" :class="sortIcon(movesSort, 'chain_points', movesOrder)" style="font-size: 0.75rem"></i>
                           </span>
                         </template>
                       </v-tooltip>
