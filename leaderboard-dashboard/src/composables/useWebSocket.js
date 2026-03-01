@@ -50,7 +50,7 @@ function connect() {
       } else if (msg.type === 'connected_users') {
         connectedUsers.value = msg.payload?.count ?? 0
       }
-    } catch (e) { 
+    } catch (e) {
       console.error('[WS] Failed to parse message:', e)
     }
   }
@@ -58,10 +58,10 @@ function connect() {
 
 function disconnect() {
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
-  if (ws) { 
+  if (ws) {
     ws.onclose = null
     ws.close()
-    ws = null 
+    ws = null
   }
   connected.value = false
 }
