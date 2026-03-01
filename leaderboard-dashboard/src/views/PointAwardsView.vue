@@ -5,13 +5,14 @@ import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
 import Pagination from '../components/Pagination.vue'
 import PointsValue from '../components/PointsValue.vue'
+import { useAwardLabels } from '../composables/useAwardLabels.js'
 
 const route  = useRoute()
 const userId = ref(route.params.id)
 
 const user      = ref(null)
 const awards    = ref([])
-const availableLabels = ref([])
+const { labels: availableLabels } = useAwardLabels(userId)
 const meta      = ref({})
 const page      = ref(Number(route.query.page) || 1)
 const perPage   = ref(50)
@@ -41,13 +42,6 @@ async function load() {
     const { items, meta: m } = await fetchList(`/users/${userId.value}/points/awards`, params)
     awards.value = items
     meta.value   = m
-    // Collect unique labels if not already done
-    if (!availableLabels.value.length) {
-      const labels = await fetchList(`/users/${userId.value}/points/awards`, { per_page: 200 })
-      const seen = new Set()
-      for (const a of labels.items || []) { if (a.label) seen.add(a.label) }
-      availableLabels.value = [...seen].sort()
-    }
   } catch (e) {
     error.value = e.message
   } finally {

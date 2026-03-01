@@ -4,7 +4,7 @@ import { usePointsDisplay } from '../composables/usePointsDisplay.js'
 
 const props = defineProps({
   value: { type: [Number, String, null], default: 0 },
-  digits: { type: Number, default: 3 },
+  digits: { type: Number, default: 0 },
   showPlus: { type: Boolean, default: false },
   bold: { type: Boolean, default: false },
 })

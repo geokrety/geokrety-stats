@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import { useRoute, RouterLink, useRouter } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
@@ -16,6 +16,7 @@ import PointsValue from '../components/PointsValue.vue'
 import AwardingOnlyToggle from '../components/AwardingOnlyToggle.vue'
 import MoveTypeFilterDropdown from '../components/MoveTypeFilterDropdown.vue'
 import GeokretTypeFilterDropdown from '../components/GeokretTypeFilterDropdown.vue'
+import { useAwardLabels } from '../composables/useAwardLabels.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,7 +29,7 @@ const moves = ref([])
 const geokrety = ref([])
 const breakdown = ref([])
 const awards = ref([])
-const availableAwardLabels = ref([])
+const { labels: availableAwardLabels } = useAwardLabels(userId)
 
 const movePage = ref(1)
 const moveMeta = ref({})
@@ -53,6 +54,8 @@ const selectedGkTypes = ref([])
 
 const awardsLabelFilter = ref('')
 
+const chainsMeta = ref({})
+
 const loading = ref(false)
 const error = ref(null)
 const activeTab = ref('overview')
@@ -62,6 +65,7 @@ const loadedTabs = ref({
   geokrety: false,
   countries: false,
   awards: false,
+  chains: false,
   'related-users': false,
 })
 
@@ -75,7 +79,8 @@ const moveTypeOptions = [
 ]
 
 const today = new Date().toISOString().slice(0, 10)
-const validTabs = ['overview', 'moves', 'geokrety', 'countries', 'awards', 'related-users']
+const validTabs = ['overview', 'moves', 'geokrety', 'countries', 'awards', 'chains', 'related-users']
+const UserChainsTab = defineAsyncComponent(() => import('../components/chains/UserChainsTable.vue'))
 
 const joinedYear = computed(() => {
   if (!user.value?.joined_at) return null
@@ -110,11 +115,16 @@ const avgPointsPerMove = computed(() => {
 })
 
 const tabCounts = computed(() => ({
-  overview: loadedTabs.value.overview ? String(breakdown.value.length || 0) : '…',
-  moves: loadedTabs.value.moves ? String(moveMeta.value.total ?? 0) : '…',
+  overview: loadedTabs.value.overview ? String(breakdown.value.length || 0) : (user.value ? '1' : '…'),
+  moves: loadedTabs.value.moves
+    ? String(moveMeta.value.total ?? 0)
+    : (user.value?.total_moves ? user.value.total_moves.toLocaleString() : '…'),
   countries: String(user.value?.countries_count ?? 0),
-  geokrety: loadedTabs.value.geokrety ? String(gkMeta.value.total ?? 0) : '…',
+  geokrety: loadedTabs.value.geokrety
+    ? String(gkMeta.value.total ?? 0)
+    : (user.value?.distinct_gks ? user.value.distinct_gks.toLocaleString() : '…'),
   awards: loadedTabs.value.awards ? String(awardsMeta.value.total ?? 0) : '…',
+  chains: loadedTabs.value.chains ? String(chainsMeta.value.total ?? 0) : '…',
   'related-users': loadedTabs.value['related-users'] ? '0' : '…',
 }))
 
@@ -242,14 +252,6 @@ async function loadAwards() {
   awardsMeta.value = meta
   loadedTabs.value.awards = true
 
-  if (!availableAwardLabels.value.length) {
-    const labelsResponse = await fetchList(`/users/${userId.value}/points/awards`, { per_page: 200 })
-    const labels = new Set()
-    for (const row of labelsResponse.items || []) {
-      if (row.label) labels.add(row.label)
-    }
-    availableAwardLabels.value = [...labels].sort()
-  }
 }
 
 async function loadActiveTabData(tab) {
@@ -259,6 +261,7 @@ async function loadActiveTabData(tab) {
     if (tab === 'geokrety') await loadGeokrety()
     if (tab === 'countries') await loadCountries()
     if (tab === 'awards') await loadAwards()
+    if (tab === 'chains') loadedTabs.value.chains = true
     if (tab === 'related-users') loadedTabs.value['related-users'] = true
   } catch (e) {
     error.value = e.message
@@ -344,7 +347,6 @@ watch(() => route.params.id, async (id) => {
   geokrety.value = []
   breakdown.value = []
   awards.value = []
-  availableAwardLabels.value = []
 
   moveMeta.value = {}
   gkMeta.value = {}
@@ -367,6 +369,7 @@ watch(() => route.params.id, async (id) => {
   gkMultiplierOnly.value = false
   selectedGkTypes.value = []
   awardsLabelFilter.value = ''
+  chainsMeta.value = {}
 
   loadedTabs.value = {
     overview: false,
@@ -374,6 +377,7 @@ watch(() => route.params.id, async (id) => {
     geokrety: false,
     countries: false,
     awards: false,
+    chains: false,
     'related-users': false,
   }
 
@@ -421,27 +425,27 @@ watch(() => route.params.id, async (id) => {
           <div class="col-12 col-xl-7 mt-xl-0 mt-3 border-top pt-3 pt-xl-0 border-xl-top-0">
             <div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-2 text-center justify-content-center">
               <div class="col">
-                <div class="fw-bold text-primary fs-5"><PointsValue :value="displayTotalPoints" :digits="3" /></div>
+                <div class="fw-bold text-primary fs-5" title="Total points including bonus rewards"><PointsValue :value="displayTotalPoints" :digits="3" /></div>
                 <div class="text-muted small">Points</div>
               </div>
               <div class="col">
-                <div class="fw-bold fs-5">{{ user.rank_all_time?.toLocaleString() || '—' }}</div>
+                <div class="fw-bold fs-5" title="All-time rank on the leaderboard">{{ user.rank_all_time?.toLocaleString() || '—' }}</div>
                 <div class="text-muted small">Rank</div>
               </div>
               <div class="col">
-                <div class="fw-bold fs-5">{{ user.total_moves?.toLocaleString() }}</div>
+                <div class="fw-bold fs-5" title="Moves this user logged">{{ user.total_moves?.toLocaleString() }}</div>
                 <div class="text-muted small">Moves</div>
               </div>
               <div class="col">
-                <div class="fw-bold fs-5">{{ user.distinct_gks?.toLocaleString() }}</div>
+                <div class="fw-bold fs-5" title="Distinct GeoKrety this user has interacted with">{{ user.distinct_gks?.toLocaleString() }}</div>
                 <div class="text-muted small">GeoKrety</div>
               </div>
               <div class="col">
-                <div class="fw-bold fs-5">{{ user.countries_count?.toLocaleString() }}</div>
+                <div class="fw-bold fs-5" title="Countries visited by this user">{{ user.countries_count?.toLocaleString() }}</div>
                 <div class="text-muted small">Countries</div>
               </div>
               <div class="col">
-                <div class="fw-bold fs-5"><PointsValue :value="avgPointsPerMove" :digits="3" /></div>
+                <div class="fw-bold fs-5" title="Average points per move across the user history"><PointsValue :value="avgPointsPerMove" :digits="3" /></div>
                 <div class="text-muted small">Avg/Move</div>
               </div>
             </div>
@@ -479,6 +483,11 @@ watch(() => route.params.id, async (id) => {
       <li class="nav-item">
         <button type="button" class="nav-link" :class="{ active: activeTab === 'awards' }" title="Detailed point award entries and reasons" @click="activeTab = 'awards'">
           <i class="bi bi-award me-1"></i>Points Log <span class="badge bg-secondary ms-1">{{ tabCounts.awards }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'chains' }" title="Chains this user participated in" @click="activeTab = 'chains'">
+          <i class="bi bi-link-45deg me-1"></i>Chains <span class="badge bg-secondary ms-1">{{ tabCounts.chains }}</span>
         </button>
       </li>
       <li class="nav-item">
@@ -688,6 +697,19 @@ watch(() => route.params.id, async (id) => {
         </div>
       </div>
       <Pagination v-if="awardsMeta.total" :meta="awardsMeta" v-model:page="awardsPage" class="mt-3" />
+    </div>
+
+    <div v-if="activeTab === 'chains'">
+      <Suspense>
+        <template #default>
+          <UserChainsTab :user-id="userId" @meta-updated="(meta) => (chainsMeta.value = meta)" />
+        </template>
+        <template #fallback>
+          <div class="text-center py-4">
+            <div class="spinner-border spinner-border-sm me-2"></div>Loading chains…
+          </div>
+        </template>
+      </Suspense>
     </div>
 
     <div v-if="activeTab === 'related-users'">

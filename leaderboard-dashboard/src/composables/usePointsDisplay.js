@@ -5,7 +5,7 @@ export function usePointsDisplay() {
     return Number.isFinite(parsed) ? parsed : 0
   }
 
-  function formatPoints(value, digits = 3, showPlus = false) {
+  function formatPoints(value, digits = 0, showPlus = false) {
     const amount = toNumber(value)
     const formatted = amount.toLocaleString(undefined, {
       minimumFractionDigits: digits,

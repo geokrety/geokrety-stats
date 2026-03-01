@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import { useRoute, RouterLink, useRouter } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
@@ -50,7 +50,11 @@ const loadedTabs = ref({
   countries: false,
   'related-users': false,
   points: false,
+  chains: false,
 })
+
+const chainsMeta = ref({})
+const GeokretChainsTable = defineAsyncComponent(() => import('../components/chains/GeokretChainsTable.vue'))
 
 const moveTypeOptions = [
   { value: 0, label: 'Drop' },
@@ -61,7 +65,7 @@ const moveTypeOptions = [
   { value: 5, label: 'Dip' },
 ]
 
-const validTabs = ['overview', 'moves', 'countries', 'related-users', 'points']
+const validTabs = ['overview', 'moves', 'countries', 'related-users', 'points', 'chains']
 const today = new Date().toISOString().slice(0, 10)
 
 const gkMedal = computed(() => {
@@ -91,6 +95,7 @@ const tabCounts = computed(() => ({
   countries: loadedTabs.value.countries ? String(countries.value.length || 0) : String(gk.value?.countries_count ?? 0),
   'related-users': loadedTabs.value['related-users'] ? String(gk.value?.distinct_users ?? 0) : '…',
   points: loadedTabs.value.points ? String(pointsLogMeta.value.total ?? 0) : '…',
+  chains: loadedTabs.value.chains ? String(chainsMeta.value.total ?? 0) : '…',
 }))
 
 const statusText = computed(() => {
@@ -181,6 +186,11 @@ async function loadActiveTabData(tab) {
   }
 }
 
+function handleChainsMeta(metaData) {
+  chainsMeta.value = metaData || {}
+  loadedTabs.value.chains = true
+}
+
 function toggleSort(colRef, orderRef, col, ascDefaults = []) {
   if (colRef.value === col) {
     orderRef.value = orderRef.value === 'asc' ? 'desc' : 'asc'
@@ -256,7 +266,8 @@ watch(() => route.params.id, async (id) => {
   selectedMoveTypes.value = []
   selectedPointsMoveTypes.value = []
 
-  loadedTabs.value = { overview: false, moves: false, countries: false, 'related-users': false, points: false }
+  loadedTabs.value = { overview: false, moves: false, countries: false, 'related-users': false, points: false, chains: false }
+  chainsMeta.value = {}
 
   await loadGeoKret()
   await loadActiveTabData(activeTab.value)
@@ -378,6 +389,11 @@ watch(() => route.params.id, async (id) => {
       <li class="nav-item">
         <button type="button" class="nav-link" :class="{ active: activeTab === 'points' }" title="Detailed points log for this GeoKret" @click="activeTab = 'points'">
           <i class="bi bi-coin me-1"></i>Points Log <span class="badge bg-secondary ms-1">{{ tabCounts.points }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'chains' }" title="Chains this GeoKret joined" @click="activeTab = 'chains'">
+          <i class="bi bi-link-45deg me-1"></i>Chains <span class="badge bg-secondary ms-1">{{ tabCounts.chains }}</span>
         </button>
       </li>
     </ul>
@@ -559,6 +575,19 @@ watch(() => route.params.id, async (id) => {
         </div>
       </div>
       <Pagination v-if="pointsLogMeta.total > 0" :meta="pointsLogMeta" v-model:page="pointsLogPage" class="mt-3" />
+    </div>
+    <div v-else-if="activeTab === 'chains'">
+      <Suspense>
+        <template #default>
+          <GeokretChainsTable :gk-id="gkId" @meta-updated="handleChainsMeta" />
+        </template>
+        <template #fallback>
+          <div class="text-center text-muted py-5">
+            <div class="spinner-border spinner-border-sm me-2"></div>
+            Loading chains…
+          </div>
+        </template>
+      </Suspense>
     </div>
   </div>
 </template>
