@@ -4,6 +4,8 @@ import { RouterLink } from 'vue-router'
 import { fetchList } from '../../composables/useApi.js'
 import Pagination from '../Pagination.vue'
 import PointsValue from '../PointsValue.vue'
+import AwardingOnlyToggle from '../AwardingOnlyToggle.vue'
+import StatusFilterDropdown from '../StatusFilterDropdown.vue'
 
 const props = defineProps({
   userId: { type: [String, Number], required: true },
@@ -18,6 +20,9 @@ const sortOrder = ref('desc')
 const loading = ref(false)
 const error = ref(null)
 
+const awardingOnly = ref(false)
+const selectedStatuses = ref([])
+
 async function loadChains() {
   if (!props.userId) return
   loading.value = true
@@ -28,6 +33,8 @@ async function loadChains() {
       per_page: 25,
       sort: sortCol.value,
       order: sortOrder.value,
+      awarding_only: awardingOnly.value,
+      status: selectedStatuses.value,
     })
     chains.value = items
     meta.value = m
@@ -64,7 +71,7 @@ watch(() => props.userId, () => {
   loadChains()
 })
 
-watch([page, sortCol, sortOrder], () => {
+watch([page, sortCol, sortOrder, awardingOnly, selectedStatuses], () => {
   loadChains()
 })
 </script>
@@ -72,6 +79,18 @@ watch([page, sortCol, sortOrder], () => {
 <template>
   <div>
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
+    <div class="card mb-3 border-0 bg-light">
+      <div class="card-body py-2">
+        <div class="row align-items-center g-3">
+          <div class="col-auto">
+            <AwardingOnlyToggle v-model="awardingOnly" />
+          </div>
+          <div class="col-auto">
+            <StatusFilterDropdown v-model="selectedStatuses" />
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-if="loading && !chains.length" class="text-center py-4">
       <div class="spinner-border spinner-border-sm me-2"></div>Loading chains…
     </div>
@@ -91,7 +110,7 @@ watch([page, sortCol, sortOrder], () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="chain in chains" :key="chain.chain_id">
+            <tr v-for="chain in chains" :key="chain.chain_id" :class="{'table-info': chain.has_user_completion && awardingOnly}">
               <td><RouterLink :to="`/chains/${chain.chain_id}`" class="fw-semibold">#{{ chain.chain_id }}</RouterLink></td>
               <td>
                 <RouterLink :to="`/geokrety/${chain.gk_id}`">{{ chain.gk_hex_id || chain.gk_name || `GK #${chain.gk_id}` }}</RouterLink>

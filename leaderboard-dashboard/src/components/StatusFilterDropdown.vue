@@ -65,7 +65,7 @@ function selectNone() {
       :class="isDefaultSelection ? 'btn-outline-secondary' : 'btn-primary'"
       type="button"
       data-bs-toggle="dropdown"
-      data-bs-auto-close="outside"
+      data-bs-auto-close="true"
       aria-expanded="false"
       title="Filter rows by GeoKret status"
     >
@@ -76,6 +76,7 @@ function selectNone() {
         <strong class="small">Statuses</strong>
         <div class="btn-group btn-group-sm" role="group">
           <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @click="selectAll">All</button>
+          <span class="mx-1 text-muted small">/</span>
           <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @click="selectNone">None</button>
         </div>
       </div>

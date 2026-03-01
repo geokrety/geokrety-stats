@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue'
 import { fetchList } from './useApi.js'
+import { CHAIN_AWARD_LABELS } from './chainAwardLabels.js'
 
 export function useAwardLabels(userIdRef) {
   const labels = ref([])
@@ -18,6 +19,9 @@ export function useAwardLabels(userIdRef) {
       const seen = new Set()
       for (const award of items) {
         if (award.label) seen.add(award.label)
+      }
+      for (const chainLabel of CHAIN_AWARD_LABELS) {
+        seen.add(chainLabel)
       }
       labels.value = [...seen].sort()
     } catch (err) {

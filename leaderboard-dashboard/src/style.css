@@ -98,6 +98,29 @@ body {
   vertical-align: middle;
 }
 
+/* Highlight active sort columns */
+th[style*="cursor:pointer"] i.bi-sort-up-alt,
+th[style*="cursor:pointer"] i.bi-sort-down-alt,
+th.sort-active {
+  color: var(--gk-accent) !important;
+  font-weight: bold;
+}
+
+th[style*="cursor:pointer"] i.bi-sort-up-alt::before,
+th[style*="cursor:pointer"] i.bi-sort-down-alt::before {
+  text-shadow: 0 0 10px var(--gk-accent);
+}
+
+.table-responsive {
+  border-radius: 0.5rem;
+}
+
+.table thead th {
+  white-space: nowrap;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
 .app-main .table thead.table-dark,
 .app-main .table thead.table-light {
   --bs-table-bg: color-mix(in srgb, var(--bs-body-bg) 88%, var(--gk-accent) 12%);

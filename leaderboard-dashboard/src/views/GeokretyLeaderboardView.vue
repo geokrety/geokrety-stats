@@ -26,6 +26,7 @@ const sortOrder = ref(route.query.order === 'asc' ? 'asc' : 'desc')
 
 const awardingOnly = ref(route.query.awarding_only === 'true')
 const multiplierGtOne = ref(route.query.multiplier_gt_one === 'true')
+const inChainOnly = ref(route.query.in_chain === 'true')
 const selectedGkTypes = ref(route.query.gk_types ? String(route.query.gk_types).split(',').map((v) => Number(v)).filter((v) => !Number.isNaN(v)) : [])
 const selectedStatuses = ref(route.query.status ? String(route.query.status).split(',').filter(Boolean) : [])
 const loveMin = ref(route.query.love_min ? Number(route.query.love_min) : null)
@@ -42,6 +43,7 @@ async function loadGeokrety() {
       order: sortOrder.value,
       awarding_only: awardingOnly.value,
       multiplier_gt_one: multiplierGtOne.value,
+      in_chain: inChainOnly.value,
     }
 
     if (selectedGkTypes.value.length) params.gk_types = selectedGkTypes.value.join(',')
@@ -66,6 +68,7 @@ function syncQuery() {
     order: sortOrder.value !== 'desc' ? sortOrder.value : undefined,
     awarding_only: awardingOnly.value ? 'true' : undefined,
     multiplier_gt_one: multiplierGtOne.value ? 'true' : undefined,
+    in_chain: inChainOnly.value ? 'true' : undefined,
     gk_types: selectedGkTypes.value.length ? selectedGkTypes.value.join(',') : undefined,
     status: selectedStatuses.value.length ? selectedStatuses.value.join(',') : undefined,
     love_min: loveMin.value !== null ? String(loveMin.value) : undefined,
@@ -103,7 +106,7 @@ watch([page], async () => {
   await loadGeokrety()
 })
 
-watch([sortCol, sortOrder, awardingOnly, multiplierGtOne, selectedGkTypes, selectedStatuses, loveMin, loveMax], async () => {
+watch([sortCol, sortOrder, awardingOnly, multiplierGtOne, inChainOnly, selectedGkTypes, selectedStatuses, loveMin, loveMax], async () => {
   page.value = 1
   syncQuery()
   await loadGeokrety()
@@ -130,6 +133,9 @@ watch([sortCol, sortOrder, awardingOnly, multiplierGtOne, selectedGkTypes, selec
       <AwardingOnlyToggle v-model="awardingOnly" />
       <button type="button" class="btn btn-sm" :class="multiplierGtOne ? 'btn-primary' : 'btn-outline-secondary'" title="Show only GeoKrety with multiplier above 1" @click="multiplierGtOne = !multiplierGtOne">
         <i class="bi bi-graph-up me-1"></i>Only multiplier >1
+      </button>
+      <button type="button" class="btn btn-sm" :class="inChainOnly ? 'btn-primary' : 'btn-outline-secondary'" title="Show only GeoKrety currently in an active chain" @click="inChainOnly = !inChainOnly">
+        <i class="bi bi-link-45deg me-1"></i>In Active Chain
       </button>
       <GeokretTypeFilterDropdown v-model="selectedGkTypes" id-prefix="gk-list-type" />
       <StatusFilterDropdown v-model="selectedStatuses" id-prefix="gk-list-status" />

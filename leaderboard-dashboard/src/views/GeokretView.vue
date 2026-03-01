@@ -91,7 +91,7 @@ const avgPointsPerMove = computed(() => {
 
 const tabCounts = computed(() => ({
   overview: loadedTabs.value.overview ? '1' : '…',
-  moves: loadedTabs.value.moves ? String(moveMeta.value.total ?? 0) : '…',
+  moves: String(gk.value?.total_moves ?? '…'),
   countries: loadedTabs.value.countries ? String(countries.value.length || 0) : String(gk.value?.countries_count ?? 0),
   'related-users': loadedTabs.value['related-users'] ? String(gk.value?.distinct_users ?? 0) : '…',
   points: loadedTabs.value.points ? String(pointsLogMeta.value.total ?? 0) : '…',
