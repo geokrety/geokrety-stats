@@ -1,0 +1,1579 @@
+- generic [ref=e2]:
+  - navigation [ref=e3]:
+    - generic [ref=e4]:
+      - link " GeoKrety Leaderboard" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - text: GeoKrety Leaderboard
+      - generic [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link " Leaderboard" [ref=e10] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e11]: 
+              - text: Leaderboard
+          - listitem [ref=e12]:
+            - link " GeoKrety" [ref=e13] [cursor=pointer]:
+              - /url: /geokrety
+              - generic [ref=e14]: 
+              - text: GeoKrety
+          - listitem [ref=e15]:
+            - link " Countries" [ref=e16] [cursor=pointer]:
+              - /url: /countries
+              - generic [ref=e17]: 
+              - text: Countries
+          - listitem [ref=e18]:
+            - link " Statistics" [ref=e19] [cursor=pointer]:
+              - /url: /stats
+              - generic [ref=e20]: 
+              - text: Statistics
+        - generic [ref=e21]:
+          - button "Switch to light theme" [ref=e54] [cursor=pointer]:
+            - generic [ref=e23]: 
+          - generic [ref=e26] [cursor=pointer]:
+            - generic [ref=e27]: 
+            - text: Offline
+  - main [ref=e28]:
+    - generic [ref=e29]:
+      - navigation "breadcrumb" [ref=e30]:
+        - list [ref=e31]:
+          - listitem [ref=e32]:
+            - link "Home" [ref=e33] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e34]: / Countries
+      - generic [ref=e36]:
+        - heading "🌍 Countries Leaderboard" [level=2] [ref=e37]
+        - paragraph [ref=e38]: View statistics by country
+      - generic [ref=e39]:
+        - generic [ref=e40]: "Sort by:"
+        - group [ref=e41]:
+          - radio "Points" [checked]
+          - generic [ref=e42] [cursor=pointer]: Points
+          - radio "Avg Points/Move"
+          - generic [ref=e43] [cursor=pointer]: Avg Points/Move
+          - radio "Total Moves"
+          - generic [ref=e44] [cursor=pointer]: Total Moves
+          - radio "Active Users"
+          - generic [ref=e45] [cursor=pointer]: Active Users
+          - radio "GeoKrety Count"
+          - generic [ref=e46] [cursor=pointer]: GeoKrety Count
+          - radio "Grabs"
+          - generic [ref=e47] [cursor=pointer]: Grabs
+          - radio "Drops"
+          - generic [ref=e48] [cursor=pointer]: Drops
+          - radio "DIPs"
+          - generic [ref=e49] [cursor=pointer]: DIPs
+          - radio "❤️ Loves"
+          - generic [ref=e50] [cursor=pointer]: ❤️ Loves
+      - generic [ref=e55]:
+        - group [ref=e57]:
+          - radio " Cards" [checked]
+          - generic [ref=e58] [cursor=pointer]:
+            - generic [ref=e59]: 
+            - text: Cards
+          - radio " Table"
+          - generic [ref=e60] [cursor=pointer]:
+            - generic [ref=e61]: 
+            - text: Table
+        - generic [ref=e62]:
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - generic [ref=e66]: 🇵🇱
+              - link "Poland" [ref=e67] [cursor=pointer]:
+                - /url: /country/PL
+                - heading "Poland" [level=4] [ref=e68]
+              - generic [ref=e69]: "Rank #1"
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - generic [ref=e72]:
+                  - generic [ref=e73]: Points
+                  - generic [ref=e74]: 56,614
+                - generic [ref=e75]:
+                  - generic [ref=e76]: Avg/Move
+                  - generic [ref=e77]: "0"
+                - generic [ref=e78]:
+                  - generic [ref=e79]: Moves
+                  - generic [ref=e80]: 3,660,140
+                - generic [ref=e81]:
+                  - generic [ref=e82]: GeoKrety
+                  - generic [ref=e83]: 37,886
+                - generic [ref=e84]:
+                  - generic [ref=e85]: Users
+                  - generic [ref=e86]: 8,644
+              - generic [ref=e88]:
+                - generic "Left in a cache" [ref=e89]: 🌳170,256
+                - generic "Taken from a cache" [ref=e90]: 🚀104,906
+                - generic "Visited without taking" [ref=e91]: 🥾3,367,534
+                - generic "Encountered but not taken" [ref=e92]: 👀13,879
+                - generic "Move action" [ref=e93]: ❤️1
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e97]: 🇩🇪
+              - link "Germany" [ref=e98] [cursor=pointer]:
+                - /url: /country/DE
+                - heading "Germany" [level=4] [ref=e99]
+              - generic [ref=e100]: "Rank #2"
+            - generic [ref=e101]:
+              - generic [ref=e102]:
+                - generic [ref=e103]:
+                  - generic [ref=e104]: Points
+                  - generic [ref=e105]: 9,335
+                - generic [ref=e106]:
+                  - generic [ref=e107]: Avg/Move
+                  - generic [ref=e108]: "0"
+                - generic [ref=e109]:
+                  - generic [ref=e110]: Moves
+                  - generic [ref=e111]: 544,743
+                - generic [ref=e112]:
+                  - generic [ref=e113]: GeoKrety
+                  - generic [ref=e114]: 22,603
+                - generic [ref=e115]:
+                  - generic [ref=e116]: Users
+                  - generic [ref=e117]: 10,377
+              - generic [ref=e119]:
+                - generic "Left in a cache" [ref=e120]: 🌳68,775
+                - generic "Taken from a cache" [ref=e121]: 🚀45,151
+                - generic "Visited without taking" [ref=e122]: 🥾417,047
+                - generic "Encountered but not taken" [ref=e123]: 👀12,102
+                - generic "Move action" [ref=e124]: ❤️1
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - generic [ref=e128]: 🇨🇿
+              - link "Czech Republic" [ref=e129] [cursor=pointer]:
+                - /url: /country/CZ
+                - heading "Czech Republic" [level=4] [ref=e130]
+              - generic [ref=e131]: "Rank #3"
+            - generic [ref=e132]:
+              - generic [ref=e133]:
+                - generic [ref=e134]:
+                  - generic [ref=e135]: Points
+                  - generic [ref=e136]: 1,719
+                - generic [ref=e137]:
+                  - generic [ref=e138]: Avg/Move
+                  - generic [ref=e139]: "0"
+                - generic [ref=e140]:
+                  - generic [ref=e141]: Moves
+                  - generic [ref=e142]: 62,675
+                - generic [ref=e143]:
+                  - generic [ref=e144]: GeoKrety
+                  - generic [ref=e145]: 5,350
+                - generic [ref=e146]:
+                  - generic [ref=e147]: Users
+                  - generic [ref=e148]: 2,588
+              - generic [ref=e150]:
+                - generic "Left in a cache" [ref=e151]: 🌳9,748
+                - generic "Taken from a cache" [ref=e152]: 🚀6,004
+                - generic "Visited without taking" [ref=e153]: 🥾45,349
+                - generic "Encountered but not taken" [ref=e154]: 👀1,387
+                - generic "Move action" [ref=e155]: ❤️0
+          - generic [ref=e157]:
+            - generic [ref=e158]:
+              - generic [ref=e159]: 🇪🇪
+              - link "Estonia" [ref=e160] [cursor=pointer]:
+                - /url: /country/EE
+                - heading "Estonia" [level=4] [ref=e161]
+              - generic [ref=e162]: "Rank #4"
+            - generic [ref=e163]:
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - generic [ref=e166]: Points
+                  - generic [ref=e167]: "696"
+                - generic [ref=e168]:
+                  - generic [ref=e169]: Avg/Move
+                  - generic [ref=e170]: "0"
+                - generic [ref=e171]:
+                  - generic [ref=e172]: Moves
+                  - generic [ref=e173]: 4,318
+                - generic [ref=e174]:
+                  - generic [ref=e175]: GeoKrety
+                  - generic [ref=e176]: "689"
+                - generic [ref=e177]:
+                  - generic [ref=e178]: Users
+                  - generic [ref=e179]: "152"
+              - generic [ref=e181]:
+                - generic "Left in a cache" [ref=e182]: 🌳709
+                - generic "Taken from a cache" [ref=e183]: 🚀472
+                - generic "Visited without taking" [ref=e184]: 🥾3,052
+                - generic "Encountered but not taken" [ref=e185]: 👀76
+                - generic "Move action" [ref=e186]: ❤️0
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - generic [ref=e190]: 🇦🇹
+              - link "Austria" [ref=e191] [cursor=pointer]:
+                - /url: /country/AT
+                - heading "Austria" [level=4] [ref=e192]
+              - generic [ref=e193]: "Rank #5"
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - generic [ref=e196]:
+                  - generic [ref=e197]: Points
+                  - generic [ref=e198]: "690"
+                - generic [ref=e199]:
+                  - generic [ref=e200]: Avg/Move
+                  - generic [ref=e201]: "0"
+                - generic [ref=e202]:
+                  - generic [ref=e203]: Moves
+                  - generic [ref=e204]: 29,380
+                - generic [ref=e205]:
+                  - generic [ref=e206]: GeoKrety
+                  - generic [ref=e207]: 3,507
+                - generic [ref=e208]:
+                  - generic [ref=e209]: Users
+                  - generic [ref=e210]: 1,332
+              - generic [ref=e212]:
+                - generic "Left in a cache" [ref=e213]: 🌳6,689
+                - generic "Taken from a cache" [ref=e214]: 🚀2,964
+                - generic "Visited without taking" [ref=e215]: 🥾18,720
+                - generic "Encountered but not taken" [ref=e216]: 👀939
+                - generic "Move action" [ref=e217]: ❤️0
+          - generic [ref=e219]:
+            - generic [ref=e220]:
+              - generic [ref=e221]: 🇸🇰
+              - link "Slovakia" [ref=e222] [cursor=pointer]:
+                - /url: /country/SK
+                - heading "Slovakia" [level=4] [ref=e223]
+              - generic [ref=e224]: "Rank #6"
+            - generic [ref=e225]:
+              - generic [ref=e226]:
+                - generic [ref=e227]:
+                  - generic [ref=e228]: Points
+                  - generic [ref=e229]: "519"
+                - generic [ref=e230]:
+                  - generic [ref=e231]: Avg/Move
+                  - generic [ref=e232]: "0"
+                - generic [ref=e233]:
+                  - generic [ref=e234]: Moves
+                  - generic [ref=e235]: 37,210
+                - generic [ref=e236]:
+                  - generic [ref=e237]: GeoKrety
+                  - generic [ref=e238]: 2,634
+                - generic [ref=e239]:
+                  - generic [ref=e240]: Users
+                  - generic [ref=e241]: "661"
+              - generic [ref=e243]:
+                - generic "Left in a cache" [ref=e244]: 🌳1,328
+                - generic "Taken from a cache" [ref=e245]: 🚀814
+                - generic "Visited without taking" [ref=e246]: 🥾34,806
+                - generic "Encountered but not taken" [ref=e247]: 👀213
+                - generic "Move action" [ref=e248]: ❤️0
+          - generic [ref=e250]:
+            - generic [ref=e251]:
+              - generic [ref=e252]: 🇬🇧
+              - link "United Kingdom" [ref=e253] [cursor=pointer]:
+                - /url: /country/GB
+                - heading "United Kingdom" [level=4] [ref=e254]
+              - generic [ref=e255]: "Rank #7"
+            - generic [ref=e256]:
+              - generic [ref=e257]:
+                - generic [ref=e258]:
+                  - generic [ref=e259]: Points
+                  - generic [ref=e260]: "511"
+                - generic [ref=e261]:
+                  - generic [ref=e262]: Avg/Move
+                  - generic [ref=e263]: "0"
+                - generic [ref=e264]:
+                  - generic [ref=e265]: Moves
+                  - generic [ref=e266]: 24,952
+                - generic [ref=e267]:
+                  - generic [ref=e268]: GeoKrety
+                  - generic [ref=e269]: 2,516
+                - generic [ref=e270]:
+                  - generic [ref=e271]: Users
+                  - generic [ref=e272]: "854"
+              - generic [ref=e274]:
+                - generic "Left in a cache" [ref=e275]: 🌳2,983
+                - generic "Taken from a cache" [ref=e276]: 🚀1,841
+                - generic "Visited without taking" [ref=e277]: 🥾19,803
+                - generic "Encountered but not taken" [ref=e278]: 👀263
+                - generic "Move action" [ref=e279]: ❤️0
+          - generic [ref=e281]:
+            - generic [ref=e282]:
+              - generic [ref=e283]: 🇳🇱
+              - link "Netherlands" [ref=e284] [cursor=pointer]:
+                - /url: /country/NL
+                - heading "Netherlands" [level=4] [ref=e285]
+              - generic [ref=e286]: "Rank #8"
+            - generic [ref=e287]:
+              - generic [ref=e288]:
+                - generic [ref=e289]:
+                  - generic [ref=e290]: Points
+                  - generic [ref=e291]: "460"
+                - generic [ref=e292]:
+                  - generic [ref=e293]: Avg/Move
+                  - generic [ref=e294]: "0"
+                - generic [ref=e295]:
+                  - generic [ref=e296]: Moves
+                  - generic [ref=e297]: 29,367
+                - generic [ref=e298]:
+                  - generic [ref=e299]: GeoKrety
+                  - generic [ref=e300]: 2,919
+                - generic [ref=e301]:
+                  - generic [ref=e302]: Users
+                  - generic [ref=e303]: 1,213
+              - generic [ref=e305]:
+                - generic "Left in a cache" [ref=e306]: 🌳5,546
+                - generic "Taken from a cache" [ref=e307]: 🚀4,099
+                - generic "Visited without taking" [ref=e308]: 🥾18,818
+                - generic "Encountered but not taken" [ref=e309]: 👀803
+                - generic "Move action" [ref=e310]: ❤️1
+          - generic [ref=e312]:
+            - generic [ref=e313]:
+              - generic [ref=e314]: 🇪🇸
+              - link "Spain" [ref=e315] [cursor=pointer]:
+                - /url: /country/ES
+                - heading "Spain" [level=4] [ref=e316]
+              - generic [ref=e317]: "Rank #9"
+            - generic [ref=e318]:
+              - generic [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]: Points
+                  - generic [ref=e322]: "375"
+                - generic [ref=e323]:
+                  - generic [ref=e324]: Avg/Move
+                  - generic [ref=e325]: "0"
+                - generic [ref=e326]:
+                  - generic [ref=e327]: Moves
+                  - generic [ref=e328]: 32,160
+                - generic [ref=e329]:
+                  - generic [ref=e330]: GeoKrety
+                  - generic [ref=e331]: 2,766
+                - generic [ref=e332]:
+                  - generic [ref=e333]: Users
+                  - generic [ref=e334]: 1,045
+              - generic [ref=e336]:
+                - generic "Left in a cache" [ref=e337]: 🌳3,508
+                - generic "Taken from a cache" [ref=e338]: 🚀1,922
+                - generic "Visited without taking" [ref=e339]: 🥾25,962
+                - generic "Encountered but not taken" [ref=e340]: 👀692
+                - generic "Move action" [ref=e341]: ❤️0
+          - generic [ref=e343]:
+            - generic [ref=e344]:
+              - generic [ref=e345]: 🇫🇷
+              - link "France" [ref=e346] [cursor=pointer]:
+                - /url: /country/FR
+                - heading "France" [level=4] [ref=e347]
+              - generic [ref=e348]: "Rank #10"
+            - generic [ref=e349]:
+              - generic [ref=e350]:
+                - generic [ref=e351]:
+                  - generic [ref=e352]: Points
+                  - generic [ref=e353]: "373"
+                - generic [ref=e354]:
+                  - generic [ref=e355]: Avg/Move
+                  - generic [ref=e356]: "0"
+                - generic [ref=e357]:
+                  - generic [ref=e358]: Moves
+                  - generic [ref=e359]: 258,906
+                - generic [ref=e360]:
+                  - generic [ref=e361]: GeoKrety
+                  - generic [ref=e362]: 7,553
+                - generic [ref=e363]:
+                  - generic [ref=e364]: Users
+                  - generic [ref=e365]: 2,395
+              - generic [ref=e367]:
+                - generic "Left in a cache" [ref=e368]: 🌳12,335
+                - generic "Taken from a cache" [ref=e369]: 🚀8,672
+                - generic "Visited without taking" [ref=e370]: 🥾235,899
+                - generic "Encountered but not taken" [ref=e371]: 👀1,695
+                - generic "Move action" [ref=e372]: ❤️1
+          - generic [ref=e374]:
+            - generic [ref=e375]:
+              - generic [ref=e376]: 🇬🇷
+              - link "Greece" [ref=e377] [cursor=pointer]:
+                - /url: /country/GR
+                - heading "Greece" [level=4] [ref=e378]
+              - generic [ref=e379]: "Rank #11"
+            - generic [ref=e380]:
+              - generic [ref=e381]:
+                - generic [ref=e382]:
+                  - generic [ref=e383]: Points
+                  - generic [ref=e384]: "329"
+                - generic [ref=e385]:
+                  - generic [ref=e386]: Avg/Move
+                  - generic [ref=e387]: "0"
+                - generic [ref=e388]:
+                  - generic [ref=e389]: Moves
+                  - generic [ref=e390]: 5,234
+                - generic [ref=e391]:
+                  - generic [ref=e392]: GeoKrety
+                  - generic [ref=e393]: 1,388
+                - generic [ref=e394]:
+                  - generic [ref=e395]: Users
+                  - generic [ref=e396]: "257"
+              - generic [ref=e398]:
+                - generic "Left in a cache" [ref=e399]: 🌳430
+                - generic "Taken from a cache" [ref=e400]: 🚀263
+                - generic "Visited without taking" [ref=e401]: 🥾4,487
+                - generic "Encountered but not taken" [ref=e402]: 👀48
+                - generic "Move action" [ref=e403]: ❤️1
+          - generic [ref=e405]:
+            - generic [ref=e406]:
+              - generic [ref=e407]: 🇺🇸
+              - link "United States" [ref=e408] [cursor=pointer]:
+                - /url: /country/US
+                - heading "United States" [level=4] [ref=e409]
+              - generic [ref=e410]: "Rank #12"
+            - generic [ref=e411]:
+              - generic [ref=e412]:
+                - generic [ref=e413]:
+                  - generic [ref=e414]: Points
+                  - generic [ref=e415]: "312"
+                - generic [ref=e416]:
+                  - generic [ref=e417]: Avg/Move
+                  - generic [ref=e418]: "0"
+                - generic [ref=e419]:
+                  - generic [ref=e420]: Moves
+                  - generic [ref=e421]: 17,303
+                - generic [ref=e422]:
+                  - generic [ref=e423]: GeoKrety
+                  - generic [ref=e424]: 4,132
+                - generic [ref=e425]:
+                  - generic [ref=e426]: Users
+                  - generic [ref=e427]: 1,005
+              - generic [ref=e429]:
+                - generic "Left in a cache" [ref=e430]: 🌳4,962
+                - generic "Taken from a cache" [ref=e431]: 🚀2,123
+                - generic "Visited without taking" [ref=e432]: 🥾9,666
+                - generic "Encountered but not taken" [ref=e433]: 👀426
+                - generic "Move action" [ref=e434]: ❤️1
+          - generic [ref=e436]:
+            - generic [ref=e437]:
+              - generic [ref=e438]: 🇩🇰
+              - link "Denmark" [ref=e439] [cursor=pointer]:
+                - /url: /country/DK
+                - heading "Denmark" [level=4] [ref=e440]
+              - generic [ref=e441]: "Rank #13"
+            - generic [ref=e442]:
+              - generic [ref=e443]:
+                - generic [ref=e444]:
+                  - generic [ref=e445]: Points
+                  - generic [ref=e446]: "308"
+                - generic [ref=e447]:
+                  - generic [ref=e448]: Avg/Move
+                  - generic [ref=e449]: "0"
+                - generic [ref=e450]:
+                  - generic [ref=e451]: Moves
+                  - generic [ref=e452]: 13,557
+                - generic [ref=e453]:
+                  - generic [ref=e454]: GeoKrety
+                  - generic [ref=e455]: 1,615
+                - generic [ref=e456]:
+                  - generic [ref=e457]: Users
+                  - generic [ref=e458]: "472"
+              - generic [ref=e460]:
+                - generic "Left in a cache" [ref=e461]: 🌳1,227
+                - generic "Taken from a cache" [ref=e462]: 🚀779
+                - generic "Visited without taking" [ref=e463]: 🥾11,396
+                - generic "Encountered but not taken" [ref=e464]: 👀113
+                - generic "Move action" [ref=e465]: ❤️0
+          - generic [ref=e467]:
+            - generic [ref=e468]:
+              - generic [ref=e469]: 🇫🇮
+              - link "Finland" [ref=e470] [cursor=pointer]:
+                - /url: /country/FI
+                - heading "Finland" [level=4] [ref=e471]
+              - generic [ref=e472]: "Rank #14"
+            - generic [ref=e473]:
+              - generic [ref=e474]:
+                - generic [ref=e475]:
+                  - generic [ref=e476]: Points
+                  - generic [ref=e477]: "303"
+                - generic [ref=e478]:
+                  - generic [ref=e479]: Avg/Move
+                  - generic [ref=e480]: "0"
+                - generic [ref=e481]:
+                  - generic [ref=e482]: Moves
+                  - generic [ref=e483]: 5,511
+                - generic [ref=e484]:
+                  - generic [ref=e485]: GeoKrety
+                  - generic [ref=e486]: "680"
+                - generic [ref=e487]:
+                  - generic [ref=e488]: Users
+                  - generic [ref=e489]: "380"
+              - generic [ref=e491]:
+                - generic "Left in a cache" [ref=e492]: 🌳1,285
+                - generic "Taken from a cache" [ref=e493]: 🚀914
+                - generic "Visited without taking" [ref=e494]: 🥾3,053
+                - generic "Encountered but not taken" [ref=e495]: 👀239
+                - generic "Move action" [ref=e496]: ❤️0
+          - generic [ref=e498]:
+            - generic [ref=e499]:
+              - generic [ref=e500]: 🇨🇭
+              - link "Switzerland" [ref=e501] [cursor=pointer]:
+                - /url: /country/CH
+                - heading "Switzerland" [level=4] [ref=e502]
+              - generic [ref=e503]: "Rank #15"
+            - generic [ref=e504]:
+              - generic [ref=e505]:
+                - generic [ref=e506]:
+                  - generic [ref=e507]: Points
+                  - generic [ref=e508]: "261"
+                - generic [ref=e509]:
+                  - generic [ref=e510]: Avg/Move
+                  - generic [ref=e511]: "0"
+                - generic [ref=e512]:
+                  - generic [ref=e513]: Moves
+                  - generic [ref=e514]: 10,342
+                - generic [ref=e515]:
+                  - generic [ref=e516]: GeoKrety
+                  - generic [ref=e517]: 1,609
+                - generic [ref=e518]:
+                  - generic [ref=e519]: Users
+                  - generic [ref=e520]: "642"
+              - generic [ref=e522]:
+                - generic "Left in a cache" [ref=e523]: 🌳1,857
+                - generic "Taken from a cache" [ref=e524]: 🚀1,270
+                - generic "Visited without taking" [ref=e525]: 🥾6,907
+                - generic "Encountered but not taken" [ref=e526]: 👀272
+                - generic "Move action" [ref=e527]: ❤️1
+          - generic [ref=e529]:
+            - generic [ref=e530]:
+              - generic [ref=e531]: 🇮🇹
+              - link "Italy" [ref=e532] [cursor=pointer]:
+                - /url: /country/IT
+                - heading "Italy" [level=4] [ref=e533]
+              - generic [ref=e534]: "Rank #16"
+            - generic [ref=e535]:
+              - generic [ref=e536]:
+                - generic [ref=e537]:
+                  - generic [ref=e538]: Points
+                  - generic [ref=e539]: "251"
+                - generic [ref=e540]:
+                  - generic [ref=e541]: Avg/Move
+                  - generic [ref=e542]: "0"
+                - generic [ref=e543]:
+                  - generic [ref=e544]: Moves
+                  - generic [ref=e545]: 14,548
+                - generic [ref=e546]:
+                  - generic [ref=e547]: GeoKrety
+                  - generic [ref=e548]: 2,560
+                - generic [ref=e549]:
+                  - generic [ref=e550]: Users
+                  - generic [ref=e551]: "650"
+              - generic [ref=e553]:
+                - generic "Left in a cache" [ref=e554]: 🌳1,022
+                - generic "Taken from a cache" [ref=e555]: 🚀592
+                - generic "Visited without taking" [ref=e556]: 🥾12,768
+                - generic "Encountered but not taken" [ref=e557]: 👀146
+                - generic "Move action" [ref=e558]: ❤️0
+          - generic [ref=e560]:
+            - generic [ref=e561]:
+              - generic [ref=e562]: 🇳🇴
+              - link "Norway" [ref=e563] [cursor=pointer]:
+                - /url: /country/NO
+                - heading "Norway" [level=4] [ref=e564]
+              - generic [ref=e565]: "Rank #17"
+            - generic [ref=e566]:
+              - generic [ref=e567]:
+                - generic [ref=e568]:
+                  - generic [ref=e569]: Points
+                  - generic [ref=e570]: "197"
+                - generic [ref=e571]:
+                  - generic [ref=e572]: Avg/Move
+                  - generic [ref=e573]: "0"
+                - generic [ref=e574]:
+                  - generic [ref=e575]: Moves
+                  - generic [ref=e576]: 6,454
+                - generic [ref=e577]:
+                  - generic [ref=e578]: GeoKrety
+                  - generic [ref=e579]: "810"
+                - generic [ref=e580]:
+                  - generic [ref=e581]: Users
+                  - generic [ref=e582]: "267"
+              - generic [ref=e584]:
+                - generic "Left in a cache" [ref=e585]: 🌳671
+                - generic "Taken from a cache" [ref=e586]: 🚀352
+                - generic "Visited without taking" [ref=e587]: 🥾5,340
+                - generic "Encountered but not taken" [ref=e588]: 👀76
+                - generic "Move action" [ref=e589]: ❤️0
+          - generic [ref=e591]:
+            - generic [ref=e592]:
+              - generic [ref=e593]: 🇸🇪
+              - link "Sweden" [ref=e594] [cursor=pointer]:
+                - /url: /country/SE
+                - heading "Sweden" [level=4] [ref=e595]
+              - generic [ref=e596]: "Rank #18"
+            - generic [ref=e597]:
+              - generic [ref=e598]:
+                - generic [ref=e599]:
+                  - generic [ref=e600]: Points
+                  - generic [ref=e601]: "177"
+                - generic [ref=e602]:
+                  - generic [ref=e603]: Avg/Move
+                  - generic [ref=e604]: "0"
+                - generic [ref=e605]:
+                  - generic [ref=e606]: Moves
+                  - generic [ref=e607]: 6,842
+                - generic [ref=e608]:
+                  - generic [ref=e609]: GeoKrety
+                  - generic [ref=e610]: 1,126
+                - generic [ref=e611]:
+                  - generic [ref=e612]: Users
+                  - generic [ref=e613]: "445"
+              - generic [ref=e615]:
+                - generic "Left in a cache" [ref=e616]: 🌳1,081
+                - generic "Taken from a cache" [ref=e617]: 🚀707
+                - generic "Visited without taking" [ref=e618]: 🥾4,870
+                - generic "Encountered but not taken" [ref=e619]: 👀163
+                - generic "Move action" [ref=e620]: ❤️0
+          - generic [ref=e622]:
+            - generic [ref=e623]:
+              - generic [ref=e624]: 🇧🇪
+              - link "Belgium" [ref=e625] [cursor=pointer]:
+                - /url: /country/BE
+                - heading "Belgium" [level=4] [ref=e626]
+              - generic [ref=e627]: "Rank #19"
+            - generic [ref=e628]:
+              - generic [ref=e629]:
+                - generic [ref=e630]:
+                  - generic [ref=e631]: Points
+                  - generic [ref=e632]: "169"
+                - generic [ref=e633]:
+                  - generic [ref=e634]: Avg/Move
+                  - generic [ref=e635]: "0"
+                - generic [ref=e636]:
+                  - generic [ref=e637]: Moves
+                  - generic [ref=e638]: 25,436
+                - generic [ref=e639]:
+                  - generic [ref=e640]: GeoKrety
+                  - generic [ref=e641]: 1,958
+                - generic [ref=e642]:
+                  - generic [ref=e643]: Users
+                  - generic [ref=e644]: "812"
+              - generic [ref=e646]:
+                - generic "Left in a cache" [ref=e647]: 🌳2,513
+                - generic "Taken from a cache" [ref=e648]: 🚀1,888
+                - generic "Visited without taking" [ref=e649]: 🥾20,453
+                - generic "Encountered but not taken" [ref=e650]: 👀530
+                - generic "Move action" [ref=e651]: ❤️0
+          - generic [ref=e653]:
+            - generic [ref=e654]:
+              - generic [ref=e655]: 🇱🇻
+              - link "Latvia" [ref=e656] [cursor=pointer]:
+                - /url: /country/LV
+                - heading "Latvia" [level=4] [ref=e657]
+              - generic [ref=e658]: "Rank #20"
+            - generic [ref=e659]:
+              - generic [ref=e660]:
+                - generic [ref=e661]:
+                  - generic [ref=e662]: Points
+                  - generic [ref=e663]: "148"
+                - generic [ref=e664]:
+                  - generic [ref=e665]: Avg/Move
+                  - generic [ref=e666]: "0"
+                - generic [ref=e667]:
+                  - generic [ref=e668]: Moves
+                  - generic [ref=e669]: 5,785
+                - generic [ref=e670]:
+                  - generic [ref=e671]: GeoKrety
+                  - generic [ref=e672]: "473"
+                - generic [ref=e673]:
+                  - generic [ref=e674]: Users
+                  - generic [ref=e675]: "116"
+              - generic [ref=e677]:
+                - generic "Left in a cache" [ref=e678]: 🌳246
+                - generic "Taken from a cache" [ref=e679]: 🚀158
+                - generic "Visited without taking" [ref=e680]: 🥾5,340
+                - generic "Encountered but not taken" [ref=e681]: 👀38
+                - generic "Move action" [ref=e682]: ❤️0
+          - generic [ref=e684]:
+            - generic [ref=e685]:
+              - generic [ref=e686]: 🇭🇺
+              - link "Hungary" [ref=e687] [cursor=pointer]:
+                - /url: /country/HU
+                - heading "Hungary" [level=4] [ref=e688]
+              - generic [ref=e689]: "Rank #21"
+            - generic [ref=e690]:
+              - generic [ref=e691]:
+                - generic [ref=e692]:
+                  - generic [ref=e693]: Points
+                  - generic [ref=e694]: "139"
+                - generic [ref=e695]:
+                  - generic [ref=e696]: Avg/Move
+                  - generic [ref=e697]: "0"
+                - generic [ref=e698]:
+                  - generic [ref=e699]: Moves
+                  - generic [ref=e700]: 13,594
+                - generic [ref=e701]:
+                  - generic [ref=e702]: GeoKrety
+                  - generic [ref=e703]: 1,330
+                - generic [ref=e704]:
+                  - generic [ref=e705]: Users
+                  - generic [ref=e706]: "281"
+              - generic [ref=e708]:
+                - generic "Left in a cache" [ref=e709]: 🌳417
+                - generic "Taken from a cache" [ref=e710]: 🚀247
+                - generic "Visited without taking" [ref=e711]: 🥾12,865
+                - generic "Encountered but not taken" [ref=e712]: 👀57
+                - generic "Move action" [ref=e713]: ❤️0
+          - generic [ref=e715]:
+            - generic [ref=e716]:
+              - generic [ref=e717]: 🇹🇳
+              - link "TN" [ref=e718] [cursor=pointer]:
+                - /url: /country/TN
+                - heading "TN" [level=4] [ref=e719]
+              - generic [ref=e720]: "Rank #22"
+            - generic [ref=e721]:
+              - generic [ref=e722]:
+                - generic [ref=e723]:
+                  - generic [ref=e724]: Points
+                  - generic [ref=e725]: "111"
+                - generic [ref=e726]:
+                  - generic [ref=e727]: Avg/Move
+                  - generic [ref=e728]: "1"
+                - generic [ref=e729]:
+                  - generic [ref=e730]: Moves
+                  - generic [ref=e731]: "115"
+                - generic [ref=e732]:
+                  - generic [ref=e733]: GeoKrety
+                  - generic [ref=e734]: "46"
+                - generic [ref=e735]:
+                  - generic [ref=e736]: Users
+                  - generic [ref=e737]: "17"
+              - generic [ref=e739]:
+                - generic "Left in a cache" [ref=e740]: 🌳17
+                - generic "Taken from a cache" [ref=e741]: 🚀4
+                - generic "Visited without taking" [ref=e742]: 🥾84
+                - generic "Encountered but not taken" [ref=e743]: 👀10
+                - generic "Move action" [ref=e744]: ❤️0
+          - generic [ref=e746]:
+            - generic [ref=e747]:
+              - generic [ref=e748]: 🇹🇭
+              - link "Thailand" [ref=e749] [cursor=pointer]:
+                - /url: /country/TH
+                - heading "Thailand" [level=4] [ref=e750]
+              - generic [ref=e751]: "Rank #23"
+            - generic [ref=e752]:
+              - generic [ref=e753]:
+                - generic [ref=e754]:
+                  - generic [ref=e755]: Points
+                  - generic [ref=e756]: "103"
+                - generic [ref=e757]:
+                  - generic [ref=e758]: Avg/Move
+                  - generic [ref=e759]: "0"
+                - generic [ref=e760]:
+                  - generic [ref=e761]: Moves
+                  - generic [ref=e762]: "792"
+                - generic [ref=e763]:
+                  - generic [ref=e764]: GeoKrety
+                  - generic [ref=e765]: "142"
+                - generic [ref=e766]:
+                  - generic [ref=e767]: Users
+                  - generic [ref=e768]: "44"
+              - generic [ref=e770]:
+                - generic "Left in a cache" [ref=e771]: 🌳89
+                - generic "Taken from a cache" [ref=e772]: 🚀33
+                - generic "Visited without taking" [ref=e773]: 🥾654
+                - generic "Encountered but not taken" [ref=e774]: 👀9
+                - generic "Move action" [ref=e775]: ❤️0
+          - generic [ref=e777]:
+            - generic [ref=e778]:
+              - generic [ref=e779]: 🇵🇹
+              - link "Portugal" [ref=e780] [cursor=pointer]:
+                - /url: /country/PT
+                - heading "Portugal" [level=4] [ref=e781]
+              - generic [ref=e782]: "Rank #24"
+            - generic [ref=e783]:
+              - generic [ref=e784]:
+                - generic [ref=e785]:
+                  - generic [ref=e786]: Points
+                  - generic [ref=e787]: "89"
+                - generic [ref=e788]:
+                  - generic [ref=e789]: Avg/Move
+                  - generic [ref=e790]: "0"
+                - generic [ref=e791]:
+                  - generic [ref=e792]: Moves
+                  - generic [ref=e793]: 7,842
+                - generic [ref=e794]:
+                  - generic [ref=e795]: GeoKrety
+                  - generic [ref=e796]: "938"
+                - generic [ref=e797]:
+                  - generic [ref=e798]: Users
+                  - generic [ref=e799]: "310"
+              - generic [ref=e801]:
+                - generic "Left in a cache" [ref=e802]: 🌳646
+                - generic "Taken from a cache" [ref=e803]: 🚀402
+                - generic "Visited without taking" [ref=e804]: 🥾6,668
+                - generic "Encountered but not taken" [ref=e805]: 👀113
+                - generic "Move action" [ref=e806]: ❤️0
+          - generic [ref=e808]:
+            - generic [ref=e809]:
+              - generic [ref=e810]: 🇨🇳
+              - link "China" [ref=e811] [cursor=pointer]:
+                - /url: /country/CN
+                - heading "China" [level=4] [ref=e812]
+              - generic [ref=e813]: "Rank #25"
+            - generic [ref=e814]:
+              - generic [ref=e815]:
+                - generic [ref=e816]:
+                  - generic [ref=e817]: Points
+                  - generic [ref=e818]: "72"
+                - generic [ref=e819]:
+                  - generic [ref=e820]: Avg/Move
+                  - generic [ref=e821]: "0"
+                - generic [ref=e822]:
+                  - generic [ref=e823]: Moves
+                  - generic [ref=e824]: 1,526
+                - generic [ref=e825]:
+                  - generic [ref=e826]: GeoKrety
+                  - generic [ref=e827]: "317"
+                - generic [ref=e828]:
+                  - generic [ref=e829]: Users
+                  - generic [ref=e830]: "81"
+              - generic [ref=e832]:
+                - generic "Left in a cache" [ref=e833]: 🌳189
+                - generic "Taken from a cache" [ref=e834]: 🚀104
+                - generic "Visited without taking" [ref=e835]: 🥾1,212
+                - generic "Encountered but not taken" [ref=e836]: 👀18
+                - generic "Move action" [ref=e837]: ❤️0
+          - generic [ref=e839]:
+            - generic [ref=e840]:
+              - generic [ref=e841]: 🇹🇷
+              - link "Turkey" [ref=e842] [cursor=pointer]:
+                - /url: /country/TR
+                - heading "Turkey" [level=4] [ref=e843]
+              - generic [ref=e844]: "Rank #26"
+            - generic [ref=e845]:
+              - generic [ref=e846]:
+                - generic [ref=e847]:
+                  - generic [ref=e848]: Points
+                  - generic [ref=e849]: "70"
+                - generic [ref=e850]:
+                  - generic [ref=e851]: Avg/Move
+                  - generic [ref=e852]: "0"
+                - generic [ref=e853]:
+                  - generic [ref=e854]: Moves
+                  - generic [ref=e855]: 7,099
+                - generic [ref=e856]:
+                  - generic [ref=e857]: GeoKrety
+                  - generic [ref=e858]: "970"
+                - generic [ref=e859]:
+                  - generic [ref=e860]: Users
+                  - generic [ref=e861]: "131"
+              - generic [ref=e863]:
+                - generic "Left in a cache" [ref=e864]: 🌳169
+                - generic "Taken from a cache" [ref=e865]: 🚀83
+                - generic "Visited without taking" [ref=e866]: 🥾6,829
+                - generic "Encountered but not taken" [ref=e867]: 👀18
+                - generic "Move action" [ref=e868]: ❤️0
+          - generic [ref=e870]:
+            - generic [ref=e871]:
+              - generic [ref=e872]: 🇰🇼
+              - link "KW" [ref=e873] [cursor=pointer]:
+                - /url: /country/KW
+                - heading "KW" [level=4] [ref=e874]
+              - generic [ref=e875]: "Rank #27"
+            - generic [ref=e876]:
+              - generic [ref=e877]:
+                - generic [ref=e878]:
+                  - generic [ref=e879]: Points
+                  - generic [ref=e880]: "64"
+                - generic [ref=e881]:
+                  - generic [ref=e882]: Avg/Move
+                  - generic [ref=e883]: "1"
+                - generic [ref=e884]:
+                  - generic [ref=e885]: Moves
+                  - generic [ref=e886]: "105"
+                - generic [ref=e887]:
+                  - generic [ref=e888]: GeoKrety
+                  - generic [ref=e889]: "34"
+                - generic [ref=e890]:
+                  - generic [ref=e891]: Users
+                  - generic [ref=e892]: "6"
+              - generic [ref=e894]:
+                - generic "Left in a cache" [ref=e895]: 🌳30
+                - generic "Taken from a cache" [ref=e896]: 🚀8
+                - generic "Visited without taking" [ref=e897]: 🥾65
+                - generic "Encountered but not taken" [ref=e898]: 👀1
+                - generic "Move action" [ref=e899]: ❤️0
+          - generic [ref=e901]:
+            - generic [ref=e902]:
+              - generic [ref=e903]: 🇯🇴
+              - link "JO" [ref=e904] [cursor=pointer]:
+                - /url: /country/JO
+                - heading "JO" [level=4] [ref=e905]
+              - generic [ref=e906]: "Rank #28"
+            - generic [ref=e907]:
+              - generic [ref=e908]:
+                - generic [ref=e909]:
+                  - generic [ref=e910]: Points
+                  - generic [ref=e911]: "58"
+                - generic [ref=e912]:
+                  - generic [ref=e913]: Avg/Move
+                  - generic [ref=e914]: "0"
+                - generic [ref=e915]:
+                  - generic [ref=e916]: Moves
+                  - generic [ref=e917]: "211"
+                - generic [ref=e918]:
+                  - generic [ref=e919]: GeoKrety
+                  - generic [ref=e920]: "124"
+                - generic [ref=e921]:
+                  - generic [ref=e922]: Users
+                  - generic [ref=e923]: "11"
+              - generic [ref=e925]:
+                - generic "Left in a cache" [ref=e926]: 🌳25
+                - generic "Taken from a cache" [ref=e927]: 🚀3
+                - generic "Visited without taking" [ref=e928]: 🥾183
+                - generic "Encountered but not taken" [ref=e929]: 👀0
+                - generic "Move action" [ref=e930]: ❤️0
+          - generic [ref=e932]:
+            - generic [ref=e933]:
+              - generic [ref=e934]: 🇭🇷
+              - link "Croatia" [ref=e935] [cursor=pointer]:
+                - /url: /country/HR
+                - heading "Croatia" [level=4] [ref=e936]
+              - generic [ref=e937]: "Rank #29"
+            - generic [ref=e938]:
+              - generic [ref=e939]:
+                - generic [ref=e940]:
+                  - generic [ref=e941]: Points
+                  - generic [ref=e942]: "56"
+                - generic [ref=e943]:
+                  - generic [ref=e944]: Avg/Move
+                  - generic [ref=e945]: "0"
+                - generic [ref=e946]:
+                  - generic [ref=e947]: Moves
+                  - generic [ref=e948]: 8,822
+                - generic [ref=e949]:
+                  - generic [ref=e950]: GeoKrety
+                  - generic [ref=e951]: 1,047
+                - generic [ref=e952]:
+                  - generic [ref=e953]: Users
+                  - generic [ref=e954]: "267"
+              - generic [ref=e956]:
+                - generic "Left in a cache" [ref=e957]: 🌳336
+                - generic "Taken from a cache" [ref=e958]: 🚀186
+                - generic "Visited without taking" [ref=e959]: 🥾8,234
+                - generic "Encountered but not taken" [ref=e960]: 👀61
+                - generic "Move action" [ref=e961]: ❤️0
+          - generic [ref=e963]:
+            - generic [ref=e964]:
+              - generic [ref=e965]: 🇨🇦
+              - link "Canada" [ref=e966] [cursor=pointer]:
+                - /url: /country/CA
+                - heading "Canada" [level=4] [ref=e967]
+              - generic [ref=e968]: "Rank #30"
+            - generic [ref=e969]:
+              - generic [ref=e970]:
+                - generic [ref=e971]:
+                  - generic [ref=e972]: Points
+                  - generic [ref=e973]: "48"
+                - generic [ref=e974]:
+                  - generic [ref=e975]: Avg/Move
+                  - generic [ref=e976]: "0"
+                - generic [ref=e977]:
+                  - generic [ref=e978]: Moves
+                  - generic [ref=e979]: 4,783
+                - generic [ref=e980]:
+                  - generic [ref=e981]: GeoKrety
+                  - generic [ref=e982]: 1,010
+                - generic [ref=e983]:
+                  - generic [ref=e984]: Users
+                  - generic [ref=e985]: "236"
+              - generic [ref=e987]:
+                - generic "Left in a cache" [ref=e988]: 🌳1,281
+                - generic "Taken from a cache" [ref=e989]: 🚀682
+                - generic "Visited without taking" [ref=e990]: 🥾2,689
+                - generic "Encountered but not taken" [ref=e991]: 👀106
+                - generic "Move action" [ref=e992]: ❤️0
+          - generic [ref=e994]:
+            - generic [ref=e995]:
+              - generic [ref=e996]: 🇮🇪
+              - link "Ireland" [ref=e997] [cursor=pointer]:
+                - /url: /country/IE
+                - heading "Ireland" [level=4] [ref=e998]
+              - generic [ref=e999]: "Rank #31"
+            - generic [ref=e1000]:
+              - generic [ref=e1001]:
+                - generic [ref=e1002]:
+                  - generic [ref=e1003]: Points
+                  - generic [ref=e1004]: "47"
+                - generic [ref=e1005]:
+                  - generic [ref=e1006]: Avg/Move
+                  - generic [ref=e1007]: "0"
+                - generic [ref=e1008]:
+                  - generic [ref=e1009]: Moves
+                  - generic [ref=e1010]: 2,373
+                - generic [ref=e1011]:
+                  - generic [ref=e1012]: GeoKrety
+                  - generic [ref=e1013]: "291"
+                - generic [ref=e1014]:
+                  - generic [ref=e1015]: Users
+                  - generic [ref=e1016]: "101"
+              - generic [ref=e1018]:
+                - generic "Left in a cache" [ref=e1019]: 🌳184
+                - generic "Taken from a cache" [ref=e1020]: 🚀103
+                - generic "Visited without taking" [ref=e1021]: 🥾2,070
+                - generic "Encountered but not taken" [ref=e1022]: 👀13
+                - generic "Move action" [ref=e1023]: ❤️0
+          - generic [ref=e1025]:
+            - generic [ref=e1026]:
+              - generic [ref=e1027]: 🇱🇺
+              - link "Luxembourg" [ref=e1028] [cursor=pointer]:
+                - /url: /country/LU
+                - heading "Luxembourg" [level=4] [ref=e1029]
+              - generic [ref=e1030]: "Rank #32"
+            - generic [ref=e1031]:
+              - generic [ref=e1032]:
+                - generic [ref=e1033]:
+                  - generic [ref=e1034]: Points
+                  - generic [ref=e1035]: "38"
+                - generic [ref=e1036]:
+                  - generic [ref=e1037]: Avg/Move
+                  - generic [ref=e1038]: "0"
+                - generic [ref=e1039]:
+                  - generic [ref=e1040]: Moves
+                  - generic [ref=e1041]: 1,579
+                - generic [ref=e1042]:
+                  - generic [ref=e1043]: GeoKrety
+                  - generic [ref=e1044]: "421"
+                - generic [ref=e1045]:
+                  - generic [ref=e1046]: Users
+                  - generic [ref=e1047]: "209"
+              - generic [ref=e1049]:
+                - generic "Left in a cache" [ref=e1050]: 🌳368
+                - generic "Taken from a cache" [ref=e1051]: 🚀216
+                - generic "Visited without taking" [ref=e1052]: 🥾949
+                - generic "Encountered but not taken" [ref=e1053]: 👀39
+                - generic "Move action" [ref=e1054]: ❤️0
+          - generic [ref=e1056]:
+            - generic [ref=e1057]:
+              - generic [ref=e1058]: 🇦🇪
+              - link "AE" [ref=e1059] [cursor=pointer]:
+                - /url: /country/AE
+                - heading "AE" [level=4] [ref=e1060]
+              - generic [ref=e1061]: "Rank #33"
+            - generic [ref=e1062]:
+              - generic [ref=e1063]:
+                - generic [ref=e1064]:
+                  - generic [ref=e1065]: Points
+                  - generic [ref=e1066]: "37"
+                - generic [ref=e1067]:
+                  - generic [ref=e1068]: Avg/Move
+                  - generic [ref=e1069]: "0"
+                - generic [ref=e1070]:
+                  - generic [ref=e1071]: Moves
+                  - generic [ref=e1072]: 1,978
+                - generic [ref=e1073]:
+                  - generic [ref=e1074]: GeoKrety
+                  - generic [ref=e1075]: "535"
+                - generic [ref=e1076]:
+                  - generic [ref=e1077]: Users
+                  - generic [ref=e1078]: "30"
+              - generic [ref=e1080]:
+                - generic "Left in a cache" [ref=e1081]: 🌳29
+                - generic "Taken from a cache" [ref=e1082]: 🚀13
+                - generic "Visited without taking" [ref=e1083]: 🥾1,933
+                - generic "Encountered but not taken" [ref=e1084]: 👀1
+                - generic "Move action" [ref=e1085]: ❤️0
+          - generic [ref=e1087]:
+            - generic [ref=e1088]:
+              - generic [ref=e1089]: 🇦🇺
+              - link "Australia" [ref=e1090] [cursor=pointer]:
+                - /url: /country/AU
+                - heading "Australia" [level=4] [ref=e1091]
+              - generic [ref=e1092]: "Rank #34"
+            - generic [ref=e1093]:
+              - generic [ref=e1094]:
+                - generic [ref=e1095]:
+                  - generic [ref=e1096]: Points
+                  - generic [ref=e1097]: "31"
+                - generic [ref=e1098]:
+                  - generic [ref=e1099]: Avg/Move
+                  - generic [ref=e1100]: "0"
+                - generic [ref=e1101]:
+                  - generic [ref=e1102]: Moves
+                  - generic [ref=e1103]: 1,070
+                - generic [ref=e1104]:
+                  - generic [ref=e1105]: GeoKrety
+                  - generic [ref=e1106]: "179"
+                - generic [ref=e1107]:
+                  - generic [ref=e1108]: Users
+                  - generic [ref=e1109]: "94"
+              - generic [ref=e1111]:
+                - generic "Left in a cache" [ref=e1112]: 🌳275
+                - generic "Taken from a cache" [ref=e1113]: 🚀167
+                - generic "Visited without taking" [ref=e1114]: 🥾579
+                - generic "Encountered but not taken" [ref=e1115]: 👀41
+                - generic "Move action" [ref=e1116]: ❤️0
+          - generic [ref=e1118]:
+            - generic [ref=e1119]:
+              - generic [ref=e1120]: 🇱🇹
+              - link "Lithuania" [ref=e1121] [cursor=pointer]:
+                - /url: /country/LT
+                - heading "Lithuania" [level=4] [ref=e1122]
+              - generic [ref=e1123]: "Rank #35"
+            - generic [ref=e1124]:
+              - generic [ref=e1125]:
+                - generic [ref=e1126]:
+                  - generic [ref=e1127]: Points
+                  - generic [ref=e1128]: "29"
+                - generic [ref=e1129]:
+                  - generic [ref=e1130]: Avg/Move
+                  - generic [ref=e1131]: "0"
+                - generic [ref=e1132]:
+                  - generic [ref=e1133]: Moves
+                  - generic [ref=e1134]: 12,131
+                - generic [ref=e1135]:
+                  - generic [ref=e1136]: GeoKrety
+                  - generic [ref=e1137]: "996"
+                - generic [ref=e1138]:
+                  - generic [ref=e1139]: Users
+                  - generic [ref=e1140]: "135"
+              - generic [ref=e1142]:
+                - generic "Left in a cache" [ref=e1143]: 🌳150
+                - generic "Taken from a cache" [ref=e1144]: 🚀77
+                - generic "Visited without taking" [ref=e1145]: 🥾11,890
+                - generic "Encountered but not taken" [ref=e1146]: 👀11
+                - generic "Move action" [ref=e1147]: ❤️0
+          - generic [ref=e1149]:
+            - generic [ref=e1150]:
+              - generic [ref=e1151]: 🇷🇺
+              - link "Russia" [ref=e1152] [cursor=pointer]:
+                - /url: /country/RU
+                - heading "Russia" [level=4] [ref=e1153]
+              - generic [ref=e1154]: "Rank #36"
+            - generic [ref=e1155]:
+              - generic [ref=e1156]:
+                - generic [ref=e1157]:
+                  - generic [ref=e1158]: Points
+                  - generic [ref=e1159]: "22"
+                - generic [ref=e1160]:
+                  - generic [ref=e1161]: Avg/Move
+                  - generic [ref=e1162]: "0"
+                - generic [ref=e1163]:
+                  - generic [ref=e1164]: Moves
+                  - generic [ref=e1165]: 1,020,116
+                - generic [ref=e1166]:
+                  - generic [ref=e1167]: GeoKrety
+                  - generic [ref=e1168]: 16,255
+                - generic [ref=e1169]:
+                  - generic [ref=e1170]: Users
+                  - generic [ref=e1171]: 1,340
+              - generic [ref=e1173]:
+                - generic "Left in a cache" [ref=e1174]: 🌳30,269
+                - generic "Taken from a cache" [ref=e1175]: 🚀18,983
+                - generic "Visited without taking" [ref=e1176]: 🥾968,069
+                - generic "Encountered but not taken" [ref=e1177]: 👀2,407
+                - generic "Move action" [ref=e1178]: ❤️1
+          - generic [ref=e1180]:
+            - generic [ref=e1181]:
+              - generic [ref=e1182]: 🇸🇮
+              - link "Slovenia" [ref=e1183] [cursor=pointer]:
+                - /url: /country/SI
+                - heading "Slovenia" [level=4] [ref=e1184]
+              - generic [ref=e1185]: "Rank #37"
+            - generic [ref=e1186]:
+              - generic [ref=e1187]:
+                - generic [ref=e1188]:
+                  - generic [ref=e1189]: Points
+                  - generic [ref=e1190]: "21"
+                - generic [ref=e1191]:
+                  - generic [ref=e1192]: Avg/Move
+                  - generic [ref=e1193]: "0"
+                - generic [ref=e1194]:
+                  - generic [ref=e1195]: Moves
+                  - generic [ref=e1196]: 3,123
+                - generic [ref=e1197]:
+                  - generic [ref=e1198]: GeoKrety
+                  - generic [ref=e1199]: "416"
+                - generic [ref=e1200]:
+                  - generic [ref=e1201]: Users
+                  - generic [ref=e1202]: "164"
+              - generic [ref=e1204]:
+                - generic "Left in a cache" [ref=e1205]: 🌳383
+                - generic "Taken from a cache" [ref=e1206]: 🚀261
+                - generic "Visited without taking" [ref=e1207]: 🥾2,432
+                - generic "Encountered but not taken" [ref=e1208]: 👀40
+                - generic "Move action" [ref=e1209]: ❤️0
+          - generic [ref=e1211]:
+            - generic [ref=e1212]:
+              - generic [ref=e1213]: 🇸🇾
+              - link "SY" [ref=e1214] [cursor=pointer]:
+                - /url: /country/SY
+                - heading "SY" [level=4] [ref=e1215]
+              - generic [ref=e1216]: "Rank #38"
+            - generic [ref=e1217]:
+              - generic [ref=e1218]:
+                - generic [ref=e1219]:
+                  - generic [ref=e1220]: Points
+                  - generic [ref=e1221]: "21"
+                - generic [ref=e1222]:
+                  - generic [ref=e1223]: Avg/Move
+                  - generic [ref=e1224]: "1"
+                - generic [ref=e1225]:
+                  - generic [ref=e1226]: Moves
+                  - generic [ref=e1227]: "28"
+                - generic [ref=e1228]:
+                  - generic [ref=e1229]: GeoKrety
+                  - generic [ref=e1230]: "6"
+                - generic [ref=e1231]:
+                  - generic [ref=e1232]: Users
+                  - generic [ref=e1233]: "3"
+              - generic [ref=e1235]:
+                - generic "Left in a cache" [ref=e1236]: 🌳7
+                - generic "Taken from a cache" [ref=e1237]: 🚀1
+                - generic "Visited without taking" [ref=e1238]: 🥾20
+                - generic "Encountered but not taken" [ref=e1239]: 👀0
+                - generic "Move action" [ref=e1240]: ❤️0
+          - generic [ref=e1242]:
+            - generic [ref=e1243]:
+              - generic [ref=e1244]: 🇯🇵
+              - link "Japan" [ref=e1245] [cursor=pointer]:
+                - /url: /country/JP
+                - heading "Japan" [level=4] [ref=e1246]
+              - generic [ref=e1247]: "Rank #39"
+            - generic [ref=e1248]:
+              - generic [ref=e1249]:
+                - generic [ref=e1250]:
+                  - generic [ref=e1251]: Points
+                  - generic [ref=e1252]: "18"
+                - generic [ref=e1253]:
+                  - generic [ref=e1254]: Avg/Move
+                  - generic [ref=e1255]: "0"
+                - generic [ref=e1256]:
+                  - generic [ref=e1257]: Moves
+                  - generic [ref=e1258]: "345"
+                - generic [ref=e1259]:
+                  - generic [ref=e1260]: GeoKrety
+                  - generic [ref=e1261]: "134"
+                - generic [ref=e1262]:
+                  - generic [ref=e1263]: Users
+                  - generic [ref=e1264]: "50"
+              - generic [ref=e1266]:
+                - generic "Left in a cache" [ref=e1267]: 🌳114
+                - generic "Taken from a cache" [ref=e1268]: 🚀54
+                - generic "Visited without taking" [ref=e1269]: 🥾170
+                - generic "Encountered but not taken" [ref=e1270]: 👀6
+                - generic "Move action" [ref=e1271]: ❤️0
+          - generic [ref=e1273]:
+            - generic [ref=e1274]:
+              - generic [ref=e1275]: 🇺🇦
+              - link "Ukraine" [ref=e1276] [cursor=pointer]:
+                - /url: /country/UA
+                - heading "Ukraine" [level=4] [ref=e1277]
+              - generic [ref=e1278]: "Rank #40"
+            - generic [ref=e1279]:
+              - generic [ref=e1280]:
+                - generic [ref=e1281]:
+                  - generic [ref=e1282]: Points
+                  - generic [ref=e1283]: "13"
+                - generic [ref=e1284]:
+                  - generic [ref=e1285]: Avg/Move
+                  - generic [ref=e1286]: "0"
+                - generic [ref=e1287]:
+                  - generic [ref=e1288]: Moves
+                  - generic [ref=e1289]: 21,958
+                - generic [ref=e1290]:
+                  - generic [ref=e1291]: GeoKrety
+                  - generic [ref=e1292]: 3,006
+                - generic [ref=e1293]:
+                  - generic [ref=e1294]: Users
+                  - generic [ref=e1295]: "394"
+              - generic [ref=e1297]:
+                - generic "Left in a cache" [ref=e1298]: 🌳3,280
+                - generic "Taken from a cache" [ref=e1299]: 🚀2,087
+                - generic "Visited without taking" [ref=e1300]: 🥾16,389
+                - generic "Encountered but not taken" [ref=e1301]: 👀165
+                - generic "Move action" [ref=e1302]: ❤️0
+          - generic [ref=e1304]:
+            - generic [ref=e1305]:
+              - generic [ref=e1306]: 🇨🇾
+              - link "CY" [ref=e1307] [cursor=pointer]:
+                - /url: /country/CY
+                - heading "CY" [level=4] [ref=e1308]
+              - generic [ref=e1309]: "Rank #41"
+            - generic [ref=e1310]:
+              - generic [ref=e1311]:
+                - generic [ref=e1312]:
+                  - generic [ref=e1313]: Points
+                  - generic [ref=e1314]: "13"
+                - generic [ref=e1315]:
+                  - generic [ref=e1316]: Avg/Move
+                  - generic [ref=e1317]: "0"
+                - generic [ref=e1318]:
+                  - generic [ref=e1319]: Moves
+                  - generic [ref=e1320]: 3,012
+                - generic [ref=e1321]:
+                  - generic [ref=e1322]: GeoKrety
+                  - generic [ref=e1323]: "219"
+                - generic [ref=e1324]:
+                  - generic [ref=e1325]: Users
+                  - generic [ref=e1326]: "51"
+              - generic [ref=e1328]:
+                - generic "Left in a cache" [ref=e1329]: 🌳50
+                - generic "Taken from a cache" [ref=e1330]: 🚀28
+                - generic "Visited without taking" [ref=e1331]: 🥾2,930
+                - generic "Encountered but not taken" [ref=e1332]: 👀4
+                - generic "Move action" [ref=e1333]: ❤️1
+          - generic [ref=e1335]:
+            - generic [ref=e1336]:
+              - generic [ref=e1337]: 🇸🇴
+              - link "SO" [ref=e1338] [cursor=pointer]:
+                - /url: /country/SO
+                - heading "SO" [level=4] [ref=e1339]
+              - generic [ref=e1340]: "Rank #42"
+            - generic [ref=e1341]:
+              - generic [ref=e1342]:
+                - generic [ref=e1343]:
+                  - generic [ref=e1344]: Points
+                  - generic [ref=e1345]: "12"
+                - generic [ref=e1346]:
+                  - generic [ref=e1347]: Avg/Move
+                  - generic [ref=e1348]: "2"
+                - generic [ref=e1349]:
+                  - generic [ref=e1350]: Moves
+                  - generic [ref=e1351]: "8"
+                - generic [ref=e1352]:
+                  - generic [ref=e1353]: GeoKrety
+                  - generic [ref=e1354]: "3"
+                - generic [ref=e1355]:
+                  - generic [ref=e1356]: Users
+                  - generic [ref=e1357]: "1"
+              - generic [ref=e1359]:
+                - generic "Left in a cache" [ref=e1360]: 🌳6
+                - generic "Taken from a cache" [ref=e1361]: 🚀2
+                - generic "Visited without taking" [ref=e1362]: 🥾0
+                - generic "Encountered but not taken" [ref=e1363]: 👀0
+                - generic "Move action" [ref=e1364]: ❤️0
+          - generic [ref=e1366]:
+            - generic [ref=e1367]:
+              - generic [ref=e1368]: 🇰🇿
+              - link "KZ" [ref=e1369] [cursor=pointer]:
+                - /url: /country/KZ
+                - heading "KZ" [level=4] [ref=e1370]
+              - generic [ref=e1371]: "Rank #43"
+            - generic [ref=e1372]:
+              - generic [ref=e1373]:
+                - generic [ref=e1374]:
+                  - generic [ref=e1375]: Points
+                  - generic [ref=e1376]: "12"
+                - generic [ref=e1377]:
+                  - generic [ref=e1378]: Avg/Move
+                  - generic [ref=e1379]: "0"
+                - generic [ref=e1380]:
+                  - generic [ref=e1381]: Moves
+                  - generic [ref=e1382]: 8,499
+                - generic [ref=e1383]:
+                  - generic [ref=e1384]: GeoKrety
+                  - generic [ref=e1385]: "628"
+                - generic [ref=e1386]:
+                  - generic [ref=e1387]: Users
+                  - generic [ref=e1388]: "49"
+              - generic [ref=e1390]:
+                - generic "Left in a cache" [ref=e1391]: 🌳179
+                - generic "Taken from a cache" [ref=e1392]: 🚀84
+                - generic "Visited without taking" [ref=e1393]: 🥾8,219
+                - generic "Encountered but not taken" [ref=e1394]: 👀13
+                - generic "Move action" [ref=e1395]: ❤️0
+          - generic [ref=e1397]:
+            - generic [ref=e1398]:
+              - generic [ref=e1399]: 🇧🇬
+              - link "Bulgaria" [ref=e1400] [cursor=pointer]:
+                - /url: /country/BG
+                - heading "Bulgaria" [level=4] [ref=e1401]
+              - generic [ref=e1402]: "Rank #44"
+            - generic [ref=e1403]:
+              - generic [ref=e1404]:
+                - generic [ref=e1405]:
+                  - generic [ref=e1406]: Points
+                  - generic [ref=e1407]: "11"
+                - generic [ref=e1408]:
+                  - generic [ref=e1409]: Avg/Move
+                  - generic [ref=e1410]: "0"
+                - generic [ref=e1411]:
+                  - generic [ref=e1412]: Moves
+                  - generic [ref=e1413]: 4,024
+                - generic [ref=e1414]:
+                  - generic [ref=e1415]: GeoKrety
+                  - generic [ref=e1416]: "490"
+                - generic [ref=e1417]:
+                  - generic [ref=e1418]: Users
+                  - generic [ref=e1419]: "81"
+              - generic [ref=e1421]:
+                - generic "Left in a cache" [ref=e1422]: 🌳113
+                - generic "Taken from a cache" [ref=e1423]: 🚀69
+                - generic "Visited without taking" [ref=e1424]: 🥾3,832
+                - generic "Encountered but not taken" [ref=e1425]: 👀9
+                - generic "Move action" [ref=e1426]: ❤️0
+          - generic [ref=e1428]:
+            - generic [ref=e1429]:
+              - generic [ref=e1430]: 🇮🇸
+              - link "Iceland" [ref=e1431] [cursor=pointer]:
+                - /url: /country/IS
+                - heading "Iceland" [level=4] [ref=e1432]
+              - generic [ref=e1433]: "Rank #45"
+            - generic [ref=e1434]:
+              - generic [ref=e1435]:
+                - generic [ref=e1436]:
+                  - generic [ref=e1437]: Points
+                  - generic [ref=e1438]: "11"
+                - generic [ref=e1439]:
+                  - generic [ref=e1440]: Avg/Move
+                  - generic [ref=e1441]: "0"
+                - generic [ref=e1442]:
+                  - generic [ref=e1443]: Moves
+                  - generic [ref=e1444]: 1,268
+                - generic [ref=e1445]:
+                  - generic [ref=e1446]: GeoKrety
+                  - generic [ref=e1447]: "145"
+                - generic [ref=e1448]:
+                  - generic [ref=e1449]: Users
+                  - generic [ref=e1450]: "54"
+              - generic [ref=e1452]:
+                - generic "Left in a cache" [ref=e1453]: 🌳110
+                - generic "Taken from a cache" [ref=e1454]: 🚀59
+                - generic "Visited without taking" [ref=e1455]: 🥾1,089
+                - generic "Encountered but not taken" [ref=e1456]: 👀10
+                - generic "Move action" [ref=e1457]: ❤️0
+          - generic [ref=e1459]:
+            - generic [ref=e1460]:
+              - generic [ref=e1461]: 🇿🇦
+              - link "South Africa" [ref=e1462] [cursor=pointer]:
+                - /url: /country/ZA
+                - heading "South Africa" [level=4] [ref=e1463]
+              - generic [ref=e1464]: "Rank #46"
+            - generic [ref=e1465]:
+              - generic [ref=e1466]:
+                - generic [ref=e1467]:
+                  - generic [ref=e1468]: Points
+                  - generic [ref=e1469]: "10"
+                - generic [ref=e1470]:
+                  - generic [ref=e1471]: Avg/Move
+                  - generic [ref=e1472]: "0"
+                - generic [ref=e1473]:
+                  - generic [ref=e1474]: Moves
+                  - generic [ref=e1475]: 4,708
+                - generic [ref=e1476]:
+                  - generic [ref=e1477]: GeoKrety
+                  - generic [ref=e1478]: "308"
+                - generic [ref=e1479]:
+                  - generic [ref=e1480]: Users
+                  - generic [ref=e1481]: "87"
+              - generic [ref=e1483]:
+                - generic "Left in a cache" [ref=e1484]: 🌳384
+                - generic "Taken from a cache" [ref=e1485]: 🚀264
+                - generic "Visited without taking" [ref=e1486]: 🥾3,843
+                - generic "Encountered but not taken" [ref=e1487]: 👀180
+                - generic "Move action" [ref=e1488]: ❤️0
+          - generic [ref=e1490]:
+            - generic [ref=e1491]:
+              - generic [ref=e1492]: 🇱🇦
+              - link "LA" [ref=e1493] [cursor=pointer]:
+                - /url: /country/LA
+                - heading "LA" [level=4] [ref=e1494]
+              - generic [ref=e1495]: "Rank #47"
+            - generic [ref=e1496]:
+              - generic [ref=e1497]:
+                - generic [ref=e1498]:
+                  - generic [ref=e1499]: Points
+                  - generic [ref=e1500]: "8"
+                - generic [ref=e1501]:
+                  - generic [ref=e1502]: Avg/Move
+                  - generic [ref=e1503]: "1"
+                - generic [ref=e1504]:
+                  - generic [ref=e1505]: Moves
+                  - generic [ref=e1506]: "12"
+                - generic [ref=e1507]:
+                  - generic [ref=e1508]: GeoKrety
+                  - generic [ref=e1509]: "4"
+                - generic [ref=e1510]:
+                  - generic [ref=e1511]: Users
+                  - generic [ref=e1512]: "3"
+              - generic [ref=e1514]:
+                - generic "Left in a cache" [ref=e1515]: 🌳9
+                - generic "Taken from a cache" [ref=e1516]: 🚀0
+                - generic "Visited without taking" [ref=e1517]: 🥾3
+                - generic "Encountered but not taken" [ref=e1518]: 👀0
+                - generic "Move action" [ref=e1519]: ❤️0
+          - generic [ref=e1521]:
+            - generic [ref=e1522]:
+              - generic [ref=e1523]: 🇱🇮
+              - link "LI" [ref=e1524] [cursor=pointer]:
+                - /url: /country/LI
+                - heading "LI" [level=4] [ref=e1525]
+              - generic [ref=e1526]: "Rank #48"
+            - generic [ref=e1527]:
+              - generic [ref=e1528]:
+                - generic [ref=e1529]:
+                  - generic [ref=e1530]: Points
+                  - generic [ref=e1531]: "8"
+                - generic [ref=e1532]:
+                  - generic [ref=e1533]: Avg/Move
+                  - generic [ref=e1534]: "0"
+                - generic [ref=e1535]:
+                  - generic [ref=e1536]: Moves
+                  - generic [ref=e1537]: "306"
+                - generic [ref=e1538]:
+                  - generic [ref=e1539]: GeoKrety
+                  - generic [ref=e1540]: "112"
+                - generic [ref=e1541]:
+                  - generic [ref=e1542]: Users
+                  - generic [ref=e1543]: "59"
+              - generic [ref=e1545]:
+                - generic "Left in a cache" [ref=e1546]: 🌳39
+                - generic "Taken from a cache" [ref=e1547]: 🚀26
+                - generic "Visited without taking" [ref=e1548]: 🥾237
+                - generic "Encountered but not taken" [ref=e1549]: 👀4
+                - generic "Move action" [ref=e1550]: ❤️0
+          - generic [ref=e1552]:
+            - generic [ref=e1553]:
+              - generic [ref=e1554]: 🇰🇭
+              - link "KH" [ref=e1555] [cursor=pointer]:
+                - /url: /country/KH
+                - heading "KH" [level=4] [ref=e1556]
+              - generic [ref=e1557]: "Rank #49"
+            - generic [ref=e1558]:
+              - generic [ref=e1559]:
+                - generic [ref=e1560]:
+                  - generic [ref=e1561]: Points
+                  - generic [ref=e1562]: "8"
+                - generic [ref=e1563]:
+                  - generic [ref=e1564]: Avg/Move
+                  - generic [ref=e1565]: "0"
+                - generic [ref=e1566]:
+                  - generic [ref=e1567]: Moves
+                  - generic [ref=e1568]: "231"
+                - generic [ref=e1569]:
+                  - generic [ref=e1570]: GeoKrety
+                  - generic [ref=e1571]: "86"
+                - generic [ref=e1572]:
+                  - generic [ref=e1573]: Users
+                  - generic [ref=e1574]: "10"
+              - generic [ref=e1576]:
+                - generic "Left in a cache" [ref=e1577]: 🌳7
+                - generic "Taken from a cache" [ref=e1578]: 🚀2
+                - generic "Visited without taking" [ref=e1579]: 🥾222
+                - generic "Encountered but not taken" [ref=e1580]: 👀0
+                - generic "Move action" [ref=e1581]: ❤️0
+          - generic [ref=e1583]:
+            - generic [ref=e1584]:
+              - generic [ref=e1585]: 🇧🇿
+              - link "BZ" [ref=e1586] [cursor=pointer]:
+                - /url: /country/BZ
+                - heading "BZ" [level=4] [ref=e1587]
+              - generic [ref=e1588]: "Rank #50"
+            - generic [ref=e1589]:
+              - generic [ref=e1590]:
+                - generic [ref=e1591]:
+                  - generic [ref=e1592]: Points
+                  - generic [ref=e1593]: "4"
+                - generic [ref=e1594]:
+                  - generic [ref=e1595]: Avg/Move
+                  - generic [ref=e1596]: "1"
+                - generic [ref=e1597]:
+                  - generic [ref=e1598]: Moves
+                  - generic [ref=e1599]: "8"
+                - generic [ref=e1600]:
+                  - generic [ref=e1601]: GeoKrety
+                  - generic [ref=e1602]: "4"
+                - generic [ref=e1603]:
+                  - generic [ref=e1604]: Users
+                  - generic [ref=e1605]: "3"
+              - generic [ref=e1607]:
+                - generic "Left in a cache" [ref=e1608]: 🌳2
+                - generic "Taken from a cache" [ref=e1609]: 🚀1
+                - generic "Visited without taking" [ref=e1610]: 🥾5
+                - generic "Encountered but not taken" [ref=e1611]: 👀0
+                - generic "Move action" [ref=e1612]: ❤️0
+  - contentinfo [ref=e53]: GeoKrety Points System — Data refreshes when connection restored

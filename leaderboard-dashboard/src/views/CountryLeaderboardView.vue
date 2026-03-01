@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
+import { countryName } from '../composables/useCountry.js'
 import { getMoveTypeTooltip } from '../composables/useMoveTypeColors.js'
 import PointsValue from '../components/PointsValue.vue'
 
@@ -186,7 +187,7 @@ function sortIcon(field) {
             <div class="card-header bg-primary bg-opacity-10 d-flex flex-column align-items-center py-3 border-0">
               <span class="display-4 mb-1">{{ getCountryFlag(country.country) }}</span>
               <RouterLink :to="`/country/${country.country}`" class="text-decoration-none text-dark" style="cursor: pointer">
-                <h4 class="fw-bold mb-0">{{ country.country.toUpperCase() }}</h4>
+                <h4 class="fw-bold mb-0">{{ countryName(country.country) }}</h4>
               </RouterLink>
               <div class="badge bg-secondary mt-1">Rank #{{ idx + 1 }}</div>
             </div>

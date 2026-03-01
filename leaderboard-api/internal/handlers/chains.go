@@ -23,6 +23,8 @@ func (h *Handler) ChainDetail(c *gin.Context) {
 			gc.gk_id,
 			COALESCE(g.gkid, gc.gk_id) AS public_gk_id,
 			COALESCE(g.name, '') AS gk_name,
+			pic.key AS gk_avatar_key,
+			g.type AS gk_type,
 			gc.status,
 			gc.started_at,
 			gc.ended_at,
@@ -32,6 +34,7 @@ func (h *Handler) ChainDetail(c *gin.Context) {
 			COALESCE(cp.chain_points, 0)::float8 AS chain_points
 		FROM geokrety_stats.gk_chains gc
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = gc.gk_id
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
 		LEFT JOIN (
 			SELECT chain_id, COUNT(*)::bigint AS member_count
 			FROM geokrety_stats.gk_chain_members
@@ -65,6 +68,8 @@ func (h *Handler) ChainDetail(c *gin.Context) {
 		&out.GkID,
 		&publicGkID,
 		&out.GkName,
+		&out.GkAvatarKey,
+		&out.GkType,
 		&out.Status,
 		&out.StartedAt,
 		&out.EndedAt,
@@ -113,9 +118,11 @@ func (h *Handler) ChainMembers(c *gin.Context) {
 
 	q := `
 		SELECT cm.chain_id, cm.user_id, COALESCE(u.username, CONCAT('User #', cm.user_id::text)) AS username,
+		       pic.key AS user_avatar_key,
 		       cm.position, cm.joined_at
 		FROM geokrety_stats.gk_chain_members cm
 		LEFT JOIN geokrety.gk_users u ON u.id = cm.user_id
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = u.avatar
 		WHERE cm.chain_id = $1
 		ORDER BY ` + orderBy + `
 		LIMIT $2 OFFSET $3
@@ -131,7 +138,7 @@ func (h *Handler) ChainMembers(c *gin.Context) {
 	out := make([]models.ChainMember, 0)
 	for rows.Next() {
 		var r models.ChainMember
-		if err := rows.Scan(&r.ChainID, &r.UserID, &r.Username, &r.Position, &r.JoinedAt); err != nil {
+		if err := rows.Scan(&r.ChainID, &r.UserID, &r.Username, &r.UserAvatarKey, &r.Position, &r.JoinedAt); err != nil {
 			errInternal(c, err)
 			return
 		}
@@ -192,6 +199,7 @@ func (h *Handler) ChainMoves(c *gin.Context) {
 			m.id,
 			m.author,
 			u.username,
+			pic.key AS author_avatar_key,
 			m.move_type,
 			m.country,
 			m.waypoint,
@@ -200,6 +208,7 @@ func (h *Handler) ChainMoves(c *gin.Context) {
 		FROM geokrety.gk_moves m
 		JOIN geokrety_stats.gk_chains gc ON gc.gk_id = m.geokret
 		LEFT JOIN geokrety.gk_users u ON u.id = m.author
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = u.avatar
 		LEFT JOIN LATERAL (
 			SELECT SUM(upl.points)::float8 AS chain_points
 			FROM geokrety_stats.user_points_log upl
@@ -232,7 +241,7 @@ func (h *Handler) ChainMoves(c *gin.Context) {
 	out := make([]models.ChainMove, 0)
 	for rows.Next() {
 		var r models.ChainMove
-		if err := rows.Scan(&r.MoveID, &r.AuthorID, &r.AuthorUsername, &r.MoveType, &r.Country, &r.Waypoint, &r.MovedOn, &r.ChainPoints); err != nil {
+		if err := rows.Scan(&r.MoveID, &r.AuthorID, &r.AuthorUsername, &r.AuthorAvatarKey, &r.MoveType, &r.Country, &r.Waypoint, &r.MovedOn, &r.ChainPoints); err != nil {
 			errInternal(c, err)
 			return
 		}

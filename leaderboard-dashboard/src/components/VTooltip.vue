@@ -6,6 +6,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  html: {
+    type: String,
+    default: ''
+  },
   placement: {
     type: String,
     default: 'top'
@@ -13,29 +17,36 @@ const props = defineProps({
 })
 
 const activator = ref(null)
+const contentRef = ref(null)
 let tooltipInstance = null
+
+const getTooltipTitle = () => {
+  if (props.text) return props.text
+  if (props.html) return props.html
+  if (contentRef.value && contentRef.value.innerHTML.trim()) return contentRef.value.innerHTML
+  return ''
+}
 
 const initTooltip = () => {
   if (activator.value && window.bootstrap?.Tooltip) {
-    if (tooltipInstance) {
-      tooltipInstance.dispose()
-    }
-    // The first child of the activator slot is our target
     const target = activator.value.firstElementChild || activator.value
+
     tooltipInstance = new window.bootstrap.Tooltip(target, {
-      title: props.text,
+      title: getTooltipTitle,
       placement: props.placement,
       trigger: 'hover focus',
-      html: true // Allow HTML in tooltips as used in App.vue
+      html: true,
+      container: 'body'
     })
   }
 }
 
-watch(() => props.text, (newText) => {
+watch([() => props.text, () => props.html], () => {
   if (tooltipInstance) {
-    tooltipInstance.setContent({ '.tooltip-inner': newText })
+    tooltipInstance.setContent({ '.tooltip-inner': getTooltipTitle() })
   }
 })
+
 
 onMounted(() => {
   // Small delay to ensure slot content is rendered
@@ -52,6 +63,8 @@ onUnmounted(() => {
 <template>
   <span ref="activator" style="display: contents;">
     <slot name="activator" :props="{}"></slot>
+  </span>
+  <span ref="contentRef" style="display: none;">
     <slot></slot>
   </span>
 </template>

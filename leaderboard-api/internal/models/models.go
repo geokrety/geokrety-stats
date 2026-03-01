@@ -181,6 +181,8 @@ type ChainSummary struct {
 	GkID                int64      `json:"gk_id"`
 	GkHexID             string     `json:"gk_hex_id"`
 	GkName              string     `json:"gk_name"`
+	GkAvatarKey         *string    `json:"gk_avatar_key,omitempty"`
+	GkType              int        `json:"gk_type"`
 	Status              string     `json:"status"`
 	StartedAt           time.Time  `json:"started_at"`
 	EndedAt             *time.Time `json:"ended_at,omitempty"`
@@ -194,17 +196,19 @@ type ChainSummary struct {
 }
 
 type ChainMember struct {
-	ChainID   int64      `json:"chain_id"`
-	UserID    int64      `json:"user_id"`
-	Username  string     `json:"username"`
-	Position  int        `json:"position"`
-	JoinedAt  *time.Time `json:"joined_at,omitempty"`
+	ChainID        int64      `json:"chain_id"`
+	UserID         int64      `json:"user_id"`
+	Username       string     `json:"username"`
+	UserAvatarKey  *string    `json:"user_avatar_key,omitempty"`
+	Position       int        `json:"position"`
+	JoinedAt       *time.Time `json:"joined_at,omitempty"`
 }
 
 type ChainMove struct {
 	MoveID         int64      `json:"move_id"`
 	AuthorID       *int64     `json:"author_id,omitempty"`
 	AuthorUsername *string    `json:"author_username,omitempty"`
+	AuthorAvatarKey *string    `json:"author_avatar_key,omitempty"`
 	MoveType       int        `json:"move_type"`
 	TypeName       string     `json:"type_name"`
 	Country        *string    `json:"country,omitempty"`

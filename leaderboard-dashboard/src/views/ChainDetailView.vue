@@ -243,7 +243,7 @@ function sortIcon(activeCol, col, order) {
                     <td class="ps-3 fw-bold text-muted">{{ member.position }}</td>
                     <td>
                       <div class="d-flex align-items-center gap-2">
-                        <img :src="userAvatarUrl(member.user_id)" width="24" height="24" class="rounded-circle border" @error="e => e.target.src = '/user-default.png'" />
+                        <img :src="userAvatarUrl(member.user_avatar_key)" width="24" height="24" class="rounded-circle border" @error="e => e.target.src = '/user-default.png'" />
                         <RouterLink :to="`/users/${member.user_id}`" class="fw-semibold text-decoration-none">{{ member.username }}</RouterLink>
                       </div>
                     </td>
@@ -317,7 +317,7 @@ function sortIcon(activeCol, col, order) {
                     <td class="ps-3 small text-muted">{{ move.moved_on?.slice(0, 10) || '—' }}</td>
                     <td>
                       <div class="d-flex align-items-center gap-2">
-                        <img :src="userAvatarUrl(move.author_id)" width="20" height="20" class="rounded-circle border" v-if="move.author_id" @error="e => e.target.src = '/user-default.png'" />
+                        <img :src="userAvatarUrl(move.author_avatar_key)" width="20" height="20" class="rounded-circle border" v-if="move.author_id" @error="e => e.target.src = '/user-default.png'" />
                         <RouterLink v-if="move.author_id" :to="`/users/${move.author_id}`" class="text-decoration-none small fw-semibold">{{ move.author_username || `User #${move.author_id}` }}</RouterLink>
                         <span v-else class="text-muted small">—</span>
                       </div>
