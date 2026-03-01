@@ -182,7 +182,7 @@ extract_fixture() {
   PGPASSWORD="$SRC_DB_PASS" psql \
     -h "$SRC_DB_HOST" -p "$SRC_DB_PORT" -U "$SRC_DB_USER" -d "$SRC_DB_NAME" \
     -v ON_ERROR_STOP=1 -t -A -F '' \
-    -c "COPY (WITH selected_moves AS ( $selector ) SELECT m.id, m.geokret, m.author, m.move_type, m.waypoint, m.country, m.lat, m.lon, m.moved_on_datetime FROM geokrety.gk_moves m JOIN selected_moves sm ON sm.id = m.id ORDER BY m.moved_on_datetime, m.id) TO STDOUT WITH CSV HEADER" > "$fixture_dir/gk_moves.csv"
+    -c "COPY (WITH selected_moves AS ( $selector ) SELECT m.id, m.geokret, m.author, m.move_type, CASE WHEN m.waypoint IS NULL THEN NULL ELSE 'WP' || SUBSTRING(md5(waypoint) FROM 1 FOR 12) END AS waypoint, m.country, m.lat, m.lon, m.moved_on_datetime FROM geokrety.gk_moves m JOIN selected_moves sm ON sm.id = m.id ORDER BY m.moved_on_datetime, m.id) TO STDOUT WITH CSV HEADER" > "$fixture_dir/gk_moves.csv"
 
   PGPASSWORD="$SRC_DB_PASS" psql \
     -h "$SRC_DB_HOST" -p "$SRC_DB_PORT" -U "$SRC_DB_USER" -d "$SRC_DB_NAME" \
@@ -297,6 +297,10 @@ load_fixture_to_temp_db() {
   PGPASSWORD="$TMP_DB_PASS" psql \
     -h "$TMP_DB_HOST" -p "$TMP_DB_PORT" -U "$TMP_DB_USER" -d "$db_name" -v ON_ERROR_STOP=1 \
     -c "\\copy geokrety.gk_moves(id,geokret,author,move_type,waypoint,country,lat,lon,moved_on_datetime) FROM '$fixture_dir/gk_moves.csv' WITH CSV HEADER"
+
+  PGPASSWORD="$TMP_DB_PASS" psql \
+    -h "$TMP_DB_HOST" -p "$TMP_DB_PORT" -U "$TMP_DB_USER" -d "$db_name" -v ON_ERROR_STOP=1 \
+    -c "UPDATE geokrety.gk_moves SET waypoint = 'WP' || SUBSTRING(md5(waypoint) FROM 1 FOR 12) WHERE waypoint IS NOT NULL AND waypoint NOT LIKE 'WP-%'"
 }
 
 refresh_reference() {

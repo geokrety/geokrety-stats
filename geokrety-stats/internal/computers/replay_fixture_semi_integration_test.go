@@ -144,6 +144,9 @@ CREATE INDEX idx_gk_moves_author ON geokrety.gk_moves(author);
 			runCmd(t, statsRoot, psqlEnv(password),
 				"psql", "-h", host, "-p", port, "-U", user, "-d", dbName, "-v", "ON_ERROR_STOP=1", "-c",
 				fmt.Sprintf("\\copy geokrety.gk_moves(id,geokret,author,move_type,waypoint,country,lat,lon,moved_on_datetime) FROM '%s' WITH CSV HEADER", movesCSV))
+			runCmd(t, statsRoot, psqlEnv(password),
+				"psql", "-h", host, "-p", port, "-U", user, "-d", dbName, "-v", "ON_ERROR_STOP=1", "-c",
+				"UPDATE geokrety.gk_moves SET waypoint = 'WP' || SUBSTRING(md5(waypoint) FROM 1 FOR 12) WHERE waypoint IS NOT NULL AND waypoint NOT LIKE 'WP-%'")
 
 			dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbName)
 

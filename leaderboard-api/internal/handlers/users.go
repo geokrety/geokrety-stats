@@ -554,9 +554,9 @@ func (h *Handler) UserRelatedUsers(c *gin.Context) {
 
 func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error) {
 	const q = `
-		SELECT us.user_id, us.username, us.home_country, us.joined_on_datetime, us.last_login_datetime,
+		SELECT us.user_id, us.username, us.home_country, us.joined_on_datetime,
 		       us.total_points, COALESCE(lb.rank, 0) AS rank, us.total_moves, us.total_drops, us.total_grabs,
-		       us.total_comments, us.total_seen, us.total_dips, us.distinct_gks_interacted,
+		       us.total_comments, us.total_seen, us.total_dips, us.total_archived, us.distinct_gks_interacted,
 		       us.distinct_owners, us.countries_visited_count, 0 AS caches_visited,
 		       us.km_contributed, us.active_days, us.first_move_at, us.last_move_at,
 		       us.pts_base, us.pts_relay, us.pts_rescuer, us.pts_chain, us.pts_country,
@@ -567,9 +567,9 @@ func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error)
 
 	var u models.User
 	err := h.DB.QueryRow(ctx, q, id).Scan(
-		&u.UserID, &u.Username, &u.HomeCountry, &u.JoinedAt, &u.LastLoginAt,
+		&u.UserID, &u.Username, &u.HomeCountry, &u.JoinedAt,
 		&u.TotalPoints, &u.RankAllTime, &u.TotalMoves, &u.TotalDrops, &u.TotalGrabs,
-		&u.TotalComments, &u.TotalSeen, &u.TotalDips, &u.DistinctGKs,
+		&u.TotalComments, &u.TotalSeen, &u.TotalDips, &u.TotalArchived, &u.DistinctGKs,
 		&u.DistinctOwners, &u.CountriesCount, &u.CachesCount,
 		&u.KmContributed, &u.ActiveDays, &u.FirstMoveAt, &u.LastMoveAt,
 		&u.PtsBase, &u.PtsRelay, &u.PtsRescuer, &u.PtsChain, &u.PtsCountry,
@@ -578,14 +578,15 @@ func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error)
 	if err != nil {
 		// Try fallback: user exists in gk_users but may not be in mv_user_stats
 		const fallback = `
-			SELECT id, username, home_country, joined_on_datetime, last_login_datetime
+			SELECT id, username, home_country, joined_on_datetime
 			FROM geokrety.gk_users WHERE id = $1`
 		var fu models.User
 		if err2 := h.DB.QueryRow(ctx, fallback, id).Scan(
-			&fu.UserID, &fu.Username, &fu.HomeCountry, &fu.JoinedAt, &fu.LastLoginAt,
+			&fu.UserID, &fu.Username, &fu.HomeCountry, &fu.JoinedAt,
 		); err2 != nil {
 			return nil, nil // not found
 		}
+		fu.TotalArchived = 0
 		return &fu, nil
 	}
 	return &u, nil

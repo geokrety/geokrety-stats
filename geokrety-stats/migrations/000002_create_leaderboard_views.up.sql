@@ -120,6 +120,42 @@ CREATE INDEX ON geokrety_stats.mv_leaderboard_yearly (year DESC, rank);
 -- USER STATS SUMMARY: comprehensive per-user stats
 -- ============================================================
 CREATE MATERIALIZED VIEW geokrety_stats.mv_user_stats AS
+WITH user_moves AS (
+    SELECT
+        m.author AS user_id,
+        COUNT(*)                                              AS total_moves,
+        COUNT(*) FILTER (WHERE m.move_type = 0)               AS total_drops,
+        COUNT(*) FILTER (WHERE m.move_type = 1)               AS total_grabs,
+        COUNT(*) FILTER (WHERE m.move_type = 2)               AS total_comments,
+        COUNT(*) FILTER (WHERE m.move_type = 3)               AS total_seen,
+        COUNT(*) FILTER (WHERE m.move_type = 4)               AS total_archived,
+        COUNT(*) FILTER (WHERE m.move_type = 5)               AS total_dips,
+        COUNT(DISTINCT m.geokret)                             AS distinct_gks_interacted,
+        COUNT(DISTINCT gk.owner) FILTER (WHERE gk.owner IS NOT NULL AND gk.owner != m.author) AS distinct_owners,
+        COUNT(DISTINCT m.country) FILTER (WHERE m.country IS NOT NULL) AS countries_visited_count,
+        COALESCE(SUM(m.distance) FILTER (WHERE m.move_type = 0), 0) AS km_contributed,
+        MIN(m.moved_on_datetime)                             AS first_move_at,
+        MAX(m.moved_on_datetime)                             AS last_move_at,
+        COUNT(DISTINCT DATE(m.moved_on_datetime))             AS active_days
+    FROM geokrety.gk_moves m
+    LEFT JOIN geokrety.gk_geokrety gk ON gk.id = m.geokret
+    WHERE m.author IS NOT NULL
+    GROUP BY m.author
+),
+points_by_label AS (
+    SELECT
+        user_id,
+        COALESCE(SUM(points) FILTER (WHERE label = 'base_move'), 0)       AS pts_base,
+        COALESCE(SUM(points) FILTER (WHERE label = 'relay_bonus'), 0)     AS pts_relay,
+        COALESCE(SUM(points) FILTER (WHERE label = 'rescuer_bonus'), 0)   AS pts_rescuer,
+        COALESCE(SUM(points) FILTER (WHERE label = 'chain_bonus'), 0)     AS pts_chain,
+        COALESCE(SUM(points) FILTER (WHERE label = 'country_bonus'), 0)   AS pts_country,
+        COALESCE(SUM(points) FILTER (WHERE label = 'diversity_bonus'), 0) AS pts_diversity,
+        COALESCE(SUM(points) FILTER (WHERE label = 'handover_bonus'), 0)  AS pts_handover,
+        COALESCE(SUM(points) FILTER (WHERE label = 'reach_bonus'), 0)     AS pts_reach
+    FROM geokrety_stats.user_points_log
+    GROUP BY user_id
+)
 SELECT
     u.id                                                        AS user_id,
     u.username,
@@ -127,49 +163,33 @@ SELECT
     u.home_latitude,
     u.home_longitude,
     u.joined_on_datetime,
-    u.last_login_datetime,
     COALESCE(t.total_points, 0)                                 AS total_points,
-
-    -- move counts
-    COUNT(DISTINCT m.id)                                        AS total_moves,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 0)        AS total_drops,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 1)        AS total_grabs,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 2)        AS total_comments,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 3)        AS total_seen,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 5)        AS total_dips,
-
-    -- GK interactions
-    COUNT(DISTINCT m.geokret)                                   AS distinct_gks_interacted,
-    COUNT(DISTINCT gk.owner) FILTER (WHERE gk.owner != u.id)   AS distinct_owners,
-
-    -- countries
-    COUNT(DISTINCT m.country) FILTER (WHERE m.country IS NOT NULL) AS countries_visited_count,
-
-    -- distance (total km of GKs moved with drops)
-    COALESCE(SUM(m.distance) FILTER (WHERE m.move_type = 0), 0) AS km_contributed,
-
-    -- activity
-    MIN(m.moved_on_datetime)                                    AS first_move_at,
-    MAX(m.moved_on_datetime)                                    AS last_move_at,
-    COUNT(DISTINCT DATE(m.moved_on_datetime))                   AS active_days,
-
-    -- points breakdown
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'base_move'), 0)       AS pts_base,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'relay_bonus'), 0)     AS pts_relay,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'rescuer_bonus'), 0)   AS pts_rescuer,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'chain_bonus'), 0)     AS pts_chain,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'country_bonus'), 0)   AS pts_country,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'diversity_bonus'), 0) AS pts_diversity,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'handover_bonus'), 0)  AS pts_handover,
-    COALESCE(SUM(pl.points) FILTER (WHERE pl.label = 'reach_bonus'), 0)     AS pts_reach
-
+    COALESCE(um.total_moves, 0)                                 AS total_moves,
+    COALESCE(um.total_drops, 0)                                 AS total_drops,
+    COALESCE(um.total_grabs, 0)                                 AS total_grabs,
+    COALESCE(um.total_comments, 0)                              AS total_comments,
+    COALESCE(um.total_seen, 0)                                  AS total_seen,
+    COALESCE(um.total_dips, 0)                                  AS total_dips,
+    COALESCE(um.total_archived, 0)                              AS total_archived,
+    COALESCE(um.distinct_gks_interacted, 0)                      AS distinct_gks_interacted,
+    COALESCE(um.distinct_owners, 0)                              AS distinct_owners,
+    COALESCE(um.countries_visited_count, 0)                      AS countries_visited_count,
+    COALESCE(um.km_contributed, 0)                               AS km_contributed,
+    um.first_move_at,
+    um.last_move_at,
+    COALESCE(um.active_days, 0)                                  AS active_days,
+    COALESCE(pl.pts_base, 0)                                     AS pts_base,
+    COALESCE(pl.pts_relay, 0)                                    AS pts_relay,
+    COALESCE(pl.pts_rescuer, 0)                                  AS pts_rescuer,
+    COALESCE(pl.pts_chain, 0)                                    AS pts_chain,
+    COALESCE(pl.pts_country, 0)                                  AS pts_country,
+    COALESCE(pl.pts_diversity, 0)                                AS pts_diversity,
+    COALESCE(pl.pts_handover, 0)                                 AS pts_handover,
+    COALESCE(pl.pts_reach, 0)                                    AS pts_reach
 FROM geokrety.gk_users u
 LEFT JOIN geokrety_stats.user_points_totals t       ON t.user_id = u.id
-LEFT JOIN geokrety.gk_moves m                       ON m.author  = u.id
-LEFT JOIN geokrety.gk_geokrety gk                   ON gk.id     = m.geokret
-LEFT JOIN geokrety_stats.user_points_log pl         ON pl.user_id = u.id
-GROUP BY u.id, u.username, u.home_country, u.home_latitude, u.home_longitude,
-         u.joined_on_datetime, u.last_login_datetime, t.total_points
+LEFT JOIN user_moves um                            ON um.user_id = u.id
+LEFT JOIN points_by_label pl                       ON pl.user_id = u.id
 WITH DATA;
 
 CREATE UNIQUE INDEX ON geokrety_stats.mv_user_stats (user_id);
@@ -179,6 +199,30 @@ CREATE INDEX ON geokrety_stats.mv_user_stats (total_points DESC);
 -- GK STATS SUMMARY: per-geokret stats
 -- ============================================================
 CREATE MATERIALIZED VIEW geokrety_stats.mv_gk_stats AS
+WITH move_stats AS (
+    SELECT
+        m.geokret                                           AS gk_id,
+        COUNT(*)                                             AS total_moves,
+        COUNT(*) FILTER (WHERE m.move_type = 0)             AS total_drops,
+        COUNT(*) FILTER (WHERE m.move_type = 1)             AS total_grabs,
+        COUNT(*) FILTER (WHERE m.move_type = 3)             AS total_seen,
+        COUNT(*) FILTER (WHERE m.move_type = 5)             AS total_dips,
+        COUNT(DISTINCT m.author) FILTER (WHERE m.author IS NOT NULL) AS distinct_users,
+        COUNT(DISTINCT m.country) FILTER (WHERE m.country IS NOT NULL) AS countries_count,
+        COUNT(DISTINCT m.waypoint) FILTER (WHERE m.waypoint IS NOT NULL) AS caches_count_distinct,
+        MIN(m.moved_on_datetime)                            AS first_move_at,
+        MAX(m.moved_on_datetime)                            AS last_move_at
+    FROM geokrety.gk_moves m
+    GROUP BY m.geokret
+),
+points_summary AS (
+    SELECT
+        gk_id,
+        COALESCE(SUM(points), 0)                              AS total_points_generated,
+        COUNT(DISTINCT user_id)                               AS users_awarded
+    FROM geokrety_stats.user_points_log
+    GROUP BY gk_id
+)
 SELECT
     g.id                                                        AS gk_id,
     g.name,
@@ -194,37 +238,34 @@ SELECT
     holder_u.id                                                 AS holder_id,
 
     -- move counts
-    COUNT(DISTINCT m.id)                                        AS total_moves,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 0)        AS total_drops,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 1)        AS total_grabs,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 3)        AS total_seen,
-    COUNT(DISTINCT m.id) FILTER (WHERE m.move_type = 5)        AS total_dips,
+    COALESCE(move_stats.total_moves, 0)                         AS total_moves,
+    COALESCE(move_stats.total_drops, 0)                         AS total_drops,
+    COALESCE(move_stats.total_grabs, 0)                         AS total_grabs,
+    COALESCE(move_stats.total_seen, 0)                          AS total_seen,
+    COALESCE(move_stats.total_dips, 0)                          AS total_dips,
 
     -- participants
-    COUNT(DISTINCT m.author)   FILTER (WHERE m.author IS NOT NULL) AS distinct_users,
-    COUNT(DISTINCT m.country)  FILTER (WHERE m.country IS NOT NULL) AS countries_count,
-    COUNT(DISTINCT m.waypoint) FILTER (WHERE m.waypoint IS NOT NULL) AS caches_count_distinct,
+    COALESCE(move_stats.distinct_users, 0)                      AS distinct_users,
+    COALESCE(move_stats.countries_count, 0)                     AS countries_count,
+    COALESCE(move_stats.caches_count_distinct, 0)               AS caches_count_distinct,
 
     -- points generated
-    COALESCE(SUM(pl.points), 0)                                 AS total_points_generated,
-    COUNT(DISTINCT pl.user_id)                                  AS users_awarded,
+    COALESCE(points_summary.total_points_generated, 0)          AS total_points_generated,
+    COALESCE(points_summary.users_awarded, 0)                   AS users_awarded,
 
     -- multiplier
     COALESCE(ms.current_multiplier, 1.0)                        AS current_multiplier,
 
     -- activity
-    MIN(m.moved_on_datetime)                                    AS first_move_at,
-    MAX(m.moved_on_datetime)                                    AS last_move_at
+    move_stats.first_move_at,
+    move_stats.last_move_at
 
 FROM geokrety.gk_geokrety g
 LEFT JOIN geokrety.gk_users owner_u             ON owner_u.id  = g.owner
 LEFT JOIN geokrety.gk_users holder_u            ON holder_u.id = g.holder
-LEFT JOIN geokrety.gk_moves m                   ON m.geokret   = g.id
-LEFT JOIN geokrety_stats.user_points_log pl     ON pl.gk_id    = g.id
+LEFT JOIN move_stats                          ON move_stats.gk_id = g.id
+LEFT JOIN points_summary                      ON points_summary.gk_id = g.id
 LEFT JOIN geokrety_stats.gk_multiplier_state ms ON ms.gk_id    = g.id
-GROUP BY g.id, g.name, g.type, g.missing, g.distance, g.caches_count,
-         g.created_on_datetime, g.born_on_datetime, owner_u.username, owner_u.id,
-         holder_u.username, holder_u.id, ms.current_multiplier
 WITH DATA;
 
 CREATE UNIQUE INDEX ON geokrety_stats.mv_gk_stats (gk_id);

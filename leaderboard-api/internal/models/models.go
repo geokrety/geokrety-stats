@@ -53,7 +53,6 @@ type User struct {
 	Username           string     `json:"username"`
 	HomeCountry        *string    `json:"home_country,omitempty"`
 	JoinedAt           *time.Time `json:"joined_at,omitempty"`
-	LastLoginAt        *time.Time `json:"last_login_at,omitempty"`
 	TotalPoints        float64    `json:"total_points"`
 	RankAllTime        int64      `json:"rank_all_time,omitempty"`
 	TotalMoves         int64      `json:"total_moves"`
@@ -62,6 +61,7 @@ type User struct {
 	TotalComments      int64      `json:"total_comments"`
 	TotalSeen          int64      `json:"total_seen"`
 	TotalDips          int64      `json:"total_dips"`
+	TotalArchived      int64      `json:"total_archived,omitempty"`
 	DistinctGKs        int64      `json:"distinct_gks"`
 	DistinctOwners     int64      `json:"distinct_owners"`
 	CountriesCount     int64      `json:"countries_count"`
