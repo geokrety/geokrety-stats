@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import Pagination from '../components/Pagination.vue'
+import PointsValue from '../components/PointsValue.vue'
 
 const route = useRoute()
 const gkId = ref(route.params.id)
@@ -90,13 +91,13 @@ function sortIcon(col) {
         <table class="table table-sm table-hover mb-0 align-middle">
           <thead class="table-dark">
             <tr>
-              <th style="cursor:pointer" @click="toggleSort('chain')">Chain <i class="bi" :class="sortIcon('chain')"></i></th>
-              <th style="cursor:pointer" @click="toggleSort('status')">Status <i class="bi" :class="sortIcon('status')"></i></th>
-              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('started')">Started <i class="bi" :class="sortIcon('started')"></i></th>
-              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('ended')">Ended <i class="bi" :class="sortIcon('ended')"></i></th>
-              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('last_active')">Last Active <i class="bi" :class="sortIcon('last_active')"></i></th>
-              <th class="text-end" style="cursor:pointer" @click="toggleSort('members')">Members <i class="bi" :class="sortIcon('members')"></i></th>
-              <th class="text-end" style="cursor:pointer" @click="toggleSort('points')">Points <i class="bi" :class="sortIcon('points')"></i></th>
+              <th style="cursor:pointer" @click="toggleSort('chain')" title="Chain identifier">Chain <i class="bi" :class="sortIcon('chain')"></i></th>
+              <th style="cursor:pointer" @click="toggleSort('status')" title="Current chain status">Status <i class="bi" :class="sortIcon('status')"></i></th>
+              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('started')" title="Chain start date">Started <i class="bi" :class="sortIcon('started')"></i></th>
+              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('ended')" title="Chain end date">Ended <i class="bi" :class="sortIcon('ended')"></i></th>
+              <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleSort('last_active')" title="Last activity date in chain">Last Active <i class="bi" :class="sortIcon('last_active')"></i></th>
+              <th class="text-end" style="cursor:pointer" @click="toggleSort('members')" title="Number of chain members">Members <i class="bi" :class="sortIcon('members')"></i></th>
+              <th class="text-end" style="cursor:pointer" @click="toggleSort('points')" title="Total chain points">Points <i class="bi" :class="sortIcon('points')"></i></th>
             </tr>
           </thead>
           <tbody>
@@ -113,7 +114,7 @@ function sortIcon(col) {
               <td class="d-none d-md-table-cell small text-muted">{{ chain.ended_at?.slice(0, 10) || '—' }}</td>
               <td class="d-none d-md-table-cell small text-muted">{{ chain.chain_last_active?.slice(0, 10) }}</td>
               <td class="text-end">{{ chain.member_count?.toLocaleString() }}</td>
-              <td class="text-end text-primary fw-semibold">{{ chain.chain_points?.toFixed(2) }}</td>
+              <td class="text-end text-primary fw-semibold"><PointsValue :value="chain.chain_points" /></td>
             </tr>
           </tbody>
         </table>

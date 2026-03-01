@@ -258,6 +258,33 @@ func (h *Handler) UserChains(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "started")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
+
+	orderBy := "gc.started_at " + dir + ", gc.id " + dir
+	switch sort {
+	case "chain":
+		orderBy = "gc.id " + dir
+	case "gk":
+		orderBy = "COALESCE(g.name, '') " + dir + ", gc.id DESC"
+	case "status":
+		orderBy = "gc.status " + dir + ", gc.started_at DESC"
+	case "last_active":
+		orderBy = "gc.chain_last_active " + dir + ", gc.started_at DESC"
+	case "members":
+		orderBy = "member_count " + dir + ", gc.started_at DESC"
+	case "points":
+		orderBy = "chain_points " + dir + ", gc.started_at DESC"
+	case "completed":
+		orderBy = "has_user_completion " + dir + ", gc.started_at DESC"
+	}
 
 	const countQ = `
 		SELECT COUNT(*)
@@ -311,7 +338,7 @@ func (h *Handler) UserChains(c *gin.Context) {
 			GROUP BY t.chain_id
 		) cp ON cp.chain_id = gc.id
 		WHERE cm.user_id = $1
-		ORDER BY gc.started_at DESC, gc.id DESC
+		ORDER BY ` + orderBy + `
 		LIMIT $2 OFFSET $3
 	`
 
@@ -486,8 +513,33 @@ func (h *Handler) MoveChains(c *gin.Context) {
 		errNotFound(c, "invalid move id")
 		return
 	}
+	sort := c.DefaultQuery("sort", "started")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 
-	const q = `
+	orderBy := "gc.started_at " + dir + ", gc.id " + dir
+	switch sort {
+	case "chain":
+		orderBy = "gc.id " + dir
+	case "gk":
+		orderBy = "COALESCE(g.name, '') " + dir + ", gc.id DESC"
+	case "status":
+		orderBy = "gc.status " + dir + ", gc.started_at DESC"
+	case "move_chain_points":
+		orderBy = "move_chain_points " + dir + ", gc.started_at DESC"
+	case "points":
+		orderBy = "chain_points " + dir + ", gc.started_at DESC"
+	case "members":
+		orderBy = "member_count " + dir + ", gc.started_at DESC"
+	}
+
+	q := `
 		SELECT
 			gc.id,
 			gc.gk_id,
@@ -549,7 +601,7 @@ func (h *Handler) MoveChains(c *gin.Context) {
 			) t
 			GROUP BY t.chain_id
 		) cp ON cp.chain_id = gc.id
-		ORDER BY gc.started_at DESC, gc.id DESC
+		ORDER BY ` + orderBy + `
 	`
 
 	rows, err := h.DB.Query(c.Request.Context(), q, moveID)

@@ -5,6 +5,8 @@ import { fetchList, fetchOne } from '../composables/useApi.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
 import { useLeaderboardLive } from '../composables/useWebSocket.js'
 import Pagination from '../components/Pagination.vue'
+import YearSelectorDropdown from '../components/YearSelectorDropdown.vue'
+import PointsValue from '../components/PointsValue.vue'
 
 const PERIODS = [
   { value: 'all',     label: 'All Time' },
@@ -85,13 +87,6 @@ watch([page], load)
 function selectPeriod(p) { period.value = p; yearValue.value = '' }
 function selectYear(y)   { yearValue.value = y; period.value = '' }
 
-function medalClass(rank) {
-  if (rank === 1) return 'text-warning fw-bold'
-  if (rank === 2) return 'text-secondary fw-bold'
-  if (rank === 3) return 'text-danger fw-bold'
-  return ''
-}
-
 // Helper: get the displayed points value for a row
 function displayPoints(row) {
   // For period-based views, the API returns `points_period` (not total_points)
@@ -152,25 +147,7 @@ function toggleSort(col) {
                   <span v-else>{{ p.label }}</span>
                 </button>
               </div>
-              <!-- Year dropdown selector -->
-              <div v-if="availableYears.length" class="dropdown">
-                <button
-                  class="btn btn-sm w-100"
-                  :class="yearValue ? 'btn-info' : 'btn-outline-secondary'"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  {{ yearValue ? `${yearValue} 📅` : 'Select Year...' }}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" style="max-height: 300px; overflow-y: auto;">
-                  <li v-for="y in availableYears" :key="y">
-                    <a href="#" class="dropdown-item" :class="yearValue === y ? 'active' : ''" @click.prevent="selectYear(y)">
-                      {{ y }}
-                    </a>
-                  </li>
-                </ul>
-              </div>
+              <YearSelectorDropdown :years="availableYears" :model-value="yearValue" @update:model-value="selectYear" />
             </div>
           </div>
         </div>
@@ -215,12 +192,7 @@ function toggleSort(col) {
               <td colspan="7" class="text-center text-secondary py-4">No data for this period.</td>
             </tr>
             <tr v-for="(row, index) in rows" :key="row.user_id">
-              <td :class="medalClass(row.rank)">
-                <span v-if="(meta.page-1)*meta.per_page + index + 1 === 1">🥇</span>
-                <span v-else-if="(meta.page-1)*meta.per_page + index + 1 === 2">🥈</span>
-                <span v-else-if="(meta.page-1)*meta.per_page + index + 1 === 3">🥉</span>
-                <span v-else>{{ (meta.page-1)*meta.per_page + index + 1 }}</span>
-              </td>
+              <td>{{ (meta.page-1)*meta.per_page + index + 1 }}</td>
               <td>
                 <RouterLink :to="`/users/${row.user_id}`" class="text-decoration-none fw-semibold">
                   {{ row.username }}
@@ -229,13 +201,13 @@ function toggleSort(col) {
                   {{ getCountryFlag(row.home_country) }} {{ row.home_country.toUpperCase() }}
                 </span>
               </td>
-              <td class="text-end fw-bold text-primary">{{ displayPoints(row)?.toLocaleString() }}</td>
+              <td class="text-end fw-bold text-primary"><PointsValue :value="displayPoints(row)" /></td>
               <td class="text-end">{{ row.move_count?.toLocaleString() }}</td>
               <td class="text-end">{{ row.gk_count?.toLocaleString() }}</td>
               <td class="text-end">{{ row.countries_count?.toLocaleString() ?? '—' }}</td>
               <td class="text-end text-muted small">
                 <span :title="`${displayPoints(row)?.toLocaleString()} pts ÷ ${row.move_count?.toLocaleString()} moves`">
-                  {{ row.avg_points_per_move?.toFixed(1) }}
+                  <PointsValue :value="row.avg_points_per_move" />
                 </span>
               </td>
             </tr>

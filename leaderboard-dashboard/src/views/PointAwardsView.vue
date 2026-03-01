@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
 import Pagination from '../components/Pagination.vue'
+import PointsValue from '../components/PointsValue.vue'
 
 const route  = useRoute()
 const userId = ref(route.params.id)
@@ -75,7 +76,6 @@ function toggleSort(col) {
   sortOrder.value = col === 'label' ? 'asc' : 'desc'
 }
 
-const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 'text-danger fw-semibold' : 'text-muted'
 </script>
 
 <template>
@@ -169,9 +169,7 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
                 </RouterLink>
                 <span v-else class="text-muted">—</span>
               </td>
-              <td class="text-end" :class="pointsClass(a.points)">
-                {{ a.points > 0 ? '+' : '' }}{{ a.points?.toFixed(2) }}
-              </td>
+              <td class="text-end fw-semibold"><PointsValue :value="a.points" /></td>
             </tr>
           </tbody>
         </table>

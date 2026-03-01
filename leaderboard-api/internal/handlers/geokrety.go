@@ -24,23 +24,70 @@ func gkHexID(publicID int64) string {
 func (h *Handler) ListGeokrety(c *gin.Context) {
 	page, perPage, offset := parsePagination(c)
 	search := c.Query("search")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
+
+	awardingOnly := c.DefaultQuery("awarding_only", "false") == "true"
+	multiplierGtOne := c.DefaultQuery("multiplier_gt_one", "false") == "true"
+
+	loveMin := c.Query("love_min")
+	loveMax := c.Query("love_max")
+
+	var gkTypes []int32
+	if typesParam := c.Query("gk_types"); typesParam != "" {
+		for _, raw := range strings.Split(typesParam, ",") {
+			trimmed := strings.TrimSpace(raw)
+			if trimmed == "" {
+				continue
+			}
+			t, convErr := strconv.Atoi(trimmed)
+			if convErr != nil || t < 0 || t > 10 {
+				c.JSON(400, gin.H{"errors": []gin.H{{"status": "400", "title": "invalid geokret type filter"}}})
+				return
+			}
+			gkTypes = append(gkTypes, int32(t))
+		}
+	}
+
+	statusFilterRaw := c.Query("status")
+	statusParts := []string{}
+	if statusFilterRaw != "" {
+		for _, raw := range strings.Split(statusFilterRaw, ",") {
+			trimmed := strings.TrimSpace(strings.ToLower(raw))
+			if trimmed != "" {
+				statusParts = append(statusParts, trimmed)
+			}
+		}
+	}
 
 	// Map frontend sort key → SQL ORDER BY expression
 	sortMap := map[string]string{
-		"points":     "s.total_points_generated DESC",
-		"moves":      "s.total_moves DESC",
-		"users":      "s.distinct_users DESC",
-		"countries":  "s.countries_count DESC",
-		"loves":      "s.loves_count DESC",
-		"multiplier": "s.current_multiplier DESC",
-		"distance":   "s.distance DESC",
-		"avg_points": "(s.total_points_generated / NULLIF(s.total_moves, 0)) DESC",
+		"id":         "COALESCE(g.gkid, s.gk_id)",
+		"name":       "LOWER(s.name)",
+		"type":       "s.gk_type",
+		"owner":      "LOWER(COALESCE(s.owner_username, ''))",
+		"status":     "CASE WHEN s.missing THEN 0 WHEN s.in_cache THEN 1 WHEN s.holder_id IS NOT NULL THEN 2 ELSE 3 END",
+		"points":     "s.total_points_generated",
+		"moves":      "s.total_moves",
+		"users":      "s.distinct_users",
+		"countries":  "s.countries_count",
+		"loves":      "s.loves_count",
+		"multiplier": "s.current_multiplier",
+		"distance":   "s.distance",
+		"avg_points": "(s.total_points_generated / NULLIF(s.total_moves, 0))",
 	}
 	sortParam := c.DefaultQuery("sort", "points")
 	orderBy, ok2 := sortMap[sortParam]
 	if !ok2 {
-		orderBy = "s.total_points_generated DESC"
+		orderBy = "s.total_points_generated"
 	}
+	orderBy = orderBy + " " + dir + ", s.gk_id ASC"
 
 	baseSelect := `
 		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.gk_type, s.missing, s.distance,
@@ -50,40 +97,84 @@ func (h *Handler) ListGeokrety(c *gin.Context) {
 		       s.total_points_generated, s.current_multiplier, s.last_move_at`
 
 	var (
-		countQ, listQ string
-		countArgs     []interface{}
-		listArgs      []interface{}
+		countQ string
+		listQ  string
 	)
 
 	fromClause := `
 		FROM geokrety_stats.mv_gk_stats s
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id`
 
+	whereParts := []string{}
+	args := []interface{}{}
+	argPos := 1
+
 	if search != "" {
-		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats WHERE name ILIKE $1`
-		listQ = baseSelect + fromClause + `
-			WHERE s.name ILIKE $1
-			ORDER BY ` + orderBy + `
-			LIMIT $2 OFFSET $3`
-		countArgs = []interface{}{"%" + search + "%"}
-		listArgs = []interface{}{"%" + search + "%", perPage, offset}
-	} else {
-		countQ = `SELECT COUNT(*) FROM geokrety_stats.mv_gk_stats`
-		listQ = baseSelect + fromClause + `
-			ORDER BY ` + orderBy + `
-			LIMIT $1 OFFSET $2`
-		countArgs = nil
-		listArgs = []interface{}{perPage, offset}
+		whereParts = append(whereParts, "s.name ILIKE $"+strconv.Itoa(argPos))
+		args = append(args, "%"+search+"%")
+		argPos++
 	}
+	if awardingOnly {
+		whereParts = append(whereParts, "COALESCE(s.total_points_generated, 0) > 0")
+	}
+	if multiplierGtOne {
+		whereParts = append(whereParts, "COALESCE(s.current_multiplier, 1.0) > 1")
+	}
+	if loveMin != "" {
+		if minVal, convErr := strconv.Atoi(loveMin); convErr == nil {
+			whereParts = append(whereParts, "COALESCE(s.loves_count, 0) >= $"+strconv.Itoa(argPos))
+			args = append(args, minVal)
+			argPos++
+		}
+	}
+	if loveMax != "" {
+		if maxVal, convErr := strconv.Atoi(loveMax); convErr == nil {
+			whereParts = append(whereParts, "COALESCE(s.loves_count, 0) <= $"+strconv.Itoa(argPos))
+			args = append(args, maxVal)
+			argPos++
+		}
+	}
+	if len(gkTypes) > 0 {
+		whereParts = append(whereParts, "s.gk_type = ANY($"+strconv.Itoa(argPos)+"::int[])")
+		args = append(args, gkTypes)
+		argPos++
+	}
+	if len(statusParts) > 0 {
+		statusClauses := []string{}
+		for _, status := range statusParts {
+			switch status {
+			case "cache", "in_cache":
+				statusClauses = append(statusClauses, "s.in_cache = TRUE")
+			case "held", "holder":
+				statusClauses = append(statusClauses, "s.in_cache = FALSE AND s.holder_id IS NOT NULL")
+			case "missing":
+				statusClauses = append(statusClauses, "s.missing = TRUE")
+			case "parked":
+				statusClauses = append(statusClauses, "s.is_parked = TRUE")
+			case "sealed", "non_collectible":
+				statusClauses = append(statusClauses, "s.is_non_collectible = TRUE")
+			}
+		}
+		if len(statusClauses) > 0 {
+			whereParts = append(whereParts, "("+strings.Join(statusClauses, " OR ")+")")
+		}
+	}
+
+	whereSQL := ""
+	if len(whereParts) > 0 {
+		whereSQL = " WHERE " + strings.Join(whereParts, " AND ")
+	}
+
+	countQ = `SELECT COUNT(*) ` + fromClause + whereSQL
+	listQ = baseSelect + fromClause + whereSQL + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + strconv.Itoa(argPos) + ` OFFSET $` + strconv.Itoa(argPos+1)
 
 	var total int64
-	if countArgs != nil {
-		_ = h.DB.QueryRow(c.Request.Context(), countQ, countArgs...).Scan(&total)
-	} else {
-		_ = h.DB.QueryRow(c.Request.Context(), countQ).Scan(&total)
-	}
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, args...).Scan(&total)
 
-	dbRows, err := h.DB.Query(c.Request.Context(), listQ, listArgs...)
+	queryArgs := append(args, perPage, offset)
+	dbRows, err := h.DB.Query(c.Request.Context(), listQ, queryArgs...)
 	if err != nil {
 		errInternal(c, err)
 		return
@@ -159,10 +250,14 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		       s.in_cache, s.is_non_collectible, s.is_parked, s.loves_count,
 		       s.total_moves, s.total_drops, s.total_grabs, s.total_comments, s.total_seen, s.total_dips,
 		       s.distinct_users, s.countries_count, s.caches_count_distinct,
-		       s.total_points_generated, s.users_awarded, s.current_multiplier,
+		       s.total_points_generated, rk.rank_all_time, s.users_awarded, s.current_multiplier,
 		       s.first_move_at, s.last_move_at
 		FROM geokrety_stats.mv_gk_stats s
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id
+		LEFT JOIN (
+			SELECT gk_id, RANK() OVER (ORDER BY total_points_generated DESC) AS rank_all_time
+			FROM geokrety_stats.mv_gk_stats
+		) rk ON rk.gk_id = s.gk_id
 		LEFT JOIN geokrety.gk_users o ON o.id = s.owner_id
 		LEFT JOIN geokrety.gk_users h ON h.id = s.holder_id
 		LEFT JOIN LATERAL (
@@ -184,7 +279,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		&g.InCache, &g.IsNonCollectible, &g.IsParked, &g.LovesCount,
 		&g.TotalMoves, &g.TotalDrops, &g.TotalGrabs, &g.TotalComments, &g.TotalSeen, &g.TotalDips,
 		&g.DistinctUsers, &g.CountriesCount, &g.DistinctCaches,
-		&g.TotalPointsGenerated, &g.UsersAwarded, &g.CurrentMultiplier,
+		&g.TotalPointsGenerated, &g.RankAllTime, &g.UsersAwarded, &g.CurrentMultiplier,
 		&g.FirstMoveAt, &g.LastMoveAt,
 	)
 	if err != nil {

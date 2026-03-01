@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
 import { getMoveTypeTooltip } from '../composables/useMoveTypeColors.js'
+import PointsValue from '../components/PointsValue.vue'
 
 const countriesRaw = ref([])
 const loading = ref(false)
@@ -65,6 +66,15 @@ const formatFloat = (num, decimals = 2) => {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   })
+}
+
+function headerSort(field) {
+  if (sortBy.value === field) return
+  sortBy.value = field
+}
+
+function sortIcon(field) {
+  return sortBy.value === field ? 'bi-sort-down-alt text-primary' : 'bi-sort-down text-muted'
 }
 
 </script>
@@ -221,16 +231,16 @@ const formatFloat = (num, decimals = 2) => {
             <tr>
               <th style="width: 60px" title="Rank position based on current sort">#</th>
               <th title="Country name">Country</th>
-              <th class="text-end" title="Total points earned in this country">Points</th>
-              <th class="text-end d-none d-md-table-cell text-nowrap" title="Average points earned per move in this country">Avg/Move</th>
-              <th class="text-end d-none d-sm-table-cell" title="Total number of recorded moves in this country">Moves</th>
-              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('drop')">🌳</th>
-              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('grab')">🚀</th>
-              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('dip')">🥾</th>
-              <th class="text-end d-none d-lg-table-cell" :title="getMoveTypeTooltip('seen')">👀</th>
-              <th class="text-end d-none d-md-table-cell" title="Number of distinct GeoKrety that visited this country">GeoKrety</th>
-              <th class="text-end d-none d-md-table-cell" title="Number of distinct users who made moves in this country">Users</th>
-              <th class="text-end" title="Total loves given to GeoKrety that visited this country">❤️</th>
+              <th class="text-end" style="cursor:pointer" @click="headerSort('points')" title="Total points earned in this country (sorted from API)">Points <i class="bi" :class="sortIcon('points')"></i></th>
+              <th class="text-end d-none d-md-table-cell text-nowrap" style="cursor:pointer" @click="headerSort('avg_points')" title="Average points earned per move in this country (sorted from API)">Avg/Move <i class="bi" :class="sortIcon('avg_points')"></i></th>
+              <th class="text-end d-none d-sm-table-cell" style="cursor:pointer" @click="headerSort('moves')" title="Total number of recorded moves in this country (sorted from API)">Moves <i class="bi" :class="sortIcon('moves')"></i></th>
+              <th class="text-end d-none d-lg-table-cell" style="cursor:pointer" @click="headerSort('drops')" :title="`${getMoveTypeTooltip('drop')} (sorted from API)`">🌳 <i class="bi" :class="sortIcon('drops')"></i></th>
+              <th class="text-end d-none d-lg-table-cell" style="cursor:pointer" @click="headerSort('grabs')" :title="`${getMoveTypeTooltip('grab')} (sorted from API)`">🚀 <i class="bi" :class="sortIcon('grabs')"></i></th>
+              <th class="text-end d-none d-lg-table-cell" style="cursor:pointer" @click="headerSort('dips')" :title="`${getMoveTypeTooltip('dip')} (sorted from API)`">🥾 <i class="bi" :class="sortIcon('dips')"></i></th>
+              <th class="text-end d-none d-lg-table-cell" style="cursor:pointer" @click="headerSort('sees')" :title="`${getMoveTypeTooltip('seen')} (sorted from API)`">👀 <i class="bi" :class="sortIcon('sees')"></i></th>
+              <th class="text-end d-none d-md-table-cell" style="cursor:pointer" @click="headerSort('gks')" title="Number of distinct GeoKrety that visited this country (sorted from API)">GeoKrety <i class="bi" :class="sortIcon('gks')"></i></th>
+              <th class="text-end d-none d-md-table-cell" style="cursor:pointer" @click="headerSort('users')" title="Number of distinct users who made moves in this country (sorted from API)">Users <i class="bi" :class="sortIcon('users')"></i></th>
+              <th class="text-end" style="cursor:pointer" @click="headerSort('loves')" title="Total loves given to GeoKrety that visited this country (sorted from API)">❤️ <i class="bi" :class="sortIcon('loves')"></i></th>
             </tr>
           </thead>
           <tbody>
@@ -247,8 +257,8 @@ const formatFloat = (num, decimals = 2) => {
                   <strong class="text-truncate" style="max-width: 120px">{{ country.country.toUpperCase() }}</strong>
                 </div>
               </td>
-              <td class="text-end fw-bold text-success">{{ formatInt(country.total_points_awarded) }}</td>
-              <td class="text-end fw-bold text-info small d-none d-md-table-cell">{{ formatFloat(country.avg_points_per_move, 3) }}</td>
+              <td class="text-end fw-bold text-success"><PointsValue :value="country.total_points_awarded" :digits="0" /></td>
+              <td class="text-end fw-bold text-info small d-none d-md-table-cell"><PointsValue :value="country.avg_points_per_move" /></td>
               <td class="text-end d-none d-sm-table-cell">{{ formatInt(country.total_moves) }}</td>
               <td class="text-end text-muted small d-none d-lg-table-cell">{{ formatInt(country.drops) }}</td>
               <td class="text-end text-muted small d-none d-lg-table-cell">{{ formatInt(country.grabs) }}</td>

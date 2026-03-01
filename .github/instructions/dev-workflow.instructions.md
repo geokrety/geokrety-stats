@@ -44,10 +44,12 @@ For every feature, bugfix, refactor, or improvement:
 9. Validate database behavior
 10. Check logs
 11. Iterate until no issues remain
-12. Commit using conventional commit format
-13. Rebuild and re-test
-14. Final verification
-15. Commit final changes
+12. Check the prompt twice and ensure all steps are applied !! IMPORTANT !!
+13. Commit using conventional commit format
+14. Rebuild and re-test
+15. Final verification
+16. Commit final changes
+17. Make a final report of completion
 
 If something fails:
 

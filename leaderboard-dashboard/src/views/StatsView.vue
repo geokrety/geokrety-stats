@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import LineChart from '../components/LineChart.vue'
 import BarChart from '../components/BarChart.vue'
+import PointsValue from '../components/PointsValue.vue'
 
 const stats      = ref(null)
 const daily      = ref([])
@@ -311,7 +312,7 @@ onMounted(async () => {
                       <td class="ps-3">
                         <span class="badge bg-light text-dark border fw-medium text-truncate d-inline-block" style="max-width: 180px">{{ b.label.replace(/_/g, ' ') }}</span>
                       </td>
-                      <td class="text-end fw-bold text-success">{{ b.points?.toLocaleString() }}</td>
+                      <td class="text-end fw-bold text-success"><PointsValue :value="b.points" /></td>
                       <td class="text-end d-none d-sm-table-cell text-muted pe-3">{{ b.count?.toLocaleString() }}</td>
                     </tr>
                   </tbody>

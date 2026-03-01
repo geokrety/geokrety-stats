@@ -147,6 +147,7 @@ type GeoKret struct {
 	CountriesCount      int64      `json:"countries_count"`
 	DistinctCaches      int64      `json:"distinct_caches"`
 	TotalPointsGenerated float64   `json:"total_points_generated"`
+	RankAllTime         *int64     `json:"rank_all_time,omitempty"`
 	UsersAwarded        int64      `json:"users_awarded"`
 	CurrentMultiplier   float64    `json:"current_multiplier"`
 	FirstMoveAt         *time.Time `json:"first_move_at,omitempty"`

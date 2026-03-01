@@ -4,7 +4,14 @@ import HomeView from '../views/HomeView.vue'
 const routes = [
   { path: '/', component: HomeView },
   { path: '/users/:id', component: () => import('../views/UserView.vue') },
-  { path: '/users/:id/awards', component: () => import('../views/PointAwardsView.vue') },
+  {
+    path: '/users/:id/awards',
+    redirect: (to) => {
+      const query = new URLSearchParams(to.query || {}).toString()
+      const hash = query ? `#awards?${query}` : '#awards'
+      return { path: `/users/${to.params.id}`, hash }
+    },
+  },
   { path: '/users/:id/chains', component: () => import('../views/UserChainsView.vue') },
   { path: '/geokrety', component: () => import('../views/GeokretyLeaderboardView.vue') },
   { path: '/geokrety/:id', component: () => import('../views/GeokretView.vue') },

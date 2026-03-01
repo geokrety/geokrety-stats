@@ -317,26 +317,104 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 	}
 	page, perPage, offset := parsePagination(c)
 
-	const countQ = `SELECT COUNT(DISTINCT geokret) FROM geokrety.gk_moves WHERE author = $1`
-	var total int64
-	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+	sort := c.DefaultQuery("sort", "last_interaction")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 
-	const q = `
-		SELECT g.id, g.name, g.type, g.missing, g.distance,
-		       gs.total_points_generated, gs.current_multiplier,
-		       pic.bucket, pic.key,
-		       MAX(m.moved_on_datetime) AS last_interaction
+	awardingOnly := c.DefaultQuery("awarding_only", "false") == "true"
+	multiplierGtOne := c.DefaultQuery("multiplier_gt_one", "false") == "true"
+
+	var gkTypes []int32
+	if typesParam := c.Query("gk_types"); typesParam != "" {
+		for _, raw := range strings.Split(typesParam, ",") {
+			trimmed := strings.TrimSpace(raw)
+			if trimmed == "" {
+				continue
+			}
+			t, convErr := strconv.Atoi(trimmed)
+			if convErr != nil || t < 0 || t > 10 {
+				c.JSON(400, gin.H{"errors": []gin.H{{"status": "400", "title": "invalid geokret type filter"}}})
+				return
+			}
+			gkTypes = append(gkTypes, int32(t))
+		}
+	}
+
+	whereParts := []string{}
+	args := []interface{}{id}
+	argPos := 2
+
+	if awardingOnly {
+		whereParts = append(whereParts, "COALESCE(gs.total_points_generated, 0) > 0")
+	}
+	if multiplierGtOne {
+		whereParts = append(whereParts, "COALESCE(gs.current_multiplier, 1.0) > 1")
+	}
+	if len(gkTypes) > 0 {
+		whereParts = append(whereParts, "g.type = ANY($"+strconv.Itoa(argPos)+"::int[])")
+		args = append(args, gkTypes)
+		argPos++
+	}
+
+	whereSQL := ""
+	if len(whereParts) > 0 {
+		whereSQL = "WHERE " + strings.Join(whereParts, " AND ")
+	}
+
+	orderBy := "last_interaction DESC NULLS LAST"
+	switch sort {
+	case "gk", "name":
+		orderBy = "LOWER(g.name) " + dir + ", last_interaction DESC NULLS LAST"
+	case "type":
+		orderBy = "g.type " + dir + ", last_interaction DESC NULLS LAST"
+	case "points":
+		orderBy = "COALESCE(gs.total_points_generated, 0) " + dir + ", last_interaction DESC NULLS LAST"
+	case "multiplier":
+		orderBy = "COALESCE(gs.current_multiplier, 1.0) " + dir + ", last_interaction DESC NULLS LAST"
+	case "last_interaction", "date":
+		orderBy = "last_interaction " + dir + " NULLS LAST"
+	}
+
+	baseFrom := `
 		FROM (SELECT DISTINCT geokret FROM geokrety.gk_moves WHERE author = $1) dm
 		JOIN geokrety.gk_geokrety g ON g.id = dm.geokret
 		LEFT JOIN geokrety_stats.mv_gk_stats gs ON gs.gk_id = g.id
 		LEFT JOIN geokrety.gk_moves m ON m.geokret = g.id AND m.author = $1
-		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar`
+
+	countQ := `
+		SELECT COUNT(*)
+		FROM (
+			SELECT g.id
+			` + baseFrom + `
+			` + whereSQL + `
+			GROUP BY g.id, g.name, g.type, g.missing, g.distance,
+			         gs.total_points_generated, gs.current_multiplier, pic.bucket, pic.key
+		) q`
+
+	var total int64
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, args...).Scan(&total)
+
+	listQ := `
+		SELECT g.id, g.name, g.type, g.missing, g.distance,
+		       gs.total_points_generated, gs.current_multiplier,
+		       pic.bucket, pic.key,
+		       MAX(m.moved_on_datetime) AS last_interaction
+		` + baseFrom + `
+		` + whereSQL + `
 		GROUP BY g.id, g.name, g.type, g.missing, g.distance,
 		         gs.total_points_generated, gs.current_multiplier, pic.bucket, pic.key
-		ORDER BY last_interaction DESC NULLS LAST
-		LIMIT $2 OFFSET $3`
+		ORDER BY ` + orderBy + `
+		LIMIT $` + strconv.Itoa(argPos) + ` OFFSET $` + strconv.Itoa(argPos+1)
 
-	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	queryArgs := append(args, perPage, offset)
+	rows, err := h.DB.Query(c.Request.Context(), listQ, queryArgs...)
 	if err != nil {
 		errInternal(c, err)
 		return
@@ -349,8 +427,10 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 			GkType              int            `json:"gk_type"`
 			Missing             bool           `json:"missing"`
 			Distance            int64          `json:"distance_km"`
-			TotalPointsGenerated *float64       `json:"total_points_generated,omitempty"`
+			TotalPointsGenerated *float64      `json:"total_points_generated,omitempty"`
 			CurrentMultiplier   *float64       `json:"current_multiplier,omitempty"`
+			LovesCount          *int64         `json:"loves_count,omitempty"`
+			Status              string         `json:"status"`
 			LastInteraction     interface{}    `json:"last_interaction,omitempty"`
 			Avatar              *string        `json:"avatar,omitempty"`
 		}
@@ -365,6 +445,19 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 			errInternal(c, err)
 			return
 		}
+			if r.CurrentMultiplier == nil {
+				defaultMultiplier := 1.0
+				r.CurrentMultiplier = &defaultMultiplier
+			}
+			if r.TotalPointsGenerated == nil {
+				defaultPoints := 0.0
+				r.TotalPointsGenerated = &defaultPoints
+			}
+			if r.Missing {
+				r.Status = "missing"
+			} else {
+				r.Status = "active"
+			}
 			r.Avatar = avatarRef(avatarBucket, avatarKey)
 		out = append(out, r)
 	}

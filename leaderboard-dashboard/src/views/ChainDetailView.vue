@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { fetchOne, fetchList } from '../composables/useApi.js'
 import Pagination from '../components/Pagination.vue'
+import PointsValue from '../components/PointsValue.vue'
 
 const route = useRoute()
 const chainId = ref(route.params.id)
@@ -122,7 +123,7 @@ function sortIcon(activeCol, col, order) {
           </div>
           <div class="text-end">
             <div><span class="badge" :class="chain.status === 'active' ? 'bg-success' : 'bg-secondary'">{{ chain.status }}</span></div>
-            <div class="small text-muted mt-1">Members: {{ chain.member_count?.toLocaleString() }} · Points: {{ chain.chain_points?.toFixed(2) }}</div>
+            <div class="small text-muted mt-1">Members: {{ chain.member_count?.toLocaleString() }} · Points: <PointsValue :value="chain.chain_points" /></div>
           </div>
         </div>
         <div class="card-footer d-flex gap-2 flex-wrap">
@@ -138,9 +139,9 @@ function sortIcon(activeCol, col, order) {
               <table class="table table-sm table-hover mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th style="cursor:pointer" @click="toggleMembersSort('position')"># <i class="bi" :class="sortIcon(membersSort, 'position', membersOrder)"></i></th>
-                    <th style="cursor:pointer" @click="toggleMembersSort('user')">User <i class="bi" :class="sortIcon(membersSort, 'user', membersOrder)"></i></th>
-                    <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMembersSort('joined')">Joined <i class="bi" :class="sortIcon(membersSort, 'joined', membersOrder)"></i></th>
+                    <th style="cursor:pointer" @click="toggleMembersSort('position')" title="Position of the user in chain order"># <i class="bi" :class="sortIcon(membersSort, 'position', membersOrder)"></i></th>
+                    <th style="cursor:pointer" @click="toggleMembersSort('user')" title="Chain member username">User <i class="bi" :class="sortIcon(membersSort, 'user', membersOrder)"></i></th>
+                    <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMembersSort('joined')" title="Date user joined the chain">Joined <i class="bi" :class="sortIcon(membersSort, 'joined', membersOrder)"></i></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -170,10 +171,10 @@ function sortIcon(activeCol, col, order) {
               <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th style="cursor:pointer" @click="toggleMovesSort('date')">Date <i class="bi" :class="sortIcon(movesSort, 'date', movesOrder)"></i></th>
-                    <th style="cursor:pointer" @click="toggleMovesSort('user')">User <i class="bi" :class="sortIcon(movesSort, 'user', movesOrder)"></i></th>
-                    <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMovesSort('type')">Type <i class="bi" :class="sortIcon(movesSort, 'type', movesOrder)"></i></th>
-                    <th class="text-end" style="cursor:pointer" @click="toggleMovesSort('chain_points')">Chain pts <i class="bi" :class="sortIcon(movesSort, 'chain_points', movesOrder)"></i></th>
+                    <th style="cursor:pointer" @click="toggleMovesSort('date')" title="Move date">Date <i class="bi" :class="sortIcon(movesSort, 'date', movesOrder)"></i></th>
+                    <th style="cursor:pointer" @click="toggleMovesSort('user')" title="User who performed the move">User <i class="bi" :class="sortIcon(movesSort, 'user', movesOrder)"></i></th>
+                    <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMovesSort('type')" title="Move type">Type <i class="bi" :class="sortIcon(movesSort, 'type', movesOrder)"></i></th>
+                    <th class="text-end" style="cursor:pointer" @click="toggleMovesSort('chain_points')" title="Points awarded for this move in chain context">Chain pts <i class="bi" :class="sortIcon(movesSort, 'chain_points', movesOrder)"></i></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,7 +188,7 @@ function sortIcon(activeCol, col, order) {
                       <span v-else class="text-muted">—</span>
                     </td>
                     <td class="d-none d-md-table-cell"><span class="badge bg-light text-dark border">{{ move.type_name }}</span></td>
-                    <td class="text-end fw-semibold text-primary">{{ move.chain_points?.toFixed(2) }}</td>
+                    <td class="text-end fw-semibold text-primary"><PointsValue :value="move.chain_points" /></td>
                   </tr>
                 </tbody>
               </table>
