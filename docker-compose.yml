@@ -57,17 +57,48 @@ services:
     #   timeout: 5s
     #   retries: 3
 
-  # ── Leaderboard Dashboard (Vue + nginx) ───────────────────────────────────
+  # ── Leaderboard Dashboard – Production (nginx) ────────────────────────────
   leaderboard-dashboard:
     build:
       context: ./leaderboard-dashboard
       dockerfile: Dockerfile
+      target: prod
+    image: leaderboard-dashboard:prod
     restart: unless-stopped
     depends_on:
       - leaderboard-api
-    #     condition: service_healthy
     ports:
       - "3000:80"
+    profiles: ["prod"]  # Default: use with 'docker compose up' or 'docker compose --profile prod up'
+
+  # ── Leaderboard Dashboard – Development (Vite with hot reload) ───────────
+  leaderboard-dashboard-dev:
+    build:
+      context: ./leaderboard-dashboard
+      dockerfile: Dockerfile
+      target: dev
+    image: leaderboard-dashboard:dev
+    restart: unless-stopped
+    depends_on:
+      - leaderboard-api
+    volumes:
+      # Mount local source code for hot reload
+      - ./leaderboard-dashboard/src:/app/src
+      - ./leaderboard-dashboard/public:/app/public
+      - ./leaderboard-dashboard/index.html:/app/index.html
+      - ./leaderboard-dashboard/vite.config.js:/app/vite.config.js
+      - ./leaderboard-dashboard/package.json:/app/package.json
+      # Skip node_modules (use container's version)
+      - /app/node_modules
+    ports:
+      - "3000:3000"      # Vite dev server (main)
+      - "5173:5173"      # Vite HMR port (for hot module reload)
+    environment:
+      VITE_HMR_HOST: localhost
+      VITE_HMR_PORT: 5173
+      VITE_HMR_PROTOCOL: ws
+    profiles: ["dev"]    # Use with 'docker compose --profile dev up'
 
 # volumes:
 #   postgres_data:
+

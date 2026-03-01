@@ -1,17 +1,32 @@
-# ── Build stage ─────────────────────────────────────────────────────────────
-FROM node:22-alpine AS builder
+# ── Dependencies stage ──────────────────────────────────────────────────────
+FROM node:22-alpine AS dependencies
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+# ── Build stage ─────────────────────────────────────────────────────────────
+FROM dependencies AS builder
+
 COPY . .
 RUN npm run build
 
-# ── Runtime stage (nginx) ────────────────────────────────────────────────────
-FROM nginx:1.27-alpine
+# ── Development stage (Vite with hot reload) ────────────────────────────────
+FROM dependencies AS dev
 
-# Copy built assets
+WORKDIR /app
+COPY . .
+
+# Expose Vite dev server port
+EXPOSE 5173
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
+
+# ── Production stage (nginx) ────────────────────────────────────────────────
+FROM nginx:1.27-alpine AS prod
+
+# Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # SPA fallback and reverse proxy config

@@ -199,6 +199,9 @@ function sortIcon(activeCol, col, order) {
               <h6 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Chain Members</h6>
               <span class="badge bg-primary rounded-pill">{{ membersMeta.total || 0 }}</span>
             </div>
+            <div class="card-body py-2" v-if="membersMeta.total">
+              This card displays the members of the chain along with their positions and join dates
+            </div>
             <div class="table-responsive">
               <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">

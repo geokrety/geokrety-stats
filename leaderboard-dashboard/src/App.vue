@@ -11,11 +11,15 @@ const THEME_KEY = 'gk-dashboard-theme'
 const navMenu = ref(null)
 const currentTheme = ref('light')
 const pulseEffect = ref(false)
+const previousMoveCount = ref(null)
 
-// Trigger visual pulse when stats update
-watch(lastUpdate, () => {
-  pulseEffect.value = true
-  setTimeout(() => { pulseEffect.value = false }, 1000)
+// Trigger visual pulse only when move count actually changes
+watch(() => stats.value?.total_moves, (newVal) => {
+  if (newVal !== null && newVal !== previousMoveCount.value) {
+    previousMoveCount.value = newVal
+    pulseEffect.value = true
+    setTimeout(() => { pulseEffect.value = false }, 1000)
+  }
 })
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
@@ -127,7 +131,8 @@ onMounted(() => {
                   :class="{'stats-update-pulse': pulseEffect}"
                 >
                   <i class="bi bi-activity text-info me-1"></i>
-                  <span class="fw-semibold">{{ stats.total_moves?.toLocaleString() }}</span> <span class="d-none d-md-inline">moves</span>
+                  <span class="fw-semibold">{{ stats.total_moves?.toLocaleString() }}</span>
+                  <span class="d-none d-md-inline">&nbsp;moves</span>
                 </span>
               </template>
               <div class="text-start p-2" style="min-width: 200px">
