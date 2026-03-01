@@ -187,30 +187,30 @@ watch(activeTab, (tab) => {
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-2">
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">
           <i class="bi bi-bar-chart-line me-1"></i>Overview
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">
           <i class="bi bi-list-ul me-1"></i>Moves
           <span v-if="moveMeta.total" class="badge bg-secondary ms-1">{{ moveMeta.total.toLocaleString() }}</span>
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'countries' }" @click="activeTab = 'countries'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'countries' }" @click="activeTab = 'countries'">
           <i class="bi bi-globe me-1"></i>Countries
           <span v-if="countries.length" class="badge bg-secondary ms-1">{{ countries.length }}</span>
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'related-users' }" @click="activeTab = 'related-users'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'related-users' }" @click="activeTab = 'related-users'">
           <i class="bi bi-people me-1"></i>Movers
           <span v-if="gk?.distinct_users" class="badge bg-secondary ms-1">{{ gk.distinct_users.toLocaleString() }}</span>
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'points' }" @click="activeTab = 'points'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'points' }" @click="activeTab = 'points'">
           <i class="bi bi-coin me-1"></i>Points Log
           <span v-if="pointsLogMeta.total" class="badge bg-success ms-1">{{ pointsLogMeta.total.toLocaleString() }}</span>
         </button>

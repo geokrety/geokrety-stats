@@ -1,32 +1,57 @@
 <script setup>
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useLiveStats } from './composables/useWebSocket.js'
 
 const route = useRoute()
 const { connected, stats, connectedUsers } = useLiveStats()
+const THEME_KEY = 'gk-dashboard-theme'
 
 const navMenu = ref(null)
+const currentTheme = ref('light')
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 
 const closeMenu = () => {
   const collapseElement = document.getElementById('navmenu')
   if (collapseElement && collapseElement.classList.contains('show')) {
-    const bsCollapse = bootstrap.Collapse.getInstance(collapseElement) || new bootstrap.Collapse(collapseElement)
+    const bsCollapse = window.bootstrap.Collapse.getInstance(collapseElement) || new window.bootstrap.Collapse(collapseElement)
     bsCollapse.hide()
   }
 }
+
+const applyTheme = (theme) => {
+  currentTheme.value = theme
+  document.documentElement.setAttribute('data-bs-theme', theme)
+  localStorage.setItem(THEME_KEY, theme)
+}
+
+const toggleTheme = () => {
+  applyTheme(currentTheme.value === 'dark' ? 'light' : 'dark')
+}
+
+onMounted(() => {
+  const htmlTheme = document.documentElement.getAttribute('data-bs-theme')
+  currentTheme.value = htmlTheme === 'dark' ? 'dark' : 'light'
+})
 </script>
 
 <template>
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+  <nav class="navbar app-navbar navbar-expand-lg sticky-top shadow-sm" :class="currentTheme === 'dark' ? 'navbar-dark' : 'navbar-light'">
     <div class="container-fluid px-2 px-md-4">
       <RouterLink class="navbar-brand fw-bold" to="/" @click="closeMenu">
         <i class="bi bi-geo-alt-fill text-warning me-1"></i> GeoKrety Leaderboard
       </RouterLink>
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
+      <button
+        class="navbar-toggler border-0"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navmenu"
+        aria-controls="navmenu"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navmenu" ref="navMenu">
@@ -53,6 +78,14 @@ const closeMenu = () => {
           </li>
         </ul>
         <span class="navbar-text small px-3">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary theme-toggle-btn me-2"
+            :aria-label="`Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} theme`"
+            @click="toggleTheme"
+          >
+            <i class="bi" :class="currentTheme === 'dark' ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
+          </button>
           <span v-if="connected" class="text-success">
             <i class="bi bi-wifi me-1"></i>Live
           </span>
@@ -69,12 +102,12 @@ const closeMenu = () => {
   </nav>
 
   <!-- Main content -->
-  <main class="container-fluid py-3 px-1 px-md-4" style="overflow-x: hidden;">
+  <main class="app-main container-fluid py-3 px-1 px-md-4">
     <RouterView />
   </main>
 
   <!-- Footer -->
-  <footer class="bg-dark text-secondary text-center py-2 small mt-4">
+  <footer class="app-footer text-center py-2 small mt-4">
     GeoKrety Points System &mdash;
     <span v-if="connected" class="text-success">
       <i class="bi bi-people-fill me-1"></i>{{ connectedUsers }} user{{ connectedUsers !== 1 ? 's' : '' }} online
@@ -84,9 +117,4 @@ const closeMenu = () => {
     </span>
   </footer>
 </template>
-
-<style>
-body { background-color: #f8f9fa; }
-.navbar-brand { font-size: 1.1rem; }
-</style>
 

@@ -143,6 +143,7 @@ function toggleSort(col) {
               <div class="btn-group btn-group-sm overflow-auto d-flex" role="group">
                 <button
                   v-for="p in PERIODS" :key="p.value"
+                  type="button"
                   class="btn flex-fill text-nowrap"
                   :class="(period === p.value && !yearValue) ? 'btn-primary' : 'btn-outline-secondary'"
                   @click="selectPeriod(p.value)"

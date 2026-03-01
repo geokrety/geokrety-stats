@@ -318,7 +318,8 @@ watch(activeRange, draw)
     <div v-if="showRangeButtons" class="d-flex justify-content-end mb-1 gap-1">
       <button
         v-for="r in RANGES" :key="r.key"
-        class="btn btn-xs py-0 px-2"
+        type="button"
+        class="btn btn-sm py-0 px-2"
         style="font-size:0.75rem"
         :class="activeRange === r.key ? 'btn-primary' : 'btn-outline-secondary'"
         @click="activeRange = r.key"

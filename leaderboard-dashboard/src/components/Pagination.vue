@@ -30,19 +30,19 @@ const pages = computed(() => {
   <nav aria-label="pagination">
     <ul class="pagination pagination-sm justify-content-center mb-0">
       <li class="page-item" :class="{ disabled: page <= 1 }">
-        <button class="page-link" @click="go(1)">&laquo;</button>
+        <button type="button" class="page-link" @click="go(1)">&laquo;</button>
       </li>
       <li class="page-item" :class="{ disabled: page <= 1 }">
-        <button class="page-link" @click="go(page - 1)">&lsaquo;</button>
+        <button type="button" class="page-link" @click="go(page - 1)">&lsaquo;</button>
       </li>
       <li v-for="p in pages" :key="p" class="page-item" :class="{ active: p === page }">
-        <button class="page-link" @click="go(p)">{{ p }}</button>
+        <button type="button" class="page-link" @click="go(p)">{{ p }}</button>
       </li>
       <li class="page-item" :class="{ disabled: page >= totalPages }">
-        <button class="page-link" @click="go(page + 1)">&rsaquo;</button>
+        <button type="button" class="page-link" @click="go(page + 1)">&rsaquo;</button>
       </li>
       <li class="page-item" :class="{ disabled: page >= totalPages }">
-        <button class="page-link" @click="go(totalPages)">&raquo;</button>
+        <button type="button" class="page-link" @click="go(totalPages)">&raquo;</button>
       </li>
     </ul>
     <p class="text-center text-muted small mt-1">

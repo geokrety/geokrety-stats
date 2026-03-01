@@ -104,7 +104,7 @@ watch(activeTab, (tab) => {
               <span v-if="user.joined_at" class="d-none d-sm-inline"> &mdash; joined {{ user.joined_at?.slice(0, 10) }}</span>
             </p>
           </div>
-          <div class="col-12 col-lg-auto mt-lg-0 mt-3 border-top pt-3 border-lg-top-0 pt-lg-0">
+          <div class="col-12 col-lg-auto mt-lg-0 mt-3 border-top border-lg-0 pt-3 pt-lg-0">
             <div class="row g-3 text-center justify-content-center">
               <div class="col-4 col-sm-auto mb-2">
                 <div class="fw-bold text-primary fs-4">{{ user.total_points?.toLocaleString() }}</div>
@@ -140,23 +140,23 @@ watch(activeTab, (tab) => {
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-2">
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">
           <i class="bi bi-bar-chart-line me-1"></i>Overview
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">
           <i class="bi bi-list-ul me-1"></i>Moves
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'countries' }" @click="activeTab = 'countries'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'countries' }" @click="activeTab = 'countries'">
           <i class="bi bi-globe me-1"></i>Countries
           <span v-if="countries.length" class="badge bg-secondary ms-1">{{ countries.length }}</span>
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" :class="{ active: activeTab === 'related-users' }" @click="activeTab = 'related-users'">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'related-users' }" @click="activeTab = 'related-users'">
           <i class="bi bi-people me-1"></i>Related Users
         </button>
       </li>
@@ -213,7 +213,7 @@ watch(activeTab, (tab) => {
                 <td class="text-end">
                   <RouterLink
                     :to="`/users/${userId}/awards?label=${encodeURIComponent(b.source)}`"
-                    class="btn btn-xs btn-outline-secondary py-0 px-1"
+                    class="btn btn-sm btn-outline-secondary py-0 px-1"
                     style="font-size:0.75rem"
                     title="View award details"
                   ><i class="bi bi-eye"></i></RouterLink>

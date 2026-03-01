@@ -96,12 +96,14 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
     <!-- Label filter chips -->
     <div v-if="availableLabels.length" class="mb-3 d-flex flex-wrap gap-1">
       <button
+        type="button"
         class="btn btn-sm"
         :class="!labelFilter ? 'btn-primary' : 'btn-outline-secondary'"
         @click="setLabel('')"
       >All</button>
       <button
         v-for="lbl in availableLabels" :key="lbl"
+        type="button"
         class="btn btn-sm"
         :class="labelFilter === lbl ? 'btn-primary' : 'btn-outline-secondary'"
         @click="setLabel(lbl)"
