@@ -1,28 +1,31 @@
 /**
  * Map move type names to Bootstrap badge colors
- * Handles both API format (drop, grab, take, etc.) and display format
+ * The color palette mirrors the charts and badges used across the dashboard.
  */
+const MOVE_TYPE_COLORS = {
+  drop: 'bg-success text-dark',
+  drops: 'bg-success text-dark',
+  dropped: 'bg-success text-dark',
+  grab: 'bg-warning text-dark',
+  grabs: 'bg-warning text-dark',
+  take: 'bg-warning text-dark',
+  catch: 'bg-warning text-dark',
+  found: 'bg-warning text-dark',
+  dip: 'bg-info text-dark',
+  dipped: 'bg-info text-dark',
+  move: 'bg-info text-dark',
+  seen: 'bg-secondary',
+  comment: 'bg-secondary',
+  archived: 'bg-dark text-light',
+  archive: 'bg-dark text-light',
+  recovered: 'bg-success text-dark',
+}
+
 export function getMoveTypeBadgeClass(typeName) {
   if (!typeName) return 'bg-secondary'
 
   const lowerType = typeof typeName === 'string' ? typeName.toLowerCase() : typeName
-
-  // API format move types (from backend: drop, grab, take, etc.)
-  const typeColors = {
-    'drop': 'bg-danger',
-    'grab': 'bg-warning text-dark',
-    'take': 'bg-info',
-    'catch': 'bg-success',
-    'dip': 'bg-primary',
-    'seen': 'bg-secondary',
-    'move': 'bg-primary',
-    'recovered': 'bg-success',
-    'dropped': 'bg-danger',
-    'found': 'bg-success',
-    'dipped': 'bg-info',
-  }
-
-  return typeColors[lowerType] || 'bg-secondary'
+  return MOVE_TYPE_COLORS[lowerType] || 'bg-secondary'
 }
 
 /**
@@ -48,42 +51,38 @@ const GEOKRETY_TYPES = {
 export function getGkTypeBadgeClass(gkType) {
   if (!gkType) return 'bg-secondary'
 
-  // Support both numeric IDs and string names
   let typeId = typeof gkType === 'number' ? gkType : null
   let typeName = typeof gkType === 'string' ? gkType : GEOKRETY_TYPES[gkType]
 
-  // Map type IDs to Bootstrap colors
   const colorsByType = {
-    0: 'bg-primary',      // Traditional
-    1: 'bg-info',         // Book/CD/DVD
-    2: 'bg-success',      // Human
-    3: 'bg-warning text-dark', // Coin
-    4: 'bg-danger',       // KretyPost
-    5: 'bg-secondary',    // Pebble
-    6: 'bg-primary',      // Car
-    7: 'bg-info',         // Playing Card
-    8: 'bg-success',      // Dog Tag
-    9: 'bg-warning text-dark', // Jigsaw
-    10: 'bg-danger',      // Easter Egg
+    0: 'bg-primary',
+    1: 'bg-info',
+    2: 'bg-success',
+    3: 'bg-warning text-dark',
+    4: 'bg-danger',
+    5: 'bg-secondary',
+    6: 'bg-primary',
+    7: 'bg-info',
+    8: 'bg-success',
+    9: 'bg-warning text-dark',
+    10: 'bg-danger',
   }
 
-  // Try numeric ID first, fallback to name-based mapping
   if (typeId !== null && colorsByType[typeId]) {
     return colorsByType[typeId]
   }
 
-  // Fallback name-based mapping for backward compatibility
   const nameColors = {
-    'Traditional': 'bg-primary',
+    Traditional: 'bg-primary',
     'Book/CD/DVD': 'bg-info',
-    'Human': 'bg-success',
-    'Coin': 'bg-warning text-dark',
-    'KretyPost': 'bg-danger',
-    'Pebble': 'bg-secondary',
-    'Car': 'bg-primary',
+    Human: 'bg-success',
+    Coin: 'bg-warning text-dark',
+    KretyPost: 'bg-danger',
+    Pebble: 'bg-secondary',
+    Car: 'bg-primary',
     'Playing Card': 'bg-info',
     'Dog Tag': 'bg-success',
-    'Jigsaw': 'bg-warning text-dark',
+    Jigsaw: 'bg-warning text-dark',
     'Easter Egg': 'bg-danger',
   }
 
@@ -97,19 +96,19 @@ export function getMoveTypeTooltip(moveType) {
   if (!moveType) return ''
 
   const tooltips = {
-    'drop': 'Left in a cache',
-    'grab': 'Taken from a cache',
-    'take': 'Taken from a cache',
-    'catch': 'Found in a cache',
-    'dip': 'Visited without taking',
-    'seen': 'Encountered but not taken',
-    'move': 'Moved',
-    'recovered': 'Recovered by original owner',
-    'dropped': 'Left in a cache',
-    'found': 'Taken from cache',
-    'dipped': 'Visited without taking',
-    'comment': 'Just a comment: no physical move',
-    'archive': 'Missing for long time',
+    drop: 'Left in a cache',
+    grab: 'Taken from a cache',
+    take: 'Taken from a cache',
+    catch: 'Found in a cache',
+    dip: 'Visited without taking',
+    seen: 'Encountered but not taken',
+    move: 'Moved',
+    recovered: 'Recovered by original owner',
+    dropped: 'Left in a cache',
+    found: 'Taken from cache',
+    dipped: 'Visited without taking',
+    comment: 'Just a comment: no physical move',
+    archive: 'Missing for long time',
   }
 
   const lowerType = typeof moveType === 'string' ? moveType.toLowerCase() : ''

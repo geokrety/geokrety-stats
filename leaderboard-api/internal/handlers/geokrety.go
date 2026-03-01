@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -148,7 +150,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, g.avatar, s.gk_type, s.missing, s.distance, s.caches_count,
+		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, pic.bucket, pic.key, s.gk_type, s.missing, s.distance, s.caches_count,
 		       s.created_on_datetime, s.born_on_datetime,
 		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
 		       COALESCE(o.home_country, NULL) AS owner_home_country,
@@ -161,6 +163,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		       s.first_move_at, s.last_move_at
 		FROM geokrety_stats.mv_gk_stats s
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
 		LEFT JOIN geokrety.gk_users o ON o.id = s.owner_id
 		LEFT JOIN geokrety.gk_users h ON h.id = s.holder_id
 		LEFT JOIN LATERAL (
@@ -172,8 +175,10 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 
 	var g models.GeoKret
 	var publicGkID int64
+	var avatarBucket sql.NullString
+	var avatarKey sql.NullString
 	err = h.DB.QueryRow(c.Request.Context(), q, id).Scan(
-		&g.GkID, &publicGkID, &g.Name, &g.Avatar, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+		&g.GkID, &publicGkID, &g.Name, &avatarBucket, &avatarKey, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 		&g.CreatedAt, &g.BornAt,
 		&g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
 		&g.OwnerHomeCountry, &g.HolderHomeCountry, &g.CacheCountry,
@@ -186,11 +191,13 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	if err != nil {
 		// fallback to raw table (no stats)
 		const fallback = `
-			SELECT id, gkid, name, avatar, type, missing, distance, caches_count,
-			       created_on_datetime, born_on_datetime
-			FROM geokrety.gk_geokrety WHERE id = $1`
+			SELECT g.id, g.gkid, g.name, pic.bucket, pic.key, g.type, g.missing, g.distance, g.caches_count,
+			       g.created_on_datetime, g.born_on_datetime
+			FROM geokrety.gk_geokrety g
+			LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
+			WHERE g.id = $1`
 		err2 := h.DB.QueryRow(c.Request.Context(), fallback, id).Scan(
-			&g.GkID, &publicGkID, &g.Name, &g.Avatar, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+			&g.GkID, &publicGkID, &g.Name, &avatarBucket, &avatarKey, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 			&g.CreatedAt, &g.BornAt,
 		)
 		if err2 != nil {
@@ -200,8 +207,9 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		g.CurrentMultiplier = 1.0
 	}
 
-	g.GkHexID = gkHexID(publicGkID)
-	g.GkTypeName = gkTypeName(g.GkType)
+		g.GkHexID = gkHexID(publicGkID)
+		g.GkTypeName = gkTypeName(g.GkType)
+		g.Avatar = avatarRef(avatarBucket, avatarKey)
 	ok(c, g, models.Meta{}, nil)
 }
 
@@ -247,28 +255,86 @@ func (h *Handler) GeoKretMoves(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "date")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
+	awardingOnly := c.DefaultQuery("awarding_only", "false") == "true"
 
-	const countQ = `SELECT COUNT(*) FROM geokrety.gk_moves WHERE geokret = $1`
+	var moveTypes []int32
+	if typesParam := c.Query("types"); typesParam != "" {
+		for _, raw := range strings.Split(typesParam, ",") {
+			trimmed := strings.TrimSpace(raw)
+			if trimmed == "" {
+				continue
+			}
+			t, convErr := strconv.Atoi(trimmed)
+			if convErr != nil || t < 0 || t > 5 {
+				c.JSON(400, gin.H{"errors": []gin.H{{"status": "400", "title": "invalid move type filter"}}})
+				return
+			}
+			moveTypes = append(moveTypes, int32(t))
+		}
+	}
+
+	var orderBy string
+	switch sort {
+	case "author":
+		orderBy = "LOWER(COALESCE(u.username, '')) " + dir + ", m.moved_on_datetime DESC"
+	case "type":
+		orderBy = "m.move_type " + dir + ", m.moved_on_datetime DESC"
+	case "country":
+		orderBy = "m.country " + dir + " NULLS LAST, m.moved_on_datetime DESC"
+	case "points":
+		orderBy = "COALESCE(p.points, 0) " + dir + ", m.moved_on_datetime DESC"
+	default:
+		orderBy = "m.moved_on_datetime " + dir
+	}
+
+	whereParts := []string{"m.geokret = $1"}
+	args := []interface{}{id}
+	argPos := 2
+	if len(moveTypes) > 0 {
+		whereParts = append(whereParts, "m.move_type = ANY($"+strconv.Itoa(argPos)+"::int[])")
+		args = append(args, moveTypes)
+		argPos++
+	}
+	if awardingOnly {
+		whereParts = append(whereParts, `EXISTS (
+			SELECT 1 FROM geokrety_stats.user_points_log upl
+			WHERE upl.move_id = m.id AND upl.points > 0
+		)`)
+	}
+	whereSQL := strings.Join(whereParts, " AND ")
+
+	countQ := `SELECT COUNT(*) FROM geokrety.gk_moves m WHERE ` + whereSQL
 	var total int64
-	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, args...).Scan(&total)
 
-	const q = `
-		SELECT m.id, m.author, u.username, m.move_type,
+	q := `
+		SELECT m.id, m.author, u.username, pic.bucket, pic.key, m.move_type,
 		       m.country, m.waypoint, m.distance, m.moved_on_datetime,
 		       COALESCE(p.points, 0)::float8 as points,
 		       p.chain_id
 		FROM geokrety.gk_moves m
 		LEFT JOIN geokrety.gk_users u ON u.id = m.author
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = u.avatar
 		LEFT JOIN (
 			SELECT move_id, SUM(points) as points, MAX(chain_id) as chain_id
 			FROM geokrety_stats.user_points_log
 			GROUP BY move_id
 		) p ON p.move_id = m.id
-		WHERE m.geokret = $1
-		ORDER BY m.moved_on_datetime DESC
-		LIMIT $2 OFFSET $3`
+		WHERE ` + whereSQL + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + strconv.Itoa(argPos) + ` OFFSET $` + strconv.Itoa(argPos+1)
 
-	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	queryArgs := append(args, perPage, offset)
+	rows, err := h.DB.Query(c.Request.Context(), q, queryArgs...)
 	if err != nil {
 		errInternal(c, err)
 		return
@@ -279,9 +345,11 @@ func (h *Handler) GeoKretMoves(c *gin.Context) {
 	for rows.Next() {
 		var r models.GkMove
 		var uname *string
+		var avatarBucket sql.NullString
+		var avatarKey sql.NullString
 		var points float64
 		var chainID *int64
-		if err := rows.Scan(&r.MoveID, &r.AuthorID, &uname, &r.MoveType,
+		if err := rows.Scan(&r.MoveID, &r.AuthorID, &uname, &avatarBucket, &avatarKey, &r.MoveType,
 			&r.Country, &r.Waypoint, &r.Distance, &r.MovedOn, &points, &chainID); err != nil {
 			errInternal(c, err)
 			return
@@ -289,6 +357,7 @@ func (h *Handler) GeoKretMoves(c *gin.Context) {
 		if uname != nil {
 			r.AuthorUsername = *uname
 		}
+		r.AuthorAvatar = avatarRef(avatarBucket, avatarKey)
 		if points > 0 {
 			r.Points = &points
 		}
@@ -507,20 +576,76 @@ func (h *Handler) GeoKretPointsLog(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "date")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
+	awardingOnly := c.DefaultQuery("awarding_only", "false") == "true"
 
-	const countQ = `SELECT COUNT(*) FROM geokrety_stats.user_points_log WHERE gk_id = $1`
+	var moveTypes []int32
+	if typesParam := c.Query("types"); typesParam != "" {
+		for _, raw := range strings.Split(typesParam, ",") {
+			trimmed := strings.TrimSpace(raw)
+			if trimmed == "" {
+				continue
+			}
+			t, convErr := strconv.Atoi(trimmed)
+			if convErr != nil || t < 0 || t > 5 {
+				c.JSON(400, gin.H{"errors": []gin.H{{"status": "400", "title": "invalid move type filter"}}})
+				return
+			}
+			moveTypes = append(moveTypes, int32(t))
+		}
+	}
+
+	var orderBy string
+	switch sort {
+	case "points":
+		orderBy = "pl.points " + dir + ", pl.awarded_at DESC"
+	case "label":
+		orderBy = "pl.label " + dir + ", pl.awarded_at DESC"
+	case "type":
+		orderBy = "m.move_type " + dir + ", pl.awarded_at DESC"
+	default:
+		orderBy = "pl.awarded_at " + dir
+	}
+
+	whereParts := []string{"pl.gk_id = $1"}
+	args := []interface{}{id}
+	argPos := 2
+	if awardingOnly {
+		whereParts = append(whereParts, "pl.points > 0")
+	}
+	if len(moveTypes) > 0 {
+		whereParts = append(whereParts, "m.move_type = ANY($"+strconv.Itoa(argPos)+"::int[])")
+		args = append(args, moveTypes)
+		argPos++
+	}
+	whereSQL := strings.Join(whereParts, " AND ")
+
+	countQ := `SELECT COUNT(*) FROM geokrety_stats.user_points_log pl LEFT JOIN geokrety.gk_moves m ON m.id = pl.move_id WHERE ` + whereSQL
 	var total int64
-	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, args...).Scan(&total)
 
-	const q = `
-		SELECT pl.id, pl.user_id, u.username, pl.move_id, pl.label, pl.points, pl.awarded_at
+	q := `
+		SELECT pl.id, pl.user_id, u.username, pic.bucket, pic.key,
+		       pl.move_id, m.move_type, m.waypoint, m.country,
+		       pl.label, pl.points, pl.awarded_at
 		FROM geokrety_stats.user_points_log pl
+		LEFT JOIN geokrety.gk_moves m ON m.id = pl.move_id
 		LEFT JOIN geokrety.gk_users u ON u.id = pl.user_id
-		WHERE pl.gk_id = $1
-		ORDER BY pl.awarded_at DESC
-		LIMIT $2 OFFSET $3`
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = u.avatar
+		WHERE ` + whereSQL + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + strconv.Itoa(argPos) + ` OFFSET $` + strconv.Itoa(argPos+1)
 
-	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	queryArgs := append(args, perPage, offset)
+	rows, err := h.DB.Query(c.Request.Context(), q, queryArgs...)
 	if err != nil {
 		errInternal(c, err)
 		return
@@ -528,21 +653,36 @@ func (h *Handler) GeoKretPointsLog(c *gin.Context) {
 	defer rows.Close()
 
 	type row struct {
-		ID        int64      `json:"id"`
-		UserID    int64      `json:"user_id"`
-		Username  *string    `json:"username,omitempty"`
-		MoveID    *int64     `json:"move_id,omitempty"`
-		Label     string     `json:"label"`
-		Points    float64    `json:"points"`
-		AwardedAt *time.Time `json:"awarded_at,omitempty"`
+		ID          int64      `json:"id"`
+		UserID      int64      `json:"user_id"`
+		Username    *string    `json:"username,omitempty"`
+		MoveID      *int64     `json:"move_id,omitempty"`
+		MoveType    *int       `json:"move_type,omitempty"`
+		TypeName    string     `json:"type_name"`
+		Waypoint    *string    `json:"waypoint,omitempty"`
+		Country     *string    `json:"country,omitempty"`
+		Label       string     `json:"label"`
+		Points      float64    `json:"points"`
+		AwardedAt   *time.Time `json:"awarded_at,omitempty"`
+		AuthorAvatar *string   `json:"author_avatar,omitempty"`
 	}
 
 	out2 := make([]row, 0)
 	for rows.Next() {
 		var r row
-		if err := rows.Scan(&r.ID, &r.UserID, &r.Username, &r.MoveID, &r.Label, &r.Points, &r.AwardedAt); err != nil {
+		var avatarBucket sql.NullString
+		var avatarKey sql.NullString
+		if err := rows.Scan(&r.ID, &r.UserID, &r.Username, &avatarBucket, &avatarKey,
+			&r.MoveID, &r.MoveType, &r.Waypoint, &r.Country,
+			&r.Label, &r.Points, &r.AwardedAt); err != nil {
 			errInternal(c, err)
 			return
+		}
+		r.AuthorAvatar = avatarRef(avatarBucket, avatarKey)
+		if r.MoveType != nil {
+			r.TypeName = moveTypeName(*r.MoveType)
+		} else {
+			r.TypeName = moveTypeName(-1)
 		}
 		out2 = append(out2, r)
 	}

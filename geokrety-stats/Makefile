@@ -11,6 +11,7 @@ GOFLAGS   ?=
 .DEFAULT_GOAL := help
 
 .PHONY: help build test lint run replay \
+		replay_2007 replay_2008 replay_2009 \
         replay_2010 replay_2011 replay_2012 replay_2013 replay_2014 \
         replay_2015 replay_2016 replay_2017 replay_2018 replay_2019 \
         replay_2020 replay_2021 replay_2022 replay_2023 replay_2024 \
@@ -89,5 +90,5 @@ replay_$(1): build
 	$(BUILD_DIR)/$(BINARY) -replay -year $(1) -truncate
 endef
 
-$(foreach year,2010 2011 2012 2013 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024,\
+$(foreach year,2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024,\
 	$(eval $(call YEAR_TARGET,$(year))))

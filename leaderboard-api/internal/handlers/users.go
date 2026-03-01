@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"strings"
 
@@ -246,12 +247,13 @@ func (h *Handler) UserMoves(c *gin.Context) {
 	_ = h.DB.QueryRow(c.Request.Context(), countQ, args...).Scan(&total)
 
 	q := `
-		SELECT m.id, m.geokret, g.name, g.avatar, m.move_type,
+		SELECT m.id, m.geokret, g.name, pic.bucket, pic.key, m.move_type,
 		       m.country, m.waypoint, m.distance, m.moved_on_datetime,
 		       COALESCE(p.points, 0)::float8 as points,
 		       p.chain_id
 		FROM geokrety.gk_moves m
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = m.geokret
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
 		LEFT JOIN (
 			SELECT move_id, SUM(points) as points, MAX(chain_id) as chain_id
 			FROM geokrety_stats.user_points_log
@@ -275,10 +277,11 @@ func (h *Handler) UserMoves(c *gin.Context) {
 	for rows.Next() {
 		var r models.UserMove
 		var gkName *string
-		var gkAvatar *string
+		var avatarBucket sql.NullString
+		var avatarKey sql.NullString
 		var points float64
 		var chainID *int64
-		if err := rows.Scan(&r.MoveID, &r.GkID, &gkName, &gkAvatar, &r.MoveType,
+		if err := rows.Scan(&r.MoveID, &r.GkID, &gkName, &avatarBucket, &avatarKey, &r.MoveType,
 			&r.Country, &r.Waypoint, &r.Distance, &r.MovedOn, &points, &chainID); err != nil {
 			errInternal(c, err)
 			return
@@ -286,7 +289,7 @@ func (h *Handler) UserMoves(c *gin.Context) {
 		if gkName != nil {
 			r.GkName = *gkName
 		}
-		r.GkAvatar = gkAvatar
+		r.GkAvatar = avatarRef(avatarBucket, avatarKey)
 		if points > 0 {
 			r.Points = &points
 		}
@@ -321,11 +324,13 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 	const q = `
 		SELECT g.id, g.name, g.type, g.missing, g.distance,
 		       gs.total_points_generated, gs.current_multiplier,
+		       pic.bucket, pic.key,
 		       MAX(m.moved_on_datetime) AS last_interaction
 		FROM (SELECT DISTINCT geokret FROM geokrety.gk_moves WHERE author = $1) dm
 		JOIN geokrety.gk_geokrety g ON g.id = dm.geokret
 		LEFT JOIN geokrety_stats.mv_gk_stats gs ON gs.gk_id = g.id
 		LEFT JOIN geokrety.gk_moves m ON m.geokret = g.id AND m.author = $1
+		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
 		GROUP BY g.id, g.name, g.type, g.missing, g.distance,
 		         gs.total_points_generated, gs.current_multiplier
 		ORDER BY last_interaction DESC NULLS LAST
@@ -338,25 +343,29 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	type row struct {
-		GkID                int64    `json:"gk_id"`
-		Name                string   `json:"gk_name"`
-		GkType              int      `json:"gk_type"`
-		Missing             bool     `json:"missing"`
-		Distance            int64    `json:"distance_km"`
-		TotalPointsGenerated *float64 `json:"total_points_generated,omitempty"`
-		CurrentMultiplier   *float64 `json:"current_multiplier,omitempty"`
-		LastInteraction     interface{} `json:"last_interaction,omitempty"`
-	}
+		type row struct {
+			GkID                int64          `json:"gk_id"`
+			Name                string         `json:"gk_name"`
+			GkType              int            `json:"gk_type"`
+			Missing             bool           `json:"missing"`
+			Distance            int64          `json:"distance_km"`
+			TotalPointsGenerated *float64       `json:"total_points_generated,omitempty"`
+			CurrentMultiplier   *float64       `json:"current_multiplier,omitempty"`
+			LastInteraction     interface{}    `json:"last_interaction,omitempty"`
+			Avatar              *string        `json:"avatar,omitempty"`
+		}
 
 	var out []row
-	for rows.Next() {
-		var r row
-		if err := rows.Scan(&r.GkID, &r.Name, &r.GkType, &r.Missing,
-			&r.Distance, &r.TotalPointsGenerated, &r.CurrentMultiplier, &r.LastInteraction); err != nil {
+		for rows.Next() {
+			var r row
+			var avatarBucket sql.NullString
+			var avatarKey sql.NullString
+			if err := rows.Scan(&r.GkID, &r.Name, &r.GkType, &r.Missing,
+				&r.Distance, &r.TotalPointsGenerated, &r.CurrentMultiplier, &avatarBucket, &avatarKey, &r.LastInteraction); err != nil {
 			errInternal(c, err)
 			return
 		}
+			r.Avatar = avatarRef(avatarBucket, avatarKey)
 		out = append(out, r)
 	}
 
@@ -621,7 +630,7 @@ func (h *Handler) UserRelatedUsers(c *gin.Context) {
 
 func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error) {
 	const q = `
-		SELECT us.user_id, us.username, gu.avatar, us.home_country, us.joined_on_datetime,
+		SELECT us.user_id, us.username, us.avatar_bucket, us.avatar_key, us.home_country, us.joined_on_datetime,
 		       COALESCE(upl.total_points, us.total_points, 0) AS total_points,
 		       COALESCE(lb.rank, 0) AS rank, us.total_moves, us.total_drops, us.total_grabs,
 		       us.total_comments, us.total_seen, us.total_dips, us.total_archived, us.distinct_gks_interacted,
@@ -630,7 +639,6 @@ func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error)
 		       us.pts_base, us.pts_relay, us.pts_rescuer, us.pts_chain, us.pts_country,
 		       us.pts_diversity, us.pts_handover, us.pts_reach
 		FROM geokrety_stats.mv_user_stats us
-		LEFT JOIN geokrety.gk_users gu ON gu.id = us.user_id
 		LEFT JOIN LATERAL (
 			SELECT SUM(points)::float8 AS total_points
 			FROM geokrety_stats.user_points_log
@@ -640,8 +648,10 @@ func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error)
 		WHERE us.user_id = $1`
 
 	var u models.User
+	var avatarBucket sql.NullString
+	var avatarKey sql.NullString
 	err := h.DB.QueryRow(ctx, q, id).Scan(
-		&u.UserID, &u.Username, &u.Avatar, &u.HomeCountry, &u.JoinedAt,
+		&u.UserID, &u.Username, &avatarBucket, &avatarKey, &u.HomeCountry, &u.JoinedAt,
 		&u.TotalPoints, &u.RankAllTime, &u.TotalMoves, &u.TotalDrops, &u.TotalGrabs,
 		&u.TotalComments, &u.TotalSeen, &u.TotalDips, &u.TotalArchived, &u.DistinctGKs,
 		&u.DistinctOwners, &u.CountriesCount, &u.CachesCount,
@@ -649,17 +659,23 @@ func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error)
 		&u.PtsBase, &u.PtsRelay, &u.PtsRescuer, &u.PtsChain, &u.PtsCountry,
 		&u.PtsDiversity, &u.PtsHandover, &u.PtsReach,
 	)
+	u.Avatar = avatarRef(avatarBucket, avatarKey)
 	if err != nil {
 		// Try fallback: user exists in gk_users but may not be in mv_user_stats
 		const fallback = `
-			SELECT id, username, avatar, home_country, joined_on_datetime
-			FROM geokrety.gk_users WHERE id = $1`
+			SELECT id, username, pic.bucket, pic.key, home_country, joined_on_datetime
+			FROM geokrety.gk_users g
+			LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
+			WHERE id = $1`
 		var fu models.User
+		var fallbackBucket sql.NullString
+		var fallbackKey sql.NullString
 		if err2 := h.DB.QueryRow(ctx, fallback, id).Scan(
-			&fu.UserID, &fu.Username, &fu.Avatar, &fu.HomeCountry, &fu.JoinedAt,
+			&fu.UserID, &fu.Username, &fallbackBucket, &fallbackKey, &fu.HomeCountry, &fu.JoinedAt,
 		); err2 != nil {
 			return nil, nil // not found
 		}
+		fu.Avatar = avatarRef(fallbackBucket, fallbackKey)
 		fu.TotalArchived = 0
 		return &fu, nil
 	}

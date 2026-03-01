@@ -41,6 +41,8 @@ SELECT
     u.id                                                         AS user_id,
     u.username,
     u.avatar,
+    pic.bucket                                                    AS avatar_bucket,
+    pic.key                                                       AS avatar_key,
     u.home_country,
     u.home_latitude,
     u.home_longitude,
@@ -69,6 +71,7 @@ SELECT
     COALESCE(pl.pts_handover, 0)                                 AS pts_handover,
     COALESCE(pl.pts_reach, 0)                                    AS pts_reach
 FROM geokrety.gk_users u
+LEFT JOIN geokrety.gk_pictures pic ON pic.id = u.avatar
 LEFT JOIN geokrety_stats.user_points_totals t ON t.user_id = u.id
 LEFT JOIN user_moves um ON um.user_id = u.id
 LEFT JOIN points_by_label pl ON pl.user_id = u.id

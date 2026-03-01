@@ -163,6 +163,7 @@ type GkMove struct {
 	MoveID        int64       `json:"move_id"`
 	AuthorID      *int64      `json:"author_id,omitempty"`
 	AuthorUsername string      `json:"author_username,omitempty"`
+	AuthorAvatar  *string     `json:"author_avatar,omitempty"`
 	MoveType      int         `json:"move_type"`
 	TypeName      string      `json:"type_name"`
 	Country       *string     `json:"country,omitempty"`

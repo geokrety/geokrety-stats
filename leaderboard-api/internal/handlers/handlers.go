@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 	"math"
 	"net/http"
@@ -136,4 +137,12 @@ func gkTypeName(t int) string {
 	default:
 		return "Unknown"
 	}
+}
+
+func avatarRef(bucket, key sql.NullString) *string {
+	if !bucket.Valid || !key.Valid || bucket.String == "" || key.String == "" {
+		return nil
+	}
+	value := bucket.String + "/" + key.String
+	return &value
 }

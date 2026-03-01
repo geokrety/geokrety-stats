@@ -1,14 +1,38 @@
-const USER_AVATAR_BASE = 'https://minio.geokrety.org/users-avatars-thumbnails/'
-const GK_AVATAR_BASE = 'https://minio.geokrety.org/gk-avatars-thumbnails/'
+const STORAGE_BASE = 'https://minio.geokrety.org'
+const FALLBACK_USER_AVATAR = 'https://cdn.geokrety.org/images/log-icons/2/icon.svg'
+const FALLBACK_GK_AVATAR = 'https://cdn.geokrety.org/images/the-mole.svg'
+
+const THUMBNAIL_BUCKETS = {
+  'users-avatars': 'users-avatars-thumbnails',
+  'gk-avatars': 'gk-avatars-thumbnails',
+}
+
+function hasProtocol(value) {
+  return typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))
+}
+
+function resolveBucket(bucket) {
+  return THUMBNAIL_BUCKETS[bucket] || bucket
+}
+
+function buildAvatarUrl(avatar, fallback) {
+  if (!avatar) return fallback
+  if (hasProtocol(avatar)) return avatar
+
+  const parts = avatar.split('/')
+  if (parts.length !== 2) return fallback
+
+  const [bucket, key] = parts
+  if (!bucket || !key) return fallback
+
+  const targetBucket = resolveBucket(bucket)
+  return `${STORAGE_BASE}/${targetBucket}/${encodeURIComponent(key)}`
+}
 
 export function userAvatarUrl(avatar) {
-  if (!avatar) return "https://cdn.geokrety.org/images/log-icons/2/icon.svg"
-  return `${USER_AVATAR_BASE}US000001_6503ce0ca3b2c` // TODO temp fix
-  // return `${USER_AVATAR_BASE}${avatar}`
+  return buildAvatarUrl(avatar, FALLBACK_USER_AVATAR)
 }
 
 export function gkAvatarUrl(avatar) {
-  if (!avatar) return "https://cdn.geokrety.org/images/the-mole.svg"
-  return `${GK_AVATAR_BASE}GK1A0C9_68c6951fce84e` // TODO temp fix
-  // return `${GK_AVATAR_BASE}${avatar}`
+  return buildAvatarUrl(avatar, FALLBACK_GK_AVATAR)
 }
