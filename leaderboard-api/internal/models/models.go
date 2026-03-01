@@ -116,7 +116,6 @@ type GeoKret struct {
 	GkID                int64      `json:"gk_id"`
 	GkHexID             string     `json:"gk_hex_id"`          // e.g. "GK1234" (GKXXXX public code)
 	Name                string     `json:"gk_name"`
-	TrackingCode        *string    `json:"-"`                  // Never expose tracking code to frontend (security)
 	GkType              int        `json:"gk_type"`
 	GkTypeName          string     `json:"gk_type_name"`
 	Missing             bool       `json:"missing"`

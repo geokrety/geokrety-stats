@@ -75,7 +75,6 @@ CREATE MATERIALIZED VIEW geokrety_stats.mv_gk_stats AS
 SELECT
     g.id                                                        AS gk_id,
     g.name,
-    g.tracking_code,
     g.type                                                      AS gk_type,
     g.missing,
     g.distance,
@@ -122,7 +121,7 @@ LEFT JOIN geokrety.gk_users holder_u            ON holder_u.id = g.holder
 LEFT JOIN geokrety.gk_moves m                   ON m.geokret   = g.id
 LEFT JOIN geokrety_stats.user_points_log pl     ON pl.gk_id    = g.id
 LEFT JOIN geokrety_stats.gk_multiplier_state ms ON ms.gk_id    = g.id
-GROUP BY g.id, g.name, g.tracking_code, g.type, g.missing, g.distance, g.caches_count,
+GROUP BY g.id, g.name, g.type, g.missing, g.distance, g.caches_count,
          g.created_on_datetime, g.born_on_datetime, owner_u.username, owner_u.id,
          holder_u.username, holder_u.id, ms.current_multiplier,
          g.holder, g.non_collectible, g.parked, g.loves_count

@@ -243,7 +243,6 @@ CREATE TABLE geokrety.gk_users (
 CREATE TABLE geokrety.gk_geokrety (
   id BIGINT PRIMARY KEY,
   name TEXT,
-  tracking_code TEXT,
   type INT NOT NULL,
   owner BIGINT,
   created_on_datetime TIMESTAMPTZ NOT NULL,
@@ -293,7 +292,7 @@ load_fixture_to_temp_db() {
 
   PGPASSWORD="$TMP_DB_PASS" psql \
     -h "$TMP_DB_HOST" -p "$TMP_DB_PORT" -U "$TMP_DB_USER" -d "$db_name" -v ON_ERROR_STOP=1 \
-    -c "UPDATE geokrety.gk_geokrety SET name='gk-'||id::text, tracking_code='TK'||id::text"
+    -c "UPDATE geokrety.gk_geokrety SET name='gk-'||id::text"
 
   PGPASSWORD="$TMP_DB_PASS" psql \
     -h "$TMP_DB_HOST" -p "$TMP_DB_PORT" -U "$TMP_DB_USER" -d "$db_name" -v ON_ERROR_STOP=1 \

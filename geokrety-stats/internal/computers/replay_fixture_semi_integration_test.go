@@ -93,7 +93,6 @@ CREATE TABLE geokrety.gk_users (
 CREATE TABLE geokrety.gk_geokrety (
   id BIGINT PRIMARY KEY,
   name TEXT,
-  tracking_code TEXT,
   type INT NOT NULL,
   owner BIGINT,
   created_on_datetime TIMESTAMPTZ NOT NULL,
@@ -141,7 +140,7 @@ CREATE INDEX idx_gk_moves_author ON geokrety.gk_moves(author);
 				fmt.Sprintf("\\copy geokrety.gk_geokrety(id,type,owner,created_on_datetime,holder) FROM '%s' WITH CSV HEADER", gksCSV))
 			runCmd(t, statsRoot, psqlEnv(password),
 				"psql", "-h", host, "-p", port, "-U", user, "-d", dbName, "-v", "ON_ERROR_STOP=1", "-c",
-				"UPDATE geokrety.gk_geokrety SET name='gk-'||id::text, tracking_code='TK'||id::text")
+				"UPDATE geokrety.gk_geokrety SET name='gk-'||id::text")
 			runCmd(t, statsRoot, psqlEnv(password),
 				"psql", "-h", host, "-p", port, "-U", user, "-d", dbName, "-v", "ON_ERROR_STOP=1", "-c",
 				fmt.Sprintf("\\copy geokrety.gk_moves(id,geokret,author,move_type,waypoint,country,lat,lon,moved_on_datetime) FROM '%s' WITH CSV HEADER", movesCSV))

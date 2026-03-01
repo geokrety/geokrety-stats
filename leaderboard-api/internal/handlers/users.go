@@ -252,14 +252,14 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
 
 	const q = `
-		SELECT g.id, g.name, g.tracking_code, g.type, g.missing, g.distance,
+		SELECT g.id, g.name, g.type, g.missing, g.distance,
 		       gs.total_points_generated, gs.current_multiplier,
 		       MAX(m.moved_on_datetime) AS last_interaction
 		FROM (SELECT DISTINCT geokret FROM geokrety.gk_moves WHERE author = $1) dm
 		JOIN geokrety.gk_geokrety g ON g.id = dm.geokret
 		LEFT JOIN geokrety_stats.mv_gk_stats gs ON gs.gk_id = g.id
 		LEFT JOIN geokrety.gk_moves m ON m.geokret = g.id AND m.author = $1
-		GROUP BY g.id, g.name, g.tracking_code, g.type, g.missing, g.distance,
+		GROUP BY g.id, g.name, g.type, g.missing, g.distance,
 		         gs.total_points_generated, gs.current_multiplier
 		ORDER BY last_interaction DESC NULLS LAST
 		LIMIT $2 OFFSET $3`
@@ -274,7 +274,6 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 	type row struct {
 		GkID                int64    `json:"gk_id"`
 		Name                string   `json:"gk_name"`
-		TrackingCode        *string  `json:"tracking_code,omitempty"`
 		GkType              int      `json:"gk_type"`
 		Missing             bool     `json:"missing"`
 		Distance            int64    `json:"distance_km"`
@@ -286,7 +285,7 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 	var out []row
 	for rows.Next() {
 		var r row
-		if err := rows.Scan(&r.GkID, &r.Name, &r.TrackingCode, &r.GkType, &r.Missing,
+		if err := rows.Scan(&r.GkID, &r.Name, &r.GkType, &r.Missing,
 			&r.Distance, &r.TotalPointsGenerated, &r.CurrentMultiplier, &r.LastInteraction); err != nil {
 			errInternal(c, err)
 			return

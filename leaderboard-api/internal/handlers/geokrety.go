@@ -148,7 +148,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.tracking_code, s.gk_type, s.missing, s.distance, s.caches_count,
+		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.gk_type, s.missing, s.distance, s.caches_count,
 		       s.created_on_datetime, s.born_on_datetime,
 		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
 		       COALESCE(o.home_country, NULL) AS owner_home_country,
@@ -173,7 +173,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	var g models.GeoKret
 	var publicGkID int64
 	err = h.DB.QueryRow(c.Request.Context(), q, id).Scan(
-		&g.GkID, &publicGkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+		&g.GkID, &publicGkID, &g.Name, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 		&g.CreatedAt, &g.BornAt,
 		&g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
 		&g.OwnerHomeCountry, &g.HolderHomeCountry, &g.CacheCountry,
@@ -186,11 +186,11 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	if err != nil {
 		// fallback to raw table (no stats)
 		const fallback = `
-			SELECT id, gkid, name, tracking_code, type, missing, distance, caches_count,
+			SELECT id, gkid, name, type, missing, distance, caches_count,
 			       created_on_datetime, born_on_datetime
 			FROM geokrety.gk_geokrety WHERE id = $1`
 		err2 := h.DB.QueryRow(c.Request.Context(), fallback, id).Scan(
-			&g.GkID, &publicGkID, &g.Name, &g.TrackingCode, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
+			&g.GkID, &publicGkID, &g.Name, &g.GkType, &g.Missing, &g.Distance, &g.CachesCount,
 			&g.CreatedAt, &g.BornAt,
 		)
 		if err2 != nil {
