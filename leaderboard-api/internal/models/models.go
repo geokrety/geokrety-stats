@@ -51,6 +51,7 @@ type LeaderboardEntry struct {
 type User struct {
 	UserID             int64      `json:"user_id"`
 	Username           string     `json:"username"`
+	Avatar             *string    `json:"avatar,omitempty"`
 	HomeCountry        *string    `json:"home_country,omitempty"`
 	JoinedAt           *time.Time `json:"joined_at,omitempty"`
 	TotalPoints        float64    `json:"total_points"`
@@ -100,6 +101,7 @@ type UserMove struct {
 	MoveID   int64       `json:"move_id"`
 	GkID     int64       `json:"gk_id"`
 	GkName   string      `json:"gk_name,omitempty"`
+	GkAvatar *string     `json:"gk_avatar,omitempty"`
 	MoveType int         `json:"move_type"`
 	TypeName string      `json:"type_name"`
 	Country  *string     `json:"country,omitempty"`
@@ -116,6 +118,7 @@ type GeoKret struct {
 	GkID                int64      `json:"gk_id"`
 	GkHexID             string     `json:"gk_hex_id"`          // e.g. "GK1234" (GKXXXX public code)
 	Name                string     `json:"gk_name"`
+	Avatar              *string    `json:"avatar,omitempty"`
 	GkType              int        `json:"gk_type"`
 	GkTypeName          string     `json:"gk_type_name"`
 	Missing             bool       `json:"missing"`

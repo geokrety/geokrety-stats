@@ -5,6 +5,7 @@ import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
 import { getMoveTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
+import { gkAvatarUrl } from '../composables/useAvatarUrl.js'
 import { waypointExternalUrl, displayWaypoint, waypointTooltip, waypointMapUrl } from '../composables/useWaypoint.js'
 import GkTypeBadge from '../components/GkTypeBadge.vue'
 import LineChart from '../components/LineChart.vue'
@@ -108,7 +109,13 @@ watch(activeTab, (tab) => {
       <div class="card-body">
         <div class="row align-items-center g-3">
           <div class="col-auto">
-            <div class="fs-1">🐢</div>
+            <img
+              v-if="gkAvatarUrl(gk.avatar)"
+              :src="gkAvatarUrl(gk.avatar)"
+              :alt="`${gk.gk_name} avatar`"
+              class="gk-avatar"
+            />
+            <div v-else class="fs-1">🐢</div>
           </div>
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -412,3 +419,13 @@ watch(activeTab, (tab) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.gk-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--bs-border-color);
+}
+</style>

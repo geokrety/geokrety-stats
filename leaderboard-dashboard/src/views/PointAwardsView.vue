@@ -10,6 +10,7 @@ const userId = ref(route.params.id)
 
 const user      = ref(null)
 const awards    = ref([])
+const availableLabels = ref([])
 const meta      = ref({})
 const page      = ref(Number(route.query.page) || 1)
 const perPage   = ref(50)
@@ -20,6 +21,10 @@ const error     = ref(null)
 
 // Optional label filter from query string
 const labelFilter = ref(route.query.label || '')
+
+async function loadUser() {
+  user.value = await fetchOne(`/users/${userId.value}`)
+}
 
 async function load() {
   loading.value = true
@@ -51,7 +56,13 @@ async function load() {
 
 onMounted(() => { loadUser(); load() })
 watch([page, labelFilter, sortCol, sortOrder], load)
-watch(() => route.params.id, id => { userId.value = id; page.value = 1; loadUser(); load() })
+watch(() => route.params.id, id => {
+  userId.value = id
+  page.value = 1
+  availableLabels.value = []
+  loadUser()
+  load()
+})
 
 function setLabel(l) { labelFilter.value = l; page.value = 1 }
 
@@ -88,9 +99,14 @@ const pointsClass = (pts) => pts > 0 ? 'text-success fw-semibold' : pts < 0 ? 't
         Point Awards
         <span v-if="user" class="text-muted fs-6 ms-2">— {{ user.username }}</span>
       </h4>
-      <RouterLink v-if="user" :to="`/users/${userId}`" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i>Back to user
-      </RouterLink>
+      <div class="d-flex gap-2">
+        <RouterLink v-if="user" :to="`/users/${userId}/chains`" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-link-45deg me-1"></i>Chains
+        </RouterLink>
+        <RouterLink v-if="user" :to="`/users/${userId}`" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Back to user
+        </RouterLink>
+      </div>
     </div>
 
     <!-- Label filter chips -->

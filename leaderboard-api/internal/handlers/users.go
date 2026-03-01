@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -178,13 +179,74 @@ func (h *Handler) UserMoves(c *gin.Context) {
 		return
 	}
 	page, perPage, offset := parsePagination(c)
+	sort := c.DefaultQuery("sort", "date")
+	order := strings.ToLower(c.DefaultQuery("order", "desc"))
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+	dir := "DESC"
+	if order == "asc" {
+		dir = "ASC"
+	}
 
-	const countQ = `SELECT COUNT(*) FROM geokrety.gk_moves WHERE author = $1`
+	awardingOnly := c.DefaultQuery("awarding_only", "false") == "true"
+
+	var moveTypes []int32
+	typesParam := c.Query("types")
+	if typesParam != "" {
+		for _, raw := range strings.Split(typesParam, ",") {
+			trimmed := strings.TrimSpace(raw)
+			if trimmed == "" {
+				continue
+			}
+			t, convErr := strconv.Atoi(trimmed)
+			if convErr != nil || t < 0 || t > 5 {
+				c.JSON(400, gin.H{"errors": []gin.H{{"status": "400", "title": "invalid move type filter"}}})
+				return
+			}
+			moveTypes = append(moveTypes, int32(t))
+		}
+	}
+
+	var orderBy string
+	switch sort {
+	case "gk":
+		orderBy = "g.name " + dir + " NULLS LAST, m.moved_on_datetime DESC"
+	case "type":
+		orderBy = "m.move_type " + dir + ", m.moved_on_datetime DESC"
+	case "country":
+		orderBy = "m.country " + dir + " NULLS LAST, m.moved_on_datetime DESC"
+	case "points":
+		orderBy = "COALESCE(p.points, 0) " + dir + ", m.moved_on_datetime DESC"
+	default:
+		orderBy = "m.moved_on_datetime " + dir
+	}
+
+	whereParts := []string{"m.author = $1"}
+	args := []interface{}{id}
+	argPos := 2
+
+	if len(moveTypes) > 0 {
+		whereParts = append(whereParts, "m.move_type = ANY($"+strconv.Itoa(argPos)+"::int[])")
+		args = append(args, moveTypes)
+		argPos++
+	}
+
+	if awardingOnly {
+		whereParts = append(whereParts, `EXISTS (
+			SELECT 1 FROM geokrety_stats.user_points_log upl
+			WHERE upl.user_id = $1 AND upl.move_id = m.id AND upl.points > 0
+		)`)
+	}
+
+	whereSQL := strings.Join(whereParts, " AND ")
+
+	countQ := `SELECT COUNT(*) FROM geokrety.gk_moves m WHERE ` + whereSQL
 	var total int64
-	_ = h.DB.QueryRow(c.Request.Context(), countQ, id).Scan(&total)
+	_ = h.DB.QueryRow(c.Request.Context(), countQ, args...).Scan(&total)
 
-	const q = `
-		SELECT m.id, m.geokret, g.name, m.move_type,
+	q := `
+		SELECT m.id, m.geokret, g.name, g.avatar, m.move_type,
 		       m.country, m.waypoint, m.distance, m.moved_on_datetime,
 		       COALESCE(p.points, 0)::float8 as points,
 		       p.chain_id
@@ -193,13 +255,16 @@ func (h *Handler) UserMoves(c *gin.Context) {
 		LEFT JOIN (
 			SELECT move_id, SUM(points) as points, MAX(chain_id) as chain_id
 			FROM geokrety_stats.user_points_log
+			WHERE user_id = $1
 			GROUP BY move_id
 		) p ON p.move_id = m.id
-		WHERE m.author = $1
-		ORDER BY m.moved_on_datetime DESC
-		LIMIT $2 OFFSET $3`
+		WHERE ` + whereSQL + `
+		ORDER BY ` + orderBy + `
+		LIMIT $` + strconv.Itoa(argPos) + ` OFFSET $` + strconv.Itoa(argPos+1)
 
-	rows, err := h.DB.Query(c.Request.Context(), q, id, perPage, offset)
+	queryArgs := append(args, perPage, offset)
+
+	rows, err := h.DB.Query(c.Request.Context(), q, queryArgs...)
 	if err != nil {
 		errInternal(c, err)
 		return
@@ -210,9 +275,10 @@ func (h *Handler) UserMoves(c *gin.Context) {
 	for rows.Next() {
 		var r models.UserMove
 		var gkName *string
+		var gkAvatar *string
 		var points float64
 		var chainID *int64
-		if err := rows.Scan(&r.MoveID, &r.GkID, &gkName, &r.MoveType,
+		if err := rows.Scan(&r.MoveID, &r.GkID, &gkName, &gkAvatar, &r.MoveType,
 			&r.Country, &r.Waypoint, &r.Distance, &r.MovedOn, &points, &chainID); err != nil {
 			errInternal(c, err)
 			return
@@ -220,6 +286,7 @@ func (h *Handler) UserMoves(c *gin.Context) {
 		if gkName != nil {
 			r.GkName = *gkName
 		}
+		r.GkAvatar = gkAvatar
 		if points > 0 {
 			r.Points = &points
 		}
@@ -554,20 +621,27 @@ func (h *Handler) UserRelatedUsers(c *gin.Context) {
 
 func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error) {
 	const q = `
-		SELECT us.user_id, us.username, us.home_country, us.joined_on_datetime,
-		       us.total_points, COALESCE(lb.rank, 0) AS rank, us.total_moves, us.total_drops, us.total_grabs,
+		SELECT us.user_id, us.username, gu.avatar, us.home_country, us.joined_on_datetime,
+		       COALESCE(upl.total_points, us.total_points, 0) AS total_points,
+		       COALESCE(lb.rank, 0) AS rank, us.total_moves, us.total_drops, us.total_grabs,
 		       us.total_comments, us.total_seen, us.total_dips, us.total_archived, us.distinct_gks_interacted,
 		       us.distinct_owners, us.countries_visited_count, 0 AS caches_visited,
 		       us.km_contributed, us.active_days, us.first_move_at, us.last_move_at,
 		       us.pts_base, us.pts_relay, us.pts_rescuer, us.pts_chain, us.pts_country,
 		       us.pts_diversity, us.pts_handover, us.pts_reach
 		FROM geokrety_stats.mv_user_stats us
+		LEFT JOIN geokrety.gk_users gu ON gu.id = us.user_id
+		LEFT JOIN LATERAL (
+			SELECT SUM(points)::float8 AS total_points
+			FROM geokrety_stats.user_points_log
+			WHERE user_id = us.user_id
+		) upl ON TRUE
 		LEFT JOIN geokrety_stats.mv_leaderboard_all_time lb ON lb.user_id = us.user_id
 		WHERE us.user_id = $1`
 
 	var u models.User
 	err := h.DB.QueryRow(ctx, q, id).Scan(
-		&u.UserID, &u.Username, &u.HomeCountry, &u.JoinedAt,
+		&u.UserID, &u.Username, &u.Avatar, &u.HomeCountry, &u.JoinedAt,
 		&u.TotalPoints, &u.RankAllTime, &u.TotalMoves, &u.TotalDrops, &u.TotalGrabs,
 		&u.TotalComments, &u.TotalSeen, &u.TotalDips, &u.TotalArchived, &u.DistinctGKs,
 		&u.DistinctOwners, &u.CountriesCount, &u.CachesCount,
@@ -578,11 +652,11 @@ func (h *Handler) fetchUser(ctx context.Context, id int64) (*models.User, error)
 	if err != nil {
 		// Try fallback: user exists in gk_users but may not be in mv_user_stats
 		const fallback = `
-			SELECT id, username, home_country, joined_on_datetime
+			SELECT id, username, avatar, home_country, joined_on_datetime
 			FROM geokrety.gk_users WHERE id = $1`
 		var fu models.User
 		if err2 := h.DB.QueryRow(ctx, fallback, id).Scan(
-			&fu.UserID, &fu.Username, &fu.HomeCountry, &fu.JoinedAt,
+			&fu.UserID, &fu.Username, &fu.Avatar, &fu.HomeCountry, &fu.JoinedAt,
 		); err2 != nil {
 			return nil, nil // not found
 		}
