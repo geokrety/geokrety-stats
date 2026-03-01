@@ -9,19 +9,128 @@ applyTo: '**'
 
 ---
 
+---
+
 ## 📋 Reference: Move Types & Geokrety Types
 
 ### Move Types (LogType)
-- `LOG_TYPE_DROPPED (0)` - GK placed in cache
-- `LOG_TYPE_GRABBED (1)` - GK taken from cache or user
-- `LOG_TYPE_SEEN (3)` - GK observed at cache (no move)
-- `LOG_TYPE_DIPPED (5)` - GK moved within same holder's inventory (same cache/user)
-- `LOG_TYPE_COMMENT (2)` / `LOG_TYPE_ARCHIVED (4)` - Not scored
+
+- `LOG_TYPE_DROPPED (0)`
+  GK placed in cache.
+  - Updates last position
+  - Requires coordinates
+  - Counts kilometers
+  - User touched
+  - Considered alive
+
+- `LOG_TYPE_GRABBED (1)`
+  GK taken from cache or another user.
+  - Updates last position
+  - Does NOT count kilometers
+  - User touched
+  - Considered alive
+
+- `LOG_TYPE_COMMENT (2)`
+  Comment only. No state change.
+  - Does NOT update position
+  - Does NOT count kilometers
+  - Not considered alive
+  - Editable
+
+- `LOG_TYPE_SEEN (3)`
+  GK observed in cache (no ownership change).
+  - Updates last position
+  - Coordinates optional (but supported)
+  - Counts kilometers
+  - User touched
+  - Considered alive
+  - Theoretically in cache
+
+- `LOG_TYPE_ARCHIVED (4)`
+  GK archived / retired from active circulation.
+  - Updates last position
+  - Does NOT count kilometers
+  - Not considered alive
+  - Not editable
+
+- `LOG_TYPE_DIPPED (5)`
+  GK moved within same holder (inventory/cache internal move).
+  - Updates last position
+  - Requires coordinates
+  - Counts kilometers
+  - User touched
+  - Considered alive
+
+---
+
+### LogType Behavioral Groups (Derived Logic)
+
+- **Alive Logs**
+  `DROPPED, GRABBED, SEEN, DIPPED`
+
+- **Require Coordinates**
+  `DROPPED, SEEN, DIPPED`
+
+- **Optional Coordinates**
+  `SEEN`
+
+- **Count Kilometers**
+  `DROPPED, SEEN, DIPPED`
+
+- **Theoretically In Cache**
+  `DROPPED, SEEN`
+
+- **Update Last Position**
+  `DROPPED, GRABBED, SEEN, ARCHIVED, DIPPED`
+
+- **User Touched GK**
+  `DROPPED, GRABBED, SEEN, DIPPED`
+
+- **Editable Logs**
+  `DROPPED, GRABBED, COMMENT, SEEN, DIPPED`
+
+---
 
 ### Geokrety Types
-- **Standard Types** (0-7): TRADITIONAL, BOOK_CD_DVD, HUMAN, COIN, KRETYPOST, PEBBLE, JIGSAW, PLAYING_CARD
-- **Non-Transferable Types** (8-10): CAR, DOG_TAG, EASTER_EGG
-  - Single owner, no handover intended, reward movement instead
+
+- `GEOKRETY_TYPE_TRADITIONAL (0)` – Standard transferable GK
+- `GEOKRETY_TYPE_BOOK_CD_DVD (1)` – Media object
+- `GEOKRETY_TYPE_HUMAN (2)` – Person traveling
+- `GEOKRETY_TYPE_COIN (3)` – Coin object
+- `GEOKRETY_TYPE_KRETYPOST (4)` – Postal-type GK
+- `GEOKRETY_TYPE_PEBBLE (5)` – Painted pebble
+- `GEOKRETY_TYPE_CAR (6)` – Non-transferable, vehicle-based
+- `GEOKRETY_TYPE_PLAYING_CARD (7)` – Card collectible
+- `GEOKRETY_TYPE_DOG_TAG (8)` – Non-transferable personal item
+- `GEOKRETY_TYPE_JIGSAW (9)` – Puzzle piece
+- `GEOKRETY_TYPE_EASTER_EGG (10)` – Admin-only special type
+
+---
+
+### Type Categories
+
+- **Standard Transferable Types**
+  `TRADITIONAL, BOOK_CD_DVD, HUMAN, COIN, KRETYPOST, PEBBLE, PLAYING_CARD, JIGSAW`
+
+- **Non-Transferable Types**
+  `CAR, DOG_TAG, EASTER_EGG`
+  - Single owner
+  - No ownership handover intended
+  - Reward movement instead of transfers
+
+- **Admin-Only Types**
+  `EASTER_EGG`
+
+- **Types Supporting "Missing" Status**
+  `TRADITIONAL, BOOK_CD_DVD, COIN, KRETYPOST, PEBBLE, PLAYING_CARD, JIGSAW`
+
+---
+
+### Picture Types
+
+- `PICTURE_GEOKRET_AVATAR (0)` – Main Geokret image
+- `PICTURE_GEOKRET_MOVE (1)` – Image attached to a move/log
+- `PICTURE_USER_AVATAR (2)` – User profile avatar
 
 ---
 
