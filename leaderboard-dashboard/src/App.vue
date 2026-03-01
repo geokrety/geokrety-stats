@@ -95,12 +95,12 @@ onMounted(() => {
           >
             <i class="bi" :class="currentTheme === 'dark' ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
           </button>
-          
+
           <v-tooltip :text="`Real-time sync: ${enabled ? 'Enabled' : 'Disabled'}. Click to toggle.`">
             <template #activator="{ props }">
-              <span 
+              <span
                 v-bind="props"
-                class="me-2 cursor-pointer" 
+                class="me-2 cursor-pointer"
                 style="cursor: pointer;"
                 @click="toggleEnabled"
               >
@@ -121,9 +121,9 @@ onMounted(() => {
             &ensp;|&ensp;
             <v-tooltip>
               <template #activator="{ props }">
-                <span 
-                  v-bind="props" 
-                  class="navbar-stats-value" 
+                <span
+                  v-bind="props"
+                  class="navbar-stats-value"
                   :class="{'stats-update-pulse': pulseEffect}"
                 >
                   <i class="bi bi-activity text-info me-1"></i>
@@ -140,11 +140,11 @@ onMounted(() => {
                 </div>
                 <div class="d-flex justify-content-between my-2">
                    <span class="small text-white opacity-75">Total Points:</span>
-                   <span class="small fw-bold ms-3">{{ stats.total_points?.toLocaleString() }}</span>
+                   <span class="small fw-bold ms-3">{{ stats.total_points_awarded?.toLocaleString() }}</span>
                 </div>
                 <div class="d-flex justify-content-between my-2">
                    <span class="small text-white opacity-75">GKs Tracked:</span>
-                   <span class="small fw-bold ms-3">{{ stats.total_geokrety?.toLocaleString() }}</span>
+                   <span class="small fw-bold ms-3">{{ stats.total_gks?.toLocaleString() }}</span>
                 </div>
                 <div class="d-flex justify-content-between mt-1 pt-1 opacity-50 x-small fst-italic border-top border-white border-opacity-25">
                    Last update: {{ new Date(lastUpdate).toLocaleTimeString() }}

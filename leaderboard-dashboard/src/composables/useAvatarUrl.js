@@ -16,7 +16,7 @@ function resolveBucket(bucket) {
 }
 
 function buildAvatarUrl(avatar, fallback) {
-  if (!avatar) return fallback
+  if (!avatar || typeof avatar !== 'string') return fallback
   if (hasProtocol(avatar)) return avatar
 
   const parts = avatar.split('/')
@@ -29,10 +29,16 @@ function buildAvatarUrl(avatar, fallback) {
   return `${STORAGE_BASE}/${targetBucket}/${encodeURIComponent(key)}`
 }
 
-export function userAvatarUrl(avatar) {
-  return buildAvatarUrl(avatar, FALLBACK_USER_AVATAR)
+export function userAvatarUrl(userId) {
+  if (typeof userId === 'number') {
+    return `${STORAGE_BASE}/users-avatars-thumbnails/${userId}`
+  }
+  return buildAvatarUrl(userId, FALLBACK_USER_AVATAR)
 }
 
-export function gkAvatarUrl(avatar) {
-  return buildAvatarUrl(avatar, FALLBACK_GK_AVATAR)
+export function gkAvatarUrl(gkId) {
+  if (typeof gkId === 'number') {
+    return `${STORAGE_BASE}/gk-avatars-thumbnails/${gkId}`
+  }
+  return buildAvatarUrl(gkId, FALLBACK_GK_AVATAR)
 }

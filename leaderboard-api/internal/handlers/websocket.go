@@ -71,10 +71,16 @@ func (h *Handler) StartBroadcaster(ctx context.Context, hub *wsHub.Hub, interval
 				},
 			})
 
-			// Only send leaderboard if clients are connected
+			// Only send updates if clients are connected
 			if hub.ClientCount() == 0 {
 				continue
 			}
+
+			// Broadcast Global Stats
+			stats := h.computeGlobalStatsFallback(ctx)
+			hub.Broadcast(models.WSMessage{Type: "global_stats", Payload: stats})
+
+			// Broadcast Leaderboard
 			entries, err := h.TopLeaderboard(ctx, 10)
 			if err != nil {
 				log.Error().Err(err).Msg("ws: leaderboard broadcast failed")

@@ -50,7 +50,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <span ref="activator" class="d-inline-block">
+  <span ref="activator" style="display: contents;">
     <slot name="activator" :props="{}"></slot>
     <slot></slot>
   </span>
