@@ -140,6 +140,7 @@ type GeoKret struct {
 	TotalMoves          int64      `json:"total_moves"`
 	TotalDrops          int64      `json:"total_drops"`
 	TotalGrabs          int64      `json:"total_grabs"`
+	TotalComments       int64      `json:"total_comments"`
 	TotalSeen           int64      `json:"total_seen"`
 	TotalDips           int64      `json:"total_dips"`
 	DistinctUsers       int64      `json:"distinct_users"`

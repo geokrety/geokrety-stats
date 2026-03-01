@@ -150,20 +150,19 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 	}
 
 	const q = `
-		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, pic.bucket, pic.key, s.gk_type, s.missing, s.distance, s.caches_count,
+		SELECT s.gk_id, COALESCE(g.gkid, s.gk_id) AS public_gk_id, s.name, s.avatar_bucket, s.avatar_key, s.gk_type, s.missing, s.distance, s.caches_count,
 		       s.created_on_datetime, s.born_on_datetime,
 		       s.owner_id, s.owner_username, s.holder_id, s.holder_username,
 		       COALESCE(o.home_country, NULL) AS owner_home_country,
 		       COALESCE(h.home_country, NULL) AS holder_home_country,
 		       COALESCE(m.country, NULL) AS cache_country,
 		       s.in_cache, s.is_non_collectible, s.is_parked, s.loves_count,
-		       s.total_moves, s.total_drops, s.total_grabs, s.total_seen, s.total_dips,
+		       s.total_moves, s.total_drops, s.total_grabs, s.total_comments, s.total_seen, s.total_dips,
 		       s.distinct_users, s.countries_count, s.caches_count_distinct,
 		       s.total_points_generated, s.users_awarded, s.current_multiplier,
 		       s.first_move_at, s.last_move_at
 		FROM geokrety_stats.mv_gk_stats s
 		LEFT JOIN geokrety.gk_geokrety g ON g.id = s.gk_id
-		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
 		LEFT JOIN geokrety.gk_users o ON o.id = s.owner_id
 		LEFT JOIN geokrety.gk_users h ON h.id = s.holder_id
 		LEFT JOIN LATERAL (
@@ -183,7 +182,7 @@ func (h *Handler) GetGeoKret(c *gin.Context) {
 		&g.OwnerID, &g.OwnerUsername, &g.HolderID, &g.HolderUsername,
 		&g.OwnerHomeCountry, &g.HolderHomeCountry, &g.CacheCountry,
 		&g.InCache, &g.IsNonCollectible, &g.IsParked, &g.LovesCount,
-		&g.TotalMoves, &g.TotalDrops, &g.TotalGrabs, &g.TotalSeen, &g.TotalDips,
+		&g.TotalMoves, &g.TotalDrops, &g.TotalGrabs, &g.TotalComments, &g.TotalSeen, &g.TotalDips,
 		&g.DistinctUsers, &g.CountriesCount, &g.DistinctCaches,
 		&g.TotalPointsGenerated, &g.UsersAwarded, &g.CurrentMultiplier,
 		&g.FirstMoveAt, &g.LastMoveAt,
@@ -286,6 +285,8 @@ func (h *Handler) GeoKretMoves(c *gin.Context) {
 	switch sort {
 	case "author":
 		orderBy = "LOWER(COALESCE(u.username, '')) " + dir + ", m.moved_on_datetime DESC"
+	case "waypoint":
+		orderBy = "m.waypoint " + dir + " NULLS LAST, m.moved_on_datetime DESC"
 	case "type":
 		orderBy = "m.move_type " + dir + ", m.moved_on_datetime DESC"
 	case "country":
@@ -607,10 +608,16 @@ func (h *Handler) GeoKretPointsLog(c *gin.Context) {
 	switch sort {
 	case "points":
 		orderBy = "pl.points " + dir + ", pl.awarded_at DESC"
+	case "user":
+		orderBy = "LOWER(COALESCE(u.username, '')) " + dir + ", pl.awarded_at DESC"
 	case "label":
 		orderBy = "pl.label " + dir + ", pl.awarded_at DESC"
 	case "type":
 		orderBy = "m.move_type " + dir + ", pl.awarded_at DESC"
+	case "country":
+		orderBy = "m.country " + dir + " NULLS LAST, pl.awarded_at DESC"
+	case "waypoint":
+		orderBy = "m.waypoint " + dir + " NULLS LAST, pl.awarded_at DESC"
 	default:
 		orderBy = "pl.awarded_at " + dir
 	}

@@ -332,7 +332,7 @@ func (h *Handler) UserGeokrety(c *gin.Context) {
 		LEFT JOIN geokrety.gk_moves m ON m.geokret = g.id AND m.author = $1
 		LEFT JOIN geokrety.gk_pictures pic ON pic.id = g.avatar
 		GROUP BY g.id, g.name, g.type, g.missing, g.distance,
-		         gs.total_points_generated, gs.current_multiplier
+		         gs.total_points_generated, gs.current_multiplier, pic.bucket, pic.key
 		ORDER BY last_interaction DESC NULLS LAST
 		LIMIT $2 OFFSET $3`
 

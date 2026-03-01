@@ -5,48 +5,114 @@ import { fetchOne, fetchList } from '../composables/useApi.js'
 import { idToGkId } from '../composables/useGkId.js'
 import { getMoveTypeBadgeClass } from '../composables/useMoveTypeColors.js'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
-import { gkAvatarUrl } from '../composables/useAvatarUrl.js'
-import { waypointExternalUrl, displayWaypoint, waypointTooltip, waypointMapUrl } from '../composables/useWaypoint.js'
+import { gkAvatarUrl, userAvatarUrl } from '../composables/useAvatarUrl.js'
+import { waypointExternalUrl, displayWaypoint, waypointTooltip } from '../composables/useWaypoint.js'
 import GkTypeBadge from '../components/GkTypeBadge.vue'
 import LineChart from '../components/LineChart.vue'
 import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
 import RelatedUsersTab from '../components/RelatedUsersTab.vue'
-import PointsBreakdownChart from '../components/PointsBreakdownChart.vue'
+import MoveTypeBreakdown from '../components/MoveTypeBreakdown.vue'
 
-const route   = useRoute()
-const gkId    = ref(route.params.id)
-const gk      = ref(null)
+const route = useRoute()
+const gkId = ref(route.params.id)
+
+const gk = ref(null)
 const timeline = ref([])
 const countries = ref([])
-const moves    = ref([])
+const moves = ref([])
 const movePage = ref(1)
 const moveMeta = ref({})
+const moveSortCol = ref('date')
+const moveSortOrder = ref('desc')
+const moveAwardingOnly = ref(false)
+const selectedMoveTypes = ref([])
+
 const pointsLog = ref([])
 const pointsLogPage = ref(1)
 const pointsLogMeta = ref({})
-const loading  = ref(false)
-const error    = ref(null)
+const pointsSortCol = ref('date')
+const pointsSortOrder = ref('desc')
+const pointsAwardingOnly = ref(false)
+const selectedPointsMoveTypes = ref([])
+
+const loading = ref(false)
+const error = ref(null)
 const activeTab = ref('overview')
+const loadedTabs = ref({
+  overview: false,
+  moves: false,
+  countries: false,
+  'related-users': false,
+  points: false,
+})
+
+const moveTypeOptions = [
+  { value: 0, label: 'Drop' },
+  { value: 1, label: 'Grab' },
+  { value: 2, label: 'Comment' },
+  { value: 3, label: 'Seen' },
+  { value: 4, label: 'Archived' },
+  { value: 5, label: 'Dip' },
+]
 
 const today = new Date().toISOString().slice(0, 10)
 
 const chartStartDate = computed(() => {
   if (gk.value?.first_move_at) return gk.value.first_move_at.slice(0, 10)
-  if (gk.value?.born_at)       return gk.value.born_at.slice(0, 10)
-  if (gk.value?.created_at)    return gk.value.created_at.slice(0, 10)
+  if (gk.value?.born_at) return gk.value.born_at.slice(0, 10)
+  if (gk.value?.created_at) return gk.value.created_at.slice(0, 10)
   return null
 })
 
-async function load() {
+const moveTypeFilterLabel = computed(() => {
+  if (!selectedMoveTypes.value.length) return 'All types'
+  return moveTypeOptions
+    .filter((opt) => selectedMoveTypes.value.includes(opt.value))
+    .map((opt) => opt.label)
+    .join(', ')
+})
+
+const pointsTypeFilterLabel = computed(() => {
+  if (!selectedPointsMoveTypes.value.length) return 'All types'
+  return moveTypeOptions
+    .filter((opt) => selectedPointsMoveTypes.value.includes(opt.value))
+    .map((opt) => opt.label)
+    .join(', ')
+})
+
+const lifetimeText = computed(() => {
+  const start = gk.value?.born_at || gk.value?.created_at || gk.value?.first_move_at
+  if (!start) return '—'
+  return formatRelativeDuration(start)
+})
+
+const inactiveText = computed(() => {
+  if (!gk.value?.last_move_at) return '—'
+  return formatRelativeDuration(gk.value.last_move_at)
+})
+
+function formatRelativeDuration(inputDate) {
+  const dt = new Date(inputDate)
+  if (Number.isNaN(dt.getTime())) return '—'
+  const diffMs = Date.now() - dt.getTime()
+  if (diffMs <= 0) return '0 days'
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'}`
+
+  const months = Math.floor(days / 30)
+  if (months < 24) return `${months} month${months === 1 ? '' : 's'}`
+
+  const years = Math.floor(months / 12)
+  return `${years} year${years === 1 ? '' : 's'}`
+}
+
+async function loadGeoKret() {
   loading.value = true
-  error.value   = null
+  error.value = null
   try {
-    gk.value        = await fetchOne(`/geokrety/${gkId.value}`)
-    const tl        = await fetchList(`/geokrety/${gkId.value}/points/timeline`, { per_page: 3650 })
-    timeline.value  = tl.items
-    const co        = await fetchList(`/geokrety/${gkId.value}/countries`, { per_page: 300 })
-    countries.value = co.items
+    gk.value = await fetchOne(`/geokrety/${gkId.value}`)
   } catch (e) {
     error.value = e.message
   } finally {
@@ -54,38 +120,169 @@ async function load() {
   }
 }
 
+async function loadOverview() {
+  if (loadedTabs.value.overview) return
+  const tl = await fetchList(`/geokrety/${gkId.value}/points/timeline`, { per_page: 3650 })
+  timeline.value = tl.items
+  loadedTabs.value.overview = true
+}
+
 async function loadMoves() {
-  const { items, meta } = await fetchList(`/geokrety/${gkId.value}/moves`, {
-    page: movePage.value, per_page: 25,
-  })
-  moves.value    = items
+  const params = {
+    page: movePage.value,
+    per_page: 25,
+    sort: moveSortCol.value,
+    order: moveSortOrder.value,
+    awarding_only: moveAwardingOnly.value,
+  }
+  if (selectedMoveTypes.value.length) {
+    params.types = selectedMoveTypes.value.join(',')
+  }
+
+  const { items, meta } = await fetchList(`/geokrety/${gkId.value}/moves`, params)
+  moves.value = items
   moveMeta.value = meta
+  loadedTabs.value.moves = true
+}
+
+async function loadCountries() {
+  if (loadedTabs.value.countries) return
+  const co = await fetchList(`/geokrety/${gkId.value}/countries`, { per_page: 300 })
+  countries.value = co.items
+  loadedTabs.value.countries = true
 }
 
 async function loadPointsLog() {
-  const { items, meta } = await fetchList(`/geokrety/${gkId.value}/points/log`, {
-    page: pointsLogPage.value, per_page: 25,
-  })
-  pointsLog.value    = items
+  const params = {
+    page: pointsLogPage.value,
+    per_page: 25,
+    sort: pointsSortCol.value,
+    order: pointsSortOrder.value,
+    awarding_only: pointsAwardingOnly.value,
+  }
+  if (selectedPointsMoveTypes.value.length) {
+    params.types = selectedPointsMoveTypes.value.join(',')
+  }
+
+  const { items, meta } = await fetchList(`/geokrety/${gkId.value}/points/log`, params)
+  pointsLog.value = items
   pointsLogMeta.value = meta
+  loadedTabs.value.points = true
 }
 
-onMounted(() => {
-  // Read tab from URL hash
+async function loadActiveTabData(tab) {
+  try {
+    if (tab === 'overview') await loadOverview()
+    if (tab === 'moves') await loadMoves()
+    if (tab === 'countries') await loadCountries()
+    if (tab === 'points') await loadPointsLog()
+    if (tab === 'related-users') loadedTabs.value['related-users'] = true
+  } catch (e) {
+    error.value = e.message
+  }
+}
+
+function toggleMoveSort(col) {
+  if (moveSortCol.value === col) {
+    moveSortOrder.value = moveSortOrder.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  moveSortCol.value = col
+  moveSortOrder.value = col === 'author' || col === 'country' || col === 'waypoint' ? 'asc' : 'desc'
+}
+
+function moveSortIcon(col) {
+  if (moveSortCol.value !== col) return 'bi-sort-down'
+  return moveSortOrder.value === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt'
+}
+
+function togglePointsSort(col) {
+  if (pointsSortCol.value === col) {
+    pointsSortOrder.value = pointsSortOrder.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  pointsSortCol.value = col
+  pointsSortOrder.value = col === 'user' || col === 'label' || col === 'country' ? 'asc' : 'desc'
+}
+
+function pointsSortIcon(col) {
+  if (pointsSortCol.value !== col) return 'bi-sort-down'
+  return pointsSortOrder.value === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down-alt'
+}
+
+function toggleMoveType(type) {
+  if (selectedMoveTypes.value.includes(type)) {
+    selectedMoveTypes.value = selectedMoveTypes.value.filter((t) => t !== type)
+    return
+  }
+  selectedMoveTypes.value = [...selectedMoveTypes.value, type].sort((a, b) => a - b)
+}
+
+function resetMoveTypeFilter() {
+  selectedMoveTypes.value = []
+}
+
+function togglePointsMoveType(type) {
+  if (selectedPointsMoveTypes.value.includes(type)) {
+    selectedPointsMoveTypes.value = selectedPointsMoveTypes.value.filter((t) => t !== type)
+    return
+  }
+  selectedPointsMoveTypes.value = [...selectedPointsMoveTypes.value, type].sort((a, b) => a - b)
+}
+
+function resetPointsTypeFilter() {
+  selectedPointsMoveTypes.value = []
+}
+
+onMounted(async () => {
   const hash = window.location.hash.slice(1)
   if (hash && ['overview', 'moves', 'countries', 'related-users', 'points'].includes(hash)) {
     activeTab.value = hash
   }
-  load()
-  loadMoves()
-  loadPointsLog()
+  await loadGeoKret()
+  await loadActiveTabData(activeTab.value)
 })
-watch(movePage, loadMoves)
-watch(pointsLogPage, loadPointsLog)
-watch(() => route.params.id, (id) => { gkId.value = id; load(); loadMoves(); loadPointsLog() })
+
+watch(movePage, () => {
+  if (activeTab.value === 'moves') loadMoves()
+})
+watch(pointsLogPage, () => {
+  if (activeTab.value === 'points') loadPointsLog()
+})
+watch([moveSortCol, moveSortOrder, moveAwardingOnly, selectedMoveTypes], () => {
+  movePage.value = 1
+  if (activeTab.value === 'moves') loadMoves()
+}, { deep: true })
+watch([pointsSortCol, pointsSortOrder, pointsAwardingOnly, selectedPointsMoveTypes], () => {
+  pointsLogPage.value = 1
+  if (activeTab.value === 'points') loadPointsLog()
+}, { deep: true })
+watch(() => route.params.id, async (id) => {
+  gkId.value = id
+  activeTab.value = 'overview'
+  timeline.value = []
+  countries.value = []
+  moves.value = []
+  moveMeta.value = {}
+  pointsLog.value = []
+  pointsLogMeta.value = {}
+  movePage.value = 1
+  pointsLogPage.value = 1
+  moveSortCol.value = 'date'
+  moveSortOrder.value = 'desc'
+  pointsSortCol.value = 'date'
+  pointsSortOrder.value = 'desc'
+  moveAwardingOnly.value = false
+  pointsAwardingOnly.value = false
+  selectedMoveTypes.value = []
+  selectedPointsMoveTypes.value = []
+  loadedTabs.value = { overview: false, moves: false, countries: false, 'related-users': false, points: false }
+  await loadGeoKret()
+  await loadActiveTabData('overview')
+})
 watch(activeTab, (tab) => {
-  // Update URL hash when tab changes
   window.location.hash = tab
+  loadActiveTabData(tab)
 })
 </script>
 
@@ -95,7 +292,6 @@ watch(activeTab, (tab) => {
   </div>
   <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
   <div v-else-if="gk">
-    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-2">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><RouterLink to="/">Home</RouterLink></li>
@@ -104,7 +300,6 @@ watch(activeTab, (tab) => {
       </ol>
     </nav>
 
-    <!-- GK Header -->
     <div class="card mb-4 shadow-sm">
       <div class="card-body">
         <div class="row align-items-center g-3">
@@ -117,6 +312,7 @@ watch(activeTab, (tab) => {
             />
             <div v-else class="fs-1">🐢</div>
           </div>
+
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <h3 class="mb-0 text-break">{{ gk.gk_name }}</h3>
@@ -125,10 +321,12 @@ watch(activeTab, (tab) => {
               <span v-if="gk.is_non_collectible" class="badge bg-warning text-dark" title="Non-transferable (sealed) GeoKret">🔒 Sealed</span>
               <span v-if="gk.is_parked" class="badge bg-info text-dark" title="Parked GeoKret">🅿️ Parked</span>
             </div>
+
             <p class="mb-0 text-muted small mt-1">
               Type: <GkTypeBadge :gk-type="gk.gk_type" :type-name="gk.gk_type_name" />
               <span v-if="gk.loves_count" class="ms-2">❤️ {{ gk.loves_count.toLocaleString() }} loves</span>
             </p>
+
             <p class="mb-0 text-muted small">
               Owner:
               <RouterLink v-if="gk.owner_id" :to="`/users/${gk.owner_id}`">{{ gk.owner_username }}</RouterLink>
@@ -136,25 +334,26 @@ watch(activeTab, (tab) => {
               <span v-if="gk.owner_home_country" class="ms-1" :title="`Home country: ${gk.owner_home_country.toUpperCase()}`">
                 {{ getCountryFlag(gk.owner_home_country) }}
               </span>
-              <span class="d-none d-sm-inline">&ensp;|&ensp;</span>
-              <br class="d-sm-none" />
-              <span v-if="gk.in_cache" class="fw-semibold">
-                <span class="badge bg-success">🏦 In Cache</span>
-                <span v-if="gk.cache_country" class="ms-1" :title="`Cache location: ${gk.cache_country.toUpperCase()}`">
-                  {{ getCountryFlag(gk.cache_country) }}
-                </span>
+            </p>
+
+            <p v-if="gk.in_cache" class="mb-0 text-muted small">
+              In cache:
+              <span class="badge bg-success ms-1">🏦 In Cache</span>
+              <span v-if="gk.cache_country" class="ms-1" :title="`Cache location: ${gk.cache_country.toUpperCase()}`">
+                {{ getCountryFlag(gk.cache_country) }}
               </span>
-              <span v-else>
-                Holder:
-                <RouterLink v-if="gk.holder_id" :to="`/users/${gk.holder_id}`">{{ gk.holder_username }}</RouterLink>
-                <span v-else>—</span>
-                <span v-if="gk.holder_home_country" class="ms-1" :title="`Home country: ${gk.holder_home_country.toUpperCase()}`">
-                  {{ getCountryFlag(gk.holder_home_country) }}
-                </span>
+            </p>
+            <p v-else class="mb-0 text-muted small">
+              Holder:
+              <RouterLink v-if="gk.holder_id" :to="`/users/${gk.holder_id}`">{{ gk.holder_username }}</RouterLink>
+              <span v-else>—</span>
+              <span v-if="gk.holder_home_country" class="ms-1" :title="`Home country: ${gk.holder_home_country.toUpperCase()}`">
+                {{ getCountryFlag(gk.holder_home_country) }}
               </span>
             </p>
           </div>
-          <div class="col-12 col-xl-auto mt-xl-0 mt-3 border-top pt-3 border-xl-top-0 pt-xl-0 border-top">
+
+          <div class="col-12 col-xl-7 mt-xl-0 mt-3 border-top pt-3 border-xl-top-0 pt-xl-0">
             <div class="row g-2 text-center justify-content-center">
               <div class="col-4 col-sm-auto mb-2 px-1">
                 <div class="fw-bold text-success fs-5">{{ gk.total_points_generated?.toLocaleString() }}</div>
@@ -185,13 +384,15 @@ watch(activeTab, (tab) => {
               <RouterLink :to="`/geokrety/${gkId}/chains`" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-link-45deg me-1"></i>Chains
               </RouterLink>
+              <button type="button" class="btn btn-sm btn-outline-primary ms-2" @click="activeTab = 'points'">
+                <i class="bi bi-award me-1"></i>Awards
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tabs -->
     <ul class="nav nav-tabs mb-2">
       <li class="nav-item">
         <button type="button" class="nav-link" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">
@@ -224,10 +425,9 @@ watch(activeTab, (tab) => {
       </li>
     </ul>
 
-    <!-- Overview -->
     <div v-if="activeTab === 'overview'">
       <div class="card mb-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light">
           <b>Points Generated per Day</b>
           <span class="text-muted small" v-if="chartStartDate">since {{ chartStartDate }}</span>
         </div>
@@ -246,41 +446,73 @@ watch(activeTab, (tab) => {
           <p v-else class="text-muted text-center py-3">No timeline data.</p>
         </div>
       </div>
-      <!-- GK stats mini summary -->
+
+      <MoveTypeBreakdown
+        title="Move Type Breakdown"
+        :drops="gk.total_drops"
+        :grabs="gk.total_grabs"
+        :dips="gk.total_dips"
+        :seen="gk.total_seen"
+        :comments="gk.total_comments"
+        :loves="gk.loves_count"
+      />
+
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-12 col-lg-6">
           <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">Reach</h5>
+            </div>
             <div class="card-body">
-              <h6 class="card-title text-muted">Move breakdown</h6>
-              <ul class="list-unstyled mb-0 small">
-                <li><span class="fw-semibold">{{ gk.total_drops?.toLocaleString() }}</span> drops</li>
-                <li><span class="fw-semibold">{{ gk.total_grabs?.toLocaleString() }}</span> grabs</li>
-                <li><span class="fw-semibold">{{ gk.total_seen?.toLocaleString() }}</span> seen</li>
-                <li><span class="fw-semibold">{{ gk.total_dips?.toLocaleString() }}</span> dips</li>
+              <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between px-0">
+                  <span>People who interacted</span>
+                  <span class="fw-semibold">{{ gk.distinct_users?.toLocaleString() }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                  <span>Different places visited</span>
+                  <span class="fw-semibold">{{ gk.distinct_caches?.toLocaleString() }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                  <span>Countries reached</span>
+                  <span class="fw-semibold">{{ gk.countries_count?.toLocaleString() }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                  <span>Users awarded</span>
+                  <span class="fw-semibold">{{ gk.users_awarded?.toLocaleString() }}</span>
+                </li>
               </ul>
             </div>
           </div>
         </div>
-        <div class="col-md-4">
+
+        <div class="col-12 col-lg-6">
           <div class="card shadow-sm h-100">
-            <div class="card-body">
-              <h6 class="card-title text-muted">Reach</h6>
-              <ul class="list-unstyled mb-0 small">
-                <li><span class="fw-semibold">{{ gk.distinct_users?.toLocaleString() }}</span> distinct users</li>
-                <li><span class="fw-semibold">{{ gk.distinct_caches?.toLocaleString() }}</span> distinct waypoints</li>
-                <li><span class="fw-semibold">{{ gk.users_awarded?.toLocaleString() }}</span> users awarded</li>
-              </ul>
+            <div class="card-header bg-light">
+              <h5 class="mb-0">Dates</h5>
             </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm h-100">
             <div class="card-body">
-              <h6 class="card-title text-muted">Dates</h6>
-              <ul class="list-unstyled mb-0 small">
-                <li v-if="gk.born_at">Born: {{ gk.born_at?.slice(0, 10) }}</li>
-                <li v-if="gk.first_move_at">First move: {{ gk.first_move_at?.slice(0, 10) }}</li>
-                <li v-if="gk.last_move_at">Last move: {{ gk.last_move_at?.slice(0, 10) }}</li>
+              <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between px-0" v-if="gk.born_at || gk.created_at">
+                  <span>Created</span>
+                  <span class="fw-semibold">{{ (gk.born_at || gk.created_at)?.slice(0, 10) }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0" v-if="gk.first_move_at">
+                  <span>First move</span>
+                  <span class="fw-semibold">{{ gk.first_move_at?.slice(0, 10) }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0" v-if="gk.last_move_at">
+                  <span>Last move</span>
+                  <span class="fw-semibold">{{ gk.last_move_at?.slice(0, 10) }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                  <span>Lifetime / age</span>
+                  <span class="fw-semibold">{{ lifetimeText }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                  <span>Inactive for</span>
+                  <span class="fw-semibold">{{ inactiveText }}</span>
+                </li>
               </ul>
             </div>
           </div>
@@ -288,36 +520,88 @@ watch(activeTab, (tab) => {
       </div>
     </div>
 
-    <!-- Moves -->
     <div v-if="activeTab === 'moves'">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+        <button
+          type="button"
+          class="btn btn-sm"
+          :class="moveAwardingOnly ? 'btn-primary' : 'btn-outline-secondary'"
+          @click="moveAwardingOnly = !moveAwardingOnly"
+        >
+          <i class="bi bi-coin me-1"></i>Only awarding points
+        </button>
+
+        <div class="dropdown">
+          <button
+            class="btn btn-sm btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+          >
+            <i class="bi bi-funnel me-1"></i>{{ moveTypeFilterLabel }}
+          </button>
+          <div class="dropdown-menu p-2" style="min-width: 220px;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong class="small">Move types</strong>
+              <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @click="resetMoveTypeFilter">All</button>
+            </div>
+            <div v-for="opt in moveTypeOptions" :key="`move-opt-${opt.value}`" class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :id="`move-type-${opt.value}`"
+                :checked="selectedMoveTypes.includes(opt.value)"
+                @change="toggleMoveType(opt.value)"
+              />
+              <label class="form-check-label small" :for="`move-type-${opt.value}`">{{ opt.label }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card shadow-sm border-0">
         <div class="table-responsive border-0 mb-0">
           <table class="table table-hover table-sm mb-0 align-middle border">
             <thead class="table-dark">
               <tr>
-                <th class="ps-3" title="Date of the move">Date</th>
-                <th title="User who logged the move">Author</th>
-                <th class="d-none d-md-table-cell" title="Type of the move (Drop, Grab, Dip, etc.)">Type</th>
-                <th class="text-end" title="Points awarded for this move (including bonuses)">Points</th>
-                <th class="d-none d-sm-table-cell" title="Wayoint/Cache where the GeoKret was placed or seen">Waypoint</th>
-                <th class="d-none d-lg-table-cell pe-3" title="Country where the move took place">Country</th>
+                <th class="ps-3" style="cursor:pointer" @click="toggleMoveSort('date')" :class="moveSortCol==='date' ? 'text-warning' : ''">Date <i class="bi" :class="moveSortIcon('date')"></i></th>
+                <th style="cursor:pointer" @click="toggleMoveSort('author')" :class="moveSortCol==='author' ? 'text-warning' : ''">Author <i class="bi" :class="moveSortIcon('author')"></i></th>
+                <th class="d-none d-md-table-cell" style="cursor:pointer" @click="toggleMoveSort('type')" :class="moveSortCol==='type' ? 'text-warning' : ''">Type <i class="bi" :class="moveSortIcon('type')"></i></th>
+                <th class="d-none d-sm-table-cell" style="cursor:pointer" @click="toggleMoveSort('country')" :class="moveSortCol==='country' ? 'text-warning' : ''">Country <i class="bi" :class="moveSortIcon('country')"></i></th>
+                <th class="d-none d-lg-table-cell" style="cursor:pointer" @click="toggleMoveSort('waypoint')" :class="moveSortCol==='waypoint' ? 'text-warning' : ''">Waypoint <i class="bi" :class="moveSortIcon('waypoint')"></i></th>
+                <th class="text-end pe-3" style="cursor:pointer" @click="toggleMoveSort('points')" :class="moveSortCol==='points' ? 'text-warning' : ''">Points <i class="bi" :class="moveSortIcon('points')"></i></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="m in moves" :key="m.move_id" @click="$router.push(`/users/${m.author_id}`)" style="cursor: pointer">
+              <tr v-for="m in moves" :key="m.move_id" @click="m.author_id && $router.push(`/users/${m.author_id}`)" style="cursor: pointer">
                 <td class="small text-muted ps-3">{{ m.moved_on?.slice(0, 10) }}</td>
                 <td>
-                  <div class="fw-bold text-truncate" style="max-width: 140px">{{ m.author_username }}</div>
-                  <div class="d-md-none small">
-                    <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`" style="font-size:0.7rem">{{ m.type_name }}</span>
-                    <span v-if="m.waypoint" class="text-muted ms-1 small font-monospace">@{{ displayWaypoint(m.waypoint) }}</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <img
+                      v-if="userAvatarUrl(m.author_avatar)"
+                      :src="userAvatarUrl(m.author_avatar)"
+                      :alt="`${m.author_username || m.author_id || 'Unknown'} avatar`"
+                      class="author-avatar"
+                    />
+                    <div>
+                      <div class="fw-bold text-truncate" style="max-width: 140px">{{ m.author_username || 'Anonymous' }}</div>
+                      <div class="d-md-none small mt-1">
+                        <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`" style="font-size:0.7rem">{{ m.type_name }}</span>
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td class="d-none d-md-table-cell">
                   <span :class="`badge ${getMoveTypeBadgeClass(m.type_name)}`">{{ m.type_name }}</span>
                 </td>
-                <td class="text-end fw-bold text-success">{{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}</td>
                 <td class="d-none d-sm-table-cell">
+                  <span v-if="m.country" :title="`Country: ${m.country}`" class="text-nowrap small text-muted">
+                    {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}
+                  </span>
+                  <span v-else class="text-muted small">—</span>
+                </td>
+                <td class="d-none d-lg-table-cell">
                   <a v-if="m.waypoint"
                      :href="waypointExternalUrl(m.waypoint)"
                      target="_blank"
@@ -329,10 +613,8 @@ watch(activeTab, (tab) => {
                   </a>
                   <span v-else class="text-muted small">—</span>
                 </td>
-                <td class="d-none d-lg-table-cell pe-3">
-                  <span v-if="m.country" :title="`Country: ${m.country}`" class="text-nowrap small text-muted">
-                    {{ getCountryFlag(m.country) }} {{ m.country.toUpperCase() }}
-                  </span>
+                <td class="text-end fw-bold pe-3" :class="m.points > 0 ? 'text-success' : 'text-muted'">
+                  {{ m.points !== null && m.points !== undefined ? m.points.toLocaleString() : '—' }}
                 </td>
               </tr>
             </tbody>
@@ -342,10 +624,9 @@ watch(activeTab, (tab) => {
       <Pagination v-if="moveMeta.total" :meta="moveMeta" v-model:page="movePage" class="mt-3" />
     </div>
 
-    <!-- Countries -->
     <div v-if="activeTab === 'countries'">
       <div class="card shadow-sm mb-2">
-        <div class="card-header"><b>Countries visited</b></div>
+        <div class="card-header bg-light"><b>Countries visited</b></div>
         <div class="card-body p-2">
           <WorldMap v-if="countries.length" :countries="countries" :height="380" />
           <p v-else class="text-muted text-center py-3">No countries data.</p>
@@ -364,7 +645,6 @@ watch(activeTab, (tab) => {
       </div>
     </div>
 
-    <!-- Related Users tab -->
     <div v-if="activeTab === 'related-users'">
       <RelatedUsersTab
         :endpoint="`/geokrety/${gkId}/related-users`"
@@ -372,8 +652,46 @@ watch(activeTab, (tab) => {
       />
     </div>
 
-    <!-- Points Log tab -->
     <div v-if="activeTab === 'points'">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+        <button
+          type="button"
+          class="btn btn-sm"
+          :class="pointsAwardingOnly ? 'btn-primary' : 'btn-outline-secondary'"
+          @click="pointsAwardingOnly = !pointsAwardingOnly"
+        >
+          <i class="bi bi-coin me-1"></i>Only awarding points
+        </button>
+
+        <div class="dropdown">
+          <button
+            class="btn btn-sm btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+          >
+            <i class="bi bi-funnel me-1"></i>{{ pointsTypeFilterLabel }}
+          </button>
+          <div class="dropdown-menu p-2" style="min-width: 220px;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong class="small">Move types</strong>
+              <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @click="resetPointsTypeFilter">All</button>
+            </div>
+            <div v-for="opt in moveTypeOptions" :key="`points-opt-${opt.value}`" class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :id="`points-type-${opt.value}`"
+                :checked="selectedPointsMoveTypes.includes(opt.value)"
+                @change="togglePointsMoveType(opt.value)"
+              />
+              <label class="form-check-label small" :for="`points-type-${opt.value}`">{{ opt.label }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="pointsLog.length === 0" class="text-center text-muted py-5">
         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
         No points recorded for this GeoKret yet.
@@ -383,29 +701,46 @@ watch(activeTab, (tab) => {
           <table class="table table-hover table-sm mb-0 align-middle border">
             <thead class="table-dark">
               <tr>
-                <th class="ps-3" title="Date the points were awarded">Date</th>
-                <th title="User who received the points">User</th>
-                <th class="d-none d-md-table-cell" title="The specific bonus or rule that triggered this reward">Reward</th>
-                <th class="text-end pe-3" title="Amount of points awarded">Points</th>
+                <th class="ps-3" style="cursor:pointer" @click="togglePointsSort('date')" :class="pointsSortCol==='date' ? 'text-warning' : ''">Date <i class="bi" :class="pointsSortIcon('date')"></i></th>
+                <th style="cursor:pointer" @click="togglePointsSort('user')" :class="pointsSortCol==='user' ? 'text-warning' : ''">User <i class="bi" :class="pointsSortIcon('user')"></i></th>
+                <th class="d-none d-md-table-cell" style="cursor:pointer" @click="togglePointsSort('label')" :class="pointsSortCol==='label' ? 'text-warning' : ''">Reward <i class="bi" :class="pointsSortIcon('label')"></i></th>
+                <th class="d-none d-sm-table-cell" style="cursor:pointer" @click="togglePointsSort('type')" :class="pointsSortCol==='type' ? 'text-warning' : ''">Type <i class="bi" :class="pointsSortIcon('type')"></i></th>
+                <th class="d-none d-sm-table-cell" style="cursor:pointer" @click="togglePointsSort('country')" :class="pointsSortCol==='country' ? 'text-warning' : ''">Country <i class="bi" :class="pointsSortIcon('country')"></i></th>
+                <th class="text-end pe-3" style="cursor:pointer" @click="togglePointsSort('points')" :class="pointsSortCol==='points' ? 'text-warning' : ''">Points <i class="bi" :class="pointsSortIcon('points')"></i></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="p in pointsLog" :key="p.id" @click="$router.push(`/users/${p.user_id}`)" style="cursor: pointer">
                 <td class="small text-muted text-nowrap ps-3">{{ p.awarded_at?.slice(0, 10) }}</td>
                 <td>
-                  <div class="fw-bold">{{ p.username || p.user_id }}</div>
-                  <div class="d-md-none small mt-1">
-                    <span class="badge bg-light text-dark border overflow-hidden text-truncate" style="max-width: 150px">
-                      {{ (p.label || p.module_source || '—').replace(/_/g, ' ') }}
-                    </span>
-                    <span v-if="p.is_owner_reward" class="badge bg-warning text-dark ms-1">Owner</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <img
+                      v-if="userAvatarUrl(p.author_avatar)"
+                      :src="userAvatarUrl(p.author_avatar)"
+                      :alt="`${p.username || p.user_id} avatar`"
+                      class="author-avatar"
+                    />
+                    <div>
+                      <div class="fw-bold text-truncate" style="max-width: 150px">{{ p.username || p.user_id }}</div>
+                      <div class="d-md-none small mt-1">
+                        <span class="badge bg-light text-dark border overflow-hidden text-truncate" style="max-width: 160px">
+                          {{ (p.label || '—').replace(/_/g, ' ') }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td class="d-none d-md-table-cell">
                   <span class="badge bg-light text-dark border" :title="p.reason || ''">
-                    {{ (p.label || p.module_source || '—').replace(/_/g, ' ') }}
+                    {{ (p.label || '—').replace(/_/g, ' ') }}
                   </span>
-                  <span v-if="p.is_owner_reward" class="badge bg-warning text-dark ms-1" title="Owner reward">Owner</span>
+                </td>
+                <td class="d-none d-sm-table-cell">
+                  <span :class="`badge ${getMoveTypeBadgeClass(p.type_name)}`">{{ p.type_name }}</span>
+                </td>
+                <td class="d-none d-sm-table-cell small text-muted">
+                  <span v-if="p.country">{{ getCountryFlag(p.country) }} {{ p.country.toUpperCase() }}</span>
+                  <span v-else>—</span>
                 </td>
                 <td class="text-end fw-bold pe-3" :class="p.points >= 0 ? 'text-success' : 'text-danger'">
                   {{ p.points >= 0 ? '+' : '' }}{{ p.points?.toLocaleString() }}
@@ -427,5 +762,14 @@ watch(activeTab, (tab) => {
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--bs-border-color);
+}
+
+.author-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--bs-border-color);
+  flex-shrink: 0;
 }
 </style>

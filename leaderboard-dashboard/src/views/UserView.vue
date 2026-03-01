@@ -11,6 +11,7 @@ import WorldMap from '../components/WorldMap.vue'
 import Pagination from '../components/Pagination.vue'
 import RelatedUsersTab from '../components/RelatedUsersTab.vue'
 import PointsBreakdownChart from '../components/PointsBreakdownChart.vue'
+import GkTypeBadge from '../components/GkTypeBadge.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -20,9 +21,12 @@ const user        = ref(null)
 const timeline    = ref([])
 const countries   = ref([])
 const moves       = ref([])
+const geokrety    = ref([])
 const breakdown   = ref([])
 const movePage    = ref(1)
 const moveMeta    = ref({})
+const gkPage      = ref(1)
+const gkMeta      = ref({})
 const moveSortCol = ref('date')
 const moveSortOrder = ref('desc')
 const moveAwardingOnly = ref(false)
@@ -33,6 +37,7 @@ const activeTab   = ref('overview')
 const loadedTabs  = ref({
   overview: false,
   moves: false,
+  geokrety: false,
   countries: false,
   'related-users': false,
 })
@@ -129,10 +134,21 @@ async function loadCountries() {
   loadedTabs.value.countries = true
 }
 
+async function loadGeokrety() {
+  const { items, meta } = await fetchList(`/users/${userId.value}/geokrety`, {
+    page: gkPage.value,
+    per_page: 25,
+  })
+  geokrety.value = items
+  gkMeta.value = meta
+  loadedTabs.value.geokrety = true
+}
+
 async function loadActiveTabData(tab) {
   try {
     if (tab === 'overview') await loadOverview()
     if (tab === 'moves') await loadMoves()
+    if (tab === 'geokrety') await loadGeokrety()
     if (tab === 'countries') await loadCountries()
     if (tab === 'related-users') loadedTabs.value['related-users'] = true
   } catch (e) {
@@ -169,13 +185,16 @@ function toggleMoveType(type) {
 onMounted(() => {
   // Read tab from URL hash
   const hash = window.location.hash.slice(1)
-  if (hash && ['overview', 'moves', 'countries', 'related-users'].includes(hash)) {
+  if (hash && ['overview', 'moves', 'geokrety', 'countries', 'related-users'].includes(hash)) {
     activeTab.value = hash
   }
   loadUser().then(() => loadActiveTabData(activeTab.value))
 })
 watch(movePage, () => {
   if (activeTab.value === 'moves') loadMoves()
+})
+watch(gkPage, () => {
+  if (activeTab.value === 'geokrety') loadGeokrety()
 })
 watch([moveSortCol, moveSortOrder, moveAwardingOnly, selectedMoveTypes], () => {
   movePage.value = 1
@@ -189,12 +208,15 @@ watch(() => route.params.id, async (id) => {
   moves.value = []
   breakdown.value = []
   moveMeta.value = {}
+  geokrety.value = []
+  gkMeta.value = {}
   movePage.value = 1
+  gkPage.value = 1
   moveSortCol.value = 'date'
   moveSortOrder.value = 'desc'
   moveAwardingOnly.value = false
   selectedMoveTypes.value = []
-  loadedTabs.value = { overview: false, moves: false, countries: false, 'related-users': false }
+  loadedTabs.value = { overview: false, moves: false, geokrety: false, countries: false, 'related-users': false }
   await loadUser()
   await loadActiveTabData('overview')
 })
@@ -239,7 +261,7 @@ watch(activeTab, (tab) => {
               <span v-if="joinedYear" class="d-none d-sm-inline"> &mdash; joined {{ joinedYear }}</span>
             </p>
           </div>
-          <div class="col-12 col-xl-auto mt-xl-0 mt-3 border-top pt-3 pt-xl-0 border-xl-top-0">
+          <div class="col-12 col-xl-7 mt-xl-0 mt-3 border-top pt-3 pt-xl-0 border-xl-top-0">
             <div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-2 text-center justify-content-center">
               <div class="col">
                 <div class="fw-bold text-primary fs-5">{{ displayTotalPoints.toLocaleString(undefined, { maximumFractionDigits: 2 }) }}</div>
@@ -270,6 +292,9 @@ watch(activeTab, (tab) => {
               <RouterLink :to="`/users/${userId}/chains`" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-link-45deg me-1"></i>Chains
               </RouterLink>
+              <RouterLink :to="`/users/${userId}/awards`" class="btn btn-sm btn-outline-primary ms-2">
+                <i class="bi bi-award me-1"></i>Awards
+              </RouterLink>
             </div>
           </div>
         </div>
@@ -292,6 +317,12 @@ watch(activeTab, (tab) => {
         <button type="button" class="nav-link" :class="{ active: activeTab === 'countries' }" @click="activeTab = 'countries'">
           <i class="bi bi-globe me-1"></i>Countries
           <span v-if="user?.countries_count" class="badge bg-secondary ms-1">{{ user.countries_count }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link" :class="{ active: activeTab === 'geokrety' }" @click="activeTab = 'geokrety'">
+          <i class="bi bi-box-seam me-1"></i>GeoKrety
+          <span v-if="gkMeta.total" class="badge bg-secondary ms-1">{{ gkMeta.total.toLocaleString() }}</span>
         </button>
       </li>
       <li class="nav-item">
@@ -455,6 +486,54 @@ watch(activeTab, (tab) => {
         </div>
       </div>
       <Pagination v-if="moveMeta.total" :meta="moveMeta" v-model:page="movePage" class="mt-3" />
+    </div>
+
+    <!-- GeoKrety tab -->
+    <div v-if="activeTab === 'geokrety'">
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive border-0 mb-0">
+          <table class="table table-hover table-sm mb-0 align-middle border">
+            <thead class="table-dark">
+              <tr>
+                <th class="ps-3">GeoKret</th>
+                <th class="d-none d-md-table-cell">Type</th>
+                <th class="d-none d-sm-table-cell">Last interaction</th>
+                <th class="text-end">Points Generated</th>
+                <th class="text-end pe-3">Multiplier</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="g in geokrety" :key="g.gk_id" @click="$router.push(`/geokrety/${g.gk_id}`)" style="cursor: pointer">
+                <td class="ps-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <img
+                      v-if="gkAvatarUrl(g.avatar)"
+                      :src="gkAvatarUrl(g.avatar)"
+                      :alt="`${g.gk_name || idToGkId(g.gk_id)} avatar`"
+                      class="gk-thumb"
+                    />
+                    <div>
+                      <RouterLink :to="`/geokrety/${g.gk_id}`" class="fw-bold text-decoration-none" @click.stop>
+                        {{ g.gk_name || idToGkId(g.gk_id) }}
+                      </RouterLink>
+                      <div class="small text-muted">#{{ g.gk_id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="d-none d-md-table-cell">
+                  <GkTypeBadge :gk-type="g.gk_type" />
+                </td>
+                <td class="d-none d-sm-table-cell small text-muted">
+                  {{ g.last_interaction ? String(g.last_interaction).slice(0, 10) : '—' }}
+                </td>
+                <td class="text-end fw-semibold text-primary">{{ Number(g.total_points_generated || 0).toLocaleString() }}</td>
+                <td class="text-end pe-3">{{ g.current_multiplier ? Number(g.current_multiplier).toFixed(2) : '1.00' }}×</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <Pagination v-if="gkMeta.total" :meta="gkMeta" v-model:page="gkPage" class="mt-3" />
     </div>
 
     <!-- Countries tab -->

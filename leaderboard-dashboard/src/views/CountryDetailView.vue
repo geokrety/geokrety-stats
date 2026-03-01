@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { getCountryFlag } from '../composables/useCountryFlags.js'
 import { fetchList } from '../composables/useApi.js'
 import LineChart from '../components/LineChart.vue'
+import MoveTypeBreakdown from '../components/MoveTypeBreakdown.vue'
 
 const route = useRoute()
 const country = ref(route.params.country?.toUpperCase())
@@ -184,45 +185,14 @@ onMounted(loadCountryData)
       </div>
 
       <!-- Move Type Breakdown -->
-      <div class="card shadow-sm mb-2">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">Move Type Breakdown</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
-              <div class="fs-2 mb-2">🌳</div>
-              <div class="text-muted small" title="GeoKrety placed into a cache">Drops</div>
-              <div class="fs-5 fw-bold">{{ formatInt(countryData.drops) }}</div>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
-              <div class="fs-2 mb-2">🚀</div>
-              <div class="text-muted small" title="GeoKrety taken from a cache or person">Grabs</div>
-              <div class="fs-5 fw-bold">{{ formatInt(countryData.grabs) }}</div>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
-              <div class="fs-2 mb-2">🥾</div>
-              <div class="text-muted small" title="Virtual carry - GeoKrety held digitally without physical cache">DIPs</div>
-              <div class="fs-5 fw-bold">{{ formatInt(countryData.dips) }}</div>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
-              <div class="fs-2 mb-2">👀</div>
-              <div class="text-muted small" title="GeoKrety spotted but not taken or placed">Seen</div>
-              <div class="fs-5 fw-bold">{{ formatInt(countryData.seen) }}</div>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
-              <div class="fs-2 mb-2">📝</div>
-              <div class="text-muted small" title="Log a comment about GeoKrety status">Comments</div>
-              <div class="fs-5 fw-bold">{{ formatInt(countryData.comments) }}</div>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2 text-center mb-2">
-              <div class="fs-2 mb-2">❤️</div>
-              <div class="text-muted small" title="Favorite/love marks given to GeoKrety">Loves</div>
-              <div class="fs-5 fw-bold text-danger">{{ formatInt(countryData.total_loves) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MoveTypeBreakdown
+        :drops="countryData.drops"
+        :grabs="countryData.grabs"
+        :dips="countryData.dips"
+        :seen="countryData.seen"
+        :comments="countryData.comments"
+        :loves="countryData.total_loves"
+      />
 
       <!-- Additional Stats -->
       <div class="card shadow-sm">
