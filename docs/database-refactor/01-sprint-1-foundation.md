@@ -1609,8 +1609,8 @@ SELECT pg_size_pretty(pg_relation_size('geokrety.gk_moves')) AS table_size;
 
 ## 12. Related Specifications / Further Reading
 
-- [00-SCHEMA.md](00-SCHEMA.md) — Comprehensive schema design document (sections 3, 4, 5.8, 9.1)
-- [01-SPRINT-INDEX.md](01-SPRINT-INDEX.md) — Sprint dependency graph and summary
+- [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md) — Comprehensive schema design document (sections 3, 4, 5.8, 9.1)
+- [00-SPRINT-INDEX.md](00-SPRINT-INDEX.md) — Sprint dependency graph and summary
 - [03-sprint-3-country-geography.md](03-sprint-3-country-geography.md) — Sprint 3: Country & Geography (depends on this sprint)
 - [99-OPEN-QUESTIONS.md](99-OPEN-QUESTIONS.md) — Open questions (Q-009 trigger ordering, Q-010 delete handling)
 - [gamification-rules.instructions.md](../../.github/instructions/gamification-rules.instructions.md) — Gamification rules reference

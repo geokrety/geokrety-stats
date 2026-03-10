@@ -243,7 +243,7 @@ Total:         338,770
 - [ ] 9. Run pgTAP tests T-4.3.001 through T-4.3.010
 - [ ] 10. Verify `phinx rollback` truncates waypoints and drops function
 
-- [ ] DBA file reviewed: [task-S4T03.dba.md](task-S4T03.dba.md)
+- - [DBA  ] DBA file reviewed: [task-S4T03.dba.md](task-S4T03.md#dba)
 - [ ] Dependencies S4T01 and S4T02 applied
 - [ ] Migration `20260310400200_seed_waypoints.php` created
 - [ ] Migration runs successfully; row count > 100,000

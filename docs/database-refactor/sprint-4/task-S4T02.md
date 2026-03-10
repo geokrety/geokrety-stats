@@ -233,7 +233,7 @@ LIMIT 20;
 - [ ] 6. Run pgTAP tests T-4.2.001 through T-4.2.009
 - [ ] 7. Verify `phinx rollback` drops the view cleanly
 
-- [ ] DBA file reviewed: [task-S4T02.dba.md](task-S4T02.dba.md)
+- - [DBA  ] DBA file reviewed: [task-S4T02.dba.md](task-S4T02.md#dba)
 - [ ] Migration `20260310400100_create_waypoints_source_view.php` created
 - [ ] Migration runs successfully
 - [ ] Both sources visible in view

@@ -276,7 +276,7 @@ GC5ZZZZ  ████████████          1,234 GK visits
 - [ ] 8. Run pgTAP tests T-4.4.001 through T-4.4.010
 - [ ] 9. Verify `phinx rollback` drops the table cleanly
 
-- [ ] DBA file reviewed: [task-S4T04.dba.md](task-S4T04.dba.md)
+- - [DBA  ] DBA file reviewed: [task-S4T04.dba.md](task-S4T04.md#dba)
 - [ ] S4T01 applied (waypoints table exists)
 - [ ] Migration `20260310400300_create_gk_cache_visits.php` created
 - [ ] Migration runs successfully

@@ -26,8 +26,7 @@ This document is the master index for the GeoKrety database refactoring sprint p
 | Document             | Path                                                                                                                           | Purpose                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | Schema Specification | [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md)                                                                                     | Canonical stats/points/achievements draft specification |
-| Gamification Rules   | [../../.github/instructions/gamification-rules.instructions.md](../../.github/instructions/gamification-rules.instructions.md) | Authoritative points/multiplier/chain rules                 |
-| Open Questions       | [99-OPEN-QUESTIONS.md](99-OPEN-QUESTIONS.md)                                                                                   | Deferred decisions and questions for future phases          |
+| Gamification Rules   | [../gamification/00-SPEC-DRAFT-v1.md](../../.github/instructions/gamification-rules.instructions.md) | Authoritative points/multiplier/chain rules                 |
 
 ## Sprint Dependency Graph
 
@@ -74,7 +73,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 
 ### Sprint 2: Sharded Counters, Daily Activity & Previous-Move Trigger
 
-**File:** [02-sprint-2-counters-daily-activity.md](02-sprint-2-counters-daily-activity.md)
+**File:** [Sprint 2](02-sprint-2-counters-daily-activity.md)
 **Depends on:** Sprint 1
 **Blocks:** Sprints 3, 4, 5, 6
 
@@ -100,7 +99,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 
 ### Sprint 3: Country, Geography & Traversal
 
-**File:** [03-sprint-3-country-geography.md](03-sprint-3-country-geography.md)
+**File:** [Sprint 3](03-sprint-3-country-geography.md)
 **Depends on:** Sprint 1, Sprint 2
 **Blocks:** Sprint 5, Sprint 6
 
@@ -122,7 +121,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 
 ### Sprint 4: Waypoints, Cache Analytics & Social Relations
 
-**File:** [sprint-4/00-index.md](sprint-4/00-index.md)
+**File:** [sprint-4/S4IS5IS6IS6I00-index.md](sprint-4/S4IS5IS6IS6I00-index.md)
 **Depends on:** Sprint 1, Sprint 2
 **Blocks:** Sprint 6
 
@@ -147,7 +146,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 
 ### Sprint 5: Advanced Analytics, Events & AMQP
 
-**File:** [sprint-5/00-index.md](sprint-5/00-index.md)
+**File:** [sprint-5/S4IS5IS6IS6I00-index.md](sprint-5/S4IS5IS6IS6I00-index.md)
 **Depends on:** Sprint 1, Sprint 2, Sprint 3, Sprint 4
 **Blocks:** Sprint 6
 
@@ -171,7 +170,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 
 ### Sprint 6: Backfill Helpers, Views & Data Migration
 
-**File:** [sprint-6/00-index.md](sprint-6/00-index.md)
+**File:** [sprint-6/S4IS5IS6IS6I00-index.md](sprint-6/S4IS5IS6IS6I00-index.md)
 **Depends on:** All previous sprints
 **Blocks:** nothing (final sprint for stats)
 

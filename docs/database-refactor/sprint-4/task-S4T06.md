@@ -268,7 +268,7 @@ GK-F001  ████████████████████    359 dis
 - [ ] 6. Run pgTAP tests T-4.6.001 through T-4.6.009
 - [ ] 7. Verify `phinx rollback` drops table cleanly
 
-- [ ] DBA file reviewed: [task-S4T06.dba.md](task-S4T06.dba.md)
+- - [DBA  ] DBA file reviewed: [task-S4T06.dba.md](task-S4T06.md#dba)
 - [ ] Migration `20260310400500_create_gk_related_users.php` created
 - [ ] Migration runs successfully
 - [ ] All T-4.6.xxx tests pass

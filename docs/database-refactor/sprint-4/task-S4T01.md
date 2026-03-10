@@ -295,7 +295,7 @@ Total: 375,000 waypoints
 - [ ] 9. Run pgTAP tests T-4.1.001 through T-4.1.011
 - [ ] 10. Verify `phinx rollback` drops the table cleanly (no orphaned objects)
 
-- [ ] DBA file reviewed and approved: [task-S4T01.dba.md](task-S4T01.dba.md)
+- - [DBA  ] DBA file reviewed and approved: [task-S4T01.dba.md](task-S4T01.md#dba)
 - [ ] Migration file `20260310400000_create_waypoints.php` created
 - [ ] Migration runs successfully (`phinx migrate`)
 - [ ] All T-4.1.xxx pgTAP tests pass

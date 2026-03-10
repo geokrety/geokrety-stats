@@ -269,7 +269,7 @@ Visited 100+:        9,000 users  (6%)
 - [ ] 8. Run pgTAP tests T-4.5.001 through T-4.5.010
 - [ ] 9. Verify `phinx rollback` drops table cleanly
 
-- [ ] DBA file reviewed: [task-S4T05.dba.md](task-S4T05.dba.md)
+- - [DBA  ] DBA file reviewed: [task-S4T05.dba.md](task-S4T05.md#dba)
 - [ ] S4T01 applied
 - [ ] Migration `20260310400400_create_user_cache_visits.php` created
 - [ ] Migration runs successfully
