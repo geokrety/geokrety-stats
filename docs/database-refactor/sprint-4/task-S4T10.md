@@ -206,7 +206,7 @@ SQL
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Section 9.2.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Section 9.2.
 
 - The canonical Sprint 4 secondary-index set is exactly: `idx_gk_related_users_user`, `idx_user_cache_visits_waypoint`, `idx_gk_cache_visits_waypoint`, and `idx_waypoints_country`.
 - References to non-canonical or nonexistent columns such as `source_type`, `touch_count`, or alternate relation-key names are obsolete draft text.

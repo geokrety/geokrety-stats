@@ -29,7 +29,7 @@ The bridge integration remains abstract at the master-spec level: the trigger wr
 
 ## Master-Spec Alignment
 
-Sprint 5 must remain aligned to [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Sections 5.7, 8.4, 8.5, 10, and 11.
+Sprint 5 must remain aligned to [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 5.7, 8.4, 8.5, 10, and 11.
 
 - Canonical Sprint 5 tables from the master spec are `stats.hourly_activity`, `stats.country_pair_flows`, `stats.gk_milestone_events`, and `stats.first_finder_events`.
 - Live trigger work in the master spec includes `gk_loves` activity updates, lightweight milestone and first-finder fact capture, and the `tr_gk_moves_emit_points_event` bridge. `stats.hourly_activity` and `stats.country_pair_flows` are batch/manual computed.

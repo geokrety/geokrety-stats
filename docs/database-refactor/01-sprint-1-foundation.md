@@ -25,7 +25,7 @@ This sprint establishes the foundation for the entire Stats database refactoring
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is [00-SPEC-DRAFT-v1.md](00-SPEC-DRAFT-v1.md), Sections 1, 4, 5.8, 8, 9, and 12.
+The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md), Sections 1, 4, 5.8, 8, 9, and 12.
 
 - Step 1.1 is a forward-only cleanup migration that drops superseded schema objects. It does not mutate Phinx bookkeeping tables.
 - Any legacy `phinxlog` deletion SQL or test text later in this draft is obsolete and non-normative.

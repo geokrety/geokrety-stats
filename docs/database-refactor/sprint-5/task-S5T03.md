@@ -300,7 +300,7 @@ ORDER BY event_type;
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Section 5.7.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Section 5.7.
 
 - Canonical table contract: `stats.gk_milestone_events(id, gk_id, event_type, occurred_at, actor_user_id, metadata)`.
 - `event_type` remains `VARCHAR(50)` constrained to the master milestone set.

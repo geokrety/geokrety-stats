@@ -281,7 +281,7 @@ ORDER BY MIN(hours_since_creation);
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Section 5.7 and Test Matrix items T142-T143.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Section 5.7 and Test Matrix items T142-T143.
 
 - Canonical table contract: `stats.first_finder_events(gk_id, finder_user_id, move_id, move_type, found_at, gk_created_at, hours_since_creation)`.
 - First-finder eligibility is limited to qualifying non-owner moves within 168 hours of GK creation.

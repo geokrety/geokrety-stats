@@ -15,7 +15,7 @@ tags:
 
 # Database Refactor Implementation Plan — Sprint Index
 
-> **Scope:** This index tracks the database-refactor sprint documents in this folder and must stay aligned with the full canonical scope in [00-SPEC-DRAFT-v1.md](00-SPEC-DRAFT-v1.md), including cross-schema dependencies.
+> **Scope:** This index tracks the database-refactor sprint documents in this folder and must stay aligned with the full canonical scope in [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md), including cross-schema dependencies.
 
 ## Overview
 
@@ -25,7 +25,7 @@ This document is the master index for the GeoKrety database refactoring sprint p
 
 | Document             | Path                                                                                                                           | Purpose                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| Schema Specification | [00-SPEC-DRAFT-v1.md](00-SPEC-DRAFT-v1.md)                                                                                     | Canonical stats/points/achievements draft specification |
+| Schema Specification | [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md)                                                                                     | Canonical stats/points/achievements draft specification |
 | Gamification Rules   | [../../.github/instructions/gamification-rules.instructions.md](../../.github/instructions/gamification-rules.instructions.md) | Authoritative points/multiplier/chain rules                 |
 | Open Questions       | [99-OPEN-QUESTIONS.md](99-OPEN-QUESTIONS.md)                                                                                   | Deferred decisions and questions for future phases          |
 

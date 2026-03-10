@@ -299,7 +299,7 @@ _Used by: "list all GKs first found by user X" profile queries._
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Section 9 and the canonical table contracts for Sprint 5.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Section 9 and the canonical table contracts for Sprint 5.
 
 - Do not assume a `processed` column on any event bridge table unless the master spec is amended to define one.
 - Indexes already owned by table-creation tasks must not be re-specified here as new mandatory Sprint 5 indexes.

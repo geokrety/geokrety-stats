@@ -361,7 +361,7 @@ COMMENT ON TRIGGER tr_gk_moves_after_relations ON geokrety.gk_moves
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Sections 5.6 and 8.4.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 5.6 and 8.4.
 
 - Canonical table names and columns are `stats.gk_related_users(geokrety_id, user_id, interaction_count, first_interaction, last_interaction)` and `stats.user_related_users(user_id, related_user_id, shared_geokrety_count, first_seen_at, last_seen_at)`.
 - `tr_gk_moves_after_relations` must be documented as `AFTER INSERT OR UPDATE OR DELETE` with exact `OLD` removal plus `NEW` application semantics.

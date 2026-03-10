@@ -73,7 +73,7 @@ Four functions are created:
 
 The helper-scope question is now resolved: waypoint, cache-visit, and relation snapshot helpers are promoted into the canonical Sprint 4 contract, while `stats.fn_snapshot_relationship_tables(...)` remains the stable master-spec entry point.
 
-**Execution order must be respected:** follow the master snapshot order from [00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), with relationship-table seeding occurring after waypoint/cache prerequisites are available.
+**Execution order must be respected:** follow the master snapshot order from [00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), with relationship-table seeding occurring after waypoint/cache prerequisites are available.
 
 ---
 
@@ -452,7 +452,7 @@ $$;
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Sections 8.3 and 11.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 8.3 and 11.
 
 - The canonical Sprint 4 contract now includes both the promoted helper set (`fn_snapshot_waypoints`, `fn_snapshot_cache_visits`, `fn_snapshot_relations`) and the stable wrapper `stats.fn_snapshot_relationship_tables(p_period daterange DEFAULT NULL)`.
 - `stats.job_log` columns are `id`, `job_name`, `status`, `metadata`, `started_at`, and `completed_at`.

@@ -408,7 +408,7 @@ COMMENT ON TRIGGER tr_gk_moves_after_waypoint_visits ON geokrety.gk_moves
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Sections 5.5 and 8.4.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 5.5 and 8.4.
 
 - `stats.waypoints` uses `waypoint_code`, not `code`, and has no `last_seen_at` column in the canonical contract.
 - `tr_gk_moves_after_waypoint_visits` is an `AFTER INSERT OR UPDATE OR DELETE` trigger, and `UPDATE` handling must reconcile `OLD` then `NEW` exactly.

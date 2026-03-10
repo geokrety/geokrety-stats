@@ -29,7 +29,7 @@ changelog:
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is [00-SPEC-DRAFT-v1.md](00-SPEC-DRAFT-v1.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
+The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.

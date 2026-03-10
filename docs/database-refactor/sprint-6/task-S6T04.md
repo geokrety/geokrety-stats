@@ -195,7 +195,7 @@ SELECT * FROM stats.job_log WHERE job_name LIKE '%km%' ORDER BY started_at DESC 
 
 ## Master-Spec Alignment
 
-This task is governed by [../00-SPEC-DRAFT-v1.md](../00-SPEC-DRAFT-v1.md), Section 8.2.
+This task is governed by [../00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Section 8.2.
 
 - The heavy wrapper orchestrates full-history backfill of `geokrety.gk_moves.km_distance` via the canonical batched function.
 - Acceptance criteria must validate coverage of `km_distance` on `geokrety.gk_moves`, not population of off-spec counter tables.
