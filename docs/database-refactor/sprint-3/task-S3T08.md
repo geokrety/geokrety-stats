@@ -219,7 +219,7 @@ ORDER BY arrived_at;
 - [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md) — Comprehensive schema design document (sections 5.3, 5.4, 8.4, 9.2)
 - [00-SPRINT-INDEX.md](00-SPRINT-INDEX.md) — Sprint dependency graph and summary
 - [spec-schema-sprint-1-foundation.md](../../spec/spec-schema-sprint-1-foundation.md) — Sprint 1: Foundation
-- [gamification-rules.instructions.md](../../.github/instructions/gamification-rules.instructions.md) — Country crossing rules (+0.05 multiplier, +3 points)
+- [gamification-rules.instructions.md](../../docs/gamification/00-SPEC-DRAFT-v1.md) — Country crossing rules (+0.05 multiplier, +3 points)
 - [PostgreSQL EXCLUDE constraint](https://www.postgresql.org/docs/16/sql-createtable.html#SQL-CREATETABLE-EXCLUDE)
 - [btree_gist Extension](https://www.postgresql.org/docs/16/btree-gist.html)
 - [pgTAP Documentation](https://pgtap.org/documentation.html)

@@ -26,7 +26,7 @@ This document is the master index for the GeoKrety database refactoring sprint p
 | Document             | Path                                                                                                                           | Purpose                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | Schema Specification | [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md)                                                                                     | Canonical stats/points/achievements draft specification |
-| Gamification Rules   | [../gamification/00-SPEC-DRAFT-v1.md](../../.github/instructions/gamification-rules.instructions.md) | Authoritative points/multiplier/chain rules                 |
+| Gamification Rules   | [../gamification/00-SPEC-DRAFT-v1.md](../../docs/gamification/00-SPEC-DRAFT-v1.md) | Authoritative points/multiplier/chain rules                 |
 
 ## Sprint Dependency Graph
 
