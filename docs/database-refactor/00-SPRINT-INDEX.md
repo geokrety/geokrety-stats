@@ -72,7 +72,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 ---
 
 ### Sprint 2: Sharded Counters, Daily Activity & Previous-Move Trigger
-**File:** [02-sprint-2-counters-daily-activity.md](02-sprint-2-counters-daily-activity.md)
+**File:** [sprint-2/S3I00-index.md](sprint-2/S2I00-index.md)
 **Depends on:** Sprint 1
 **Blocks:** Sprints 3, 4, 5, 6
 
@@ -97,7 +97,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 ---
 
 ### Sprint 3: Country, Geography & Traversal
-**File:** [03-sprint-3-country-geography.md](03-sprint-3-country-geography.md)
+**File:** [sprint-3/S3I00-index.md](sprint-3/S3I00-index.md)
 **Depends on:** Sprint 1, Sprint 2
 **Blocks:** Sprint 5, Sprint 6
 
