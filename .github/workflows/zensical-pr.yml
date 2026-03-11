@@ -9,6 +9,10 @@ on:
       - 'zensical.toml'
       - '.github/workflows/zensical-pr.yml'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   deploy:
     name: Build documentation site
