@@ -30,7 +30,7 @@ migration: 20260310500900_create_analytics_indexes.php
 blocks:
   - S6T05
 changelog:
-  - 2026-03-10: created by merge of task-S5T10.dba.md and task-S5T10.specification.md
+  - 2026.03.10: created by merge of task-S5T10.dba.md and task-S5T10.specification.md
 ---
 
 # Task S5T10: Sprint 5 Analytics Indexes

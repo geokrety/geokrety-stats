@@ -22,7 +22,7 @@ step: 2.4
 migration: 20260310200300_create_daily_entity_counts.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.4
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.4
 ---
 
 # Task S2T04: Create stats.daily_entity_counts Table

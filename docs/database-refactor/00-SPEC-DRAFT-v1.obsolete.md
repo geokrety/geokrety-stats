@@ -1,18 +1,3 @@
----
-title: GeoKrety Stats Schema Comprehensive Specification
-version: 3.0
-date_created: 2026-03-08
-last_updated: 2026-03-10
-owner: GeoKrety Community
-tags:
-  - database
-  - postgresql
-  - stats
-  - points
-  - achievements
-  - architecture
-  - obsolete
----
 
 # GeoKrety Stats Schema Comprehensive Specification
 

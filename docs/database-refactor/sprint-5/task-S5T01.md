@@ -29,7 +29,7 @@ blocks:
   - S5T08
   - S5T10
 changelog:
-  - 2026-03-10: created by merge of task-S5T01.dba.md and task-S5T01.specification.md
+  - 2026.03.10: created by merge of task-S5T01.dba.md and task-S5T01.specification.md
 ---
 
 # Task S5T01: stats.hourly_activity Table

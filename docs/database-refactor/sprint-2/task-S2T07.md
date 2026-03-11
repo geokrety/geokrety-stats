@@ -22,7 +22,7 @@ step: 2.7
 migration: 20260310200600_create_gk_moves_daily_trigger.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.7
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.7
 ---
 
 # Task S2T07: Create gk_moves Daily Activity Trigger + Attach

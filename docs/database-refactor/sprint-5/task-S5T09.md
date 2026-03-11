@@ -30,8 +30,8 @@ blocks:
   - S5T10
   - S6T05
 changelog:
-  - 2026-03-10: created by merge of task-S5T09.dba.md and task-S5T09.specification.md
-  - 2026-03-10: resolved Q-035 by narrowing S5T09 to hourly and country-pair batch functions
+  - 2026.03.10: created by merge of task-S5T09.dba.md and task-S5T09.specification.md
+  - 2026.03.10: resolved Q-035 by narrowing S5T09 to hourly and country-pair batch functions
 ---
 
 # Task S5T09: Batch Aggregation Functions

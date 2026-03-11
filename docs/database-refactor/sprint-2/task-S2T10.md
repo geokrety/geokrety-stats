@@ -22,8 +22,8 @@ step: 2.10
 migration: 20260310200900_create_gk_users_counter_trigger.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.10
-  - 2026-03-10: canonicalized trigger name and registration-date semantics
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.10
+  - 2026.03.10: canonicalized trigger name and registration-date semantics
 ---
 
 # Task S2T10: Create gk_users Counter Trigger + Attach

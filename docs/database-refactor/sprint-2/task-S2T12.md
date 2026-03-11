@@ -22,7 +22,7 @@ step: 2.12
 migration: 20260310201100_create_daily_activity_seed.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.12
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.12
 ---
 
 # Task S2T12: Create Daily Activity Seed Function

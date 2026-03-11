@@ -28,9 +28,9 @@ migration: "(manual SQL - no migration)"
 blocks:
   - S6T09
 changelog:
-  - 2026-03-10: created by merge of task-S6T08.dba.md and task-S6T08.specification.md
-  - 2026-03-10: resolved Q-018 by standardizing `stats.fn_reconcile_stats()`
-  - 2026-03-10: resolved Q-040 by canonizing the reconciliation target set and zero-delta policy
+  - 2026.03.10: created by merge of task-S6T08.dba.md and task-S6T08.specification.md
+  - 2026.03.10: resolved Q-018 by standardizing `stats.fn_reconcile_stats()`
+  - 2026.03.10: resolved Q-040 by canonizing the reconciliation target set and zero-delta policy
 ---
 
 # Task S6T08: Full Backfill Execution Plan & Reconciliation

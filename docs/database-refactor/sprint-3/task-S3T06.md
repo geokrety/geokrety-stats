@@ -22,8 +22,8 @@ step: 3.6
 migration: 20260310300500_create_country_history_trigger.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.6
-  - 2026-03-10: marked missing canonical SQL and Phinx implementation as a blocking question
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.6
+  - 2026.03.10: marked missing canonical SQL and Phinx implementation as a blocking question
 ---
 
 # Task S3T06: Create Country History Trigger Function + Attach

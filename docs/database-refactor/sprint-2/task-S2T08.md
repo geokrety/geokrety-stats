@@ -22,8 +22,8 @@ step: 2.8
 migration: 20260310200700_create_gk_geokrety_counter_trigger.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.8
-  - 2026-03-10: canonicalized trigger name and creation-date semantics
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.8
+  - 2026.03.10: canonicalized trigger name and creation-date semantics
 ---
 
 # Task S2T08: Create gk_geokrety Counter Trigger + Attach

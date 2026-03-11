@@ -22,8 +22,8 @@ step: 2.11
 migration: 20260310201000_create_entity_counter_snapshot.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.11
-  - 2026-03-10: logged shard-distribution ambiguity for snapshot seeding
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.11
+  - 2026.03.10: logged shard-distribution ambiguity for snapshot seeding
 ---
 
 # Task S2T11: Create Entity Counter Snapshot Function

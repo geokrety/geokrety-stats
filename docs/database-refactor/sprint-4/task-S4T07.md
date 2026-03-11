@@ -29,7 +29,7 @@ blocks:
   - S4T10
   - S4T11
 changelog:
-  - 2026-03-10: created by merge of task-S4T07.dba.md and task-S4T07.specification.md
+  - 2026.03.10: created by merge of task-S4T07.dba.md and task-S4T07.specification.md
 ---
 
 # Task S4T07: stats.user_related_users Table

@@ -22,7 +22,7 @@ step: 3.2
 migration: 20260310300100_create_gk_countries_visited.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.2
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.2
 ---
 
 # Task S3T02: Create stats.gk_countries_visited Table

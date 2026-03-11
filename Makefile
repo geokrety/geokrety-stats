@@ -1,14 +1,14 @@
 VENV := uv
 PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
-MKDOCS := $(VENV)/bin/mkdocs
+ZENSICAL := $(VENV)/bin/zensical
 
 .PHONY: init install build serve preview clean help
 
 help:
-	@echo "MkDocs documentation management targets:"
+	@echo "Zensical documentation management targets:"
 	@echo "  make init       - Initialize uv Python virtual environment"
-	@echo "  make install    - Install mkdocs and mkdocs-material"
+	@echo "  make install    - Install zensical static site generator"
 	@echo "  make build      - Build the documentation site"
 	@echo "  make serve      - Serve documentation with live reload (for editing)"
 	@echo "  make preview    - Build and serve site preview with clickable link"
@@ -21,20 +21,20 @@ init:
 	@echo "✓ Virtual environment ready at $(VENV)"
 
 install: init
-	@echo "Installing mkdocs and mkdocs-material..."
-	$(PIP) install mkdocs mkdocs-material
+	@echo "Installing zensical static site generator..."
+	$(PIP) install zensical
 	@echo "✓ Dependencies installed"
 
-build: install
+build:
 	@echo "Building documentation site..."
-	$(MKDOCS) build
+	$(ZENSICAL) build
 	@echo "✓ Site built at site/"
 
-serve: install
-	@echo "Starting MkDocs live server..."
+serve:
+	@echo "Starting Zensical live server..."
 	@echo "Visit http://127.0.0.1:8160 in your browser"
 	@echo "Press Ctrl+C to stop"
-	$(MKDOCS) serve --dev-addr=127.0.0.1:8160
+	$(ZENSICAL) serve --dev-addr=localhost:8160
 
 preview: build
 	@echo "Starting HTTP server on port 8160..."

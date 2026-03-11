@@ -29,8 +29,8 @@ migration: 20260310600500_create_stats_views.php
 blocks:
   - S6T07
 changelog:
-  - 2026-03-10: created by merge of task-S6T06.dba.md and task-S6T06.specification.md
-  - 2026-03-10: resolved Q-039 by canonizing the Sprint 6 stats UC view catalog
+  - 2026.03.10: created by merge of task-S6T06.dba.md and task-S6T06.specification.md
+  - 2026.03.10: resolved Q-039 by canonizing the Sprint 6 stats UC view catalog
 ---
 
 # Task S6T06: Stats UC Views

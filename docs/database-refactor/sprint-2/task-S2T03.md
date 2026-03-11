@@ -22,7 +22,7 @@ step: 2.3
 migration: 20260310200200_create_daily_active_users.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.3
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.3
 ---
 
 # Task S2T03: Create stats.daily_active_users Table

@@ -22,7 +22,7 @@ step: 2.1
 migration: 20260310200000_create_entity_counters_shard.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.1
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.1
 ---
 
 # Task S2T01: Create stats.entity_counters_shard Table

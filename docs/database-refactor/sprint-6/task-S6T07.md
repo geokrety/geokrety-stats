@@ -27,9 +27,9 @@ migration: 20260310600600_create_materialized_views.php
 blocks:
   - S6T09
 changelog:
-  - 2026-03-10: created by merge of task-S6T07.dba.md and task-S6T07.specification.md
-  - 2026-03-10: resolved Q-017 by standardizing the materialized-view catalog
-  - 2026-03-10: resolved Q-006 by canonizing the refresh schedule owner and cadence
+  - 2026.03.10: created by merge of task-S6T07.dba.md and task-S6T07.specification.md
+  - 2026.03.10: resolved Q-017 by standardizing the materialized-view catalog
+  - 2026.03.10: resolved Q-006 by canonizing the refresh schedule owner and cadence
 ---
 
 # Task S6T07: Materialized Views

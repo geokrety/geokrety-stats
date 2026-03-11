@@ -11,7 +11,7 @@ tags:
   - sprint-5
   - task-index
 changelog:
-  - 2026-03-10: created or refreshed aggregated task index
+  - 2026.03.10: created or refreshed aggregated task index
 ---
 
 # Sprint 5 Task Index

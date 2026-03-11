@@ -22,7 +22,7 @@ step: 3.1
 migration: 20260310300000_create_country_daily_stats.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.1
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.1
 ---
 
 # Task S3T01: Create stats.country_daily_stats Table

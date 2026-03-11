@@ -29,8 +29,8 @@ migration: 20260310500600_create_milestone_trigger.php
 blocks:
   - S5T10
 changelog:
-  - 2026-03-10: created by merge of task-S5T07.dba.md and task-S5T07.specification.md
-  - 2026-03-10: resolved Q-033 by narrowing S5T07 to milestone detection only
+  - 2026.03.10: created by merge of task-S5T07.dba.md and task-S5T07.specification.md
+  - 2026.03.10: resolved Q-033 by narrowing S5T07 to milestone detection only
 ---
 
 # Task S5T07: Milestone Detection Trigger

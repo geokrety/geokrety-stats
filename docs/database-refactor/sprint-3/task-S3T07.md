@@ -22,9 +22,9 @@ step: 3.7
 migration: 20260310300600_create_country_snapshot_functions.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.7
-  - 2026-03-10: clarified the move-derived snapshot scope and logged the remaining backfill gap
-  - 2026-03-10: documented the unresolved stale-row cleanup contract for partial reseeds
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.7
+  - 2026.03.10: clarified the move-derived snapshot scope and logged the remaining backfill gap
+  - 2026.03.10: documented the unresolved stale-row cleanup contract for partial reseeds
 ---
 
 # Task S3T07: Create Country Snapshot/Seed Functions

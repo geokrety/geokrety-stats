@@ -22,8 +22,8 @@ step: 2.5
 migration: 20260310200400_create_previous_move_trigger.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.5
-  - 2026-03-10: logged master-spec trigger timing conflict for review
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.5
+  - 2026.03.10: logged master-spec trigger timing conflict for review
 ---
 
 # Task S2T05: Create Previous-Move Trigger Function + Attach

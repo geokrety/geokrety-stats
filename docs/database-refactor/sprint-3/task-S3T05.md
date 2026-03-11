@@ -22,9 +22,9 @@ step: 3.5
 migration: 20260310300400_create_country_rollups_trigger.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.5
-  - 2026-03-10: aligned test and checklist wording to exact recomputation semantics
-  - 2026-03-10: marked missing canonical SQL and Phinx implementation as a blocking question
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.5
+  - 2026.03.10: aligned test and checklist wording to exact recomputation semantics
+  - 2026.03.10: marked missing canonical SQL and Phinx implementation as a blocking question
 ---
 
 # Task S3T05: Create Country Rollups Trigger Function + Attach

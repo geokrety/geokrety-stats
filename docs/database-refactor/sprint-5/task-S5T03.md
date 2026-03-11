@@ -30,7 +30,7 @@ blocks:
   - S5T07
   - S5T10
 changelog:
-  - 2026-03-10: created by merge of task-S5T03.dba.md and task-S5T03.specification.md
+  - 2026.03.10: created by merge of task-S5T03.dba.md and task-S5T03.specification.md
 ---
 
 # Task S5T03: stats.gk_milestone_events Table

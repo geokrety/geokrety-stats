@@ -26,7 +26,7 @@ migration: 20260310600200_create_backfill_heavy_previous_move_id.php
 blocks:
   - S6T05
 changelog:
-  - 2026-03-10: created by merge of task-S6T02.dba.md and task-S6T02.specification.md
+  - 2026.03.10: created by merge of task-S6T02.dba.md and task-S6T02.specification.md
 ---
 
 # Task S6T02: Heavy previous_move_id Orchestrator

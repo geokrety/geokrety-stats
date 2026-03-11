@@ -22,8 +22,8 @@ step: 2.6
 migration: 20260310200500_create_gk_moves_counter_trigger.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.6
-  - 2026-03-10: marked missing canonical SQL source as blocking open question
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.6
+  - 2026.03.10: marked missing canonical SQL source as blocking open question
 ---
 
 # Task S2T06: Create gk_moves Sharded Counter Trigger + Attach

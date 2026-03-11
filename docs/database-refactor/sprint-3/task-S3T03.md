@@ -22,8 +22,8 @@ step: 3.3
 migration: 20260310300200_create_user_countries.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.3
-  - 2026-03-10: restored the missing Phinx migration and SQL usage examples sections
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.3
+  - 2026.03.10: restored the missing Phinx migration and SQL usage examples sections
 ---
 
 # Task S3T03: Create stats.user_countries Table

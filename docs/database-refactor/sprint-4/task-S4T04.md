@@ -27,7 +27,7 @@ blocks:
   - S4T10
   - S4T11
 changelog:
-  - 2026-03-10: created by merge of task-S4T04.dba.md and task-S4T04.specification.md
+  - 2026.03.10: created by merge of task-S4T04.dba.md and task-S4T04.specification.md
 ---
 
 # Task S4T04: Create stats.gk_cache_visits Table

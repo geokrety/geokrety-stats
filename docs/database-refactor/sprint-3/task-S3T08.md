@@ -22,8 +22,8 @@ step: 3.8
 migration: 20260310300700_create_country_indexes.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.8
-  - 2026-03-10: removed sprint-wide appendix content from this step-scoped task file
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.8
+  - 2026.03.10: removed sprint-wide appendix content from this step-scoped task file
 ---
 
 # Task S3T08: Create Country Indexes

@@ -29,8 +29,8 @@ migration: 20260310500400_create_gk_loves_counter_trigger.php
 blocks:
   - S5T06
 changelog:
-  - 2026-03-10: created by merge of task-S5T05.dba.md and task-S5T05.specification.md
-  - 2026-03-10: resolved Q-031 by restoring the canonical loves-trigger scope
+  - 2026.03.10: created by merge of task-S5T05.dba.md and task-S5T05.specification.md
+  - 2026.03.10: resolved Q-031 by restoring the canonical loves-trigger scope
 ---
 
 # Task S5T05: gk_loves Activity Trigger

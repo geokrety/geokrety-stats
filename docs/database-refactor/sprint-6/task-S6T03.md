@@ -29,8 +29,8 @@ blocks:
   - S6T04
   - S6T05
 changelog:
-  - 2026-03-10: created by merge of task-S6T03.dba.md and task-S6T03.specification.md
-  - 2026-03-10: resolved Q-037 by narrowing S6T03 to km_distance backfill only
+  - 2026.03.10: created by merge of task-S6T03.dba.md and task-S6T03.specification.md
+  - 2026.03.10: resolved Q-037 by narrowing S6T03 to km_distance backfill only
 ---
 
 # Task S6T03: Batched km Distance Backfill Function

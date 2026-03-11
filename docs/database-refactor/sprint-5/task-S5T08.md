@@ -28,8 +28,8 @@ migration: 20260310500700_create_first_finder_trigger.php
 blocks:
   - S5T09
 changelog:
-  - 2026-03-10: created by merge of task-S5T08.dba.md and task-S5T08.specification.md
-  - 2026-03-10: resolved Q-034 by canonizing the live first-finder trigger scope
+  - 2026.03.10: created by merge of task-S5T08.dba.md and task-S5T08.specification.md
+  - 2026.03.10: resolved Q-034 by canonizing the live first-finder trigger scope
 ---
 
 # Task S5T08: First-Finder Detection Trigger

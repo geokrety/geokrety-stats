@@ -22,8 +22,8 @@ step: 2.9
 migration: 20260310200800_create_gk_pictures_counter_trigger.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.9
-  - 2026-03-10: canonicalized trigger name and logged missing SQL source
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.9
+  - 2026.03.10: canonicalized trigger name and logged missing SQL source
 ---
 
 # Task S2T09: Create gk_pictures Counter Trigger + Attach

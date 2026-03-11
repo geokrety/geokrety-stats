@@ -22,8 +22,8 @@ step: 3.4
 migration: 20260310300300_create_gk_country_history.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.4
-  - 2026-03-10: added an explicit btree_gist prerequisite guard to the DDL and migration
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.4
+  - 2026.03.10: added an explicit btree_gist prerequisite guard to the DDL and migration
 ---
 
 # Task S3T04: Create stats.gk_country_history Table

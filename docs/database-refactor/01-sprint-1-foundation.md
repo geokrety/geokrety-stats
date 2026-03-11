@@ -1,23 +1,3 @@
----
-title: 'Sprint 1: Foundation & Source Table Preparation'
-version: 1.0
-date_created: 2026-03-08
-last_updated: 2026-03-08
-owner: GeoKrety Community
-sprint: 1
-depends_on: []
-blocks: [2, 3, 4, 5, 6]
-tags:
-  - database
-  - postgresql
-  - stats
-  - schema
-  - migration
-  - sprint-1
-  - foundation
-  - source-table
-  - revert
----
 
 # Sprint 1: Foundation & Source Table Preparation
 

@@ -32,8 +32,8 @@ blocks:
   - S4T10
   - S4T11
 changelog:
-  - 2026-03-10: created by merge of task-S4T09.dba.md and task-S4T09.specification.md
-  - 2026-03-10: logged the stale relation-trigger contract conflict in the merged SQL
+  - 2026.03.10: created by merge of task-S4T09.dba.md and task-S4T09.specification.md
+  - 2026.03.10: logged the stale relation-trigger contract conflict in the merged SQL
 ---
 
 # Task S4T09: Social Relation Trigger

@@ -28,8 +28,8 @@ blocks:
   - S4T05
   - S4T08
 changelog:
-  - 2026-03-10: created by merge of task-S4T03.dba.md and task-S4T03.specification.md
-  - 2026-03-10: logged the seed-source conflict between direct-table and canonical-view implementations
+  - 2026.03.10: created by merge of task-S4T03.dba.md and task-S4T03.specification.md
+  - 2026.03.10: logged the seed-source conflict between direct-table and canonical-view implementations
 ---
 
 # Task S4T03: Seed stats.waypoints from GC/OC Sources

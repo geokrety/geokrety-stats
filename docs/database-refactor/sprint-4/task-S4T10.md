@@ -29,8 +29,8 @@ migration: 20260310400900_create_cache_relation_indexes.php
 blocks:
   - S4T11
 changelog:
-  - 2026-03-10: created by merge of task-S4T10.dba.md and task-S4T10.specification.md
-  - 2026-03-10: logged the canonical-four-index versus legacy-ten-index conflict
+  - 2026.03.10: created by merge of task-S4T10.dba.md and task-S4T10.specification.md
+  - 2026.03.10: logged the canonical-four-index versus legacy-ten-index conflict
 ---
 
 # Task S4T10: Indexes for Sprint 4 Tables
