@@ -1,4 +1,4 @@
-name: Build Zensical Site on Pull Request
+name: Documentation Build Zensical Site on Pull Request
 
 on:
   pull_request:
@@ -10,34 +10,23 @@ on:
       - '.github/workflows/zensical-pr.yml'
 
 jobs:
-  build:
+  deploy:
     name: Build documentation site
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install zensical
-
-      - name: Build site
-        run: zensical build
+          python-version: 3.x
+      - run: pip install zensical
+      - run: zensical build --clean
 
       - name: Upload site artifact
         uses: actions/upload-artifact@v4
         with:
           name: zensical-site
           path: site/
-          retention-days: 30
+          retention-days: 3
           if-no-files-found: error
 
       - name: Comment on PR with artifact info
