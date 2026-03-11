@@ -33,8 +33,8 @@ blocks:
   - S4T10
   - S4T11
 changelog:
-  - 2026-03-10: created by merge of task-S4T08.dba.md and task-S4T08.specification.md
-  - 2026-03-10: logged the stale waypoint-column conflict in the merged trigger SQL
+  - 2026.03.10: created by merge of task-S4T08.dba.md and task-S4T08.specification.md
+  - 2026.03.10: logged the stale waypoint-column conflict in the merged trigger SQL
 ---
 
 # Task S4T08: Waypoint Resolution & Cache Visit Trigger

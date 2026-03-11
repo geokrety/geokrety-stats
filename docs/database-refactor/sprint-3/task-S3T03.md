@@ -22,15 +22,15 @@ step: 3.3
 migration: 20260310300200_create_user_countries.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.3
-  - 2026-03-10: restored the missing Phinx migration and SQL usage examples sections
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.3
+  - 2026.03.10: restored the missing Phinx migration and SQL usage examples sections
 ---
 
 # Task S3T03: Create stats.user_countries Table
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
+The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.

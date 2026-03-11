@@ -22,16 +22,16 @@ step: 3.7
 migration: 20260310300600_create_country_snapshot_functions.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.7
-  - 2026-03-10: clarified the move-derived snapshot scope and logged the remaining backfill gap
-  - 2026-03-10: documented the unresolved stale-row cleanup contract for partial reseeds
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.7
+  - 2026.03.10: clarified the move-derived snapshot scope and logged the remaining backfill gap
+  - 2026.03.10: documented the unresolved stale-row cleanup contract for partial reseeds
 ---
 
 # Task S3T07: Create Country Snapshot/Seed Functions
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 3 task set in `docs/database-refactor/sprint-3/`. `00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
+The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 3 task set in `docs/database-refactor/sprint-3/`. `../00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.

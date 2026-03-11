@@ -28,8 +28,8 @@ blocks:
   - S6T02
   - S6T03
 changelog:
-  - 2026-03-10: created by merge of task-S6T01.dba.md and task-S6T01.specification.md
-  - 2026-03-10: resolved Q-036 by canonizing the backfill job_log contract
+  - 2026.03.10: created by merge of task-S6T01.dba.md and task-S6T01.specification.md
+  - 2026.03.10: resolved Q-036 by canonizing the backfill job_log contract
 ---
 
 # Task S6T01: Batched previous_move_id Backfill Function

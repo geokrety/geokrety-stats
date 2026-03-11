@@ -22,15 +22,15 @@ step: 3.4
 migration: 20260310300300_create_gk_country_history.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.4
-  - 2026-03-10: added an explicit btree_gist prerequisite guard to the DDL and migration
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.4
+  - 2026.03.10: added an explicit btree_gist prerequisite guard to the DDL and migration
 ---
 
 # Task S3T04: Create stats.gk_country_history Table
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
+The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.

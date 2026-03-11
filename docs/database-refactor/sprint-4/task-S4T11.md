@@ -29,8 +29,8 @@ task: S4T11
 step: 4.11
 migration: 20260310401000_create_waypoint_relation_snapshots.php
 changelog:
-  - 2026-03-10: created by merge of task-S4T11.dba.md and task-S4T11.specification.md
-  - 2026-03-10: logged the canonical snapshot-helper scope conflict
+  - 2026.03.10: created by merge of task-S4T11.dba.md and task-S4T11.specification.md
+  - 2026.03.10: logged the canonical snapshot-helper scope conflict
 ---
 
 # Task S4T11: Snapshot Functions for Waypoints & Relations

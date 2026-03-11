@@ -26,7 +26,7 @@ migration: 20260310400100_create_waypoints_source_view.php
 blocks:
   - S4T03
 changelog:
-  - 2026-03-10: created by merge of task-S4T02.dba.md and task-S4T02.specification.md
+  - 2026.03.10: created by merge of task-S4T02.dba.md and task-S4T02.specification.md
 ---
 
 # Task S4T02: Create stats.v_waypoints_source_union View

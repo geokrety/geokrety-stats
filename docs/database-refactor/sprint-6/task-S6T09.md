@@ -26,8 +26,8 @@ task: S6T09
 step: 6.9
 migration: "(no migration)"
 changelog:
-  - 2026-03-10: created by merge of task-S6T09.dba.md and task-S6T09.specification.md
-  - 2026-03-10: resolved Q-041 by splitting DB validation scope from rollout sign-off
+  - 2026.03.10: created by merge of task-S6T09.dba.md and task-S6T09.specification.md
+  - 2026.03.10: resolved Q-041 by splitting DB validation scope from rollout sign-off
 ---
 
 # Task S6T09: Performance Validation & Quality Gates

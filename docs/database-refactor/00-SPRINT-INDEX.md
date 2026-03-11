@@ -1,17 +1,3 @@
----
-title: 'Stats Schema Implementation Plan — Sprint Index'
-version: 1.0
-date_created: 2026-03-08
-last_updated: 2026-03-08
-owner: GeoKrety Community
-scope: database-refactor
-tags:
-  - database
-  - postgresql
-  - stats
-  - implementation-plan
-  - sprint-index
----
 
 # Database Refactor Implementation Plan — Sprint Index
 

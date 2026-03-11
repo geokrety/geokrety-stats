@@ -29,7 +29,7 @@ blocks:
   - S5T07
   - S5T10
 changelog:
-  - 2026-03-10: created by merge of task-S5T04.dba.md and task-S5T04.specification.md
+  - 2026.03.10: created by merge of task-S5T04.dba.md and task-S5T04.specification.md
 ---
 
 # Task S5T04: stats.first_finder_events Table

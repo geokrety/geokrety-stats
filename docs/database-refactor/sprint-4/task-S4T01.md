@@ -30,7 +30,7 @@ blocks:
   - S4T05
   - S4T08
 changelog:
-  - 2026-03-10: created by merge of task-S4T01.dba.md and task-S4T01.specification.md
+  - 2026.03.10: created by merge of task-S4T01.dba.md and task-S4T01.specification.md
 ---
 
 # Task S4T01: Create stats.waypoints Table

@@ -26,8 +26,8 @@ migration: 20260310500500_create_amqp_event_trigger.php
 blocks:
   - S5T10
 changelog:
-  - 2026-03-10: created by merge of task-S5T06.dba.md and task-S5T06.specification.md
-  - 2026-03-10: resolved Q-032 by restoring the canonical transport-neutral bridge contract
+  - 2026.03.10: created by merge of task-S5T06.dba.md and task-S5T06.specification.md
+  - 2026.03.10: resolved Q-032 by restoring the canonical transport-neutral bridge contract
 ---
 
 # Task S5T06: Points Event Bridge Trigger

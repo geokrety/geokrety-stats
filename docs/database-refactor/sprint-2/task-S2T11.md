@@ -22,15 +22,15 @@ step: 2.11
 migration: 20260310201000_create_entity_counter_snapshot.php
 blocks: [3, 4, 5, 6]
 changelog:
-  - 2026-03-10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.11
-  - 2026-03-10: logged shard-distribution ambiguity for snapshot seeding
+  - 2026.03.10: created by merge of 02-sprint-2-counters-daily-activity.md step 2.11
+  - 2026.03.10: logged shard-distribution ambiguity for snapshot seeding
 ---
 
 # Task S2T11: Create Entity Counter Snapshot Function
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 2 task set in `docs/database-refactor/sprint-2/`. `00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
+The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 2 task set in `docs/database-refactor/sprint-2/`. `../00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
 
 - Canonical previous-move function name: `geokrety.fn_set_previous_move_id_and_distance()`.
 - Canonical `stats.daily_activity` column name: `gk_created`, not `new_geokrety_count`.

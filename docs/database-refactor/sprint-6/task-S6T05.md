@@ -33,8 +33,8 @@ migration: 20260310600400_create_snapshot_orchestration.php
 blocks:
   - S6T08
 changelog:
-  - 2026-03-10: created by merge of task-S6T05.dba.md and task-S6T05.specification.md
-  - 2026-03-10: resolved Q-038 by canonizing the orchestration helper list and order
+  - 2026.03.10: created by merge of task-S6T05.dba.md and task-S6T05.specification.md
+  - 2026.03.10: resolved Q-038 by canonizing the orchestration helper list and order
 ---
 
 # Task S6T05: Snapshot Orchestration Function

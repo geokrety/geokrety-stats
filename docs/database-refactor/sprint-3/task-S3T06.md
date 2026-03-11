@@ -22,15 +22,15 @@ step: 3.6
 migration: 20260310300500_create_country_history_trigger.php
 blocks: [5, 6]
 changelog:
-  - 2026-03-10: created by merge of 03-sprint-3-country-geography.md step 3.6
-  - 2026-03-10: marked missing canonical SQL and Phinx implementation as a blocking question
+  - 2026.03.10: created by merge of 03-sprint-3-country-geography.md step 3.6
+  - 2026.03.10: marked missing canonical SQL and Phinx implementation as a blocking question
 ---
 
 # Task S3T06: Create Country History Trigger Function + Attach
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 3 task set in `docs/database-refactor/sprint-3/`. `00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
+The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 3 task set in `docs/database-refactor/sprint-3/`. `../00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.

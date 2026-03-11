@@ -28,7 +28,7 @@ blocks:
   - S4T10
   - S4T11
 changelog:
-  - 2026-03-10: created by merge of task-S4T06.dba.md and task-S4T06.specification.md
+  - 2026.03.10: created by merge of task-S4T06.dba.md and task-S4T06.specification.md
 ---
 
 # Task S4T06: Create stats.gk_related_users Table

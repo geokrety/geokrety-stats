@@ -27,7 +27,7 @@ migration: 20260310600300_create_backfill_km_distance_heavy.php
 blocks:
   - S6T05
 changelog:
-  - 2026-03-10: created by merge of task-S6T04.dba.md and task-S6T04.specification.md
+  - 2026.03.10: created by merge of task-S6T04.dba.md and task-S6T04.specification.md
 ---
 
 # Task S6T04: Heavy km Distance Orchestrator

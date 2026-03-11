@@ -1,23 +1,3 @@
----
-title: 'Sprint 1: Foundation & Source Table Preparation'
-version: 1.0
-date_created: 2026-03-08
-last_updated: 2026-03-08
-owner: GeoKrety Community
-sprint: 1
-depends_on: []
-blocks: [2, 3, 4, 5, 6]
-tags:
-  - database
-  - postgresql
-  - stats
-  - schema
-  - migration
-  - sprint-1
-  - foundation
-  - source-table
-  - revert
----
 
 # Sprint 1: Foundation & Source Table Preparation
 
@@ -1611,8 +1591,6 @@ SELECT pg_size_pretty(pg_relation_size('geokrety.gk_moves')) AS table_size;
 
 - [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md) — Comprehensive schema design document (sections 3, 4, 5.8, 9.1)
 - [00-SPRINT-INDEX.md](00-SPRINT-INDEX.md) — Sprint dependency graph and summary
-- [03-sprint-3-country-geography.md](03-sprint-3-country-geography.md) — Sprint 3: Country & Geography (depends on this sprint)
-- [99-OPEN-QUESTIONS.md](99-OPEN-QUESTIONS.md) — Open questions (Q-009 trigger ordering, Q-010 delete handling)
 - [gamification-rules.instructions.md](../gamification/00-SPEC-DRAFT-v1.md) — Gamification rules reference
 - [PostgreSQL ALTER TABLE](https://www.postgresql.org/docs/16/sql-altertable.html)
 - [PostgreSQL CREATE INDEX CONCURRENTLY](https://www.postgresql.org/docs/16/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY)

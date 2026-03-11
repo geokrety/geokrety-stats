@@ -1,0 +1,38 @@
+# Zensical Configuration
+# Documentation: https://zensical.org/docs/setup/basics/
+
+[project]
+
+# Site metadata
+site_name = "GeoKrety Stats specs"
+site_description = "Technical specifications and implementation guides for GeoKrety analytics and database systems."
+site_author = "GeoKrety Team"
+site_url = "https://geokrety.github.io/geokrety-stats/"
+repo_url = "https://github.com/geokrety/geokrety-stats"
+repo_name = "geokrety/geokrety-stats"
+copyright = "2026 GeoKrety Team"
+language = "en"
+
+[project.theme]
+primary = "indigo"
+accent = "indigo"
+
+# Palette toggle for automatic mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+# Palette toggle for light mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+# Palette toggle for dark mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
