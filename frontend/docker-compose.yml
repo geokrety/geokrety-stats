@@ -1,0 +1,31 @@
+services:
+  # ── Development (default — no profile needed) ───────────────────────────────
+  frontend:
+    profiles: []
+    image: geokrety-stats-frontend:dev
+    build:
+      context: .
+      target: builder
+    command: pnpm dev --host 0.0.0.0 --port 5173
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+
+  # ── Production (opt-in: docker compose --profile prod up) ──────────────────
+  frontend-prod:
+    profiles:
+      - prod
+    image: geokrety-stats-frontend:latest
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "9090:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped

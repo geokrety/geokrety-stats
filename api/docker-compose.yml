@@ -1,0 +1,12 @@
+---
+services:
+  api:
+    build: .
+    container_name: geokrety-stats-api
+    ports:
+      - "3001:3001"
+    environment:
+      - PGHOST=192.168.130.65
+      - PGPASSWORD=geokrety
+      - LOG_LEVEL=debug
+    restart: unless-stopped

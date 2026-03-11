@@ -14,18 +14,14 @@
 - **Target Browsers**: Modern browsers supporting ES2020+
 - **Build Tool**: Vite for fast development and optimized production builds
 - **Mapping**: [Leaflet.js](https://leafletjs.com/) (`leaflet` v1.x) for interactive world maps; dark CartoDB tile layer used throughout
-- **Data Visualisation**: [D3.js](https://d3js.org/) (`d3` v7) for colour scales (notably `scaleSequentialLog` + `interpolateGreens`) on choropleth maps
+- **Data Visualisation**: [ECharts](https://ECharts.org/)
 - **Geo data**: [topojson-client](https://github.com/topojson/topojson-client) + [world-atlas](https://github.com/topojson/world-atlas) for country polygons; country numeric ISO 3166-1 → alpha-2 mapping is in `src/data/iso3166.ts`
 
 ### Related projects:
 
-- [geokrety-stats-api](https://github.com/geokrety/geokrety-stats-api) - Backend API providing statistics data
-- [geokrety-stats](https://github.com/geokrety/geokrety-stats) - Data processing daemon that computes statistics
 - [geokrety-website](https://github.com/geokrety/geokrety-website) - Main GeoKrety platform database
 
 ---
-
-## Use subagents to decompose the tasks
 
 ## GeoKrety.org — Quick "General" summary
 
@@ -53,13 +49,7 @@
 ## Project Structure
 
 ```
-geokrety-stats-frontend/
-├── .github/
-│   ├── instructions/         # Development guidelines
-│   │   └── vuejs3.instructions.md
-│   └── skills/              # AI agent skills
-│       ├── web-design-reviewer/
-│       └── multi-stage-dockerfile/
+/
 ├── public/                   # Static assets
 │   ├── favicon.ico
 │   └── index.html

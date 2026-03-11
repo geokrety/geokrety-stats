@@ -1,5 +1,11 @@
 .vscode/
 .mypy_cache/
+.envrc
+.env
+.env.*
+.cache/
+tmp/
+tmp2/
 
 # Github pages
 site/

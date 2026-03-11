@@ -1,22 +1,47 @@
-# GeoKrety Stats Documentation
+---
+title: GeoKrety Database Specs
+description: Authoritative documentation for the GeoKrety database schemas, analytics surfaces, live maintenance triggers, and operational runbooks.
+icon: material/database
+---
 
-Welcome to the GeoKrety Stats documentation site! This site contains detailed specifications and implementation guides for the GeoKrety system's analytics and database infrastructure.
+# GeoKrety Database Specs
 
-## What is GeoKrety Stats?
+This site is now the authoritative database reference for the current GeoKrety Stats branch. It describes what exists in the live schemas, how the March 2026 migration chain changed the system, which source-side triggers feed analytics, and how to operate or extend the platform safely.
 
-GeoKrety Stats is analytics system for GeoKrety.org treasure-hunting tracking. This documentation covers the technical specifications for statistics engine.
+```mermaid
+flowchart LR
+	G[geokrety\nsource transactions] --> S[stats\ncanonical analytics schema]
+	G --> GS[geokrety_stats\nlegacy and gamification analytics]
+	P[public\nPostGIS and raster support] --> G
+	G --> A[audit\nrequest and action logs]
+	G --> NQ[notify_queues\noutbox and NOTIFY bridge]
+	AQ[amqp\nbroker config and publish helpers] --> NQ
+	SEC[secure\nrestricted secrets] --> G
+	S --> API[future read API / OpenAPI]
+	GS -. gamification and legacy exceptions .-> API
+```
 
-## Documentation Structure
+## Start here
 
-This site includes:
+- [Schema hub](specs.md)
+- [Stats schema](specs.stats.md)
+- [GeoKrety source schema](specs.geokrety.md)
+- [Legacy and gamification analytics](specs.geokrety_stats.md)
 
-- **Database Refactor** - Comprehensive specifications and sprint-based implementation details for database schema optimization and refactoring
-- **Gamification** - Specification and design for gamification features within the GeoKrety system
+The default contract for future read APIs is `stats`. The `geokrety_stats` schema remains important, but mainly for points, leaderboards, and legacy read models.
 
-## Getting Started
+## What changed on this branch
 
-Navigate using the sidebar menu to explore different sections. Each section contains detailed task specifications and implementation guides.
+The branch starting at `20260310100100_create_stats_schema.php` established `stats` as the canonical analytics schema and then layered on:
 
-## Updates
+- exact sharded counters and daily rollups
+- country rollups and temporal country history
+- waypoint registry and relationship surfaces
+- milestone and first-finder event analytics
+- snapshot orchestration, resumable backfill support, and materialized read models
+- late-stage performance work on `gk_moves` indexing and scoped backfills
+- live reconciliation hardening for first-finder correctness
 
-This documentation is updated regularly as development progresses.
+## Historical material
+
+The material in [docs/database-refactor/00-SPRINT-INDEX.md](database-refactor/00-SPRINT-INDEX.md) is still useful, but it should now be read as implementation history and design notes. The `docs/specs*.md` pages are the current contract.

@@ -1,6 +1,6 @@
 ---
 description: 'VueJS 3 development standards and best practices with Composition API and TypeScript'
-applyTo: '**/*.vue, **/*.ts, **/*.js/tmp/geokrety-stats/.github, **/*.css'
+applyTo: '**/*.vue, **/*.ts, **/*.js, **/*.css'
 ---
 
 # VueJS 3 Development Instructions

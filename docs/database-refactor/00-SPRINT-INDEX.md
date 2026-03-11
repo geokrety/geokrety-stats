@@ -58,7 +58,7 @@ Sprint 1 ─── Foundation & Source Table Preparation
 ---
 
 ### Sprint 2: Sharded Counters, Daily Activity & Previous-Move Trigger
-**File:** [sprint-2/S3I00-index.md](sprint-2/S2I00-index.md)
+**File:** [sprint-2/S2I00-index.md](sprint-2/S2I00-index.md)
 **Depends on:** Sprint 1
 **Blocks:** Sprints 3, 4, 5, 6
 
@@ -162,8 +162,8 @@ Sprint 1 ─── Foundation & Source Table Preparation
 | ---- | ------------------------------------------------- | -------------------------------------------------------- |
 | 6.1  | Create `fn_backfill_previous_move_id` (batched)   | `20260310600000_create_backfill_previous_move.php`       |
 | 6.2  | Create `fn_backfill_heavy_previous_move_id_all`   | `20260310600100_create_backfill_previous_move_heavy.php` |
-| 6.3  | Create `fn_backfill_km_distance` (batched)        | `20260310600200_create_backfill_km_distance.php`         |
-| 6.4  | Create `fn_backfill_heavy_km_distance_all`        | `20260310600300_create_backfill_km_distance_heavy.php`   |
+| 6.3  | Fold `km_distance` repair into the grouped previous-move backfill chain | `20260310100110_previous_move_backfill_chain.php` |
+| 6.4  | No standalone km-distance wrapper; heavy previous-move backfill remains the only deployment entrypoint | `20260310100110_previous_move_backfill_chain.php` |
 | 6.5  | Create snapshot ingestion orchestration functions | `20260310600400_create_snapshot_orchestration.php`       |
 | 6.6  | Create the canonical 12 stats UC views            | `20260310600500_create_stats_views.php`                  |
 | 6.7  | Define optional materialized-view accelerators    | `20260310600600_create_materialized_views.php`           |

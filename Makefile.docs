@@ -11,7 +11,6 @@ help:
 	@echo "  make install    - Install zensical static site generator"
 	@echo "  make build      - Build the documentation site"
 	@echo "  make serve      - Serve documentation with live reload (for editing)"
-	@echo "  make preview    - Build and serve site preview with clickable link"
 	@echo "  make clean      - Remove built site directory"
 
 init:
@@ -35,16 +34,6 @@ serve:
 	@echo "Visit http://127.0.0.1:8160 in your browser"
 	@echo "Press Ctrl+C to stop"
 	$(ZENSICAL) serve --dev-addr=localhost:8160
-
-preview: build
-	@echo "Starting HTTP server on port 8160..."
-	@URL="http://127.0.0.1:8160"; \
-	( cd site && $(PY) -m http.server 8160 2>/dev/null & ); \
-	sleep 1; \
-	printf '\033]8;;%s\a%s\033]8;;\a\n' "$$URL" "📖 Documentation Preview:" ; \
-	echo "Serving at $$URL"; \
-	echo "Press Ctrl+C to stop..."; \
-	wait
 
 clean:
 	@echo "Removing built site..."

@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: GeoKrety Stats API
+  version: 0.1.0
+  description: REST and WebSocket bootstrap API for GeoKrety statistics dashboard.
+servers:
+  - url: http://localhost:3001
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/v1/stats/global:
+    get:
+      summary: Get global counters
+      responses:
+        '200':
+          description: Global statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalStats'
+  /api/v1/stats/recent:
+    get:
+      summary: Get recent activity
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Recent moves
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecentMove'
+  /api/v1/stats/leaderboard:
+    get:
+      summary: Get leaderboard
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Leaderboard users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardUser'
+  /api/v1/countries:
+    get:
+      summary: Get country statistics
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Country stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CountryStats'
+  /api/v1/ws/publish:
+    post:
+      summary: Publish websocket message (simple publish API)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishMessageRequest'
+      responses:
+        '202':
+          description: Published
+components:
+  schemas:
+    GlobalStats:
+      type: object
+      properties:
+        totalGeokrety:
+          type: integer
+        totalGeokretyHidden:
+          type: integer
+        totalMoves:
+          type: integer
+        registeredUsers:
+          type: integer
+        activeUsers:
+          type: integer
+        countriesReached:
+          type: integer
+        picturesUploaded:
+          type: integer
+    RecentMove:
+      type: object
+      properties:
+        id:
+          type: integer
+        geokretName:
+          type: string
+        type:
+          type: string
+        username:
+          type: string
+        country:
+          type: string
+        countryFlag:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    LeaderboardUser:
+      type: object
+      properties:
+        rank:
+          type: integer
+        username:
+          type: string
+        initials:
+          type: string
+        points:
+          type: integer
+        movesCount:
+          type: integer
+        avatarColor:
+          type: string
+    CountryStats:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        flag:
+          type: string
+        movesCount:
+          type: integer
+        usersHome:
+          type: integer
+        activeUsers:
+          type: integer
+        movesByType:
+          type: object
+          properties:
+            dropped:
+              type: integer
+            dipped:
+              type: integer
+            seen:
+              type: integer
+        loves:
+          type: integer
+        pictures:
+          type: integer
+        pointsSum:
+          type: number
+        pointsSumMoves:
+          type: number
+        geokretyInCache:
+          type: integer
+        geokretyLost:
+          type: integer
+        avgPointsPerMove:
+          type: number
+    PublishMessageRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: stats_update
+        path:
+          type: string
+          example: global
+        data:
+          type: object
