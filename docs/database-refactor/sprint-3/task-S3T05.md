@@ -31,7 +31,7 @@ changelog:
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 3 task set in `docs/database-refactor/sprint-3/`. `00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
+The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 3 task set in `docs/database-refactor/sprint-3/`. `../00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.

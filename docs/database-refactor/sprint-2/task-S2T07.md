@@ -29,7 +29,7 @@ changelog:
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 2 task set in `docs/database-refactor/sprint-2/`. `00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
+The normative contract for this sprint is `00-SPRINT-INDEX.md` plus the canonical Sprint 2 task set in `docs/database-refactor/sprint-2/`. `../00-SPEC-DRAFT-v1.obsolete.md` is legacy context only and is not authoritative.
 
 - Canonical previous-move function name: `geokrety.fn_set_previous_move_id_and_distance()`.
 - Canonical `stats.daily_activity` column name: `gk_created`, not `new_geokrety_count`.

@@ -1,2 +1,6 @@
 .vscode/
 .mypy_cache/
+
+# Github pages
+site/
+uv/

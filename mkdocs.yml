@@ -1,0 +1,56 @@
+site_name: GeoKrety Stats specs
+site_url: https://geokrety.github.io/geokrety-stats/
+repo_url: https://github.com/geokrety/geokrety-stats
+repo_name: geokrety/geokrety-stats
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.tabs
+    - navigation.top
+    - navigation.sections
+    - navigation.instant
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Database Refactor:
+    - Overview: database-refactor/00-SPRINT-INDEX.md
+    - Foundation: database-refactor/01-sprint-1-foundation.md
+    - Sprint 2: database-refactor/sprint-2/S2I00-index.md
+    - Sprint 3: database-refactor/sprint-3/S3I00-index.md
+    - Sprint 4: database-refactor/sprint-4/S4I00-index.md
+    - Sprint 5: database-refactor/sprint-5/S5I00-index.md
+    - Sprint 6: database-refactor/sprint-6/S6I00-index.md
+    - Draft: database-refactor/00-SPEC-DRAFT-v1.obsolete.md
+  - Gamification: gamification/00-SPEC-DRAFT-v1.md

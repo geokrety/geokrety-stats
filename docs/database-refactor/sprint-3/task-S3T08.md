@@ -30,7 +30,7 @@ changelog:
 
 ## Master-Spec Alignment
 
-The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
+The normative contract for this sprint is [00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md), Sections 5.3, 5.4, 8.4, 9.2, and 11.
 
 - `stats.country_daily_stats.unique_users` and `unique_gks` are exact online-maintained values, not approximate placeholders.
 - `INSERT`, `UPDATE`, and `DELETE` handling for `stats.gk_countries_visited`, `stats.user_countries`, and `stats.gk_country_history` must maintain exact state. When earliest/latest rows are invalidated, affected rows must be recomputed from remaining qualifying moves.
@@ -216,10 +216,10 @@ ORDER BY arrived_at;
 
 ## 12. Related Specifications / Further Reading
 
-- [00-SPEC-DRAFT-v1.obsolete.md](00-SPEC-DRAFT-v1.obsolete.md) — Comprehensive schema design document (sections 5.3, 5.4, 8.4, 9.2)
-- [00-SPRINT-INDEX.md](00-SPRINT-INDEX.md) — Sprint dependency graph and summary
-- [spec-schema-sprint-1-foundation.md](../../spec/spec-schema-sprint-1-foundation.md) — Sprint 1: Foundation
-- [gamification-rules.instructions.md](../gamification/00-SPEC-DRAFT-v1.md) — Country crossing rules (+0.05 multiplier, +3 points)
+- [00-SPEC-DRAFT-v1.obsolete.md](../00-SPEC-DRAFT-v1.obsolete.md) — Comprehensive schema design document (sections 5.3, 5.4, 8.4, 9.2)
+- [00-SPRINT-INDEX.md](../00-SPRINT-INDEX.md) — Sprint dependency graph and summary
+- [01-sprint-1-foundation.md](../01-sprint-1-foundation.md) — Sprint 1: Foundation
+- [gamification-rules.instructions.md](../../gamification/00-SPEC-DRAFT-v1.md) — Country crossing rules (+0.05 multiplier, +3 points)
 - [PostgreSQL EXCLUDE constraint](https://www.postgresql.org/docs/16/sql-createtable.html#SQL-CREATETABLE-EXCLUDE)
 - [btree_gist Extension](https://www.postgresql.org/docs/16/btree-gist.html)
 - [pgTAP Documentation](https://pgtap.org/documentation.html)
