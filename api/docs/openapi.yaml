@@ -44,6 +44,71 @@ paths:
       responses:
         '200':
           description: Leaderboard payload
+  /api/v3/stats/hourly-heatmap:
+    get:
+      summary: Hourly activity heatmap cells for charts
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Hourly heatmap payload
+  /api/v3/stats/country-flows:
+    get:
+      summary: Cross-country GeoKret flow records
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Country flow payload
+  /api/v3/stats/top-caches:
+    get:
+      summary: Most visited waypoints globally
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Top caches payload
+  /api/v3/stats/first-finder-leaderboard:
+    get:
+      summary: First-finder hall of fame
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: First-finder leaderboard payload
+  /api/v3/stats/distance-records:
+    get:
+      summary: Distance record leaderboard for GeoKrety
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Distance records payload
   /api/v3/geokrety/recent-moves:
     get:
       summary: Recent GeoKrety moves
@@ -68,6 +133,34 @@ paths:
       responses:
         '200':
           description: Recent watched payload
+  /api/v3/geokrety/{id}/timeline:
+    get:
+      summary: Milestone timeline for a single GeoKret
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: GeoKret timeline payload
+  /api/v3/geokrety/{id}/circulation:
+    get:
+      summary: Circulation summary for a single GeoKret
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: GeoKret circulation payload
   /api/v3/countries/recent-active:
     get:
       summary: Recently active countries
@@ -92,6 +185,23 @@ paths:
       responses:
         '200':
           description: Recent active users payload
+  /api/v3/users/{id}/network:
+    get:
+      summary: Shared-GeoKret network edges for a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: User network payload
 components:
   schemas:
     Envelope:

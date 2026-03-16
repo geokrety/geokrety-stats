@@ -47,12 +47,19 @@ func NewRouter(
 			sr.Get("/kpis", statsHandler.GetKPIs)
 			sr.Get("/countries", statsHandler.GetCountries)
 			sr.Get("/leaderboard", statsHandler.GetLeaderboard)
+			sr.Get("/hourly-heatmap", statsHandler.GetHourlyHeatmap)
+			sr.Get("/country-flows", statsHandler.GetCountryFlows)
+			sr.Get("/top-caches", statsHandler.GetTopCaches)
+			sr.Get("/first-finder-leaderboard", statsHandler.GetFirstFinderLeaderboard)
+			sr.Get("/distance-records", statsHandler.GetDistanceRecords)
 		})
 		api.Route("/geokrety", func(gr chi.Router) {
 			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
 			gr.Get("/recent-born", statsHandler.GetRecentBorn)
 			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
 			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
+			gr.Get("/{id}/timeline", statsHandler.GetGeokretTimeline)
+			gr.Get("/{id}/circulation", statsHandler.GetGeokretCirculation)
 		})
 		api.Route("/countries", func(cr chi.Router) {
 			cr.Get("/recent-active", statsHandler.GetRecentActiveCountries)
@@ -63,6 +70,7 @@ func NewRouter(
 		api.Route("/users", func(ur chi.Router) {
 			ur.Get("/recent-registered", statsHandler.GetRecentRegisteredUsers)
 			ur.Get("/recent-active", statsHandler.GetRecentActiveUsers)
+			ur.Get("/{id}/network", statsHandler.GetUserNetwork)
 		})
 	})
 

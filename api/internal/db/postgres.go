@@ -162,6 +162,70 @@ type RecentActiveUser struct {
 	LastMoveAt     time.Time `db:"last_move_at" json:"lastMoveAt"`
 }
 
+type HourlyHeatmapCell struct {
+	ActivityDate time.Time `db:"activity_date" json:"activityDate"`
+	HourUTC      int       `db:"hour_utc" json:"hourUtc"`
+	MoveType     int       `db:"move_type" json:"moveType"`
+	MoveCount    int64     `db:"move_count" json:"moveCount"`
+}
+
+type CountryFlow struct {
+	YearMonth     time.Time `db:"year_month" json:"yearMonth"`
+	FromCountry   string    `db:"from_country" json:"fromCountry"`
+	ToCountry     string    `db:"to_country" json:"toCountry"`
+	MoveCount     int64     `db:"move_count" json:"moveCount"`
+	UniqueGKCount int64     `db:"unique_gk_count" json:"uniqueGkCount"`
+	FromFlag      string    `json:"fromFlag"`
+	ToFlag        string    `json:"toFlag"`
+}
+
+type TopCache struct {
+	WaypointCode   string `db:"waypoint_code" json:"waypointCode"`
+	TotalGKVisits  int64  `db:"total_gk_visits" json:"totalGkVisits"`
+	DistinctGKCount int64 `db:"distinct_gks" json:"distinctGks"`
+}
+
+type FirstFinderLeaderboardEntry struct {
+	UserID     int64  `db:"user_id" json:"userId"`
+	Username   string `db:"username" json:"username"`
+	FirstFinds int64  `db:"first_finds" json:"firstFinds"`
+	Rank       int    `json:"rank"`
+}
+
+type DistanceRecord struct {
+	GeoKretID   int64   `db:"gk_id" json:"geokretId"`
+	GKID        *int64  `db:"gkid" json:"gkid"`
+	GeoKretName string  `db:"name" json:"geokretName"`
+	KMTotal     float64 `db:"km_total" json:"kmTotal"`
+	Rank        int     `json:"rank"`
+}
+
+type UserNetworkEdge struct {
+	UserID              int64     `db:"user_id" json:"userId"`
+	RelatedUserID       int64     `db:"related_user_id" json:"relatedUserId"`
+	RelatedUsername     string    `db:"related_username" json:"relatedUsername"`
+	SharedGeoKretyCount int64     `db:"shared_geokrety_count" json:"sharedGeokretyCount"`
+	FirstSeenAt         time.Time `db:"first_seen_at" json:"firstSeenAt"`
+	LastSeenAt          time.Time `db:"last_seen_at" json:"lastSeenAt"`
+}
+
+type GeokretTimelineEvent struct {
+	GeoKretID     int64      `db:"gk_id" json:"geokretId"`
+	EventType     string     `db:"event_type" json:"eventType"`
+	OccurredAt    time.Time  `db:"occurred_at" json:"occurredAt"`
+	ActorUserID   *int64     `db:"actor_user_id" json:"actorUserId"`
+	ActorUsername *string    `db:"actor_username" json:"actorUsername"`
+}
+
+type GeokretCirculation struct {
+	GeoKretID    int64   `db:"geokrety_id" json:"geokretId"`
+	GKID         *int64  `db:"gkid" json:"gkid"`
+	GeoKretName  string  `db:"name" json:"geokretName"`
+	Users        int64   `db:"users" json:"users"`
+	Interactions int64   `db:"interactions" json:"interactions"`
+	AvgPerUser   float64 `json:"avgInteractionsPerUser"`
+}
+
 func Open(cfg config.Config) (*Store, error) {
 	database, err := sqlx.Open("pgx", cfg.DSN())
 	if err != nil {
@@ -656,6 +720,166 @@ LIMIT $1 OFFSET $2
 		return nil, fmt.Errorf("query recent active users: %w", err)
 	}
 	return rows, nil
+}
+
+func (s *Store) FetchHourlyHeatmap(ctx context.Context, limit, offset int) ([]HourlyHeatmapCell, error) {
+	rows := []HourlyHeatmapCell{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	activity_date,
+	hour_utc,
+	move_type,
+	move_count
+FROM stats.v_uc8_seasonal_heatmap
+ORDER BY activity_date DESC, hour_utc DESC, move_type ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query hourly heatmap: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchCountryFlows(ctx context.Context, limit, offset int) ([]CountryFlow, error) {
+	rows := []CountryFlow{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	year_month,
+	from_country,
+	to_country,
+	move_count,
+	unique_gk_count
+FROM stats.v_uc7_country_flow
+ORDER BY year_month DESC, move_count DESC, from_country ASC, to_country ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query country flows: %w", err)
+	}
+	for i := range rows {
+		rows[i].FromCountry = strings.ToUpper(rows[i].FromCountry)
+		rows[i].ToCountry = strings.ToUpper(rows[i].ToCountry)
+		rows[i].FromFlag = countryFlag(rows[i].FromCountry)
+		rows[i].ToFlag = countryFlag(rows[i].ToCountry)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchTopCaches(ctx context.Context, limit, offset int) ([]TopCache, error) {
+	rows := []TopCache{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	waypoint_code,
+	total_gk_visits,
+	distinct_gks
+FROM stats.v_uc10_cache_popularity
+ORDER BY total_gk_visits DESC, distinct_gks DESC, waypoint_code ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query top caches: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchFirstFinderLeaderboard(ctx context.Context, limit, offset int) ([]FirstFinderLeaderboardEntry, error) {
+	rows := []FirstFinderLeaderboardEntry{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	v.finder_user_id AS user_id,
+	COALESCE(u.username, 'unknown') AS username,
+	v.first_finds
+FROM stats.v_uc14_first_finder_hof AS v
+LEFT JOIN geokrety.gk_users AS u ON u.id = v.finder_user_id
+ORDER BY v.first_finds DESC, v.finder_user_id ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query first finder leaderboard: %w", err)
+	}
+	for i := range rows {
+		rows[i].Rank = offset + i + 1
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchDistanceRecords(ctx context.Context, limit, offset int) ([]DistanceRecord, error) {
+	rows := []DistanceRecord{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	v.gk_id,
+	g.gkid,
+	COALESCE(g.name, 'Unknown GeoKret') AS name,
+	v.km_total
+FROM stats.v_uc15_distance_records AS v
+LEFT JOIN geokrety.gk_geokrety AS g ON g.id = v.gk_id
+ORDER BY v.km_total DESC NULLS LAST, v.gk_id ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query distance records: %w", err)
+	}
+	for i := range rows {
+		rows[i].Rank = offset + i + 1
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]UserNetworkEdge, error) {
+	rows := []UserNetworkEdge{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	v.user_id,
+	v.related_user_id,
+	COALESCE(u.username, 'unknown') AS related_username,
+	v.shared_geokrety_count,
+	v.first_seen_at,
+	v.last_seen_at
+FROM stats.v_uc2_user_network AS v
+LEFT JOIN geokrety.gk_users AS u ON u.id = v.related_user_id
+WHERE v.user_id = $1
+ORDER BY v.shared_geokrety_count DESC, v.related_user_id ASC
+LIMIT $2 OFFSET $3
+`, userID, limit, offset); err != nil {
+		return nil, fmt.Errorf("query user network: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchGeokretTimeline(ctx context.Context, geokretID int64, limit, offset int) ([]GeokretTimelineEvent, error) {
+	rows := []GeokretTimelineEvent{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	v.gk_id,
+	v.event_type,
+	v.occurred_at,
+	v.actor_user_id,
+	u.username AS actor_username
+FROM stats.v_uc13_gk_timeline AS v
+LEFT JOIN geokrety.gk_users AS u ON u.id = v.actor_user_id
+WHERE v.gk_id = $1
+ORDER BY v.occurred_at DESC, v.event_type ASC
+LIMIT $2 OFFSET $3
+`, geokretID, limit, offset); err != nil {
+		return nil, fmt.Errorf("query geokret timeline: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchGeokretCirculation(ctx context.Context, geokretID int64) (GeokretCirculation, error) {
+	row := GeokretCirculation{}
+	if err := s.db.GetContext(ctx, &row, `
+SELECT
+	v.geokrety_id,
+	g.gkid,
+	COALESCE(g.name, 'Unknown GeoKret') AS name,
+	v.users,
+	v.interactions
+FROM stats.v_uc3_gk_circulation AS v
+LEFT JOIN geokrety.gk_geokrety AS g ON g.id = v.geokrety_id
+WHERE v.geokrety_id = $1
+`, geokretID); err != nil {
+		return GeokretCirculation{}, fmt.Errorf("query geokret circulation: %w", err)
+	}
+	if row.Users > 0 {
+		row.AvgPerUser = float64(row.Interactions) / float64(row.Users)
+	}
+	return row, nil
 }
 
 func countryFlag(code string) string {
