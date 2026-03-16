@@ -38,8 +38,9 @@ func NewRouter(
 	r.Use(httpMetrics(metricsCollector))
 	r.Use(cors)
 
-	r.Get("/", Home) // TODO basic self contained API info
-	r.Get("/health", systemHandler.Health)
+	r.Get("/", Home)
+	r.Get("/healtz", systemHandler.Healtz) // TODO simple liveness check without DB dependency
+	r.Get("/health", systemHandler.Health) // TODO comprehensive health check with DB and dependencies
 	r.Handle("/metrics", promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{}))
 	r.Get("/ws", hub.ServeWS)
 
@@ -55,60 +56,71 @@ func NewRouter(
 			sr.Get("/distance-records", statsHandler.GetDistanceRecords)
 		})
 		api.Route("/geokrety", func(gr chi.Router) {
-			gr.Get("/{id}", statsHandler.GetGeokrety)                           // TODO
-			gr.Get("/{id}/moves", statsHandler.GetGeokretyMoves)                // TODO
-			gr.Get("/{id}/moves/{moveId}", statsHandler.GetGeokretyMoveDetails) // TODO
-			gr.Get("/{id}/loves", statsHandler.GetGeokretyLoves)                // TODO
-			gr.Get("/{id}/watches", statsHandler.GetGeokretyWatches)            // TODO
-			gr.Get("/{id}/pictures", statsHandler.GetGeokretyPictures)          // TODO
-			gr.Get("/search", statsHandler.SearchGeokrety)                      // TODO
+			gr.Get("/{id}", statsHandler.GetGeokrety)
+			gr.Get("/{id}/moves", statsHandler.GetGeokretyMoves)
+			gr.Get("/{id}/moves/{moveId}", statsHandler.GetGeokretyMoveDetails)
+			gr.Get("/{id}/loved-by", statsHandler.GetGeokretyLovedBy)
+			gr.Get("/{id}/watched-by", statsHandler.GetGeokretyWatchedBy)
+			gr.Get("/{id}/pictures", statsHandler.GetGeokretyPictures)
+			gr.Get("/search", statsHandler.SearchGeokrety)
+			gr.Get("/{id}/loves", statsHandler.GetGeokretyLovedBy)
+			gr.Get("/{id}/watches", statsHandler.GetGeokretyWatchedBy)
 			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
 			gr.Get("/recent-born", statsHandler.GetRecentBorn)
 			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
 			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
+			gr.Get("/{id}/timeline", statsHandler.GetGeokretTimeline)
 			gr.Get("/{id}/countries/timeline", statsHandler.GetGeokretTimeline)
 			gr.Get("/{id}/events/timeline", statsHandler.GetGeokretTimeline)
 			gr.Get("/{id}/circulation", statsHandler.GetGeokretCirculation)
-			gr.Get("/{id}/countries", statsHandler.GetGeokretyCountries)                   // TODO
-			gr.Get("/{id}/waypoints", statsHandler.GetGeokretyWaypoints)                   // TODO
-			gr.Get("/{id}/stats/map/countries", statsHandler.GetGeokretyStatsMapCountries) // TODO
-			gr.Get("/{id}/stats/elevation", statsHandler.GetGeokretyStatsElevation)        // TODO
-			gr.Get("/{id}/stats/heatmap/days", statsHandler.GetGeokretyStatsHeatmapDays)   // TODO
-			gr.Get("/{id}/geojson/trip", statsHandler.GetGeokretyGeoJSONTrip)              // TODO
-			gr.Get("/{id}/WorldChoropleth", statsHandler.GetGeokretyWorldChoropleth)       // TODO
+			gr.Get("/{id}/countries", statsHandler.GetGeokretyCountries)
+			gr.Get("/{id}/waypoints", statsHandler.GetGeokretyWaypoints)
+			gr.Get("/{id}/stats/map/countries", statsHandler.GetGeokretyStatsMapCountries)
+			gr.Get("/{id}/stats/elevation", statsHandler.GetGeokretyStatsElevation)
+			gr.Get("/{id}/stats/heatmap/days", statsHandler.GetGeokretyStatsHeatmapDays)
+			gr.Get("/{id}/geojson/trip", statsHandler.GetGeokretyGeoJSONTrip)
+			gr.Get("/{id}/world-choropleth", statsHandler.GetGeokretyStatsMapCountries)
+			gr.Get("/{id}/WorldChoropleth", statsHandler.GetGeokretyWorldChoropleth)
 
 		})
 		api.Route("/countries", func(cr chi.Router) {
-			cr.Get("/{id}", statsHandler.GetCountryDetails) // TODO
+			cr.Get("/{code}", statsHandler.GetCountryDetails)
 			cr.Get("/recent-active", statsHandler.GetRecentActiveCountries)
-			cr.Get("/{id}/spotted-geokrety", statsHandler.GetCountrySpottedGeokrety) // TODO
+			cr.Get("/{code}/geokrety", statsHandler.GetCountryGeokrety)
+			cr.Get("/{code}/spotted-geokrety", statsHandler.GetCountrySpottedGeokrety)
 		})
 		api.Route("/waypoints", func(wr chi.Router) {
 			wr.Get("/recent-active", statsHandler.GetRecentActiveWaypoints)
-			wr.Get("/{id}", statsHandler.GetWaypoint)                                 // TODO
-			wr.Get("/{id}/spotted-geokrety", statsHandler.GetWaypointSpottedGeokrety) // TODO
-			wr.Get("/{id}/past-geokrety", statsHandler.GetWaypointPastGeokrety)       // TODO
-			wr.Get("/search", statsHandler.SearchWaypoints)                           // TODO
+			wr.Get("/{code}", statsHandler.GetWaypoint)
+			wr.Get("/{code}/geokrety-current", statsHandler.GetWaypointCurrentGeokrety)
+			wr.Get("/{code}/geokrety-past", statsHandler.GetWaypointPastGeokrety)
+			wr.Get("/{code}/spotted-geokrety", statsHandler.GetWaypointSpottedGeokrety)
+			wr.Get("/{code}/past-geokrety", statsHandler.GetWaypointPastGeokrety)
+			wr.Get("/search", statsHandler.SearchWaypoints)
 		})
 		api.Route("/users", func(ur chi.Router) {
-			ur.Get("/{id}", statsHandler.GetUserDetails)                          // TODO
-			ur.Get("/{id}/owned-geokrety", statsHandler.GetUserOwnedGeokrety)     // TODO
-			ur.Get("/{id}/found-geokrety", statsHandler.GetUserFoundGeokrety)     // TODO
-			ur.Get("/{id}/loved-geokrety", statsHandler.GetUserLovedGeokrety)     // TODO
-			ur.Get("/{id}/watched-geokrety", statsHandler.GetUserWatchedGeokrety) // TODO
-			ur.Get("/{id}/pictures", statsHandler.GetUserPictures)                // TODO
-			ur.Get("/{id}/countries", statsHandler.GetUserCountries)              // TODO
-			ur.Get("/{id}/waypoints", statsHandler.GetUserWaypoints)              // TODO
+			ur.Get("/{id}", statsHandler.GetUserDetails)
+			ur.Get("/{id}/geokrety-owned", statsHandler.GetUserOwnedGeokrety)
+			ur.Get("/{id}/geokrety-found", statsHandler.GetUserFoundGeokrety)
+			ur.Get("/{id}/geokrety-loved", statsHandler.GetUserLovedGeokrety)
+			ur.Get("/{id}/geokrety-watched", statsHandler.GetUserWatchedGeokrety)
+			ur.Get("/{id}/owned-geokrety", statsHandler.GetUserOwnedGeokrety)
+			ur.Get("/{id}/found-geokrety", statsHandler.GetUserFoundGeokrety)
+			ur.Get("/{id}/loved-geokrety", statsHandler.GetUserLovedGeokrety)
+			ur.Get("/{id}/watched-geokrety", statsHandler.GetUserWatchedGeokrety)
+			ur.Get("/{id}/pictures", statsHandler.GetUserPictures)
+			ur.Get("/{id}/countries", statsHandler.GetUserCountries)
+			ur.Get("/{id}/waypoints", statsHandler.GetUserWaypoints)
 			ur.Get("/{id}/network", statsHandler.GetUserNetwork)
-			ur.Get("/search", statsHandler.SearchUsers) // TODO
+			ur.Get("/search", statsHandler.SearchUsers)
 			ur.Get("/recent-registered", statsHandler.GetRecentRegisteredUsers)
 			ur.Get("/recent-active", statsHandler.GetRecentActiveUsers)
-			ur.Get("/{id}/stats/heatmap/days", statsHandler.GetUserStatsHeatmapDays)   // TODO
-			ur.Get("/{id}/stats/heatmap/hours", statsHandler.GetUserStatsHeatmapHours) // TODO
-			ur.Get("/{id}/stats/map/countries", statsHandler.GetUserStatsMapCountries) // TODO
+			ur.Get("/{id}/stats/heatmap/days", statsHandler.GetUserStatsHeatmapDays)
+			ur.Get("/{id}/stats/heatmap/hours", statsHandler.GetUserStatsHeatmapHours)
+			ur.Get("/{id}/stats/map/countries", statsHandler.GetUserStatsMapCountries)
 		})
 		api.Route("/pictures", func(pr chi.Router) {
-			pr.Get("/{id}", statsHandler.GetPicture) // TODO
+			pr.Get("/{id}", statsHandler.GetPicture)
 		})
 	})
 

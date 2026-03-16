@@ -51,3 +51,15 @@ func TestHealthDegraded(t *testing.T) {
 		t.Fatalf("expected 503, got %d", w.Code)
 	}
 }
+
+func TestHealtzOK(t *testing.T) {
+	h := NewSystemHandler(&mockSystemStore{}, newTestHub(), zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/healtz", nil)
+	w := httptest.NewRecorder()
+
+	h.Healtz(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}

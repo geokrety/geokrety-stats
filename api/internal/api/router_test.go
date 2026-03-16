@@ -112,6 +112,134 @@ func (h *handlersTestStore) FetchGeokretCirculation(ctx context.Context, geokret
 	return db.GeokretCirculation{}, nil
 }
 
+func (h *handlersTestStore) FetchGeokrety(ctx context.Context, geokretID int64) (db.GeokretDetails, error) {
+	return db.GeokretDetails{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyMoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.MoveRecord, error) {
+	return []db.MoveRecord{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyMoveDetails(ctx context.Context, geokretID, moveID int64) (db.MoveRecord, error) {
+	return db.MoveRecord{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	return []db.SocialUserEntry{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyWatches(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	return []db.SocialUserEntry{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyPictures(ctx context.Context, geokretID int64, limit, offset int) ([]db.PictureInfo, error) {
+	return []db.PictureInfo{}, nil
+}
+
+func (h *handlersTestStore) SearchGeokrety(ctx context.Context, query string, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyCountries(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretCountryVisit, error) {
+	return []db.GeokretCountryVisit{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretWaypointVisit, error) {
+	return []db.GeokretWaypointVisit{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyStatsMapCountries(ctx context.Context, geokretID int64, limit, offset int) ([]db.CountryCount, error) {
+	return []db.CountryCount{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyStatsElevation(ctx context.Context, geokretID int64, limit, offset int) ([]db.ElevationPoint, error) {
+	return []db.ElevationPoint{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyStatsHeatmapDays(ctx context.Context, geokretID int64, limit, offset int) ([]db.DayHeatmapCell, error) {
+	return []db.DayHeatmapCell{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyTripPoints(ctx context.Context, geokretID int64, limit, offset int) ([]db.TripPoint, error) {
+	return []db.TripPoint{}, nil
+}
+
+func (h *handlersTestStore) FetchCountryDetails(ctx context.Context, countryCode string) (db.CountryDetails, error) {
+	return db.CountryDetails{}, nil
+}
+
+func (h *handlersTestStore) FetchCountryGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchWaypoint(ctx context.Context, waypointCode string) (db.WaypointDetails, error) {
+	return db.WaypointDetails{}, nil
+}
+
+func (h *handlersTestStore) FetchWaypointCurrentGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchWaypointPastGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) SearchWaypoints(ctx context.Context, query string, limit, offset int) ([]db.WaypointSummary, error) {
+	return []db.WaypointSummary{}, nil
+}
+
+func (h *handlersTestStore) FetchUserDetails(ctx context.Context, userID int64) (db.UserDetails, error) {
+	return db.UserDetails{}, nil
+}
+
+func (h *handlersTestStore) FetchUserOwnedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchUserFoundGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchUserLovedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchUserWatchedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchUserPictures(ctx context.Context, userID int64, limit, offset int) ([]db.PictureInfo, error) {
+	return []db.PictureInfo{}, nil
+}
+
+func (h *handlersTestStore) FetchUserCountries(ctx context.Context, userID int64, limit, offset int) ([]db.UserCountryVisit, error) {
+	return []db.UserCountryVisit{}, nil
+}
+
+func (h *handlersTestStore) FetchUserWaypoints(ctx context.Context, userID int64, limit, offset int) ([]db.UserWaypointVisit, error) {
+	return []db.UserWaypointVisit{}, nil
+}
+
+func (h *handlersTestStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
+	return []db.UserSearchResult{}, nil
+}
+
+func (h *handlersTestStore) FetchUserStatsHeatmapDays(ctx context.Context, userID int64, limit, offset int) ([]db.DayHeatmapCell, error) {
+	return []db.DayHeatmapCell{}, nil
+}
+
+func (h *handlersTestStore) FetchUserStatsHeatmapHours(ctx context.Context, userID int64, limit, offset int) ([]db.HourHeatmapCell, error) {
+	return []db.HourHeatmapCell{}, nil
+}
+
+func (h *handlersTestStore) FetchUserStatsMapCountries(ctx context.Context, userID int64, limit, offset int) ([]db.CountryCount, error) {
+	return []db.CountryCount{}, nil
+}
+
+func (h *handlersTestStore) FetchPicture(ctx context.Context, pictureID int64) (db.PictureInfo, error) {
+	return db.PictureInfo{}, nil
+}
+
 func TestV3RoutesReachable(t *testing.T) {
 	r := testRouter(t)
 	paths := []string{
@@ -129,13 +257,45 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/geokrety/recent-born",
 		"/api/v3/geokrety/recent-loved",
 		"/api/v3/geokrety/recent-watched",
+		"/api/v3/geokrety/1",
+		"/api/v3/geokrety/1/moves",
+		"/api/v3/geokrety/1/moves/2",
+		"/api/v3/geokrety/1/loved-by",
+		"/api/v3/geokrety/1/watched-by",
+		"/api/v3/geokrety/1/pictures",
+		"/api/v3/geokrety/search?q=gk",
 		"/api/v3/geokrety/1/timeline",
 		"/api/v3/geokrety/1/circulation",
+		"/api/v3/geokrety/1/countries",
+		"/api/v3/geokrety/1/waypoints",
+		"/api/v3/geokrety/1/stats/map/countries",
+		"/api/v3/geokrety/1/stats/elevation",
+		"/api/v3/geokrety/1/stats/heatmap/days",
+		"/api/v3/geokrety/1/geojson/trip",
+		"/api/v3/countries/PL",
 		"/api/v3/countries/recent-active",
+		"/api/v3/countries/PL/geokrety",
 		"/api/v3/waypoints/recent-active",
+		"/api/v3/waypoints/GC123",
+		"/api/v3/waypoints/GC123/geokrety-current",
+		"/api/v3/waypoints/GC123/geokrety-past",
+		"/api/v3/waypoints/search?q=gc",
 		"/api/v3/users/recent-registered",
 		"/api/v3/users/recent-active",
+		"/api/v3/users/1",
+		"/api/v3/users/1/geokrety-owned",
+		"/api/v3/users/1/geokrety-found",
+		"/api/v3/users/1/geokrety-loved",
+		"/api/v3/users/1/geokrety-watched",
+		"/api/v3/users/1/pictures",
+		"/api/v3/users/1/countries",
+		"/api/v3/users/1/waypoints",
 		"/api/v3/users/1/network",
+		"/api/v3/users/search?q=us",
+		"/api/v3/users/1/stats/heatmap/days",
+		"/api/v3/users/1/stats/heatmap/hours",
+		"/api/v3/users/1/stats/map/countries",
+		"/api/v3/pictures/1",
 	}
 
 	for _, p := range paths {
