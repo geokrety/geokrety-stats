@@ -38,6 +38,7 @@ func NewRouter(
 	r.Use(httpMetrics(metricsCollector))
 	r.Use(cors)
 
+	r.Get("/", Home) // TODO basic self contained API info
 	r.Get("/health", systemHandler.Health)
 	r.Handle("/metrics", promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{}))
 	r.Get("/ws", hub.ServeWS)
@@ -54,23 +55,60 @@ func NewRouter(
 			sr.Get("/distance-records", statsHandler.GetDistanceRecords)
 		})
 		api.Route("/geokrety", func(gr chi.Router) {
+			gr.Get("/{id}", statsHandler.GetGeokrety)                           // TODO
+			gr.Get("/{id}/moves", statsHandler.GetGeokretyMoves)                // TODO
+			gr.Get("/{id}/moves/{moveId}", statsHandler.GetGeokretyMoveDetails) // TODO
+			gr.Get("/{id}/loves", statsHandler.GetGeokretyLoves)                // TODO
+			gr.Get("/{id}/watches", statsHandler.GetGeokretyWatches)            // TODO
+			gr.Get("/{id}/pictures", statsHandler.GetGeokretyPictures)          // TODO
+			gr.Get("/search", statsHandler.SearchGeokrety)                      // TODO
 			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
 			gr.Get("/recent-born", statsHandler.GetRecentBorn)
 			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
 			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
-			gr.Get("/{id}/timeline", statsHandler.GetGeokretTimeline)
+			gr.Get("/{id}/countries/timeline", statsHandler.GetGeokretTimeline)
+			gr.Get("/{id}/events/timeline", statsHandler.GetGeokretTimeline)
 			gr.Get("/{id}/circulation", statsHandler.GetGeokretCirculation)
+			gr.Get("/{id}/countries", statsHandler.GetGeokretyCountries)                   // TODO
+			gr.Get("/{id}/waypoints", statsHandler.GetGeokretyWaypoints)                   // TODO
+			gr.Get("/{id}/stats/map/countries", statsHandler.GetGeokretyStatsMapCountries) // TODO
+			gr.Get("/{id}/stats/elevation", statsHandler.GetGeokretyStatsElevation)        // TODO
+			gr.Get("/{id}/stats/heatmap/days", statsHandler.GetGeokretyStatsHeatmapDays)   // TODO
+			gr.Get("/{id}/geojson/trip", statsHandler.GetGeokretyGeoJSONTrip)              // TODO
+			gr.Get("/{id}/WorldChoropleth", statsHandler.GetGeokretyWorldChoropleth)       // TODO
+
 		})
 		api.Route("/countries", func(cr chi.Router) {
+			cr.Get("/{id}", statsHandler.GetCountryDetails) // TODO
 			cr.Get("/recent-active", statsHandler.GetRecentActiveCountries)
+			cr.Get("/{id}/spotted-geokrety", statsHandler.GetCountrySpottedGeokrety) // TODO
 		})
 		api.Route("/waypoints", func(wr chi.Router) {
 			wr.Get("/recent-active", statsHandler.GetRecentActiveWaypoints)
+			wr.Get("/{id}", statsHandler.GetWaypoint)                                 // TODO
+			wr.Get("/{id}/spotted-geokrety", statsHandler.GetWaypointSpottedGeokrety) // TODO
+			wr.Get("/{id}/past-geokrety", statsHandler.GetWaypointPastGeokrety)       // TODO
+			wr.Get("/search", statsHandler.SearchWaypoints)                           // TODO
 		})
 		api.Route("/users", func(ur chi.Router) {
+			ur.Get("/{id}", statsHandler.GetUserDetails)                          // TODO
+			ur.Get("/{id}/owned-geokrety", statsHandler.GetUserOwnedGeokrety)     // TODO
+			ur.Get("/{id}/found-geokrety", statsHandler.GetUserFoundGeokrety)     // TODO
+			ur.Get("/{id}/loved-geokrety", statsHandler.GetUserLovedGeokrety)     // TODO
+			ur.Get("/{id}/watched-geokrety", statsHandler.GetUserWatchedGeokrety) // TODO
+			ur.Get("/{id}/pictures", statsHandler.GetUserPictures)                // TODO
+			ur.Get("/{id}/countries", statsHandler.GetUserCountries)              // TODO
+			ur.Get("/{id}/waypoints", statsHandler.GetUserWaypoints)              // TODO
+			ur.Get("/{id}/network", statsHandler.GetUserNetwork)
+			ur.Get("/search", statsHandler.SearchUsers) // TODO
 			ur.Get("/recent-registered", statsHandler.GetRecentRegisteredUsers)
 			ur.Get("/recent-active", statsHandler.GetRecentActiveUsers)
-			ur.Get("/{id}/network", statsHandler.GetUserNetwork)
+			ur.Get("/{id}/stats/heatmap/days", statsHandler.GetUserStatsHeatmapDays)   // TODO
+			ur.Get("/{id}/stats/heatmap/hours", statsHandler.GetUserStatsHeatmapHours) // TODO
+			ur.Get("/{id}/stats/map/countries", statsHandler.GetUserStatsMapCountries) // TODO
+		})
+		api.Route("/pictures", func(pr chi.Router) {
+			pr.Get("/{id}", statsHandler.GetPicture) // TODO
 		})
 	})
 

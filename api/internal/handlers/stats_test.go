@@ -268,15 +268,15 @@ func TestStatsHandlerErrorEndpoints(t *testing.T) {
 			h := NewStatsHandler(store, zap.NewNop())
 
 			handler := map[string]http.HandlerFunc{
-					"FetchGlobalStats":            h.GetKPIs,
-					"FetchCountries":              h.GetCountries,
-					"FetchLeaderboard":            h.GetLeaderboard,
-					"FetchRecentMoves":            h.GetRecentMoves,
-					"FetchHourlyHeatmap":          h.GetHourlyHeatmap,
-					"FetchCountryFlows":           h.GetCountryFlows,
-					"FetchTopCaches":              h.GetTopCaches,
-					"FetchFirstFinderLeaderboard": h.GetFirstFinderLeaderboard,
-					"FetchDistanceRecords":        h.GetDistanceRecords,
+				"FetchGlobalStats":            h.GetKPIs,
+				"FetchCountries":              h.GetCountries,
+				"FetchLeaderboard":            h.GetLeaderboard,
+				"FetchRecentMoves":            h.GetRecentMoves,
+				"FetchHourlyHeatmap":          h.GetHourlyHeatmap,
+				"FetchCountryFlows":           h.GetCountryFlows,
+				"FetchTopCaches":              h.GetTopCaches,
+				"FetchFirstFinderLeaderboard": h.GetFirstFinderLeaderboard,
+				"FetchDistanceRecords":        h.GetDistanceRecords,
 			}[tc.failMethod]
 
 			r := httptest.NewRequest(http.MethodGet, tc.target, nil)

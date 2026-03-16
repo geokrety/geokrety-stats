@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/geokrety/geokrety-stats-api/internal/db"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
