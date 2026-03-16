@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 
 type mockStatsStore struct {
 	failMethod string
+	noRowsMethod string
 	lastMethod string
 	lastLimit  int
 	lastOffset int
@@ -23,6 +25,9 @@ type mockStatsStore struct {
 
 func (m *mockStatsStore) maybeFail(method string) error {
 	m.lastMethod = method
+	if m.noRowsMethod == method {
+		return sql.ErrNoRows
+	}
 	if m.failMethod == method {
 		return errors.New("boom")
 	}
@@ -177,6 +182,256 @@ func (m *mockStatsStore) FetchGeokretCirculation(ctx context.Context, geokretID 
 		return db.GeokretCirculation{}, err
 	}
 	return db.GeokretCirculation{GeoKretID: geokretID, GeoKretName: "GK", Users: 2, Interactions: 6, AvgPerUser: 3}, nil
+}
+
+func (m *mockStatsStore) FetchGeokrety(ctx context.Context, geokretID int64) (db.GeokretDetails, error) {
+	if err := m.maybeFail("FetchGeokrety"); err != nil {
+		return db.GeokretDetails{}, err
+	}
+	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: geokretID, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyMoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.MoveRecord, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyMoves"); err != nil {
+		return nil, err
+	}
+	return []db.MoveRecord{{ID: 1, GeokretID: geokretID, MovedOn: time.Now(), CreatedOn: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyMoveDetails(ctx context.Context, geokretID, moveID int64) (db.MoveRecord, error) {
+	if err := m.maybeFail("FetchGeokretyMoveDetails"); err != nil {
+		return db.MoveRecord{}, err
+	}
+	return db.MoveRecord{ID: moveID, GeokretID: geokretID, MovedOn: time.Now(), CreatedOn: time.Now()}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyLoves"); err != nil {
+		return nil, err
+	}
+	return []db.SocialUserEntry{{UserID: 1, Username: "u", At: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyWatches(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyWatches"); err != nil {
+		return nil, err
+	}
+	return []db.SocialUserEntry{{UserID: 1, Username: "u", At: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyPictures(ctx context.Context, geokretID int64, limit, offset int) ([]db.PictureInfo, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyPictures"); err != nil {
+		return nil, err
+	}
+	return []db.PictureInfo{{ID: 1, GeokretID: &geokretID, CreatedOn: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) SearchGeokrety(ctx context.Context, query string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("SearchGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: query}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyCountries(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretCountryVisit, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyCountries"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretCountryVisit{{CountryCode: "PL", FirstVisitedAt: time.Now(), MoveCount: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretWaypointVisit, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyWaypoints"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretWaypointVisit{{WaypointCode: "GC123", VisitCount: 1, FirstVisitedAt: time.Now(), LastVisitedAt: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyStatsMapCountries(ctx context.Context, geokretID int64, limit, offset int) ([]db.CountryCount, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyStatsMapCountries"); err != nil {
+		return nil, err
+	}
+	return []db.CountryCount{{CountryCode: "PL", Value: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyStatsElevation(ctx context.Context, geokretID int64, limit, offset int) ([]db.ElevationPoint, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyStatsElevation"); err != nil {
+		return nil, err
+	}
+	return []db.ElevationPoint{{MoveID: 1, MovedOn: time.Now(), Elevation: 100}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyStatsHeatmapDays(ctx context.Context, geokretID int64, limit, offset int) ([]db.DayHeatmapCell, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyStatsHeatmapDays"); err != nil {
+		return nil, err
+	}
+	return []db.DayHeatmapCell{{Day: time.Now(), MoveCount: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyTripPoints(ctx context.Context, geokretID int64, limit, offset int) ([]db.TripPoint, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyTripPoints"); err != nil {
+		return nil, err
+	}
+	return []db.TripPoint{{MoveID: 1, MovedOn: time.Now(), Lat: 1, Lon: 2}}, nil
+}
+
+func (m *mockStatsStore) FetchCountryDetails(ctx context.Context, countryCode string) (db.CountryDetails, error) {
+	if err := m.maybeFail("FetchCountryDetails"); err != nil {
+		return db.CountryDetails{}, err
+	}
+	return db.CountryDetails{Code: countryCode, Name: "Poland"}, nil
+}
+
+func (m *mockStatsStore) FetchCountryGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchCountryGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchWaypoint(ctx context.Context, waypointCode string) (db.WaypointDetails, error) {
+	if err := m.maybeFail("FetchWaypoint"); err != nil {
+		return db.WaypointDetails{}, err
+	}
+	return db.WaypointDetails{WaypointSummary: db.WaypointSummary{WaypointCode: waypointCode, Source: "gc"}}, nil
+}
+
+func (m *mockStatsStore) FetchWaypointCurrentGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchWaypointCurrentGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchWaypointPastGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchWaypointPastGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) SearchWaypoints(ctx context.Context, query string, limit, offset int) ([]db.WaypointSummary, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("SearchWaypoints"); err != nil {
+		return nil, err
+	}
+	return []db.WaypointSummary{{WaypointCode: query, Source: "gc"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserDetails(ctx context.Context, userID int64) (db.UserDetails, error) {
+	if err := m.maybeFail("FetchUserDetails"); err != nil {
+		return db.UserDetails{}, err
+	}
+	return db.UserDetails{ID: userID, Username: "u", JoinedAt: time.Now()}, nil
+}
+
+func (m *mockStatsStore) FetchUserOwnedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserOwnedGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserFoundGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserFoundGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserLovedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserLovedGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserWatchedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserWatchedGeokrety"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserPictures(ctx context.Context, userID int64, limit, offset int) ([]db.PictureInfo, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserPictures"); err != nil {
+		return nil, err
+	}
+	return []db.PictureInfo{{ID: 1, UserID: &userID, CreatedOn: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchUserCountries(ctx context.Context, userID int64, limit, offset int) ([]db.UserCountryVisit, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserCountries"); err != nil {
+		return nil, err
+	}
+	return []db.UserCountryVisit{{CountryCode: "PL", MoveCount: 1, FirstVisit: time.Now(), LastVisit: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchUserWaypoints(ctx context.Context, userID int64, limit, offset int) ([]db.UserWaypointVisit, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserWaypoints"); err != nil {
+		return nil, err
+	}
+	return []db.UserWaypointVisit{{WaypointCode: "GC123", VisitCount: 1, FirstVisitedAt: time.Now(), LastVisitedAt: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("SearchUsers"); err != nil {
+		return nil, err
+	}
+	return []db.UserSearchResult{{ID: 1, Username: query, JoinedAt: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchUserStatsHeatmapDays(ctx context.Context, userID int64, limit, offset int) ([]db.DayHeatmapCell, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserStatsHeatmapDays"); err != nil {
+		return nil, err
+	}
+	return []db.DayHeatmapCell{{Day: time.Now(), MoveCount: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchUserStatsHeatmapHours(ctx context.Context, userID int64, limit, offset int) ([]db.HourHeatmapCell, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserStatsHeatmapHours"); err != nil {
+		return nil, err
+	}
+	return []db.HourHeatmapCell{{DayOfWeek: 1, HourUTC: 12, MoveCount: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchUserStatsMapCountries(ctx context.Context, userID int64, limit, offset int) ([]db.CountryCount, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserStatsMapCountries"); err != nil {
+		return nil, err
+	}
+	return []db.CountryCount{{CountryCode: "PL", Value: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchPicture(ctx context.Context, pictureID int64) (db.PictureInfo, error) {
+	if err := m.maybeFail("FetchPicture"); err != nil {
+		return db.PictureInfo{}, err
+	}
+	return db.PictureInfo{ID: pictureID, CreatedOn: time.Now()}, nil
 }
 
 func TestStatsHandlerSuccessEndpoints(t *testing.T) {

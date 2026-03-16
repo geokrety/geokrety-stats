@@ -23,6 +23,13 @@ func NewSystemHandler(store SystemStore, hub *ws.Hub, logger *zap.Logger) *Syste
 	return &SystemHandler{store: store, hub: hub, logger: logger}
 }
 
+func (h *SystemHandler) Healtz(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"status":     "ok",
+		"serverTime": time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
 func (h *SystemHandler) Health(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()

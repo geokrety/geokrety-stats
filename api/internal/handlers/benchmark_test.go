@@ -34,3 +34,13 @@ func BenchmarkGetHourlyHeatmap(b *testing.B) {
 		h.GetHourlyHeatmap(w, r)
 	}
 }
+
+func BenchmarkGetGeokrety(b *testing.B) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	for i := 0; i < b.N; i++ {
+		r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/1", nil)
+		r = withRouteParam(r, "id", "1")
+		w := httptest.NewRecorder()
+		h.GetGeokrety(w, r)
+	}
+}
