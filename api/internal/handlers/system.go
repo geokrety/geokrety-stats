@@ -2,22 +2,24 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
-	"github.com/geokrety/geokrety-stats-api/internal/db"
 	"github.com/geokrety/geokrety-stats-api/internal/ws"
 	"go.uber.org/zap"
 )
 
+type SystemStore interface {
+	Ping(ctx context.Context) error
+}
+
 type SystemHandler struct {
-	store  *db.Store
+	store  SystemStore
 	hub    *ws.Hub
 	logger *zap.Logger
 }
 
-func NewSystemHandler(store *db.Store, hub *ws.Hub, logger *zap.Logger) *SystemHandler {
+func NewSystemHandler(store SystemStore, hub *ws.Hub, logger *zap.Logger) *SystemHandler {
 	return &SystemHandler{store: store, hub: hub, logger: logger}
 }
 
@@ -39,33 +41,5 @@ func (h *SystemHandler) Health(w http.ResponseWriter, r *http.Request) {
 		"status":          status,
 		"activeWsClients": h.hub.ActiveConnections(),
 		"serverTime":      time.Now().UTC().Format(time.RFC3339),
-	})
-}
-
-type PublishRequest struct {
-	Type string          `json:"type"`
-	Path string          `json:"path"`
-	Data json.RawMessage `json:"data"`
-}
-
-func (h *SystemHandler) PublishWS(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	var req PublishRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON payload")
-		return
-	}
-	if req.Type == "" {
-		req.Type = "stats_update"
-	}
-	if req.Path == "" {
-		req.Path = "global"
-	}
-
-	h.hub.PublishRaw(r.Context(), req.Type, req.Path, req.Data)
-	h.logger.Info("published websocket message", zap.String("type", req.Type), zap.String("path", req.Path))
-
-	writeJSON(w, http.StatusAccepted, map[string]interface{}{
-		"status": "queued",
 	})
 }
