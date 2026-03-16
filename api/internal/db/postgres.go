@@ -570,19 +570,39 @@ LIMIT $1 OFFSET $2
 func (s *Store) FetchRecentActiveWaypoints(ctx context.Context, limit, offset int) ([]ActiveWaypoint, error) {
 	rows := []ActiveWaypoint{}
 	if err := s.db.SelectContext(ctx, &rows, `
+		WITH grouped AS (
+			SELECT
+				UPPER(m.waypoint) AS waypoint,
+				COUNT(*)::bigint AS moves,
+				MAX(m.moved_on_datetime) AS last_activity_at
+			FROM geokrety.gk_moves AS m
+			WHERE m.waypoint IS NOT NULL
+				AND BTRIM(m.waypoint) <> ''
+				AND m.moved_on_datetime >= NOW() - INTERVAL '30 days'
+			GROUP BY UPPER(m.waypoint)
+		), latest_move AS (
+			SELECT DISTINCT ON (UPPER(m.waypoint))
+				UPPER(m.waypoint) AS waypoint,
+				UPPER(m.country) AS country,
+				m.lat,
+				m.lon,
+				m.moved_on_datetime
+			FROM geokrety.gk_moves AS m
+			WHERE m.waypoint IS NOT NULL
+				AND BTRIM(m.waypoint) <> ''
+				AND m.moved_on_datetime >= NOW() - INTERVAL '30 days'
+			ORDER BY UPPER(m.waypoint), m.moved_on_datetime DESC, m.id DESC
+		)
 SELECT
-UPPER(m.waypoint) AS waypoint,
-UPPER(MAX(m.country)) AS country,
-COUNT(*)::bigint AS moves,
-MAX(m.moved_on_datetime) AS last_activity_at,
-MAX(m.lat) AS lat,
-MAX(m.lon) AS lon
-FROM geokrety.gk_moves AS m
-WHERE m.waypoint IS NOT NULL
-AND BTRIM(m.waypoint) <> ''
-AND m.moved_on_datetime >= NOW() - INTERVAL '30 days'
-GROUP BY UPPER(m.waypoint)
-ORDER BY last_activity_at DESC, moves DESC
+			g.waypoint,
+			lm.country,
+			g.moves,
+			g.last_activity_at,
+			lm.lat,
+			lm.lon
+		FROM grouped AS g
+		LEFT JOIN latest_move AS lm ON lm.waypoint = g.waypoint
+		ORDER BY g.last_activity_at DESC, g.moves DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
 		return nil, fmt.Errorf("query recent active waypoints: %w", err)
