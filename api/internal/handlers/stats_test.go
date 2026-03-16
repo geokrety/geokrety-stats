@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/db"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
@@ -115,6 +116,69 @@ func (m *mockStatsStore) FetchRecentActiveUsers(ctx context.Context, limit, offs
 	return []db.RecentActiveUser{{UserID: 1, Username: "u", LastMoveAt: time.Now()}}, nil
 }
 
+func (m *mockStatsStore) FetchHourlyHeatmap(ctx context.Context, limit, offset int) ([]db.HourlyHeatmapCell, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchHourlyHeatmap"); err != nil {
+		return nil, err
+	}
+	return []db.HourlyHeatmapCell{{ActivityDate: time.Now(), HourUTC: 12, MoveType: 5, MoveCount: 10}}, nil
+}
+
+func (m *mockStatsStore) FetchCountryFlows(ctx context.Context, limit, offset int) ([]db.CountryFlow, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchCountryFlows"); err != nil {
+		return nil, err
+	}
+	return []db.CountryFlow{{FromCountry: "PL", ToCountry: "DE", MoveCount: 2}}, nil
+}
+
+func (m *mockStatsStore) FetchTopCaches(ctx context.Context, limit, offset int) ([]db.TopCache, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchTopCaches"); err != nil {
+		return nil, err
+	}
+	return []db.TopCache{{WaypointCode: "GC123", TotalGKVisits: 3, DistinctGKCount: 2}}, nil
+}
+
+func (m *mockStatsStore) FetchFirstFinderLeaderboard(ctx context.Context, limit, offset int) ([]db.FirstFinderLeaderboardEntry, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchFirstFinderLeaderboard"); err != nil {
+		return nil, err
+	}
+	return []db.FirstFinderLeaderboardEntry{{UserID: 1, Username: "u", FirstFinds: 4, Rank: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchDistanceRecords(ctx context.Context, limit, offset int) ([]db.DistanceRecord, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchDistanceRecords"); err != nil {
+		return nil, err
+	}
+	return []db.DistanceRecord{{GeoKretID: 1, GeoKretName: "GK", KMTotal: 100, Rank: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserNetwork"); err != nil {
+		return nil, err
+	}
+	return []db.UserNetworkEdge{{UserID: userID, RelatedUserID: 2, RelatedUsername: "peer", SharedGeoKretyCount: 3}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretTimeline(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretTimelineEvent, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretTimeline"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretTimelineEvent{{GeoKretID: geokretID, EventType: "km_100", OccurredAt: time.Now()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretCirculation(ctx context.Context, geokretID int64) (db.GeokretCirculation, error) {
+	if err := m.maybeFail("FetchGeokretCirculation"); err != nil {
+		return db.GeokretCirculation{}, err
+	}
+	return db.GeokretCirculation{GeoKretID: geokretID, GeoKretName: "GK", Users: 2, Interactions: 6, AvgPerUser: 3}, nil
+}
+
 func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 	store := &mockStatsStore{}
 	h := NewStatsHandler(store, zap.NewNop())
@@ -141,6 +205,11 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 		{"waypoints-active", "/api/v3/waypoints/recent-active?limit=11&offset=1", h.GetRecentActiveWaypoints, "FetchRecentActiveWaypoints", http.StatusOK, "FetchRecentActiveWaypoints", 11, 1, true},
 		{"users-registered", "/api/v3/users/recent-registered?limit=11&offset=1", h.GetRecentRegisteredUsers, "FetchRecentRegisteredUsers", http.StatusOK, "FetchRecentRegisteredUsers", 11, 1, true},
 		{"users-active", "/api/v3/users/recent-active?limit=11&offset=1", h.GetRecentActiveUsers, "FetchRecentActiveUsers", http.StatusOK, "FetchRecentActiveUsers", 11, 1, true},
+		{"hourly-heatmap", "/api/v3/stats/hourly-heatmap?limit=11&offset=1", h.GetHourlyHeatmap, "FetchHourlyHeatmap", http.StatusOK, "FetchHourlyHeatmap", 11, 1, true},
+		{"country-flows", "/api/v3/stats/country-flows?limit=11&offset=1", h.GetCountryFlows, "FetchCountryFlows", http.StatusOK, "FetchCountryFlows", 11, 1, true},
+		{"top-caches", "/api/v3/stats/top-caches?limit=11&offset=1", h.GetTopCaches, "FetchTopCaches", http.StatusOK, "FetchTopCaches", 11, 1, true},
+		{"first-finder", "/api/v3/stats/first-finder-leaderboard?limit=11&offset=1", h.GetFirstFinderLeaderboard, "FetchFirstFinderLeaderboard", http.StatusOK, "FetchFirstFinderLeaderboard", 11, 1, true},
+		{"distance-records", "/api/v3/stats/distance-records?limit=11&offset=1", h.GetDistanceRecords, "FetchDistanceRecords", http.StatusOK, "FetchDistanceRecords", 11, 1, true},
 	}
 
 	for _, tc := range tests {
@@ -186,6 +255,11 @@ func TestStatsHandlerErrorEndpoints(t *testing.T) {
 		{"countries", "FetchCountries", "/api/v3/stats/countries", nil},
 		{"leaderboard", "FetchLeaderboard", "/api/v3/stats/leaderboard", nil},
 		{"recent-moves", "FetchRecentMoves", "/api/v3/geokrety/recent-moves", nil},
+		{"heatmap", "FetchHourlyHeatmap", "/api/v3/stats/hourly-heatmap", nil},
+		{"country-flows", "FetchCountryFlows", "/api/v3/stats/country-flows", nil},
+		{"top-caches", "FetchTopCaches", "/api/v3/stats/top-caches", nil},
+		{"first-finder", "FetchFirstFinderLeaderboard", "/api/v3/stats/first-finder-leaderboard", nil},
+		{"distance-records", "FetchDistanceRecords", "/api/v3/stats/distance-records", nil},
 	}
 
 	for _, tc := range tests {
@@ -194,10 +268,15 @@ func TestStatsHandlerErrorEndpoints(t *testing.T) {
 			h := NewStatsHandler(store, zap.NewNop())
 
 			handler := map[string]http.HandlerFunc{
-				"FetchGlobalStats": h.GetKPIs,
-				"FetchCountries":   h.GetCountries,
-				"FetchLeaderboard": h.GetLeaderboard,
-				"FetchRecentMoves": h.GetRecentMoves,
+				"FetchGlobalStats":            h.GetKPIs,
+				"FetchCountries":              h.GetCountries,
+				"FetchLeaderboard":            h.GetLeaderboard,
+				"FetchRecentMoves":            h.GetRecentMoves,
+				"FetchHourlyHeatmap":          h.GetHourlyHeatmap,
+				"FetchCountryFlows":           h.GetCountryFlows,
+				"FetchTopCaches":              h.GetTopCaches,
+				"FetchFirstFinderLeaderboard": h.GetFirstFinderLeaderboard,
+				"FetchDistanceRecords":        h.GetDistanceRecords,
 			}[tc.failMethod]
 
 			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
@@ -215,6 +294,76 @@ func TestStatsHandlerErrorEndpoints(t *testing.T) {
 				t.Fatalf("error field missing")
 			}
 		})
+	}
+}
+
+func TestStatsHandlerParamEndpoints(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+
+	tests := []struct {
+		name      string
+		handler   http.HandlerFunc
+		path      string
+		key       string
+		value     string
+		expMethod string
+	}{
+		{"user-network", h.GetUserNetwork, "/api/v3/users/123/network?limit=9&offset=2", "id", "123", "FetchUserNetwork"},
+		{"gk-timeline", h.GetGeokretTimeline, "/api/v3/geokrety/123/timeline?limit=9&offset=2", "id", "123", "FetchGeokretTimeline"},
+		{"gk-circulation", h.GetGeokretCirculation, "/api/v3/geokrety/123/circulation", "id", "123", "FetchGeokretCirculation"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add(tc.key, tc.value)
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+			w := httptest.NewRecorder()
+			tc.handler(w, r)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d", w.Code)
+			}
+			if store.lastMethod != tc.expMethod {
+				t.Fatalf("expected method %s, got %s", tc.expMethod, store.lastMethod)
+			}
+		})
+	}
+}
+
+func TestStatsHandlerInvalidIdentifier(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+
+	tests := []http.HandlerFunc{h.GetUserNetwork, h.GetGeokretTimeline, h.GetGeokretCirculation}
+	for _, handler := range tests {
+		r := httptest.NewRequest(http.MethodGet, "/bad", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "abc")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+		handler(w, r)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", w.Code)
+		}
+	}
+}
+
+func TestStatsHandlerGeokretCirculationError(t *testing.T) {
+	store := &mockStatsStore{failMethod: "FetchGeokretCirculation"}
+	h := NewStatsHandler(store, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/123/circulation", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", "123")
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+
+	h.GetGeokretCirculation(w, r)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", w.Code)
 	}
 }
 

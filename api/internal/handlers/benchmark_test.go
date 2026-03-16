@@ -25,3 +25,12 @@ func BenchmarkGetRecentMoves(b *testing.B) {
 		h.GetRecentMoves(w, r)
 	}
 }
+
+func BenchmarkGetHourlyHeatmap(b *testing.B) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	for i := 0; i < b.N; i++ {
+		r := httptest.NewRequest(http.MethodGet, "/api/v3/stats/hourly-heatmap?limit=20&offset=0", nil)
+		w := httptest.NewRecorder()
+		h.GetHourlyHeatmap(w, r)
+	}
+}

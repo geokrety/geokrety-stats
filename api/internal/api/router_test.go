@@ -80,6 +80,38 @@ func (h *handlersTestStore) FetchRecentActiveUsers(ctx context.Context, limit, o
 	return []db.RecentActiveUser{}, nil
 }
 
+func (h *handlersTestStore) FetchHourlyHeatmap(ctx context.Context, limit, offset int) ([]db.HourlyHeatmapCell, error) {
+	return []db.HourlyHeatmapCell{}, nil
+}
+
+func (h *handlersTestStore) FetchCountryFlows(ctx context.Context, limit, offset int) ([]db.CountryFlow, error) {
+	return []db.CountryFlow{}, nil
+}
+
+func (h *handlersTestStore) FetchTopCaches(ctx context.Context, limit, offset int) ([]db.TopCache, error) {
+	return []db.TopCache{}, nil
+}
+
+func (h *handlersTestStore) FetchFirstFinderLeaderboard(ctx context.Context, limit, offset int) ([]db.FirstFinderLeaderboardEntry, error) {
+	return []db.FirstFinderLeaderboardEntry{}, nil
+}
+
+func (h *handlersTestStore) FetchDistanceRecords(ctx context.Context, limit, offset int) ([]db.DistanceRecord, error) {
+	return []db.DistanceRecord{}, nil
+}
+
+func (h *handlersTestStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
+	return []db.UserNetworkEdge{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretTimeline(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretTimelineEvent, error) {
+	return []db.GeokretTimelineEvent{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretCirculation(ctx context.Context, geokretID int64) (db.GeokretCirculation, error) {
+	return db.GeokretCirculation{}, nil
+}
+
 func TestV3RoutesReachable(t *testing.T) {
 	r := testRouter(t)
 	paths := []string{
@@ -88,14 +120,22 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/stats/kpis",
 		"/api/v3/stats/countries",
 		"/api/v3/stats/leaderboard",
+		"/api/v3/stats/hourly-heatmap",
+		"/api/v3/stats/country-flows",
+		"/api/v3/stats/top-caches",
+		"/api/v3/stats/first-finder-leaderboard",
+		"/api/v3/stats/distance-records",
 		"/api/v3/geokrety/recent-moves",
 		"/api/v3/geokrety/recent-born",
 		"/api/v3/geokrety/recent-loved",
 		"/api/v3/geokrety/recent-watched",
+		"/api/v3/geokrety/1/timeline",
+		"/api/v3/geokrety/1/circulation",
 		"/api/v3/countries/recent-active",
 		"/api/v3/waypoints/recent-active",
 		"/api/v3/users/recent-registered",
 		"/api/v3/users/recent-active",
+		"/api/v3/users/1/network",
 	}
 
 	for _, p := range paths {

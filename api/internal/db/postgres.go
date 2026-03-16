@@ -180,9 +180,9 @@ type CountryFlow struct {
 }
 
 type TopCache struct {
-	WaypointCode   string `db:"waypoint_code" json:"waypointCode"`
-	TotalGKVisits  int64  `db:"total_gk_visits" json:"totalGkVisits"`
-	DistinctGKCount int64 `db:"distinct_gks" json:"distinctGks"`
+	WaypointCode    string `db:"waypoint_code" json:"waypointCode"`
+	TotalGKVisits   int64  `db:"total_gk_visits" json:"totalGkVisits"`
+	DistinctGKCount int64  `db:"distinct_gks" json:"distinctGks"`
 }
 
 type FirstFinderLeaderboardEntry struct {
@@ -210,11 +210,11 @@ type UserNetworkEdge struct {
 }
 
 type GeokretTimelineEvent struct {
-	GeoKretID     int64      `db:"gk_id" json:"geokretId"`
-	EventType     string     `db:"event_type" json:"eventType"`
-	OccurredAt    time.Time  `db:"occurred_at" json:"occurredAt"`
-	ActorUserID   *int64     `db:"actor_user_id" json:"actorUserId"`
-	ActorUsername *string    `db:"actor_username" json:"actorUsername"`
+	GeoKretID     int64     `db:"gk_id" json:"geokretId"`
+	EventType     string    `db:"event_type" json:"eventType"`
+	OccurredAt    time.Time `db:"occurred_at" json:"occurredAt"`
+	ActorUserID   *int64    `db:"actor_user_id" json:"actorUserId"`
+	ActorUsername *string   `db:"actor_username" json:"actorUsername"`
 }
 
 type GeokretCirculation struct {
