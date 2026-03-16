@@ -176,22 +176,45 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 }
 
 func TestStatsHandlerErrorEndpoints(t *testing.T) {
-	store := &mockStatsStore{failMethod: "FetchRecentMoves"}
-	h := NewStatsHandler(store, zap.NewNop())
-
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/recent-moves", nil)
-	w := httptest.NewRecorder()
-	h.GetRecentMoves(w, r)
-
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("expected status 500, got %d", w.Code)
+	tests := []struct {
+		name       string
+		failMethod string
+		target     string
+		handler    http.HandlerFunc
+	}{
+		{"kpis", "FetchGlobalStats", "/api/v3/stats/kpis", nil},
+		{"countries", "FetchCountries", "/api/v3/stats/countries", nil},
+		{"leaderboard", "FetchLeaderboard", "/api/v3/stats/leaderboard", nil},
+		{"recent-moves", "FetchRecentMoves", "/api/v3/geokrety/recent-moves", nil},
 	}
-	var payload map[string]interface{}
-	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-	if payload["error"] == nil {
-		t.Fatalf("error field missing")
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &mockStatsStore{failMethod: tc.failMethod}
+			h := NewStatsHandler(store, zap.NewNop())
+
+			handler := map[string]http.HandlerFunc{
+				"FetchGlobalStats": h.GetKPIs,
+				"FetchCountries":   h.GetCountries,
+				"FetchLeaderboard": h.GetLeaderboard,
+				"FetchRecentMoves": h.GetRecentMoves,
+			}[tc.failMethod]
+
+			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			w := httptest.NewRecorder()
+			handler(w, r)
+
+			if w.Code != http.StatusInternalServerError {
+				t.Fatalf("expected status 500, got %d", w.Code)
+			}
+			var payload map[string]interface{}
+			if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+				t.Fatalf("failed to decode response: %v", err)
+			}
+			if payload["error"] == nil {
+				t.Fatalf("error field missing")
+			}
+		})
 	}
 }
 
