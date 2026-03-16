@@ -9,5 +9,5 @@ FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 COPY --from=builder /out/geokrety-stats-api /app/geokrety-stats-api
 COPY docs/openapi.yaml /app/docs/openapi.yaml
-EXPOSE 3000
+EXPOSE 7415
 ENTRYPOINT ["/app/geokrety-stats-api"]

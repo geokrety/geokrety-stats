@@ -13,7 +13,7 @@
 - **API Integration**: REST API calls (GET) for initial data load and WebSocket subscriptions for live data
 - **Target Browsers**: Modern browsers supporting ES2020+
 - **Build Tool**: Vite for fast development and optimized production builds
-- **Mapping**: [Leaflet.js](https://leafletjs.com/) (`leaflet` v1.x) for interactive world maps; dark CartoDB tile layer used throughout
+- **Mapping**: [Leaflet.js](https://leafletjs.com/) (`leaflet` v1.x) for interactive world maps
 - **Data Visualisation**: [ECharts](https://ECharts.org/)
 - **Geo data**: [topojson-client](https://github.com/topojson/topojson-client) + [world-atlas](https://github.com/topojson/world-atlas) for country polygons; country numeric ISO 3166-1 → alpha-2 mapping is in `src/data/iso3166.ts`
 

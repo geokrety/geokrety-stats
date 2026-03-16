@@ -19,16 +19,12 @@ Recommended tech choices (implementers may change if justified):
 
 Environment / Configuration
 - `DATABASE_URL` or `PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE`
-- `PORT` (default `3000`)
+- `PORT` (default `7415`)
 - `LOG_LEVEL` (debug|info|warn|error)
 - `ENABLE_SWAGGER` (true/false)
 - `WS_BROADCAST_INTERVAL` (ms) — for periodic status broadcasts (optional)
 
-REST Endpoints (suggested)
-- `GET /api/v1/stats/global` — returns `GlobalStats` (totalGeokrety, totalMoves, etc.)
-- `GET /api/v1/stats/recent` — returns recent moves list for Activity feed
-- `GET /api/v1/stats/leaderboard` — returns leaderboard users
-- `GET /api/v1/countries` — returns country statistics array
+REST Endpoints (suggested basics)
 - `GET /openapi.yaml` — raw OpenAPI spec
 - `GET /docs` — Swagger UI (serve only in non-production or when `ENABLE_SWAGGER=true`)
 - `GET /health` — simple health check
@@ -67,26 +63,29 @@ Operational considerations
 
 ## Docker Compose (local development)
 
-Use the included `docker ompose.yml` to start a small local stack (API, PostgreSQL and MQTT broker).
+Use the included `docker compose.yml` to start a small local stack (API, PostgreSQL and MQTT broker).
 
 - Build and start the stack (force recreate):
 
 ```bash
 cd geokrety-stats-api
-docker ompose up --force-recreate -d
+docker compose up --force-recreate -d
 ```
 
 - Stop the stack:
 
 ```bash
 cd geokrety-stats-api
-docker ompose down
+docker compose down
 ```
 
-- Makefile helpers (in the `geokrety-stats-api` folder):
+- `Makefile` helpers: fmt lint vet build run test tidy docker-build up down clean
+  - `make build`
+  - `make run`
+  - `make test`
 
 ```bash
-# Start the stack (uses docker ompose --force-recreate -d)
+# Start the stack (uses docker compose --force-recreate -d)
 make up
 
 # Stop the stack

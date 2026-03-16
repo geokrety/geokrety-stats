@@ -24,7 +24,7 @@ type Config struct {
 
 func Load() (Config, error) {
 	cfg := Config{
-		Port:                getEnv("PORT", "3001"),
+		Port:                getEnv("PORT", "7415"),
 		LogLevel:            getEnv("LOG_LEVEL", "info"),
 		EnableSwagger:       getEnvBool("ENABLE_SWAGGER", true),
 		WSBroadcastInterval: getEnvInt("WS_BROADCAST_INTERVAL", 15000),
