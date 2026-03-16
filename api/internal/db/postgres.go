@@ -16,32 +16,32 @@ type Store struct {
 }
 
 type PictureTypeStats struct {
-	GeokretAvatars int64 `json:"geokretAvatars"` // type 0: PICTURE_GEOKRET_AVATAR
-	GeokretMoves   int64 `json:"geokretMoves"`   // type 1: PICTURE_GEOKRET_MOVE
-	UserAvatars    int64 `json:"userAvatars"`    // type 2: PICTURE_USER_AVATAR
+	GeokretAvatars int64 `json:"geokretAvatars"`
+	GeokretMoves   int64 `json:"geokretMoves"`
+	UserAvatars    int64 `json:"userAvatars"`
 }
 
 type GeokretyTypeStats struct {
-	Traditional int64 `json:"traditional"` // type 0
-	Book        int64 `json:"book"`        // type 1
-	Human       int64 `json:"human"`       // type 2
-	Coin        int64 `json:"coin"`        // type 3
-	Kretypost   int64 `json:"kretypost"`   // type 4
-	Pebble      int64 `json:"pebble"`      // type 5
-	Car         int64 `json:"car"`         // type 6
-	Playingcard int64 `json:"playingcard"` // type 7
-	Dogtag      int64 `json:"dogtag"`      // type 8
-	Jigsaw      int64 `json:"jigsaw"`      // type 9
-	Easteregg   int64 `json:"easteregg"`   // type 10
+	Traditional int64 `json:"traditional"`
+	Book        int64 `json:"book"`
+	Human       int64 `json:"human"`
+	Coin        int64 `json:"coin"`
+	Kretypost   int64 `json:"kretypost"`
+	Pebble      int64 `json:"pebble"`
+	Car         int64 `json:"car"`
+	Playingcard int64 `json:"playingcard"`
+	Dogtag      int64 `json:"dogtag"`
+	Jigsaw      int64 `json:"jigsaw"`
+	Easteregg   int64 `json:"easteregg"`
 }
 
 type MoveTypeStats struct {
-	Dropped   int64 `json:"dropped"`   // type 0
-	Grabbed   int64 `json:"grabbed"`   // type 1
-	Commented int64 `json:"commented"` // type 2
-	Seen      int64 `json:"seen"`      // type 3
-	Archived  int64 `json:"archived"`  // type 4
-	Dipped    int64 `json:"dipped"`    // type 5
+	Dropped   int64 `json:"dropped"`
+	Grabbed   int64 `json:"grabbed"`
+	Commented int64 `json:"commented"`
+	Seen      int64 `json:"seen"`
+	Archived  int64 `json:"archived"`
+	Dipped    int64 `json:"dipped"`
 }
 
 type GlobalStats struct {
@@ -71,6 +71,7 @@ type RecentMove struct {
 
 type LeaderboardUser struct {
 	Rank        int    `json:"rank"`
+	UserID      int64  `db:"user_id" json:"userId"`
 	Username    string `db:"username" json:"username"`
 	Initials    string `json:"initials"`
 	Points      int64  `db:"points" json:"points"`
@@ -95,6 +96,70 @@ type CountryStats struct {
 	GeokretyInCache  int64   `db:"geokrety_in_cache" json:"geokretyInCache"`
 	GeokretyLost     int64   `db:"geokrety_lost" json:"geokretyLost"`
 	AvgPointsPerMove float64 `db:"avg_points_per_move" json:"avgPointsPerMove"`
+}
+
+type RecentBorn struct {
+	ID        int64     `db:"id" json:"id"`
+	GKID      int64     `db:"gkid" json:"gkid"`
+	Name      string    `db:"name" json:"name"`
+	Type      int16     `db:"type" json:"type"`
+	BornAt    time.Time `db:"born_at" json:"bornAt"`
+	OwnerID   *int64    `db:"owner_id" json:"ownerId"`
+	OwnerName string    `db:"owner_name" json:"ownerName"`
+}
+
+type RecentLoved struct {
+	GeoKretID   int64     `db:"geokret_id" json:"geokretId"`
+	GeoKretName string    `db:"geokret_name" json:"geokretName"`
+	UserID      int64     `db:"user_id" json:"userId"`
+	Username    string    `db:"username" json:"username"`
+	LovedAt     time.Time `db:"loved_at" json:"lovedAt"`
+}
+
+type RecentWatched struct {
+	GeoKretID   int64     `db:"geokret_id" json:"geokretId"`
+	GeoKretName string    `db:"geokret_name" json:"geokretName"`
+	UserID      int64     `db:"user_id" json:"userId"`
+	Username    string    `db:"username" json:"username"`
+	WatchedAt   time.Time `db:"watched_at" json:"watchedAt"`
+}
+
+type ActiveCountry struct {
+	Code           string    `db:"code" json:"code"`
+	Moves          int64     `db:"moves" json:"moves"`
+	UniqueUsers    int64     `db:"unique_users" json:"uniqueUsers"`
+	LastActivityAt time.Time `db:"last_activity_at" json:"lastActivityAt"`
+	Flag           string    `json:"flag"`
+}
+
+type ActiveWaypoint struct {
+	Waypoint       string     `db:"waypoint" json:"waypoint"`
+	Country        *string    `db:"country" json:"country"`
+	Moves          int64      `db:"moves" json:"moves"`
+	LastActivityAt time.Time  `db:"last_activity_at" json:"lastActivityAt"`
+	Lat            *float64   `db:"lat" json:"lat"`
+	Lon            *float64   `db:"lon" json:"lon"`
+	GeoJSON        *GeoJSONPt `json:"geojson"`
+}
+
+type GeoJSONPt struct {
+	Type        string    `json:"type"`
+	Coordinates []float64 `json:"coordinates"`
+}
+
+type RecentRegisteredUser struct {
+	ID          int64     `db:"id" json:"id"`
+	Username    string    `db:"username" json:"username"`
+	JoinedAt    time.Time `db:"joined_at" json:"joinedAt"`
+	HomeCountry *string   `db:"home_country" json:"homeCountry"`
+}
+
+type RecentActiveUser struct {
+	UserID         int64     `db:"user_id" json:"userId"`
+	Username       string    `db:"username" json:"username"`
+	MovesCount     int64     `db:"moves_count" json:"movesCount"`
+	CountriesCount int64     `db:"countries_count" json:"countriesCount"`
+	LastMoveAt     time.Time `db:"last_move_at" json:"lastMoveAt"`
 }
 
 func Open(cfg config.Config) (*Store, error) {
@@ -126,13 +191,6 @@ func (s *Store) Ping(ctx context.Context) error {
 func (s *Store) FetchGlobalStats(ctx context.Context) (GlobalStats, error) {
 	stats := GlobalStats{}
 
-	// TODO consider creating a view that aggregates these counts for even faster retrieval
-	// TODO can we use a single query with conditional aggregation instead of multiple queries?
-
-	// Use sharded counters for fast, exact counts on high-volume tables
-	// This avoids expensive table scans and returns results in ~O(16) time
-
-	// Consolidated single-query aggregation over sharded counters for many entities.
 	type countersAgg struct {
 		TotalMoves       int64 `db:"total_moves"`
 		RegisteredUsers  int64 `db:"registered_users"`
@@ -161,39 +219,37 @@ func (s *Store) FetchGlobalStats(ctx context.Context) (GlobalStats, error) {
 	}
 
 	agg := countersAgg{}
-
 	if err := s.db.GetContext(ctx, &agg, `
-		SELECT
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves'), 0) AS total_moves,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_users'), 0) AS registered_users,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety'), 0) AS total_geokrety,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures'), 0) AS pictures_uploaded,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures_type_0'), 0) AS pictures_type_0,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures_type_1'), 0) AS pictures_type_1,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures_type_2'), 0) AS pictures_type_2,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_0'), 0) AS geokrety_type_0,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_1'), 0) AS geokrety_type_1,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_2'), 0) AS geokrety_type_2,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_3'), 0) AS geokrety_type_3,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_4'), 0) AS geokrety_type_4,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_5'), 0) AS geokrety_type_5,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_6'), 0) AS geokrety_type_6,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_7'), 0) AS geokrety_type_7,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_8'), 0) AS geokrety_type_8,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_9'), 0) AS geokrety_type_9,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_10'), 0) AS geokrety_type_10,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_0'), 0) AS moves_type_0,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_1'), 0) AS moves_type_1,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_2'), 0) AS moves_type_2,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_3'), 0) AS moves_type_3,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_4'), 0) AS moves_type_4,
-			COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_5'), 0) AS moves_type_5
-		FROM stats.entity_counters_shard
-	`); err != nil {
+SELECT
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves'), 0) AS total_moves,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_users'), 0) AS registered_users,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety'), 0) AS total_geokrety,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures'), 0) AS pictures_uploaded,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures_type_0'), 0) AS pictures_type_0,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures_type_1'), 0) AS pictures_type_1,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_pictures_type_2'), 0) AS pictures_type_2,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_0'), 0) AS geokrety_type_0,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_1'), 0) AS geokrety_type_1,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_2'), 0) AS geokrety_type_2,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_3'), 0) AS geokrety_type_3,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_4'), 0) AS geokrety_type_4,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_5'), 0) AS geokrety_type_5,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_6'), 0) AS geokrety_type_6,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_7'), 0) AS geokrety_type_7,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_8'), 0) AS geokrety_type_8,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_9'), 0) AS geokrety_type_9,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_geokrety_type_10'), 0) AS geokrety_type_10,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_0'), 0) AS moves_type_0,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_1'), 0) AS moves_type_1,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_2'), 0) AS moves_type_2,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_3'), 0) AS moves_type_3,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_4'), 0) AS moves_type_4,
+COALESCE(SUM(cnt) FILTER (WHERE entity = 'gk_moves_type_5'), 0) AS moves_type_5
+FROM stats.entity_counters_shard
+`); err != nil {
 		return GlobalStats{}, fmt.Errorf("query aggregated counters: %w", err)
 	}
 
-	// Map aggregated results into existing stats structure
 	stats.TotalMoves = agg.TotalMoves
 	stats.RegisteredUsers = agg.RegisteredUsers
 	stats.TotalGeokrety = agg.TotalGeokrety
@@ -220,74 +276,72 @@ func (s *Store) FetchGlobalStats(ctx context.Context) (GlobalStats, error) {
 	stats.MovesByType.Dipped = agg.MovesType5
 
 	if err := s.db.GetContext(ctx, &stats.ActiveUsers, `
-		SELECT COALESCE(active_users, 0)
-		FROM stats.daily_activity
-		ORDER BY activity_date DESC
-		LIMIT 1
-	`); err != nil {
+SELECT COALESCE(COUNT(*), 0)
+FROM stats.daily_active_users
+WHERE activity_date = CURRENT_DATE
+`); err != nil {
 		return GlobalStats{}, fmt.Errorf("query active users: %w", err)
 	}
 
-	// Moves in last 30 days (direct query with indexed moved_on_datetime)
 	if err := s.db.GetContext(ctx, &stats.MovesLast30Days, `
-		SELECT COALESCE(COUNT(*), 0)
-		FROM geokrety.gk_moves
-		WHERE moved_on_datetime >= NOW() - INTERVAL '30 days'
-	`); err != nil {
+SELECT COALESCE(COUNT(*), 0)
+FROM geokrety.gk_moves
+WHERE moved_on_datetime >= NOW() - INTERVAL '30 days'
+`); err != nil {
 		return GlobalStats{}, fmt.Errorf("query moves last 30 days: %w", err)
 	}
 
-	// Active users in last 30 days (users who created moves)
 	if err := s.db.GetContext(ctx, &stats.ActiveUsersLast30d, `
-		SELECT COALESCE(COUNT(DISTINCT author), 0)
-		FROM geokrety.gk_moves
-		WHERE moved_on_datetime >= NOW() - INTERVAL '30 days'
-	`); err != nil {
+SELECT COALESCE(COUNT(DISTINCT author), 0)
+FROM geokrety.gk_moves
+WHERE moved_on_datetime >= NOW() - INTERVAL '30 days'
+AND author IS NOT NULL
+`); err != nil {
 		return GlobalStats{}, fmt.Errorf("query active users last 30d: %w", err)
 	}
 
 	if err := s.db.GetContext(ctx, &stats.CountriesReached, `
-		SELECT COALESCE(COUNT(*), 0)
-		FROM stats.country_stats
-		WHERE total_moves > 0
-	`); err != nil {
+SELECT COALESCE(COUNT(DISTINCT country_code), 0)
+FROM stats.country_daily_stats
+WHERE moves_count > 0
+`); err != nil {
 		return GlobalStats{}, fmt.Errorf("query countries reached: %w", err)
 	}
 
 	if err := s.db.GetContext(ctx, &stats.TotalGeokretyHidden, `
-		SELECT COALESCE(COUNT(*), 0)
-		FROM geokrety.gk_geokrety_in_caches
-	`); err != nil {
+SELECT COALESCE(COUNT(*), 0)
+FROM geokrety.gk_geokrety_in_caches
+`); err != nil {
 		return GlobalStats{}, fmt.Errorf("query hidden geokrety: %w", err)
 	}
 
 	return stats, nil
 }
 
-func (s *Store) FetchRecentMoves(ctx context.Context, limit int) ([]RecentMove, error) {
+func (s *Store) FetchRecentMoves(ctx context.Context, limit, offset int) ([]RecentMove, error) {
 	rows := []RecentMove{}
 	if err := s.db.SelectContext(ctx, &rows, `
-		SELECT
-			m.id,
-			COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
-			CASE m.move_type
-				WHEN 0 THEN 'dropped'
-				WHEN 1 THEN 'grabbed'
-				WHEN 2 THEN 'commented'
-				WHEN 3 THEN 'seen'
-				WHEN 4 THEN 'archived'
-				WHEN 5 THEN 'dipped'
-				ELSE 'commented'
-			END AS type,
-			COALESCE(u.username, m.username, 'unknown') AS username,
-			COALESCE(UPPER(m.country), '') AS country,
-			m.moved_on_datetime AS timestamp
-		FROM geokrety.gk_moves AS m
-		LEFT JOIN geokrety.gk_geokrety AS g ON g.id = m.geokret
-		LEFT JOIN geokrety.gk_users AS u ON u.id = m.author
-		ORDER BY m.moved_on_datetime DESC
-		LIMIT $1
-	`, limit); err != nil {
+SELECT
+m.id,
+COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
+CASE m.move_type
+WHEN 0 THEN 'dropped'
+WHEN 1 THEN 'grabbed'
+WHEN 2 THEN 'commented'
+WHEN 3 THEN 'seen'
+WHEN 4 THEN 'archived'
+WHEN 5 THEN 'dipped'
+ELSE 'unknown'
+END AS type,
+COALESCE(u.username, m.username, 'unknown') AS username,
+COALESCE(UPPER(m.country), '') AS country,
+m.moved_on_datetime AS timestamp
+FROM geokrety.gk_moves AS m
+LEFT JOIN geokrety.gk_geokrety AS g ON g.id = m.geokret
+LEFT JOIN geokrety.gk_users AS u ON u.id = m.author
+ORDER BY m.moved_on_datetime DESC, m.id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
 		return nil, fmt.Errorf("query recent activity: %w", err)
 	}
 
@@ -298,26 +352,26 @@ func (s *Store) FetchRecentMoves(ctx context.Context, limit int) ([]RecentMove, 
 	return rows, nil
 }
 
-func (s *Store) FetchLeaderboard(ctx context.Context, limit int) ([]LeaderboardUser, error) {
+func (s *Store) FetchLeaderboard(ctx context.Context, limit, offset int) ([]LeaderboardUser, error) {
 	rows := []LeaderboardUser{}
 	if err := s.db.SelectContext(ctx, &rows, `
-		SELECT
-			COALESCE(u.username, 'unknown') AS username,
-			COALESCE(SUM(upd.points), 0)::bigint AS points,
-			COALESCE(SUM(upd.moves_count), 0)::bigint AS moves_count
-		FROM stats.user_points_daily AS upd
-		INNER JOIN geokrety.gk_users AS u ON u.id = upd.user_id
-		GROUP BY u.username
-		ORDER BY points DESC, moves_count DESC
-		LIMIT $1
-	`, limit); err != nil {
+SELECT
+u.id AS user_id,
+u.username,
+COUNT(*)::bigint AS points,
+COUNT(*)::bigint AS moves_count
+FROM geokrety.gk_moves AS m
+INNER JOIN geokrety.gk_users AS u ON u.id = m.author
+GROUP BY u.id, u.username
+ORDER BY points DESC, u.username ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
 		return nil, fmt.Errorf("query leaderboard: %w", err)
 	}
 
 	colors := []string{
 		"bg-emerald-500",
 		"bg-cyan-500",
-		"bg-violet-500",
 		"bg-sky-500",
 		"bg-amber-500",
 		"bg-rose-500",
@@ -327,7 +381,7 @@ func (s *Store) FetchLeaderboard(ctx context.Context, limit int) ([]LeaderboardU
 		"bg-lime-500",
 	}
 	for i := range rows {
-		rows[i].Rank = i + 1
+		rows[i].Rank = offset + i + 1
 		rows[i].Initials = usernameInitials(rows[i].Username)
 		rows[i].AvatarColor = colors[i%len(colors)]
 	}
@@ -335,77 +389,87 @@ func (s *Store) FetchLeaderboard(ctx context.Context, limit int) ([]LeaderboardU
 	return rows, nil
 }
 
-func (s *Store) FetchCountries(ctx context.Context, limit int) ([]CountryStats, error) {
+func (s *Store) FetchCountries(ctx context.Context, limit, offset int) ([]CountryStats, error) {
 	rows := []CountryStats{}
 	if err := s.db.SelectContext(ctx, &rows, `
-		WITH country_names AS (
-			SELECT
-				UPPER(original) AS code,
-				MIN(country) AS name
-			FROM geokrety.gk_waypoints_country
-			WHERE LENGTH(original) = 2
-				AND country IS NOT NULL
-			GROUP BY UPPER(original)
-		), users_home AS (
-			SELECT
-				UPPER(home_country) AS code,
-				COUNT(*) AS users_home
-			FROM geokrety.gk_users
-			WHERE home_country IS NOT NULL
-			GROUP BY UPPER(home_country)
-		), country_points_users AS (
-			SELECT
-				UPPER(u.home_country) AS code,
-				COALESCE(SUM(upd.points), 0) AS points_sum
-			FROM geokrety.gk_users AS u
-			INNER JOIN stats.user_points_daily AS upd ON upd.user_id = u.id
-			WHERE u.home_country IS NOT NULL
-			GROUP BY UPPER(u.home_country)
-		), country_pictures AS (
-			SELECT
-				UPPER(country) AS code,
-				COALESCE(SUM(pictures_count), 0) AS pictures
-			FROM geokrety.gk_moves
-			WHERE country IS NOT NULL
-			GROUP BY UPPER(country)
-		), country_loves AS (
-			SELECT
-				cc.country_code AS code,
-				COALESCE(SUM(g.loves_count), 0) AS loves,
-				COUNT(*) FILTER (WHERE g.missing = FALSE) AS geokrety_in_cache,
-				COUNT(*) FILTER (WHERE g.missing = TRUE) AS geokrety_lost
-			FROM stats.gk_current_country AS cc
-			INNER JOIN geokrety.gk_geokrety AS g ON g.id = cc.geokrety_id
-			GROUP BY cc.country_code
-		)
-		SELECT
-			cs.country_code AS code,
-			COALESCE(cn.name, cs.country_code) AS name,
-			cs.total_moves AS moves_count,
-			COALESCE(uh.users_home, 0) AS users_home,
-			cs.unique_users AS active_users,
-			cs.drops AS dropped,
-			cs.dips AS dipped,
-			cs.sees AS seen,
-			COALESCE(cl.loves, 0) AS loves,
-			COALESCE(cp.pictures, 0) AS pictures,
-			COALESCE(cpu.points_sum, 0) AS points_sum,
-			cs.total_points_awarded AS points_sum_moves,
-			COALESCE(cl.geokrety_in_cache, 0) AS geokrety_in_cache,
-			COALESCE(cl.geokrety_lost, 0) AS geokrety_lost,
-			CASE
-				WHEN cs.total_moves > 0 THEN ROUND((cs.total_points_awarded / cs.total_moves::double precision)::numeric, 2)::double precision
-				ELSE 0
-			END AS avg_points_per_move
-		FROM stats.country_stats AS cs
-		LEFT JOIN country_names AS cn ON cn.code = cs.country_code
-		LEFT JOIN users_home AS uh ON uh.code = cs.country_code
-		LEFT JOIN country_points_users AS cpu ON cpu.code = cs.country_code
-		LEFT JOIN country_pictures AS cp ON cp.code = cs.country_code
-		LEFT JOIN country_loves AS cl ON cl.code = cs.country_code
-		ORDER BY cs.total_points_awarded DESC, cs.total_moves DESC
-		LIMIT $1
-	`, limit); err != nil {
+WITH country_agg AS (
+SELECT
+UPPER(country_code) AS code,
+SUM(moves_count)::bigint AS moves_count,
+SUM(unique_users)::bigint AS active_users,
+SUM(drops)::bigint AS dropped,
+SUM(dips)::bigint AS dipped,
+SUM(sees)::bigint AS seen,
+SUM(points_contributed)::double precision AS points_sum_moves
+FROM stats.country_daily_stats
+GROUP BY UPPER(country_code)
+), country_names AS (
+SELECT
+UPPER(original) AS code,
+MIN(country) AS name
+FROM geokrety.gk_waypoints_country
+WHERE LENGTH(original) = 2
+AND country IS NOT NULL
+GROUP BY UPPER(original)
+), users_home AS (
+SELECT
+UPPER(home_country) AS code,
+COUNT(*)::bigint AS users_home
+FROM geokrety.gk_users
+WHERE home_country IS NOT NULL
+GROUP BY UPPER(home_country)
+), country_loves AS (
+SELECT
+				UPPER(d.country) AS code,
+				COALESCE(SUM(g.loves_count), 0)::bigint AS loves
+			FROM geokrety.gk_geokrety_with_details AS d
+			INNER JOIN geokrety.gk_geokrety AS g ON g.id = d.id
+WHERE country IS NOT NULL
+			GROUP BY UPPER(d.country)
+), country_pictures AS (
+SELECT
+UPPER(country) AS code,
+COALESCE(SUM(pictures_count), 0)::bigint AS pictures
+FROM geokrety.gk_moves
+WHERE country IS NOT NULL
+GROUP BY UPPER(country)
+), country_presence AS (
+SELECT
+UPPER(country) AS code,
+COUNT(*) FILTER (WHERE missing = FALSE)::bigint AS geokrety_in_cache,
+COUNT(*) FILTER (WHERE missing = TRUE)::bigint AS geokrety_lost
+FROM geokrety.gk_geokrety_in_caches
+WHERE country IS NOT NULL
+GROUP BY UPPER(country)
+)
+SELECT
+ca.code,
+COALESCE(cn.name, ca.code) AS name,
+ca.moves_count,
+COALESCE(uh.users_home, 0) AS users_home,
+ca.active_users,
+ca.dropped,
+ca.dipped,
+ca.seen,
+COALESCE(cl.loves, 0) AS loves,
+COALESCE(cp.pictures, 0) AS pictures,
+ca.points_sum_moves AS points_sum,
+ca.points_sum_moves,
+COALESCE(pr.geokrety_in_cache, 0) AS geokrety_in_cache,
+COALESCE(pr.geokrety_lost, 0) AS geokrety_lost,
+CASE
+WHEN ca.moves_count > 0 THEN ROUND((ca.points_sum_moves / ca.moves_count)::numeric, 2)::double precision
+ELSE 0
+END AS avg_points_per_move
+FROM country_agg AS ca
+LEFT JOIN country_names AS cn ON cn.code = ca.code
+LEFT JOIN users_home AS uh ON uh.code = ca.code
+LEFT JOIN country_loves AS cl ON cl.code = ca.code
+LEFT JOIN country_pictures AS cp ON cp.code = ca.code
+LEFT JOIN country_presence AS pr ON pr.code = ca.code
+ORDER BY ca.moves_count DESC, ca.code ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
 		return nil, fmt.Errorf("query countries: %w", err)
 	}
 
@@ -414,6 +478,163 @@ func (s *Store) FetchCountries(ctx context.Context, limit int) ([]CountryStats, 
 		rows[i].Flag = countryFlag(rows[i].Code)
 	}
 
+	return rows, nil
+}
+
+func (s *Store) FetchRecentBorn(ctx context.Context, limit, offset int) ([]RecentBorn, error) {
+	rows := []RecentBorn{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+g.id,
+g.gkid,
+g.name,
+g.type,
+g.born_on_datetime AS born_at,
+g.owner AS owner_id,
+COALESCE(u.username, 'Abandoned') AS owner_name
+FROM geokrety.gk_geokrety AS g
+LEFT JOIN geokrety.gk_users AS u ON u.id = g.owner
+ORDER BY g.born_on_datetime DESC, g.id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent born: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchRecentLoved(ctx context.Context, limit, offset int) ([]RecentLoved, error) {
+	rows := []RecentLoved{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+l.geokret AS geokret_id,
+g.name AS geokret_name,
+l.user AS user_id,
+COALESCE(u.username, 'unknown') AS username,
+l.created_on_datetime AS loved_at
+FROM geokrety.gk_loves AS l
+INNER JOIN geokrety.gk_geokrety AS g ON g.id = l.geokret
+LEFT JOIN geokrety.gk_users AS u ON u.id = l.user
+ORDER BY l.created_on_datetime DESC, l.id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent loved: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchRecentWatched(ctx context.Context, limit, offset int) ([]RecentWatched, error) {
+	rows := []RecentWatched{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+w.geokret AS geokret_id,
+g.name AS geokret_name,
+w.user AS user_id,
+COALESCE(u.username, 'unknown') AS username,
+w.created_on_datetime AS watched_at
+FROM geokrety.gk_watched AS w
+INNER JOIN geokrety.gk_geokrety AS g ON g.id = w.geokret
+LEFT JOIN geokrety.gk_users AS u ON u.id = w.user
+ORDER BY w.created_on_datetime DESC, w.id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent watched: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchRecentActiveCountries(ctx context.Context, limit, offset int) ([]ActiveCountry, error) {
+	rows := []ActiveCountry{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+UPPER(country) AS code,
+COUNT(*)::bigint AS moves,
+COUNT(DISTINCT author)::bigint AS unique_users,
+MAX(moved_on_datetime) AS last_activity_at
+FROM geokrety.gk_moves
+WHERE country IS NOT NULL
+AND moved_on_datetime >= NOW() - INTERVAL '30 days'
+GROUP BY UPPER(country)
+ORDER BY last_activity_at DESC, moves DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent active countries: %w", err)
+	}
+
+	for i := range rows {
+		rows[i].Flag = countryFlag(rows[i].Code)
+	}
+
+	return rows, nil
+}
+
+func (s *Store) FetchRecentActiveWaypoints(ctx context.Context, limit, offset int) ([]ActiveWaypoint, error) {
+	rows := []ActiveWaypoint{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+UPPER(m.waypoint) AS waypoint,
+UPPER(MAX(m.country)) AS country,
+COUNT(*)::bigint AS moves,
+MAX(m.moved_on_datetime) AS last_activity_at,
+MAX(m.lat) AS lat,
+MAX(m.lon) AS lon
+FROM geokrety.gk_moves AS m
+WHERE m.waypoint IS NOT NULL
+AND BTRIM(m.waypoint) <> ''
+AND m.moved_on_datetime >= NOW() - INTERVAL '30 days'
+GROUP BY UPPER(m.waypoint)
+ORDER BY last_activity_at DESC, moves DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent active waypoints: %w", err)
+	}
+
+	for i := range rows {
+		if rows[i].Lat != nil && rows[i].Lon != nil {
+			rows[i].GeoJSON = &GeoJSONPt{
+				Type:        "Point",
+				Coordinates: []float64{*rows[i].Lon, *rows[i].Lat},
+			}
+		}
+	}
+
+	return rows, nil
+}
+
+func (s *Store) FetchRecentRegisteredUsers(ctx context.Context, limit, offset int) ([]RecentRegisteredUser, error) {
+	rows := []RecentRegisteredUser{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+id,
+username,
+joined_on_datetime AS joined_at,
+UPPER(home_country) AS home_country
+FROM geokrety.gk_users
+ORDER BY joined_on_datetime DESC, id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent registered users: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchRecentActiveUsers(ctx context.Context, limit, offset int) ([]RecentActiveUser, error) {
+	rows := []RecentActiveUser{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+u.id AS user_id,
+u.username,
+COUNT(*)::bigint AS moves_count,
+COUNT(DISTINCT UPPER(m.country))::bigint AS countries_count,
+MAX(m.moved_on_datetime) AS last_move_at
+FROM geokrety.gk_moves AS m
+INNER JOIN geokrety.gk_users AS u ON u.id = m.author
+WHERE m.moved_on_datetime >= NOW() - INTERVAL '30 days'
+GROUP BY u.id, u.username
+ORDER BY last_move_at DESC, moves_count DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query recent active users: %w", err)
+	}
 	return rows, nil
 }
 

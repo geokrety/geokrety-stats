@@ -1,120 +1,142 @@
 package handlers
 
 import (
-	"encoding/json"
+	"context"
 	"net/http"
-	"strconv"
+	"reflect"
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/db"
 	"go.uber.org/zap"
 )
 
+type StatsStore interface {
+	FetchGlobalStats(ctx context.Context) (db.GlobalStats, error)
+	FetchCountries(ctx context.Context, limit, offset int) ([]db.CountryStats, error)
+	FetchLeaderboard(ctx context.Context, limit, offset int) ([]db.LeaderboardUser, error)
+	FetchRecentMoves(ctx context.Context, limit, offset int) ([]db.RecentMove, error)
+	FetchRecentBorn(ctx context.Context, limit, offset int) ([]db.RecentBorn, error)
+	FetchRecentLoved(ctx context.Context, limit, offset int) ([]db.RecentLoved, error)
+	FetchRecentWatched(ctx context.Context, limit, offset int) ([]db.RecentWatched, error)
+	FetchRecentActiveCountries(ctx context.Context, limit, offset int) ([]db.ActiveCountry, error)
+	FetchRecentActiveWaypoints(ctx context.Context, limit, offset int) ([]db.ActiveWaypoint, error)
+	FetchRecentRegisteredUsers(ctx context.Context, limit, offset int) ([]db.RecentRegisteredUser, error)
+	FetchRecentActiveUsers(ctx context.Context, limit, offset int) ([]db.RecentActiveUser, error)
+}
+
 type StatsHandler struct {
-	store  *db.Store
+	store  StatsStore
 	logger *zap.Logger
 }
 
-func NewStatsHandler(store *db.Store, logger *zap.Logger) *StatsHandler {
+func NewStatsHandler(store StatsStore, logger *zap.Logger) *StatsHandler {
 	return &StatsHandler{store: store, logger: logger}
 }
 
-func (h *StatsHandler) GetGlobal(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	stats, err := h.store.FetchGlobalStats(ctx)
+func (h *StatsHandler) GetKPIs(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	stats, err := h.store.FetchGlobalStats(r.Context())
 	if err != nil {
 		h.logger.Error("failed to fetch global stats", zap.Error(err))
 		writeError(w, http.StatusInternalServerError, "failed to fetch global stats")
 		return
 	}
-	writeJSON(w, http.StatusOK, stats)
-}
-
-func (h *StatsHandler) GetRecent(w http.ResponseWriter, r *http.Request) {
-	limit := queryInt(r, "limit", 20)
-	ctx := r.Context()
-	rows, err := h.store.FetchRecentMoves(ctx, limit)
-	if err != nil {
-		h.logger.Error("failed to fetch recent activity", zap.Error(err))
-		writeError(w, http.StatusInternalServerError, "failed to fetch recent activity")
-		return
-	}
-	writeJSON(w, http.StatusOK, rows)
-}
-
-func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
-	limit := queryInt(r, "limit", 10)
-	ctx := r.Context()
-	rows, err := h.store.FetchLeaderboard(ctx, limit)
-	if err != nil {
-		h.logger.Error("failed to fetch leaderboard", zap.Error(err))
-		writeError(w, http.StatusInternalServerError, "failed to fetch leaderboard")
-		return
-	}
-	writeJSON(w, http.StatusOK, rows)
+	writeEnvelope(w, http.StatusOK, stats, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetCountries(w http.ResponseWriter, r *http.Request) {
-	limit := queryInt(r, "limit", 250)
-	ctx := r.Context()
-	rows, err := h.store.FetchCountries(ctx, limit)
+	started := time.Now()
+	limit := queryInt(r, "limit", 50, 1, 1000)
+	offset := queryInt(r, "offset", 0, 0, 1_000_000)
+	rows, err := h.store.FetchCountries(r.Context(), limit, offset)
 	if err != nil {
 		h.logger.Error("failed to fetch countries", zap.Error(err))
 		writeError(w, http.StatusInternalServerError, "failed to fetch countries")
 		return
 	}
-
-	response := make([]map[string]interface{}, 0, len(rows))
-	for _, row := range rows {
-		response = append(response, map[string]interface{}{
-			"code":        row.Code,
-			"name":        row.Name,
-			"flag":        row.Flag,
-			"movesCount":  row.MovesCount,
-			"usersHome":   row.UsersHome,
-			"activeUsers": row.ActiveUsers,
-			"movesByType": map[string]int64{
-				"dropped": row.Dropped,
-				"dipped":  row.Dipped,
-				"seen":    row.Seen,
-			},
-			"loves":            row.Loves,
-			"pictures":         row.Pictures,
-			"pointsSum":        row.PointsSum,
-			"pointsSumMoves":   row.PointsSumMoves,
-			"geokretyInCache":  row.GeokretyInCache,
-			"geokretyLost":     row.GeokretyLost,
-			"avgPointsPerMove": row.AvgPointsPerMove,
-		})
-	}
-
-	writeJSON(w, http.StatusOK, response)
+	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, len(rows))
 }
 
-func queryInt(r *http.Request, key string, fallback int) int {
-	val := r.URL.Query().Get(key)
-	if val == "" {
-		return fallback
+func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	limit := queryInt(r, "limit", 20, 1, 1000)
+	offset := queryInt(r, "offset", 0, 0, 1_000_000)
+	rows, err := h.store.FetchLeaderboard(r.Context(), limit, offset)
+	if err != nil {
+		h.logger.Error("failed to fetch leaderboard", zap.Error(err))
+		writeError(w, http.StatusInternalServerError, "failed to fetch leaderboard")
+		return
 	}
-	parsed, err := strconv.Atoi(val)
-	if err != nil || parsed <= 0 {
-		return fallback
-	}
-	if parsed > 1000 {
-		return 1000
-	}
-	return parsed
+	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, len(rows))
 }
 
-func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
+func (h *StatsHandler) GetRecentMoves(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentMoves(ctx, limit, offset)
+	}, "failed to fetch recent activity")
 }
 
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]interface{}{
-		"error":     message,
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
+func (h *StatsHandler) GetRecentBorn(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentBorn(ctx, limit, offset)
+	}, "failed to fetch recently born geokrety")
+}
+
+func (h *StatsHandler) GetRecentLoved(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentLoved(ctx, limit, offset)
+	}, "failed to fetch recently loved geokrety")
+}
+
+func (h *StatsHandler) GetRecentWatched(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentWatched(ctx, limit, offset)
+	}, "failed to fetch recently watched geokrety")
+}
+
+func (h *StatsHandler) GetRecentActiveCountries(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentActiveCountries(ctx, limit, offset)
+	}, "failed to fetch recent active countries")
+}
+
+func (h *StatsHandler) GetRecentActiveWaypoints(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentActiveWaypoints(ctx, limit, offset)
+	}, "failed to fetch recent active waypoints")
+}
+
+func (h *StatsHandler) GetRecentRegisteredUsers(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentRegisteredUsers(ctx, limit, offset)
+	}, "failed to fetch recent registered users")
+}
+
+func (h *StatsHandler) GetRecentActiveUsers(w http.ResponseWriter, r *http.Request) {
+	h.getRecentList(w, r, func(ctx context.Context, limit, offset int) (interface{}, error) {
+		return h.store.FetchRecentActiveUsers(ctx, limit, offset)
+	}, "failed to fetch recent active users")
+}
+
+func (h *StatsHandler) getRecentList(
+	w http.ResponseWriter,
+	r *http.Request,
+	fetch func(context.Context, int, int) (interface{}, error),
+	errMsg string,
+) {
+	started := time.Now()
+	limit := queryInt(r, "limit", 20, 1, 1000)
+	offset := queryInt(r, "offset", 0, 0, 1_000_000)
+	rows, err := fetch(r.Context(), limit, offset)
+	if err != nil {
+		h.logger.Error(errMsg, zap.Error(err))
+		writeError(w, http.StatusInternalServerError, errMsg)
+		return
+	}
+	count := 0
+	v := reflect.ValueOf(rows)
+	if v.IsValid() && v.Kind() == reflect.Slice {
+		count = v.Len()
+	}
+	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, count)
 }

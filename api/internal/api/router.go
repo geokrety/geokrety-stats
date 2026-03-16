@@ -41,13 +41,29 @@ func NewRouter(
 	r.Get("/health", systemHandler.Health)
 	r.Handle("/metrics", promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{}))
 	r.Get("/ws", hub.ServeWS)
-	r.Post("/api/v1/ws/publish", systemHandler.PublishWS)
 
-	r.Route("/api/v1", func(api chi.Router) {
-		api.Get("/stats/global", statsHandler.GetGlobal)
-		api.Get("/stats/recent", statsHandler.GetRecent)
-		api.Get("/stats/leaderboard", statsHandler.GetLeaderboard)
-		api.Get("/countries", statsHandler.GetCountries)
+	r.Route("/api/v3", func(api chi.Router) {
+		api.Route("/stats", func(sr chi.Router) {
+			sr.Get("/kpis", statsHandler.GetKPIs)
+			sr.Get("/countries", statsHandler.GetCountries)
+			sr.Get("/leaderboard", statsHandler.GetLeaderboard)
+		})
+		api.Route("/geokrety", func(gr chi.Router) {
+			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
+			gr.Get("/recent-born", statsHandler.GetRecentBorn)
+			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
+			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
+		})
+		api.Route("/countries", func(cr chi.Router) {
+			cr.Get("/recent-active", statsHandler.GetRecentActiveCountries)
+		})
+		api.Route("/waypoints", func(wr chi.Router) {
+			wr.Get("/recent-active", statsHandler.GetRecentActiveWaypoints)
+		})
+		api.Route("/users", func(ur chi.Router) {
+			ur.Get("/recent-registered", statsHandler.GetRecentRegisteredUsers)
+			ur.Get("/recent-active", statsHandler.GetRecentActiveUsers)
+		})
 	})
 
 	if cfg.EnableSwagger {
@@ -114,7 +130,7 @@ func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

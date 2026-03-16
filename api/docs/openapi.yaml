@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: GeoKrety Stats API
-  version: 0.1.0
-  description: REST and WebSocket bootstrap API for GeoKrety statistics dashboard.
+  version: 3.0.0
+  description: Read-only API for GeoKrety statistics, activity feeds, and visualization workloads.
 servers:
   - url: http://localhost:7415
 paths:
@@ -12,187 +12,101 @@ paths:
       responses:
         '200':
           description: Service healthy
-          content:
-            application/json:
-              schema:
-                type: object
-  /api/v1/stats/global:
+  /api/v3/stats/kpis:
     get:
-      summary: Get global counters
+      summary: Global KPI counters
       responses:
         '200':
-          description: Global statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GlobalStats'
-  /api/v1/stats/recent:
+          description: KPI payload
+  /api/v3/stats/countries:
     get:
-      summary: Get recent activity
+      summary: Country leaderboard and map aggregates
       parameters:
         - in: query
           name: limit
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0 }
       responses:
         '200':
-          description: Recent moves
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RecentMove'
-  /api/v1/stats/leaderboard:
+          description: Countries payload
+  /api/v3/stats/leaderboard:
     get:
-      summary: Get leaderboard
+      summary: User leaderboard
       parameters:
         - in: query
           name: limit
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-      responses:
-        '200':
-          description: Leaderboard users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/LeaderboardUser'
-  /api/v1/countries:
-    get:
-      summary: Get country statistics
-      parameters:
+          schema: { type: integer, minimum: 1, maximum: 1000 }
         - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
+          name: offset
+          schema: { type: integer, minimum: 0 }
       responses:
         '200':
-          description: Country stats
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CountryStats'
-  /api/v1/ws/publish:
-    post:
-      summary: Publish websocket message (simple publish API)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PublishMessageRequest'
+          description: Leaderboard payload
+  /api/v3/geokrety/recent-moves:
+    get:
+      summary: Recent GeoKrety moves
       responses:
-        '202':
-          description: Published
+        '200':
+          description: Recent moves payload
+  /api/v3/geokrety/recent-born:
+    get:
+      summary: Recently created GeoKrety
+      responses:
+        '200':
+          description: Recent born payload
+  /api/v3/geokrety/recent-loved:
+    get:
+      summary: Recently loved GeoKrety
+      responses:
+        '200':
+          description: Recent loved payload
+  /api/v3/geokrety/recent-watched:
+    get:
+      summary: Recently watched GeoKrety
+      responses:
+        '200':
+          description: Recent watched payload
+  /api/v3/countries/recent-active:
+    get:
+      summary: Recently active countries
+      responses:
+        '200':
+          description: Active countries payload
+  /api/v3/waypoints/recent-active:
+    get:
+      summary: Recently active waypoints
+      responses:
+        '200':
+          description: Active waypoints payload
+  /api/v3/users/recent-registered:
+    get:
+      summary: Recently registered users
+      responses:
+        '200':
+          description: Recent registered users payload
+  /api/v3/users/recent-active:
+    get:
+      summary: Recently active users
+      responses:
+        '200':
+          description: Recent active users payload
 components:
   schemas:
-    GlobalStats:
+    Envelope:
       type: object
       properties:
-        totalGeokrety:
-          type: integer
-        totalGeokretyHidden:
-          type: integer
-        totalMoves:
-          type: integer
-        registeredUsers:
-          type: integer
-        activeUsers:
-          type: integer
-        countriesReached:
-          type: integer
-        picturesUploaded:
-          type: integer
-    RecentMove:
-      type: object
-      properties:
-        id:
-          type: integer
-        geokretName:
-          type: string
-        type:
-          type: string
-        username:
-          type: string
-        country:
-          type: string
-        countryFlag:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-    LeaderboardUser:
-      type: object
-      properties:
-        rank:
-          type: integer
-        username:
-          type: string
-        initials:
-          type: string
-        points:
-          type: integer
-        movesCount:
-          type: integer
-        avatarColor:
-          type: string
-    CountryStats:
-      type: object
-      properties:
-        code:
-          type: string
-        name:
-          type: string
-        flag:
-          type: string
-        movesCount:
-          type: integer
-        usersHome:
-          type: integer
-        activeUsers:
-          type: integer
-        movesByType:
-          type: object
-          properties:
-            dropped:
-              type: integer
-            dipped:
-              type: integer
-            seen:
-              type: integer
-        loves:
-          type: integer
-        pictures:
-          type: integer
-        pointsSum:
-          type: number
-        pointsSumMoves:
-          type: number
-        geokretyInCache:
-          type: integer
-        geokretyLost:
-          type: integer
-        avgPointsPerMove:
-          type: number
-    PublishMessageRequest:
-      type: object
-      properties:
-        type:
-          type: string
-          example: stats_update
-        path:
-          type: string
-          example: global
         data:
           type: object
+        meta:
+          type: object
+          properties:
+            requestedAt: { type: string, format: date-time }
+            queryMs: { type: integer }
+            pagination:
+              type: object
+              properties:
+                limit: { type: integer }
+                offset: { type: integer }
+                count: { type: integer }
