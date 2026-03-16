@@ -4,7 +4,7 @@ services:
     build: .
     container_name: geokrety-stats-api
     ports:
-      - "3001:3001"
+      - "7415:7415"
     environment:
       - PGHOST=192.168.130.65
       - PGPASSWORD=geokrety

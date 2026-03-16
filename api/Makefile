@@ -42,7 +42,7 @@ docker-build:
 	docker compose build
 
 up:
-	@echo "Starting stack with docker ompose (force recreate)..."
+	@echo "Starting stack with docker compose (force recreate)..."
 	docker compose up --force-recreate -d
 
 down:

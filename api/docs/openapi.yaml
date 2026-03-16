@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: REST and WebSocket bootstrap API for GeoKrety statistics dashboard.
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:7415
 paths:
   /health:
     get:
