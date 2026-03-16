@@ -29,10 +29,11 @@ func (h *SystemHandler) Health(w http.ResponseWriter, r *http.Request) {
 
 	status := "ok"
 	if err := h.store.Ping(ctx); err != nil {
+		h.logger.Warn("database health check failed", zap.Error(err))
 		status = "degraded"
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{
 			"status": status,
-			"error":  err.Error(),
+			"error":  "database_unavailable",
 		})
 		return
 	}
