@@ -13,17 +13,10 @@ repo_name = "geokrety/geokrety-stats"
 copyright = "2026 GeoKrety Team"
 language = "en"
 nav = [
-	{ Home = "index.md" },
-	{ "Schema Hub" = "specs.md" },
-	{ "Canonical Stats" = "specs.stats.md" },
-	{ "Source Schema" = "specs.geokrety.md" },
-	{ "Support: Public" = "specs.public.md" },
-	{ "Support: Audit" = "specs.audit.md" },
-	{ "Support: Notify Queues" = "specs.notify_queues.md" },
-	{ "Support: AMQP" = "specs.amqp.md" },
-	{ "Support: Secure" = "specs.secure.md" },
-	{ "Legacy: Geokrety Stats" = "specs.geokrety_stats.md" },
-	{ "Legacy: Gamification Draft" = "gamification/00-SPEC-DRAFT-v1.md" },
+ 	{ Home = "index.md" },
+ 	{ "Schema: GeoKrety Stats" = "schema/specs.md" },
+ 	{ "Log At Home" = "log-at-home/index.md" },
+ 	{ "Legacy: Gamification Draft" = "gamification/00-SPEC-DRAFT-v1.md" },
 ]
 
 [project.theme]

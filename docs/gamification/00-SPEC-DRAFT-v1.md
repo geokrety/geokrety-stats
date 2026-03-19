@@ -1,15 +1,10 @@
 ---
 description: Gamification rules for Geokrety - live points, multiplier system, and circulation incentives
-applyTo: '**'
 ---
 
 # Geokrety Gamification Rules
 
 **Core Philosophy:** Reward circulation and real hand-to-hand movement. Encourage quick turnover and diverse interaction patterns.
-
----
-
----
 
 ## 📋 Reference: Move Types & Geokrety Types
 
