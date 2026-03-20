@@ -39,8 +39,8 @@ func NewRouter(
 	r.Use(cors)
 
 	r.Get("/", Home)
-	r.Get("/healtz", systemHandler.Healtz) // TODO simple liveness check without DB dependency
-	r.Get("/health", systemHandler.Health) // TODO comprehensive health check with DB and dependencies
+	r.Get("/healtz", systemHandler.Healtz)
+	r.Get("/health", systemHandler.Health)
 	r.Handle("/metrics", promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{}))
 	r.Get("/ws", hub.ServeWS)
 
@@ -50,40 +50,45 @@ func NewRouter(
 			sr.Get("/countries", statsHandler.GetCountries)
 			sr.Get("/leaderboard", statsHandler.GetLeaderboard)
 			sr.Get("/hourly-heatmap", statsHandler.GetHourlyHeatmap)
+			sr.Get("/seasonal-heatmap", statsHandler.GetHourlyHeatmap)
 			sr.Get("/country-flows", statsHandler.GetCountryFlows)
 			sr.Get("/top-caches", statsHandler.GetTopCaches)
 			sr.Get("/first-finder-leaderboard", statsHandler.GetFirstFinderLeaderboard)
 			sr.Get("/distance-records", statsHandler.GetDistanceRecords)
+			sr.Get("/dormancy", statsHandler.GetStatsDormancy)
+			sr.Get("/multiplier-velocity", statsHandler.GetStatsMultiplierVelocity)
 		})
 		api.Route("/geokrety", func(gr chi.Router) {
-			gr.Get("/{id}", statsHandler.GetGeokrety)
-			gr.Get("/{id}/moves", statsHandler.GetGeokretyMoves)
-			gr.Get("/{id}/moves/{moveId}", statsHandler.GetGeokretyMoveDetails)
-			gr.Get("/{id}/loved-by", statsHandler.GetGeokretyLovedBy)
-			gr.Get("/{id}/watched-by", statsHandler.GetGeokretyWatchedBy)
-			gr.Get("/{id}/pictures", statsHandler.GetGeokretyPictures)
+			gr.Get("/", statsHandler.GetGeokretyList)
+			gr.Get("/{id}", statsHandler.GetGeokretyById)     // TODO rename `statsHandler.GetGeokretyById` to `statsHandler.GetGeokretyDetailsById`
+			gr.Get("/{gkid}", statsHandler.GetGeokretyDetailsByGkId) // TODO implement `statsHandler.GetGeokretyDetailsByGkId`
+			gr.Get("/{gkid}/moves", statsHandler.GetGeokretyMoves)
+			gr.Get("/{gkid}/moves/{moveId}", statsHandler.GetGeokretyMoveDetails)
+			gr.Get("/{gkid}/loved-by", statsHandler.GetGeokretyLovedBy)
+			gr.Get("/{gkid}/watched-by", statsHandler.GetGeokretyWatchedBy)
+			gr.Get("/{gkid}/pictures", statsHandler.GetGeokretyPictures)
 			gr.Get("/search", statsHandler.SearchGeokrety)
-			gr.Get("/{id}/loves", statsHandler.GetGeokretyLovedBy)
-			gr.Get("/{id}/watches", statsHandler.GetGeokretyWatchedBy)
+			gr.Get("/{gkid}/loves", statsHandler.GetGeokretyLovedBy)
+			gr.Get("/{gkid}/watches", statsHandler.GetGeokretyWatchedBy)
 			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
 			gr.Get("/recent-born", statsHandler.GetRecentBorn)
 			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
 			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
-			gr.Get("/{id}/timeline", statsHandler.GetGeokretTimeline)
-			gr.Get("/{id}/countries/timeline", statsHandler.GetGeokretTimeline)
-			gr.Get("/{id}/events/timeline", statsHandler.GetGeokretTimeline)
-			gr.Get("/{id}/circulation", statsHandler.GetGeokretCirculation)
-			gr.Get("/{id}/countries", statsHandler.GetGeokretyCountries)
-			gr.Get("/{id}/waypoints", statsHandler.GetGeokretyWaypoints)
-			gr.Get("/{id}/stats/map/countries", statsHandler.GetGeokretyStatsMapCountries)
-			gr.Get("/{id}/stats/elevation", statsHandler.GetGeokretyStatsElevation)
-			gr.Get("/{id}/stats/heatmap/days", statsHandler.GetGeokretyStatsHeatmapDays)
-			gr.Get("/{id}/geojson/trip", statsHandler.GetGeokretyGeoJSONTrip)
-			gr.Get("/{id}/world-choropleth", statsHandler.GetGeokretyStatsMapCountries)
-			gr.Get("/{id}/WorldChoropleth", statsHandler.GetGeokretyWorldChoropleth)
+			gr.Get("/{gkid}/timeline", statsHandler.GetGeokretTimeline)
+			gr.Get("/{gkid}/countries/timeline", statsHandler.GetGeokretTimeline)
+			gr.Get("/{gkid}/events/timeline", statsHandler.GetGeokretTimeline)
+			gr.Get("/{gkid}/circulation", statsHandler.GetGeokretCirculation)
+			gr.Get("/{gkid}/countries", statsHandler.GetGeokretyCountries)
+			gr.Get("/{gkid}/waypoints", statsHandler.GetGeokretyWaypoints)
+			gr.Get("/{gkid}/stats/map/countries", statsHandler.GetGeokretyStatsMapCountries)
+			gr.Get("/{gkid}/stats/elevation", statsHandler.GetGeokretyStatsElevation)
+			gr.Get("/{gkid}/stats/heatmap/days", statsHandler.GetGeokretyStatsHeatmapDays)
+			gr.Get("/{gkid}/geojson/trip", statsHandler.GetGeokretyGeoJSONTrip)
+			gr.Get("/{gkid}/world-choropleth", statsHandler.GetGeokretyStatsMapCountries)
+			gr.Get("/{gkid}/WorldChoropleth", statsHandler.GetGeokretyWorldChoropleth)
 
 		})
-		api.Route("/countries", func(cr chi.Router) {
+		api.Route("/countries", func(cr chi.Router) { // TODO implement statsHandler.GetCountryList and add `cr.Get("/", statsHandler.GetCountryList)`
 			cr.Get("/{code}", statsHandler.GetCountryDetails)
 			cr.Get("/recent-active", statsHandler.GetRecentActiveCountries)
 			cr.Get("/{code}/geokrety", statsHandler.GetCountryGeokrety)
@@ -99,6 +104,7 @@ func NewRouter(
 			wr.Get("/search", statsHandler.SearchWaypoints)
 		})
 		api.Route("/users", func(ur chi.Router) {
+			ur.Get("/", statsHandler.GetUserList) // TODO implement statsHandler.GetUserList
 			ur.Get("/{id}", statsHandler.GetUserDetails)
 			ur.Get("/{id}/geokrety-owned", statsHandler.GetUserOwnedGeokrety)
 			ur.Get("/{id}/geokrety-found", statsHandler.GetUserFoundGeokrety)
@@ -117,10 +123,12 @@ func NewRouter(
 			ur.Get("/recent-active", statsHandler.GetRecentActiveUsers)
 			ur.Get("/{id}/stats/heatmap/days", statsHandler.GetUserStatsHeatmapDays)
 			ur.Get("/{id}/stats/heatmap/hours", statsHandler.GetUserStatsHeatmapHours)
+			ur.Get("/{id}/stats/continent-coverage", statsHandler.GetUserStatsContinentCoverage)
 			ur.Get("/{id}/stats/map/countries", statsHandler.GetUserStatsMapCountries)
 		})
 		api.Route("/pictures", func(pr chi.Router) {
-			pr.Get("/{id}", statsHandler.GetPicture)
+			pr.Get("/", statsHandler.GetPictureList) // TODO implement statsHandler.GetPictureList
+			pr.Get("/{id}", statsHandler.GetPicture) // TODO rename `statsHandler.GetPicture` to `statsHandler.GetPictureDetails`
 		})
 	})
 

@@ -100,6 +100,14 @@ func (h *handlersTestStore) FetchDistanceRecords(ctx context.Context, limit, off
 	return []db.DistanceRecord{}, nil
 }
 
+func (h *handlersTestStore) FetchStatsDormancy(ctx context.Context, limit, offset int) ([]db.DormancyRecord, error) {
+	return []db.DormancyRecord{}, nil
+}
+
+func (h *handlersTestStore) FetchStatsMultiplierVelocity(ctx context.Context, limit, offset int) ([]db.MultiplierVelocityRecord, error) {
+	return []db.MultiplierVelocityRecord{}, nil
+}
+
 func (h *handlersTestStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
 	return []db.UserNetworkEdge{}, nil
 }
@@ -224,6 +232,10 @@ func (h *handlersTestStore) SearchUsers(ctx context.Context, query string, limit
 	return []db.UserSearchResult{}, nil
 }
 
+func (h *handlersTestStore) FetchUserStatsContinentCoverage(ctx context.Context, userID int64, limit, offset int) ([]db.UserContinentCoverage, error) {
+	return []db.UserContinentCoverage{}, nil
+}
+
 func (h *handlersTestStore) FetchUserStatsHeatmapDays(ctx context.Context, userID int64, limit, offset int) ([]db.DayHeatmapCell, error) {
 	return []db.DayHeatmapCell{}, nil
 }
@@ -249,10 +261,13 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/stats/countries",
 		"/api/v3/stats/leaderboard",
 		"/api/v3/stats/hourly-heatmap",
+		"/api/v3/stats/seasonal-heatmap",
 		"/api/v3/stats/country-flows",
 		"/api/v3/stats/top-caches",
 		"/api/v3/stats/first-finder-leaderboard",
 		"/api/v3/stats/distance-records",
+		"/api/v3/stats/dormancy",
+		"/api/v3/stats/multiplier-velocity",
 		"/api/v3/geokrety/recent-moves",
 		"/api/v3/geokrety/recent-born",
 		"/api/v3/geokrety/recent-loved",
@@ -292,6 +307,7 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/users/1/waypoints",
 		"/api/v3/users/1/network",
 		"/api/v3/users/search?q=us",
+		"/api/v3/users/1/stats/continent-coverage",
 		"/api/v3/users/1/stats/heatmap/days",
 		"/api/v3/users/1/stats/heatmap/hours",
 		"/api/v3/users/1/stats/map/countries",

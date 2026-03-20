@@ -123,6 +123,32 @@ type HourHeatmapCell struct {
 	MoveCount int64 `db:"move_count" json:"moveCount"`
 }
 
+type DormancyRecord struct {
+	GeokretID       int64      `db:"geokret_id" json:"geokretId"`
+	GKID            *int64     `db:"gkid" json:"gkid"`
+	GeokretName     string     `db:"geokret_name" json:"geokretName"`
+	LastTouch       *time.Time `db:"last_touch" json:"lastTouch"`
+	DormancySeconds int64      `db:"dormancy_seconds" json:"dormancySeconds"`
+	DormancyDays    float64    `db:"dormancy_days" json:"dormancyDays"`
+}
+
+type MultiplierVelocityRecord struct {
+	GeokretID   int64      `db:"geokret_id" json:"geokretId"`
+	GKID        *int64     `db:"gkid" json:"gkid"`
+	GeokretName string     `db:"geokret_name" json:"geokretName"`
+	LastChange  *time.Time `db:"last_change" json:"lastChange"`
+	AvgDelta    float64    `db:"avg_delta" json:"avgDelta"`
+}
+
+type UserContinentCoverage struct {
+	UserID        int64   `db:"user_id" json:"userId"`
+	Username      string  `db:"username" json:"username"`
+	ContinentCode string  `db:"continent_code" json:"continentCode"`
+	ContinentName string  `db:"continent_name" json:"continentName"`
+	Moves         int64   `db:"moves" json:"moves"`
+	Share         float64 `db:"share" json:"share"`
+}
+
 type TripPoint struct {
 	MoveID   int64      `db:"move_id" json:"moveId"`
 	MovedOn  time.Time  `db:"moved_on_datetime" json:"movedOn"`
@@ -587,6 +613,46 @@ ORDER BY day DESC
 LIMIT $2 OFFSET $3
 `, geokretID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query geokret heatmap days: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchStatsDormancy(ctx context.Context, limit, offset int) ([]DormancyRecord, error) {
+	rows := []DormancyRecord{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	v.geokrety_id AS geokret_id,
+	g.gkid,
+	COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
+	v.last_touch,
+	COALESCE(EXTRACT(EPOCH FROM v.dormancy_interval), 0)::bigint AS dormancy_seconds,
+	COALESCE(ROUND((EXTRACT(EPOCH FROM v.dormancy_interval) / 86400.0)::numeric, 2), 0)::double precision AS dormancy_days
+FROM stats.v_uc6_dormancy AS v
+LEFT JOIN geokrety.gk_geokrety AS g ON g.id = v.geokrety_id
+ORDER BY v.dormancy_interval DESC NULLS LAST, v.geokrety_id ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query dormancy records: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchStatsMultiplierVelocity(ctx context.Context, limit, offset int) ([]MultiplierVelocityRecord, error) {
+	rows := []MultiplierVelocityRecord{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	v.gk_id AS geokret_id,
+	g.gkid,
+	COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
+	v.last_change,
+	COALESCE(v.avg_delta, 0)::double precision AS avg_delta
+FROM stats.v_uc9_multiplier_velocity AS v
+LEFT JOIN geokrety.gk_geokrety AS g ON g.id = v.gk_id
+WHERE v.gk_id IS NOT NULL
+ORDER BY v.last_change DESC NULLS LAST, ABS(v.avg_delta) DESC NULLS LAST, v.gk_id ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query multiplier velocity records: %w", err)
 	}
 	return rows, nil
 }
@@ -1106,6 +1172,43 @@ LIMIT $2 OFFSET $3
 	}
 	for i := range rows {
 		rows[i].Flag = countryFlag(rows[i].CountryCode)
+	}
+	return rows, nil
+}
+
+func (s *Store) FetchUserStatsContinentCoverage(ctx context.Context, userID int64, limit, offset int) ([]UserContinentCoverage, error) {
+	rows := []UserContinentCoverage{}
+	if err := s.db.SelectContext(ctx, &rows, `
+WITH continent_names AS (
+	SELECT
+		continent_code,
+		MIN(continent_name) AS continent_name
+	FROM stats.continent_reference
+	GROUP BY continent_code
+), total_moves AS (
+	SELECT COALESCE(SUM(moves), 0)::bigint AS total
+	FROM stats.v_uc4_user_continent_coverage
+	WHERE user_id = $1
+)
+SELECT
+	v.user_id,
+	COALESCE(u.username, 'unknown') AS username,
+	v.continent_code,
+	COALESCE(cn.continent_name, v.continent_code) AS continent_name,
+	v.moves,
+	CASE
+		WHEN tm.total > 0 THEN ROUND((v.moves::numeric / tm.total::numeric), 4)::double precision
+		ELSE 0
+	END AS share
+FROM stats.v_uc4_user_continent_coverage AS v
+LEFT JOIN geokrety.gk_users AS u ON u.id = v.user_id
+LEFT JOIN continent_names AS cn ON cn.continent_code = v.continent_code
+CROSS JOIN total_moves AS tm
+WHERE v.user_id = $1
+ORDER BY v.moves DESC, v.continent_code ASC
+LIMIT $2 OFFSET $3
+`, userID, limit, offset); err != nil {
+		return nil, fmt.Errorf("query user continent coverage: %w", err)
 	}
 	return rows, nil
 }

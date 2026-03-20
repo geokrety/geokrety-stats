@@ -174,6 +174,18 @@ func (h *StatsHandler) GetGeokretyStatsHeatmapDays(w http.ResponseWriter, r *htt
 	}, "failed to fetch geokret heatmap days")
 }
 
+func (h *StatsHandler) GetStatsDormancy(w http.ResponseWriter, r *http.Request) {
+	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
+		return h.store.FetchStatsDormancy(r.Context(), limit, offset)
+	}, "failed to fetch dormancy records")
+}
+
+func (h *StatsHandler) GetStatsMultiplierVelocity(w http.ResponseWriter, r *http.Request) {
+	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
+		return h.store.FetchStatsMultiplierVelocity(r.Context(), limit, offset)
+	}, "failed to fetch multiplier velocity records")
+}
+
 func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
 	geokretID, ok := parseInt64Param(w, r, "id")
@@ -358,6 +370,16 @@ func (h *StatsHandler) GetUserStatsHeatmapDays(w http.ResponseWriter, r *http.Re
 	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
 		return h.store.FetchUserStatsHeatmapDays(r.Context(), userID, limit, offset)
 	}, "failed to fetch user day heatmap")
+}
+
+func (h *StatsHandler) GetUserStatsContinentCoverage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := parseInt64Param(w, r, "id")
+	if !ok {
+		return
+	}
+	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
+		return h.store.FetchUserStatsContinentCoverage(r.Context(), userID, limit, offset)
+	}, "failed to fetch user continent coverage")
 }
 
 func (h *StatsHandler) GetUserStatsHeatmapHours(w http.ResponseWriter, r *http.Request) {

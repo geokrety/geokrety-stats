@@ -16,11 +16,11 @@ import (
 )
 
 type mockStatsStore struct {
-	failMethod string
+	failMethod   string
 	noRowsMethod string
-	lastMethod string
-	lastLimit  int
-	lastOffset int
+	lastMethod   string
+	lastLimit    int
+	lastOffset   int
 }
 
 func (m *mockStatsStore) maybeFail(method string) error {
@@ -159,6 +159,22 @@ func (m *mockStatsStore) FetchDistanceRecords(ctx context.Context, limit, offset
 		return nil, err
 	}
 	return []db.DistanceRecord{{GeoKretID: 1, GeoKretName: "GK", KMTotal: 100, Rank: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchStatsDormancy(ctx context.Context, limit, offset int) ([]db.DormancyRecord, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchStatsDormancy"); err != nil {
+		return nil, err
+	}
+	return []db.DormancyRecord{{GeokretID: 1, GeokretName: "GK", DormancySeconds: 86400, DormancyDays: 1}}, nil
+}
+
+func (m *mockStatsStore) FetchStatsMultiplierVelocity(ctx context.Context, limit, offset int) ([]db.MultiplierVelocityRecord, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchStatsMultiplierVelocity"); err != nil {
+		return nil, err
+	}
+	return []db.MultiplierVelocityRecord{{GeokretID: 1, GeokretName: "GK", AvgDelta: 0.25}}, nil
 }
 
 func (m *mockStatsStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
@@ -403,6 +419,14 @@ func (m *mockStatsStore) SearchUsers(ctx context.Context, query string, limit, o
 	return []db.UserSearchResult{{ID: 1, Username: query, JoinedAt: time.Now()}}, nil
 }
 
+func (m *mockStatsStore) FetchUserStatsContinentCoverage(ctx context.Context, userID int64, limit, offset int) ([]db.UserContinentCoverage, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserStatsContinentCoverage"); err != nil {
+		return nil, err
+	}
+	return []db.UserContinentCoverage{{UserID: userID, Username: "u", ContinentCode: "EU", ContinentName: "Europe", Moves: 10, Share: 0.5}}, nil
+}
+
 func (m *mockStatsStore) FetchUserStatsHeatmapDays(ctx context.Context, userID int64, limit, offset int) ([]db.DayHeatmapCell, error) {
 	m.lastLimit, m.lastOffset = limit, offset
 	if err := m.maybeFail("FetchUserStatsHeatmapDays"); err != nil {
@@ -461,10 +485,13 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 		{"users-registered", "/api/v3/users/recent-registered?limit=11&offset=1", h.GetRecentRegisteredUsers, "FetchRecentRegisteredUsers", http.StatusOK, "FetchRecentRegisteredUsers", 11, 1, true},
 		{"users-active", "/api/v3/users/recent-active?limit=11&offset=1", h.GetRecentActiveUsers, "FetchRecentActiveUsers", http.StatusOK, "FetchRecentActiveUsers", 11, 1, true},
 		{"hourly-heatmap", "/api/v3/stats/hourly-heatmap?limit=11&offset=1", h.GetHourlyHeatmap, "FetchHourlyHeatmap", http.StatusOK, "FetchHourlyHeatmap", 11, 1, true},
+		{"seasonal-heatmap", "/api/v3/stats/seasonal-heatmap?limit=11&offset=1", h.GetHourlyHeatmap, "FetchHourlyHeatmap", http.StatusOK, "FetchHourlyHeatmap", 11, 1, true},
 		{"country-flows", "/api/v3/stats/country-flows?limit=11&offset=1", h.GetCountryFlows, "FetchCountryFlows", http.StatusOK, "FetchCountryFlows", 11, 1, true},
 		{"top-caches", "/api/v3/stats/top-caches?limit=11&offset=1", h.GetTopCaches, "FetchTopCaches", http.StatusOK, "FetchTopCaches", 11, 1, true},
 		{"first-finder", "/api/v3/stats/first-finder-leaderboard?limit=11&offset=1", h.GetFirstFinderLeaderboard, "FetchFirstFinderLeaderboard", http.StatusOK, "FetchFirstFinderLeaderboard", 11, 1, true},
 		{"distance-records", "/api/v3/stats/distance-records?limit=11&offset=1", h.GetDistanceRecords, "FetchDistanceRecords", http.StatusOK, "FetchDistanceRecords", 11, 1, true},
+		{"dormancy", "/api/v3/stats/dormancy?limit=11&offset=1", h.GetStatsDormancy, "FetchStatsDormancy", http.StatusOK, "FetchStatsDormancy", 11, 1, true},
+		{"multiplier-velocity", "/api/v3/stats/multiplier-velocity?limit=11&offset=1", h.GetStatsMultiplierVelocity, "FetchStatsMultiplierVelocity", http.StatusOK, "FetchStatsMultiplierVelocity", 11, 1, true},
 	}
 
 	for _, tc := range tests {
@@ -515,6 +542,8 @@ func TestStatsHandlerErrorEndpoints(t *testing.T) {
 		{"top-caches", "FetchTopCaches", "/api/v3/stats/top-caches", nil},
 		{"first-finder", "FetchFirstFinderLeaderboard", "/api/v3/stats/first-finder-leaderboard", nil},
 		{"distance-records", "FetchDistanceRecords", "/api/v3/stats/distance-records", nil},
+		{"dormancy", "FetchStatsDormancy", "/api/v3/stats/dormancy", nil},
+		{"velocity", "FetchStatsMultiplierVelocity", "/api/v3/stats/multiplier-velocity", nil},
 	}
 
 	for _, tc := range tests {
@@ -523,15 +552,17 @@ func TestStatsHandlerErrorEndpoints(t *testing.T) {
 			h := NewStatsHandler(store, zap.NewNop())
 
 			handler := map[string]http.HandlerFunc{
-				"FetchGlobalStats":            h.GetKPIs,
-				"FetchCountries":              h.GetCountries,
-				"FetchLeaderboard":            h.GetLeaderboard,
-				"FetchRecentMoves":            h.GetRecentMoves,
-				"FetchHourlyHeatmap":          h.GetHourlyHeatmap,
-				"FetchCountryFlows":           h.GetCountryFlows,
-				"FetchTopCaches":              h.GetTopCaches,
-				"FetchFirstFinderLeaderboard": h.GetFirstFinderLeaderboard,
-				"FetchDistanceRecords":        h.GetDistanceRecords,
+				"FetchGlobalStats":             h.GetKPIs,
+				"FetchCountries":               h.GetCountries,
+				"FetchLeaderboard":             h.GetLeaderboard,
+				"FetchRecentMoves":             h.GetRecentMoves,
+				"FetchHourlyHeatmap":           h.GetHourlyHeatmap,
+				"FetchCountryFlows":            h.GetCountryFlows,
+				"FetchTopCaches":               h.GetTopCaches,
+				"FetchFirstFinderLeaderboard":  h.GetFirstFinderLeaderboard,
+				"FetchDistanceRecords":         h.GetDistanceRecords,
+				"FetchStatsDormancy":           h.GetStatsDormancy,
+				"FetchStatsMultiplierVelocity": h.GetStatsMultiplierVelocity,
 			}[tc.failMethod]
 
 			r := httptest.NewRequest(http.MethodGet, tc.target, nil)

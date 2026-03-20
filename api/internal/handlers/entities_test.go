@@ -82,6 +82,7 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 		{"user-countries", h.GetUserCountries, "/api/v3/users/1/countries", []string{"id", "1"}, "FetchUserCountries", http.StatusOK, true, 20, 0},
 		{"user-waypoints", h.GetUserWaypoints, "/api/v3/users/1/waypoints", []string{"id", "1"}, "FetchUserWaypoints", http.StatusOK, true, 20, 0},
 		{"user-search", h.SearchUsers, "/api/v3/users/search?q=us&limit=2&offset=3", nil, "SearchUsers", http.StatusOK, true, 2, 3},
+		{"user-continent-coverage", h.GetUserStatsContinentCoverage, "/api/v3/users/1/stats/continent-coverage?limit=2&offset=1", []string{"id", "1"}, "FetchUserStatsContinentCoverage", http.StatusOK, true, 2, 1},
 		{"user-heatmap-days", h.GetUserStatsHeatmapDays, "/api/v3/users/1/stats/heatmap/days", []string{"id", "1"}, "FetchUserStatsHeatmapDays", http.StatusOK, true, 20, 0},
 		{"user-heatmap-hours", h.GetUserStatsHeatmapHours, "/api/v3/users/1/stats/heatmap/hours", []string{"id", "1"}, "FetchUserStatsHeatmapHours", http.StatusOK, true, 20, 0},
 		{"user-map-countries", h.GetUserStatsMapCountries, "/api/v3/users/1/stats/map/countries", []string{"id", "1"}, "FetchUserStatsMapCountries", http.StatusOK, true, 20, 0},
@@ -150,6 +151,7 @@ func TestEntityHandlerInvalidRequests(t *testing.T) {
 		{"bad-id-user-heatmap-days", h.GetUserStatsHeatmapDays, "/api/v3/users/abc/stats/heatmap/days", []string{"id", "abc"}},
 		{"bad-id-user-heatmap-hours", h.GetUserStatsHeatmapHours, "/api/v3/users/abc/stats/heatmap/hours", []string{"id", "abc"}},
 		{"bad-id-user-map-countries", h.GetUserStatsMapCountries, "/api/v3/users/abc/stats/map/countries", []string{"id", "abc"}},
+		{"bad-id-user-continent-coverage", h.GetUserStatsContinentCoverage, "/api/v3/users/abc/stats/continent-coverage", []string{"id", "abc"}},
 		{"bad-id-picture", h.GetPicture, "/api/v3/pictures/abc", []string{"id", "abc"}},
 		{"bad-search-users", h.SearchUsers, "/api/v3/users/search?q=x", nil},
 		{"bad-search-geokrety", h.SearchGeokrety, "/api/v3/geokrety/search?q=x", nil},
@@ -205,11 +207,11 @@ func TestEntityHandlerStoreErrors(t *testing.T) {
 
 func TestEntityListHandlersInternalServerError(t *testing.T) {
 	tests := []struct {
-		name      string
-		store     *mockStatsStore
-		handler   http.HandlerFunc
-		target    string
-		params    []string
+		name    string
+		store   *mockStatsStore
+		handler http.HandlerFunc
+		target  string
+		params  []string
 	}{
 		{"geokret-moves", &mockStatsStore{failMethod: "FetchGeokretyMoves"}, nil, "/api/v3/geokrety/1/moves", []string{"id", "1"}},
 		{"geokret-loved-by", &mockStatsStore{failMethod: "FetchGeokretyLoves"}, nil, "/api/v3/geokrety/1/loved-by", []string{"id", "1"}},
@@ -222,21 +224,23 @@ func TestEntityListHandlersInternalServerError(t *testing.T) {
 		{"user-heatmap-days", &mockStatsStore{failMethod: "FetchUserStatsHeatmapDays"}, nil, "/api/v3/users/1/stats/heatmap/days", []string{"id", "1"}},
 		{"user-heatmap-hours", &mockStatsStore{failMethod: "FetchUserStatsHeatmapHours"}, nil, "/api/v3/users/1/stats/heatmap/hours", []string{"id", "1"}},
 		{"user-map-countries", &mockStatsStore{failMethod: "FetchUserStatsMapCountries"}, nil, "/api/v3/users/1/stats/map/countries", []string{"id", "1"}},
+		{"user-continent-coverage", &mockStatsStore{failMethod: "FetchUserStatsContinentCoverage"}, nil, "/api/v3/users/1/stats/continent-coverage", []string{"id", "1"}},
 	}
 
 	for i := range tests {
 		tests[i].handler = map[string]http.HandlerFunc{
-			"geokret-moves":      NewStatsHandler(tests[i].store, zap.NewNop()).GetGeokretyMoves,
-			"geokret-loved-by":   NewStatsHandler(tests[i].store, zap.NewNop()).GetGeokretyLovedBy,
-			"country-geokrety":   NewStatsHandler(tests[i].store, zap.NewNop()).GetCountryGeokrety,
-			"waypoint-current":   NewStatsHandler(tests[i].store, zap.NewNop()).GetWaypointCurrentGeokrety,
-			"user-owned":         NewStatsHandler(tests[i].store, zap.NewNop()).GetUserOwnedGeokrety,
-			"user-pictures":      NewStatsHandler(tests[i].store, zap.NewNop()).GetUserPictures,
-			"user-countries":     NewStatsHandler(tests[i].store, zap.NewNop()).GetUserCountries,
-			"user-waypoints":     NewStatsHandler(tests[i].store, zap.NewNop()).GetUserWaypoints,
-			"user-heatmap-days":  NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsHeatmapDays,
-			"user-heatmap-hours": NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsHeatmapHours,
-			"user-map-countries": NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsMapCountries,
+			"geokret-moves":           NewStatsHandler(tests[i].store, zap.NewNop()).GetGeokretyMoves,
+			"geokret-loved-by":        NewStatsHandler(tests[i].store, zap.NewNop()).GetGeokretyLovedBy,
+			"country-geokrety":        NewStatsHandler(tests[i].store, zap.NewNop()).GetCountryGeokrety,
+			"waypoint-current":        NewStatsHandler(tests[i].store, zap.NewNop()).GetWaypointCurrentGeokrety,
+			"user-owned":              NewStatsHandler(tests[i].store, zap.NewNop()).GetUserOwnedGeokrety,
+			"user-pictures":           NewStatsHandler(tests[i].store, zap.NewNop()).GetUserPictures,
+			"user-countries":          NewStatsHandler(tests[i].store, zap.NewNop()).GetUserCountries,
+			"user-waypoints":          NewStatsHandler(tests[i].store, zap.NewNop()).GetUserWaypoints,
+			"user-heatmap-days":       NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsHeatmapDays,
+			"user-heatmap-hours":      NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsHeatmapHours,
+			"user-map-countries":      NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsMapCountries,
+			"user-continent-coverage": NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsContinentCoverage,
 		}[tests[i].name]
 	}
 

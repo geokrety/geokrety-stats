@@ -265,6 +265,17 @@ The implementation should therefore:
 - prefer a dedicated backfill-safe trigger guard or equivalent scoped mechanism if unrelated `gk_moves` maintenance triggers would otherwise turn the repair into a full analytics replay
 - not rely on globally disabling triggers as the primary operational plan
 
+### Integration requirement
+
+The backfill method MUST be integrated into script `/home/kumy/GIT/geokrety-stats/docs/database-refactor/run_snapshot_backfill.py` with a new command option `--backfill-logged-at-author-home` that calls this function with appropriate parameters for a full-history run.
+
+- The script must be updated to allow users to run the backfill function with a single command, without needing to call the function manually from psql.
+- The script must handle any necessary setup or teardown for the backfill function, such as logging or progress reporting, using existing infrastructure where possible.
+- The script must be tested to ensure that the backfill function is called correctly and that the expected summary output is produced.
+- The script must maintain backward compatibility with existing commands and not require any changes to run other backfill operations.
+- Documentation for the new command option must be added to the script's help output.
+- The integration must be implemented in a way that does not introduce new dependencies or significantly increase the complexity of the script.
+
 ## Requirements
 
 | ID | Requirement |
@@ -509,10 +520,11 @@ Minimum verification sequence:
 2. Run PHP syntax validation on the new migration.
 3. Apply the migration with the Phinx workflow.
 4. Verify the new column, trigger, and functions exist.
-5. Run the focused pgTAP test file.
-6. Roll back the migration.
-7. Verify the new objects are removed.
-8. Re-apply the migration and re-run the focused pgTAP test file.
+5. Roll back the migration.
+6. Verify the new objects are removed.
+7. Re-apply the migration.
+8. Copy the database `geokrety` to `tests` using script `/home/kumy/GIT/geokrety-website/website/db/tests-copy-schema-geokrety-to-tests.sh`.
+9. Run the focused pgTAP test file.
 
 Use the repository-standard Phinx and pgTAP workflow from the database migration docs and the existing migration skill guidance. Do not substitute ad hoc SQL spot checks for the focused pgTAP file.
 
@@ -529,4 +541,4 @@ Use the repository-standard Phinx and pgTAP workflow from the database migration
 - Use the `create-migration` skill when implementation starts.
 - Use the existing GeoKrety database migration conventions from the docs and recent Phinx migrations.
 - Use pgTAP, not ad hoc SQL checks, for the behavioral contract above.
-- When the implementation is finished, run the requested review loop in this order: `specification` -> `technical-writer` -> `requirements-analyst`.
+- When the implementation is finished, run the requested review loop in this order using agents: `specification` -> `quality-engineer` -> `system-architect`, `refactoring-expert`, `performance-engineer` and iterate until full resolution.
