@@ -9,6 +9,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -744,6 +745,134 @@ def execute_phase_sql(
     return json.loads(payload)
 
 
+def execute_logged_at_author_home_backfill(
+    cur: psycopg2.extensions.cursor,
+    batch_size: int,
+) -> str:
+    cur.execute(
+        "SELECT stats.fn_backfill_gk_moves_logged_at_author_home(NULL, %s)",
+        (batch_size,),
+    )
+    row = cur.fetchone()
+    return "" if row is None or row[0] is None else str(row[0])
+
+
+def parse_logged_at_author_home_backfill_summary(
+    summary: str,
+) -> tuple[int, int, int, str]:
+    match = re.match(
+        r"^Processed (\d+) rows; (\d+) rows updated; (\d+) batch(?:es)? completed; (.+)\.$",
+        summary,
+    )
+    if match is None:
+        raise RuntimeError(
+            "unexpected logged_at_author_home backfill summary: "
+            f"{summary}"
+        )
+    return (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3)),
+        match.group(4),
+    )
+
+
+def run_logged_at_author_home_backfill(
+    batch_size: int,
+    log_file: str,
+) -> int:
+    event_logger = EventLogger(log_file)
+    conn = connect()
+    started_at = dt.datetime.now(UTC)
+    wall_start = time.monotonic()
+    previous_autocommit = conn.autocommit
+    lock_key = "backfill_logged_at_author_home_full_history"
+    lock_acquired = False
+    total_processed = 0
+    total_updated = 0
+    total_batches = 0
+    scope_description = "full-history scope"
+
+    try:
+        if previous_autocommit:
+            conn.autocommit = False
+
+        lock_acquired = try_acquire_run_lock(conn, lock_key)
+        if not lock_acquired:
+            raise RuntimeError(
+                "another logged_at_author_home backfill is already running"
+            )
+
+        target = (
+            "stats.fn_backfill_gk_moves_logged_at_author_home"
+            f"(NULL, {batch_size})"
+        )
+        print(f"{EMOJI['info']} Running full-history {target}")
+        event_logger.log(
+            "logged_at_author_home backfill started: "
+            f"full-history, batch_size={batch_size}, replica_role=on, "
+            f"lock_key={lock_key}"
+        )
+
+        iteration = 0
+        while True:
+            iteration += 1
+            with conn.cursor() as cur:
+                cur.execute("SET LOCAL session_replication_role = replica")
+                batch_summary = execute_logged_at_author_home_backfill(cur, batch_size)
+
+            processed, updated, batches, scope_description = (
+                parse_logged_at_author_home_backfill_summary(batch_summary)
+            )
+            conn.commit()
+
+            total_processed += processed
+            total_updated += updated
+            total_batches += batches
+
+            event_logger.log(
+                "logged_at_author_home backfill iteration committed: "
+                f"iteration={iteration} summary={batch_summary}"
+            )
+
+            if processed == 0:
+                break
+
+            print(
+                f"{EMOJI['running']} Batch {total_batches}: {batch_summary}"
+            )
+
+        summary = (
+            f"Processed {total_processed} rows; {total_updated} rows updated; "
+            f"{total_batches} batches completed; {scope_description}."
+        )
+
+        elapsed = time.monotonic() - wall_start
+        completed_at = dt.datetime.now(UTC)
+        event_logger.log(
+            "logged_at_author_home backfill completed: "
+            f"summary={summary} wall={elapsed:.2f}s "
+            f"started_at={started_at.isoformat()} "
+            f"completed_at={completed_at.isoformat()}"
+        )
+        print(f"{EMOJI['done']} {summary}")
+        print(
+            f"{EMOJI['stats']} Elapsed: {format_duration(elapsed)}"
+        )
+        return 0
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        if lock_acquired:
+            release_run_lock(conn, lock_key)
+            conn.commit()
+        if previous_autocommit:
+            conn.autocommit = True
+        conn.close()
+        event_logger.close()
+
+
 def run_phase(
     conn: psycopg2.extensions.connection,
     phase: str,
@@ -915,6 +1044,15 @@ def main() -> int:
         help="batch size passed to fn_run_snapshot_phase",
     )
     parser.add_argument(
+        "--backfill-logged-at-author-home",
+        action="store_true",
+        help=(
+            "run the full-history caller-committed "
+            "stats.fn_backfill_gk_moves_logged_at_author_home "
+            "backfill and exit"
+        ),
+    )
+    parser.add_argument(
         "--skip-entity-counters",
         action="store_true",
         help="skip the full-only fn_snapshot_entity_counters phase",
@@ -962,6 +1100,12 @@ def main() -> int:
 
     if args.batch_size < 1:
         parser.error("--batch-size must be >= 1")
+
+    if args.backfill_logged_at_author_home:
+        return run_logged_at_author_home_backfill(
+            args.batch_size,
+            args.log_file,
+        )
 
     start = parse_bound(args.start, default=DEFAULT_START)
     end = parse_bound(args.end, default=default_end())

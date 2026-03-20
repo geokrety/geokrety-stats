@@ -7,4 +7,6 @@ icon: material/home
 This section contains the specification and test plan for the `logged_at_author_home` feature.
 
 - Spec: [Detailed spec](log-at-home.spec.md)
+- Implementation log: [Implementation status](99-IMPLEMENTATION.md)
+- Open questions: [Open questions](99-OPEN-QUESTIONS.md)
 

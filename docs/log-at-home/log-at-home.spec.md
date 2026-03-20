@@ -216,7 +216,7 @@ The function returns `text`.
 
 **Return Value Format:**
 
-The function must return a single-line text summary with the following format:
+Each function invocation must return a single-line text summary for the batch it just processed, with the following format:
 ```
 Processed <total_processed> rows; <rows_changed> rows updated;
 <batch_count> batches completed; <scope_description>.
@@ -224,8 +224,9 @@ Processed <total_processed> rows; <rows_changed> rows updated;
 
 **Example return values:**
 ```
-'Processed 1000000 rows; 15234 rows updated; 20 batches completed; full-history scope.'
-'Processed 50000 rows; 8765 rows updated; 1 batch completed; period-scoped from 2025-01-01 to 2025-03-19.'
+'Processed 50000 rows; 50000 rows updated; 1 batches completed; full-history scope.'
+'Processed 50000 rows; 8765 rows updated; 1 batches completed; period-scoped from 2025-01-01 to 2025-03-19.'
+'Processed 0 rows; 0 rows updated; 0 batches completed; period-scoped from 2025-01-01 to 2025-03-19.'
 'Processed 0 rows; 0 rows updated; 0 batches completed; empty period scope (no rows in range).'
 ```
 
@@ -250,11 +251,16 @@ Processed <total_processed> rows; <rows_changed> rows updated;
 - accepts optional `p_period` scoped on `gk_moves.moved_on_datetime`
 - accepts `p_batch_size` for batched execution on large datasets
 - is idempotent: repeated calls produce the same final values
-- processes rows in deterministic ascending `gk_moves.id` order inside each scoped run
-- returns a deterministic summary text including, at minimum, scoped row count, changed row count, batch count, and whether the run was full-history or period-scoped
+- processes at most one batch per call in deterministic ascending `gk_moves.id` order among rows whose stored value still differs from the derived truth table
+- returns a deterministic summary text including, at minimum, the current batch's processed row count, changed row count, batch count, and whether the run was full-history or period-scoped
 - updates only rows whose derived value differs from the stored value
+- relies on the caller to repeat invocations until the summary reports `Processed 0 rows` for the requested scope
 
 ### Operational constraints
+
+
+**Operational batching and commit requirement:**
+For large backfill runs (full-history or high row count), the batching and commit logic should be handled by the caller (e.g., CLI or orchestration script), not as a single top-level transaction. Each batch should be committed separately to reduce risk, resource usage, and potential rollback cost. The backfill function should process rows in batches, but the caller is responsible for committing after each batch.
 
 The implementation must avoid a backfill strategy that needlessly amplifies unrelated `gk_moves` trigger work across millions of rows.
 
@@ -265,11 +271,18 @@ The implementation should therefore:
 - prefer a dedicated backfill-safe trigger guard or equivalent scoped mechanism if unrelated `gk_moves` maintenance triggers would otherwise turn the repair into a full analytics replay
 - not rely on globally disabling triggers as the primary operational plan
 
+Implementation note:
+
+- Direct SQL calls to the backfill function remain ordinary `UPDATE`s.
+- The dedicated maintenance CLI may use transaction-scoped `SET LOCAL session_replication_role = replica` for each committed batch to suppress unrelated trigger side effects during the controlled repair run.
+- That runner-specific operational choice is not part of the generic SQL function contract.
+
 ### Integration requirement
 
 The backfill method MUST be integrated into script `/home/kumy/GIT/geokrety-stats/docs/database-refactor/run_snapshot_backfill.py` with a new command option `--backfill-logged-at-author-home` that calls this function with appropriate parameters for a full-history run.
 
 - The script must be updated to allow users to run the backfill function with a single command, without needing to call the function manually from psql.
+- The script must call the function repeatedly until it returns `Processed 0 rows`, committing after each invocation and presenting an aggregated final summary for the full run.
 - The script must handle any necessary setup or teardown for the backfill function, such as logging or progress reporting, using existing infrastructure where possible.
 - The script must be tested to ensure that the backfill function is called correctly and that the expected summary output is produced.
 - The script must maintain backward compatibility with existing commands and not require any changes to run other backfill operations.
@@ -291,6 +304,7 @@ The backfill method MUST be integrated into script `/home/kumy/GIT/geokrety-stat
 | REQ-LAH-006C | The implementation must use geography proximity (`ST_DWithin`) for all matching; migration comments and pgTAP test intent must document that the internal predicate uses geography proximity (≤50m). |
 | REQ-LAH-007 | Provide a dedicated manual backfill function following the existing `stats.fn_backfill_*` naming family. |
 | REQ-LAH-008 | The backfill function must support optional period-scoped execution and configurable batch size. |
+| REQ-LAH-008A | Large backfill runs must be caller-driven in commit-sized batches; the caller repeats the function and commits after each processed batch. |
 | REQ-LAH-009 | The backfill function must be idempotent. |
 | REQ-LAH-009A | The backfill function must reject `NULL`, zero, or negative batch sizes. |
 | REQ-LAH-010 | Deliver the change as a new Phinx migration in `/home/kumy/GIT/geokrety-website/website/db/migrations/`. |
@@ -373,6 +387,14 @@ Then all in-scope rows are updated to the same values that the live trigger woul
 Given a dataset already fully reconciled
 When the backfill function is run again with the same scope
 Then the final stored values remain unchanged and the function completes without error
+
+### AC-LAH-008A: Caller-managed batched repair
+
+Given more stale rows than fit in one batch
+When the caller repeatedly invokes `stats.fn_backfill_gk_moves_logged_at_author_home(...)` with a bounded `p_batch_size` and commits after each call
+Then each invocation repairs at most one deterministic ascending-id batch
+And a final invocation returns `Processed 0 rows`
+And the aggregated caller-visible result matches the same final truth table as a complete repair run
 
 ### AC-LAH-009: User home edits do not fan out automatically
 
@@ -496,7 +518,8 @@ These tests must cover AC-LAH-001 through AC-LAH-009 plus batch-size validation.
 | T-LAH-020 | Updating `gk_users` home coordinates does not auto-update historical moves | move rows remain unchanged before backfill |
 | T-LAH-021 | Mixed `position` plus scalar input with conflicting values uses normalized coordinates | stored boolean matches normalized row state |
 | T-LAH-022 | Backfill repairs pre-existing rows with stale or default values | rows match expected truth table |
-| T-LAH-023 | Backfill is idempotent on second run | no further value changes |
+| T-LAH-023 | Backfill supports caller-managed commit-sized batching across repeated calls | later calls pick up remaining stale rows until `Processed 0 rows` |
+| T-LAH-023A | Backfill is idempotent after all required batches complete | no further value changes |
 | T-LAH-024 | Backfill rejects `NULL`, zero, and negative batch sizes | error raised |
 | T-LAH-025 | Applying the migration does not auto-run the historical backfill | pre-existing rows keep default or prior values until manual repair |
 | T-LAH-026 | Insert move with non-existent author row (orphaned FK or deleted user) | `logged_at_author_home = false` or FK constraint violation prevents insert |
@@ -542,3 +565,6 @@ Use the repository-standard Phinx and pgTAP workflow from the database migration
 - Use the existing GeoKrety database migration conventions from the docs and recent Phinx migrations.
 - Use pgTAP, not ad hoc SQL checks, for the behavioral contract above.
 - When the implementation is finished, run the requested review loop in this order using agents: `specification` -> `quality-engineer` -> `system-architect`, `refactoring-expert`, `performance-engineer` and iterate until full resolution.
+
+**Batch commit implementation note:**
+The CLI or orchestration layer should run the backfill function in commit-sized batches, committing after each batch and aggregating the per-call summaries into the final operator-facing report. This prevents excessive WAL, memory, and rollback cost for large updates, and aligns with best practices for high-volume database maintenance.
