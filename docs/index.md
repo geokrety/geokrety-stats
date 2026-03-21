@@ -6,9 +6,9 @@ icon: material/home
 
 # Index
 
-* [Schema: GeoKret Stats](./schema/)
-* [Exlude log at home from stats](./log-at-home/)
+* [Schema: GeoKret Stats](schema/specs.md)
+* [Exlude log at home from stats](log-at-home/index.md)
 
 ### Simple ideas
 
-* [Gamification](/gamification/)
+* [Gamification](gamification/00-SPEC-DRAFT-v1.md)

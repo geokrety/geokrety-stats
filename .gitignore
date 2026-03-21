@@ -37,3 +37,4 @@ build/
 .eggs/
 *.pot
 *.mo
+.pgpass

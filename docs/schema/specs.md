@@ -83,7 +83,6 @@ Observed from the live development database during documentation generation:
 
 Keep these for design history, not as the current contract:
 
-- [Sprint index](database-refactor/00-SPRINT-INDEX.md)
-- [Implementation log](database-refactor/99-IMPLEMENTATION.md)
-- [Runbook](database-refactor/RUNBOOK.md)
-- [Performance notes](database-refactor/PERFORMANCE.md)
+- [Sprint index](../database-refactor/00-SPRINT-INDEX.md)
+- [Runbook](../database-refactor/RUNBOOK.md)
+- [Performance notes](../database-refactor/PERFORMANCE.md)
