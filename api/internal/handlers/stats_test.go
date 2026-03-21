@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/db"
+	"github.com/geokrety/geokrety-stats-api/internal/gkid"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -70,7 +71,7 @@ func (m *mockStatsStore) FetchRecentBorn(ctx context.Context, limit, offset int)
 	if err := m.maybeFail("FetchRecentBorn"); err != nil {
 		return nil, err
 	}
-	return []db.RecentBorn{{ID: 1, Name: "GK", BornAt: time.Now()}}, nil
+	return []db.RecentBorn{{ID: 1, GKID: *mustGeokretIdPtr(1), Name: "GK", BornAt: time.Now()}}, nil
 }
 
 func (m *mockStatsStore) FetchRecentLoved(ctx context.Context, limit, offset int) ([]db.RecentLoved, error) {
@@ -78,7 +79,7 @@ func (m *mockStatsStore) FetchRecentLoved(ctx context.Context, limit, offset int
 	if err := m.maybeFail("FetchRecentLoved"); err != nil {
 		return nil, err
 	}
-	return []db.RecentLoved{{GeoKretID: 1, Username: "u", LovedAt: time.Now()}}, nil
+	return []db.RecentLoved{{GeoKretID: 1, GKID: mustGeokretIdPtr(255), Username: "u", LovedAt: time.Now()}}, nil
 }
 
 func (m *mockStatsStore) FetchRecentWatched(ctx context.Context, limit, offset int) ([]db.RecentWatched, error) {
@@ -86,7 +87,7 @@ func (m *mockStatsStore) FetchRecentWatched(ctx context.Context, limit, offset i
 	if err := m.maybeFail("FetchRecentWatched"); err != nil {
 		return nil, err
 	}
-	return []db.RecentWatched{{GeoKretID: 1, Username: "u", WatchedAt: time.Now()}}, nil
+	return []db.RecentWatched{{GeoKretID: 1, GKID: mustGeokretIdPtr(255), Username: "u", WatchedAt: time.Now()}}, nil
 }
 
 func (m *mockStatsStore) FetchRecentActiveCountries(ctx context.Context, limit, offset int) ([]db.ActiveCountry, error) {
@@ -158,7 +159,7 @@ func (m *mockStatsStore) FetchDistanceRecords(ctx context.Context, limit, offset
 	if err := m.maybeFail("FetchDistanceRecords"); err != nil {
 		return nil, err
 	}
-	return []db.DistanceRecord{{GeoKretID: 1, GeoKretName: "GK", KMTotal: 100, Rank: 1}}, nil
+	return []db.DistanceRecord{{GeoKretID: 1, GKID: mustGeokretIdPtr(255), GeoKretName: "GK", KMTotal: 100, Rank: 1}}, nil
 }
 
 func (m *mockStatsStore) FetchStatsDormancy(ctx context.Context, limit, offset int) ([]db.DormancyRecord, error) {
@@ -166,7 +167,7 @@ func (m *mockStatsStore) FetchStatsDormancy(ctx context.Context, limit, offset i
 	if err := m.maybeFail("FetchStatsDormancy"); err != nil {
 		return nil, err
 	}
-	return []db.DormancyRecord{{GeokretID: 1, GeokretName: "GK", DormancySeconds: 86400, DormancyDays: 1}}, nil
+	return []db.DormancyRecord{{GeokretID: 1, GKID: mustGeokretIdPtr(255), GeokretName: "GK", DormancySeconds: 86400, DormancyDays: 1}}, nil
 }
 
 func (m *mockStatsStore) FetchStatsMultiplierVelocity(ctx context.Context, limit, offset int) ([]db.MultiplierVelocityRecord, error) {
@@ -174,7 +175,7 @@ func (m *mockStatsStore) FetchStatsMultiplierVelocity(ctx context.Context, limit
 	if err := m.maybeFail("FetchStatsMultiplierVelocity"); err != nil {
 		return nil, err
 	}
-	return []db.MultiplierVelocityRecord{{GeokretID: 1, GeokretName: "GK", AvgDelta: 0.25}}, nil
+	return []db.MultiplierVelocityRecord{{GeokretID: 1, GKID: mustGeokretIdPtr(255), GeokretName: "GK", AvgDelta: 0.25}}, nil
 }
 
 func (m *mockStatsStore) FetchCountryList(ctx context.Context, limit, offset int) ([]db.CountryDetails, error) {
@@ -205,7 +206,7 @@ func (m *mockStatsStore) FetchGeokretCirculation(ctx context.Context, geokretID 
 	if err := m.maybeFail("FetchGeokretCirculation"); err != nil {
 		return db.GeokretCirculation{}, err
 	}
-	return db.GeokretCirculation{GeoKretID: geokretID, GeoKretName: "GK", Users: 2, Interactions: 6, AvgPerUser: 3}, nil
+	return db.GeokretCirculation{GeoKretID: geokretID, GKID: mustGeokretIdPtr(255), GeoKretName: "GK", Users: 2, Interactions: 6, AvgPerUser: 3}, nil
 }
 
 func (m *mockStatsStore) FetchGeokrety(ctx context.Context, geokretID int64) (db.GeokretDetails, error) {
@@ -227,7 +228,24 @@ func (m *mockStatsStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (d
 	if err := m.maybeFail("FetchGeokretyByGKID"); err != nil {
 		return db.GeokretDetails{}, err
 	}
-	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: gkid, GKID: &gkid, Name: "GK"}}, nil
+	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: gkid, GKID: mustGeokretIdPtr(gkid), Name: "GK"}}, nil
+}
+
+func mustGeokretId(t *testing.T, value int64) *gkid.GeokretId {
+	t.Helper()
+	parsed, err := gkid.FromInt(value)
+	if err != nil {
+		t.Fatalf("FromInt(%d) returned error: %v", value, err)
+	}
+	return parsed
+}
+
+func mustGeokretIdPtr(value int64) *gkid.GeokretId {
+	parsed, err := gkid.FromInt(value)
+	if err != nil {
+		panic(err)
+	}
+	return parsed
 }
 
 func (m *mockStatsStore) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {
@@ -572,6 +590,56 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 	}
 }
 
+func TestStatsHandlersSerializeGKIDStrings(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	tests := []struct {
+		name    string
+		handler http.HandlerFunc
+		target  string
+		want    string
+		path    []string
+	}{
+		{name: "recent-born", handler: h.GetRecentBorn, target: "/api/v3/geokrety/recent-born", want: "GK0001"},
+		{name: "recent-loved", handler: h.GetRecentLoved, target: "/api/v3/geokrety/recent-loved", want: "GK00FF"},
+		{name: "recent-watched", handler: h.GetRecentWatched, target: "/api/v3/geokrety/recent-watched", want: "GK00FF"},
+		{name: "distance-records", handler: h.GetDistanceRecords, target: "/api/v3/stats/distance-records", want: "GK00FF"},
+		{name: "dormancy", handler: h.GetStatsDormancy, target: "/api/v3/stats/dormancy", want: "GK00FF"},
+		{name: "multiplier-velocity", handler: h.GetStatsMultiplierVelocity, target: "/api/v3/stats/multiplier-velocity", want: "GK00FF"},
+		{name: "circulation", handler: h.GetGeokretCirculation, target: "/api/v3/geokrety/255/circulation", want: "GK00FF", path: []string{"id", "255"}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			if len(tc.path) > 0 {
+				r = withRouteParams(r, tc.path...)
+			}
+			w := httptest.NewRecorder()
+
+			tc.handler(w, r)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", w.Code)
+			}
+			payload := decodeMap(t, w)
+			data := payload["data"]
+			switch typed := data.(type) {
+			case []any:
+				row := typed[0].(map[string]any)
+				if got := row["gkid"]; got != tc.want {
+					t.Fatalf("gkid = %#v, want %s", got, tc.want)
+				}
+			case map[string]any:
+				if got := typed["gkid"]; got != tc.want {
+					t.Fatalf("gkid = %#v, want %s", got, tc.want)
+				}
+			default:
+				t.Fatalf("unexpected data payload type %T", data)
+			}
+		})
+	}
+}
+
 func TestStatsHandlerErrorEndpoints(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -673,7 +741,7 @@ func TestStatsHandlerInvalidIdentifier(t *testing.T) {
 	for _, handler := range tests {
 		r := httptest.NewRequest(http.MethodGet, "/bad", nil)
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("id", "abc")
+		rctx.URLParams.Add("id", "GKZZ")
 		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 		handler(w, r)

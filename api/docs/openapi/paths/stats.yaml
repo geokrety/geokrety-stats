@@ -1,0 +1,420 @@
+/api/v3/stats/kpis:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsKpis
+    summary: Global KPI counters
+    responses:
+      '200':
+        description: Global KPI payload
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GlobalStats'
+            example:
+              data:
+                totalGeokrety: 108950
+                totalGeokretyHidden: 55368
+                totalMoves: 6926419
+                movesLast30Days: 19957
+                registeredUsers: 36410
+                activeUsers: 16
+                activeUsersLast30d: 214
+                countriesReached: 209
+                picturesUploaded: 69213
+              meta:
+                requestedAt: '2026-03-16T20:47:17Z'
+                queryMs: 90
+                pagination:
+                  limit: 1
+                  offset: 0
+                  count: 1
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GlobalStats'
+            example:
+              data:
+                totalGeokrety: 108950
+                totalGeokretyHidden: 55368
+                totalMoves: 6926419
+                movesLast30Days: 19957
+                registeredUsers: 36410
+                activeUsers: 16
+                activeUsersLast30d: 214
+                countriesReached: 209
+                picturesUploaded: 69213
+              meta:
+                requestedAt: '2026-03-16T20:47:17Z'
+                queryMs: 90
+                pagination:
+                  limit: 1
+                  offset: 0
+                  count: 1
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/countries:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsCountries
+    summary: Country leaderboard and map aggregates
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Country aggregate rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryStats'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryStats'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/leaderboard:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsLeaderboard
+    summary: User leaderboard
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: User ranking rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardUser'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardUser'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/hourly-heatmap:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsHourlyHeatmap
+    summary: Hourly activity heatmap cells
+    description: Heatmap-ready cells grouped by UTC day and hour.
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Hourly heatmap cells
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HourlyHeatmapCell'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HourlyHeatmapCell'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/seasonal-heatmap:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsSeasonalHeatmapAlias
+    summary: Seasonal heatmap alias
+    description: Alias of `/api/v3/stats/hourly-heatmap` backed by the same handler
+      and schema.
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Hourly heatmap cells
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HourlyHeatmapCell'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HourlyHeatmapCell'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/country-flows:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsCountryFlows
+    summary: Cross-country GeoKret flow records
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Country flow records
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryFlow'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryFlow'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/top-caches:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsTopCaches
+    summary: Most visited waypoints globally
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Top cache records
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TopCache'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TopCache'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/first-finder-leaderboard:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsFirstFinderLeaderboard
+    summary: First-finder hall of fame
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: First-finder ranking rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FirstFinderLeaderboardEntry'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FirstFinderLeaderboardEntry'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/distance-records:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsDistanceRecords
+    summary: Distance record leaderboard for GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Distance record rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DistanceRecord'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DistanceRecord'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/dormancy:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsDormancy
+    summary: Longest dormancy records
+    description: GeoKrety ordered by inactivity duration since the last touch event.
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Dormancy records
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DormancyRecord'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DormancyRecord'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/stats/multiplier-velocity:
+  get:
+    tags:
+    - Stats
+    operationId: getStatsMultiplierVelocity
+    summary: Recent multiplier velocity records
+    description: GeoKrety ordered by recent multiplier delta trends.
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Multiplier velocity records
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MultiplierVelocityRecord'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MultiplierVelocityRecord'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

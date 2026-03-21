@@ -1,0 +1,142 @@
+openapi: 3.0.3
+
+info:
+  title: GeoKrety Stats API
+  version: 3.1.0
+  description: |
+    Read-only API for GeoKrety statistics, activity feeds, entity exploration, and visualization workloads.
+
+    Every `/api/v3/...` JSON endpoint returns a response envelope with `data` and `meta`.
+    List endpoints support `limit` and `offset` pagination. Search endpoints require a `q` query parameter of at least 2 characters.
+
+    ## GeoKret Public Identifiers (GKID)
+
+    GeoKrety endpoints accept public identifiers in three forms:
+    - **Numeric decimal**: `1`, `123`, `65535` (direct GKID number)
+    - **Bare hexadecimal**: `0001`, `00FF`, `FFFF` (hex without the `GK` prefix)
+    - **GK-prefixed hexadecimal**: `GK0001`, `GK00FF`, `GKFFFF` (padded hex representation)
+
+    All forms resolve to the same GeoKret object. Examples:
+    - `/api/v3/geokrety/1` and `/api/v3/geokrety/GK0001` fetch the same GeoKret
+    - `/api/v3/geokrety/00FF` and `/api/v3/geokrety/GK00FF` fetch the same GeoKret
+    - `/api/v3/geokrety/255` and `/api/v3/geokrety/GK00FF` are equivalent
+
+servers:
+  - url: http://192.168.130.65:7415
+    description: Local network development server
+  - url: http://localhost:7415
+    description: Local development server
+
+tags:
+  - name: System
+    description: Service metadata, health checks, metrics, and websocket entrypoint
+  - name: Stats
+    description: Global graph and leaderboard datasets
+  - name: Geokrety
+    description: GeoKret entity details, feeds, graphs, and map payloads
+  - name: Countries
+    description: Country-level aggregates and currently spotted GeoKrety
+  - name: Waypoints
+    description: Waypoint search, details, and spotted or historical GeoKrety
+  - name: Users
+    description: User details, activity, relationships, collections, and graphs
+  - name: Pictures
+    description: Read-only picture metadata
+
+paths:
+  /:
+    $ref: './paths/system.yaml#/~1'
+  /healtz:
+    $ref: './paths/system.yaml#/~1healtz'
+  /health:
+    $ref: './paths/system.yaml#/~1health'
+  /metrics:
+    $ref: './paths/system.yaml#/~1metrics'
+  /ws:
+    $ref: './paths/system.yaml#/~1ws'
+  /openapi.yaml:
+    $ref: './paths/system.yaml#/~1openapi.yaml'
+  /api/v3/geokrety:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety'
+  /api/v3/geokrety/search:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1search'
+  /api/v3/geokrety/recent-moves:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1recent-moves'
+  /api/v3/geokrety/recent-born:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1recent-born'
+  /api/v3/geokrety/recent-loved:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1recent-loved'
+  /api/v3/geokrety/recent-watched:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1recent-watched'
+  /api/v3/geokrety/{gkid}:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}'
+  /api/v3/geokrety/{gkid}/moves:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1moves'
+  /api/v3/geokrety/{gkid}/moves/{moveId}:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1moves~1{moveId}'
+  /api/v3/geokrety/{gkid}/loved-by:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1loved-by'
+  /api/v3/geokrety/{gkid}/watched-by:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1watched-by'
+  /api/v3/geokrety/{gkid}/loves:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1loves'
+  /api/v3/geokrety/{gkid}/watches:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1watches'
+  /api/v3/geokrety/{gkid}/pictures:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1pictures'
+  /api/v3/geokrety/{gkid}/timeline:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1timeline'
+  /api/v3/geokrety/{gkid}/countries/timeline:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1countries~1timeline'
+  /api/v3/geokrety/{gkid}/events/timeline:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1events~1timeline'
+  /api/v3/geokrety/{gkid}/circulation:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1circulation'
+  /api/v3/geokrety/{gkid}/countries:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1countries'
+  /api/v3/geokrety/{gkid}/waypoints:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1waypoints'
+  /api/v3/geokrety/{gkid}/stats/map/countries:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1stats~1map~1countries'
+  /api/v3/geokrety/{gkid}/world-choropleth:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1world-choropleth'
+  /api/v3/geokrety/{gkid}/WorldChoropleth:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1WorldChoropleth'
+  /api/v3/geokrety/{gkid}/stats/elevation:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1stats~1elevation'
+  /api/v3/geokrety/{gkid}/stats/heatmap/days:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1stats~1heatmap~1days'
+  /api/v3/geokrety/{gkid}/geojson/trip:
+    $ref: './paths/geokrety.yaml#/~1api~1v3~1geokrety~1{gkid}~1geojson~1trip'
+  /api/v3/stats/kpis:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1kpis'
+  /api/v3/stats/countries:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1countries'
+  /api/v3/stats/leaderboard:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1leaderboard'
+  /api/v3/stats/hourly-heatmap:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1hourly-heatmap'
+  /api/v3/stats/seasonal-heatmap:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1seasonal-heatmap'
+  /api/v3/stats/country-flows:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1country-flows'
+  /api/v3/stats/top-caches:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1top-caches'
+  /api/v3/stats/first-finder-leaderboard:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1first-finder-leaderboard'
+  /api/v3/stats/distance-records:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1distance-records'
+  /api/v3/stats/dormancy:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1dormancy'
+  /api/v3/stats/multiplier-velocity:
+    $ref: './paths/stats.yaml#/~1api~1v3~1stats~1multiplier-velocity'
+
+components:
+  parameters:
+    $ref: './components/parameters.yaml'
+
+  responses:
+    $ref: './components/responses.yaml'
+
+  schemas:
+    $ref: './components/schemas.yaml'

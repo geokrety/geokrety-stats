@@ -1,0 +1,1038 @@
+/api/v3/geokrety:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokrety
+    summary: List GeoKrety
+    description: 'Paginated list of GeoKrety. Results are ordered by activity (most
+      recent moves first).
+
+      '
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Paginated GeoKrety list
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/search:
+  get:
+    tags:
+    - Geokrety
+    operationId: searchGeokrety
+    summary: Search GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/SearchQueryParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Matching GeoKrety
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/recent-moves:
+  get:
+    tags:
+    - Geokrety
+    operationId: getRecentGeokretyMoves
+    summary: Recent GeoKrety moves
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recent move feed
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentMove'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentMove'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/recent-born:
+  get:
+    tags:
+    - Geokrety
+    operationId: getRecentGeokretyBorn
+    summary: Recently created GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recent born feed
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentBorn'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentBorn'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/recent-loved:
+  get:
+    tags:
+    - Geokrety
+    operationId: getRecentGeokretyLoved
+    summary: Recently loved GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recent love feed
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentLoved'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentLoved'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/recent-watched:
+  get:
+    tags:
+    - Geokrety
+    operationId: getRecentGeokretyWatched
+    summary: Recently watched GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recent watch feed
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentWatched'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentWatched'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokret
+    summary: GeoKret details
+    description: Fetch full details for a single GeoKret by public identifier (GKID).
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    responses:
+      '200':
+        description: GeoKret detail payload
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeokretDetails'
+            example:
+              data:
+                id: 1
+                gkid: GK0001
+                name: Pierwszy GeoKret
+                type: 0
+                missing: false
+                ownerId: 1
+                ownerUsername: filips
+                holderId: 1
+                holderUsername: filips
+                country: null
+                waypoint: null
+                lat: null
+                lon: null
+                lovesCount: 0
+                picturesCount: 0
+                bornAt: '2007-10-26T02:00:00+02:00'
+                lastMoveAt: null
+                geojson: null
+                mission: Pierwszy GeoKret
+                distanceKm: 0
+                cachesCount: 0
+                commentsHidden: false
+              meta:
+                requestedAt: '2026-03-16T20:47:17Z'
+                queryMs: 2
+                pagination:
+                  limit: 1
+                  offset: 0
+                  count: 1
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeokretDetails'
+            example:
+              data:
+                id: 1
+                gkid: GK0001
+                name: Pierwszy GeoKret
+                type: 0
+                missing: false
+                ownerId: 1
+                ownerUsername: filips
+                holderId: 1
+                holderUsername: filips
+                country: null
+                waypoint: null
+                lat: null
+                lon: null
+                lovesCount: 0
+                picturesCount: 0
+                bornAt: '2007-10-26T02:00:00+02:00'
+                lastMoveAt: null
+                geojson: null
+                mission: Pierwszy GeoKret
+                distanceKm: 0
+                cachesCount: 0
+                commentsHidden: false
+              meta:
+                requestedAt: '2026-03-16T20:47:17Z'
+                queryMs: 2
+                pagination:
+                  limit: 1
+                  offset: 0
+                  count: 1
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/moves:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretMoves
+    summary: GeoKret move history
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Move history rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MoveRecord'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MoveRecord'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/moves/{moveId}:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretMove
+    summary: Single GeoKret move details
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/MoveIdParam'
+    responses:
+      '200':
+        description: Move detail payload
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MoveRecord'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MoveRecord'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/loved-by:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretLovedBy
+    summary: Users who loved a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Love relation rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/watched-by:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretWatchedBy
+    summary: Users watching a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Watch relation rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/loves:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretLovesAlias
+    summary: Deprecated alias for loved-by
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/geokrety/{gkid}/loved-by`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/watches:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretWatchesAlias
+    summary: Deprecated alias for watched-by
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/geokrety/{gkid}/watched-by`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SocialUserEntry'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/pictures:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretPictures
+    summary: Picture metadata attached to a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Picture metadata rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureInfo'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureInfo'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/timeline:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretTimeline
+    summary: Milestone timeline for a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Timeline events
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretTimelineEvent'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretTimelineEvent'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/countries/timeline:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretCountriesTimelineAlias
+    summary: Deprecated timeline alias
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/geokrety/{gkid}/timeline`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretTimelineEvent'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretTimelineEvent'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/events/timeline:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretEventsTimelineAlias
+    summary: Deprecated event timeline alias
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/geokrety/{gkid}/timeline`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretTimelineEvent'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretTimelineEvent'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/circulation:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretCirculation
+    summary: Circulation summary for a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    responses:
+      '200':
+        description: Circulation summary
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeokretCirculation'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeokretCirculation'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/countries:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretCountries
+    summary: Countries visited by a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Country visit rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretCountryVisit'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretCountryVisit'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/waypoints:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretWaypoints
+    summary: Waypoints visited by a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Waypoint visit rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretWaypointVisit'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretWaypointVisit'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/stats/map/countries:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretCountryMap
+    summary: Country map counts for a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Country choropleth rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/world-choropleth:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretWorldChoropleth
+    summary: World choropleth alias
+    description: Alias of `/api/v3/geokrety/{gkid}/stats/map/countries`.
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Country choropleth rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/WorldChoropleth:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretWorldChoroplethLegacy
+    summary: Legacy world choropleth alias
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/geokrety/{gkid}/stats/map/countries`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/stats/elevation:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretElevation
+    summary: Elevation profile for a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Elevation points
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ElevationPoint'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ElevationPoint'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/stats/heatmap/days:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretDayHeatmap
+    summary: Daily activity heatmap for a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Daily heatmap cells
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DayHeatmapCell'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DayHeatmapCell'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/geokrety/{gkid}/geojson/trip:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretTripGeoJson
+    summary: GeoJSON trip path for a GeoKret
+    description: Returns a GeoJSON feature collection wrapped in the standard API
+      envelope.
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - in: query
+      name: limit
+      description: Maximum number of trip points to return.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5000
+        default: 500
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: GeoJSON trip feature collection
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeoJSONFeatureCollection'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

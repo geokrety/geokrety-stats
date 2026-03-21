@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -119,7 +120,51 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 			if payload["meta"] == nil {
 				t.Fatalf("meta field missing")
 			}
+			if tc.name == "geokret-details-by-gkid" || tc.name == "geokret-details-by-numeric-gkid" {
+				data := payload["data"].(map[string]any)
+				if got := data["gkid"]; got != "GK0001" {
+					t.Fatalf("data.gkid = %#v, want GK0001", got)
+				}
+			}
 		})
+	}
+}
+
+func TestEntityHandlerAcceptsBareHexGKID(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/00FF", nil), "gkid", "00FF")
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyDetailsByGkId(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].(map[string]any)
+	if got := data["gkid"]; got != "GK00FF" {
+		t.Fatalf("data.gkid = %#v, want GK00FF", got)
+	}
+}
+
+func TestEntityHandlerXMLResponseUsesCanonicalGKID(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/GK0001", nil), "gkid", "GK0001")
+	r.Header.Set("Accept", "application/xml")
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyDetailsByGkId(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if got := w.Header().Get("Content-Type"); got != "application/xml" {
+		t.Fatalf("content-type = %q, want application/xml", got)
+	}
+	if body := w.Body.String(); !strings.Contains(body, "<gkid>GK0001</gkid>") {
+		t.Fatalf("expected XML body to contain canonical gkid, got %s", body)
 	}
 }
 
@@ -133,18 +178,18 @@ func TestEntityHandlerInvalidRequests(t *testing.T) {
 	}{
 		{"bad-id", h.GetGeokrety, "/api/v3/geokrety/abc", []string{"id", "abc"}},
 		{"bad-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/GKZZ", []string{"gkid", "GKZZ"}},
-		{"bad-id-moves", h.GetGeokretyMoves, "/api/v3/geokrety/abc/moves", []string{"id", "abc"}},
-		{"bad-id-move-details", h.GetGeokretyMoveDetails, "/api/v3/geokrety/abc/moves/1", []string{"id", "abc", "moveId", "1"}},
+		{"bad-id-moves", h.GetGeokretyMoves, "/api/v3/geokrety/GKZZ/moves", []string{"id", "GKZZ"}},
+		{"bad-id-move-details", h.GetGeokretyMoveDetails, "/api/v3/geokrety/GKZZ/moves/1", []string{"id", "GKZZ", "moveId", "1"}},
 		{"bad-move-id", h.GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/x", []string{"id", "1", "moveId", "x"}},
-		{"bad-id-loved-by", h.GetGeokretyLovedBy, "/api/v3/geokrety/abc/loved-by", []string{"id", "abc"}},
-		{"bad-id-watched-by", h.GetGeokretyWatchedBy, "/api/v3/geokrety/abc/watched-by", []string{"id", "abc"}},
-		{"bad-id-pictures", h.GetGeokretyPictures, "/api/v3/geokrety/abc/pictures", []string{"id", "abc"}},
-		{"bad-id-countries", h.GetGeokretyCountries, "/api/v3/geokrety/abc/countries", []string{"id", "abc"}},
-		{"bad-id-waypoints", h.GetGeokretyWaypoints, "/api/v3/geokrety/abc/waypoints", []string{"id", "abc"}},
-		{"bad-id-map-countries", h.GetGeokretyStatsMapCountries, "/api/v3/geokrety/abc/stats/map/countries", []string{"id", "abc"}},
-		{"bad-id-elevation", h.GetGeokretyStatsElevation, "/api/v3/geokrety/abc/stats/elevation", []string{"id", "abc"}},
-		{"bad-id-heatmap-days", h.GetGeokretyStatsHeatmapDays, "/api/v3/geokrety/abc/stats/heatmap/days", []string{"id", "abc"}},
-		{"bad-id-geojson-trip", h.GetGeokretyGeoJSONTrip, "/api/v3/geokrety/abc/geojson/trip", []string{"id", "abc"}},
+		{"bad-id-loved-by", h.GetGeokretyLovedBy, "/api/v3/geokrety/GKZZ/loved-by", []string{"id", "GKZZ"}},
+		{"bad-id-watched-by", h.GetGeokretyWatchedBy, "/api/v3/geokrety/GKZZ/watched-by", []string{"id", "GKZZ"}},
+		{"bad-id-pictures", h.GetGeokretyPictures, "/api/v3/geokrety/GKZZ/pictures", []string{"id", "GKZZ"}},
+		{"bad-id-countries", h.GetGeokretyCountries, "/api/v3/geokrety/GKZZ/countries", []string{"id", "GKZZ"}},
+		{"bad-id-waypoints", h.GetGeokretyWaypoints, "/api/v3/geokrety/GKZZ/waypoints", []string{"id", "GKZZ"}},
+		{"bad-id-map-countries", h.GetGeokretyStatsMapCountries, "/api/v3/geokrety/GKZZ/stats/map/countries", []string{"id", "GKZZ"}},
+		{"bad-id-elevation", h.GetGeokretyStatsElevation, "/api/v3/geokrety/GKZZ/stats/elevation", []string{"id", "GKZZ"}},
+		{"bad-id-heatmap-days", h.GetGeokretyStatsHeatmapDays, "/api/v3/geokrety/GKZZ/stats/heatmap/days", []string{"id", "GKZZ"}},
+		{"bad-id-geojson-trip", h.GetGeokretyGeoJSONTrip, "/api/v3/geokrety/GKZZ/geojson/trip", []string{"id", "GKZZ"}},
 		{"bad-country", h.GetCountryDetails, "/api/v3/countries/POL", []string{"code", "POL"}},
 		{"bad-country-symbols", h.GetCountryGeokrety, "/api/v3/countries/1!/geokrety", []string{"code", "1!"}},
 		{"bad-waypoint", h.GetWaypoint, "/api/v3/waypoints/*", []string{"code", "*"}},

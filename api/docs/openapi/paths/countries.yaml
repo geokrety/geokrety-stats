@@ -1,0 +1,185 @@
+/api/v3/countries:
+  get:
+    tags:
+    - Countries
+    operationId: listCountries
+    summary: List countries
+    description: 'Paginated list of countries ranked by recent activity or geographic
+      coverage.
+
+      '
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Paginated country list
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryDetails'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryDetails'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/countries/recent-active:
+  get:
+    tags:
+    - Countries
+    operationId: getRecentActiveCountries
+    summary: Recently active countries
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recently active country rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveCountry'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveCountry'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/countries/{code}:
+  get:
+    tags:
+    - Countries
+    operationId: getCountry
+    summary: Country details
+    parameters:
+    - $ref: '#/components/parameters/CountryCodeParam'
+    responses:
+      '200':
+        description: Country detail payload
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CountryDetails'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CountryDetails'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/countries/{code}/geokrety:
+  get:
+    tags:
+    - Countries
+    operationId: getCountryGeokrety
+    summary: GeoKrety currently spotted in a country
+    parameters:
+    - $ref: '#/components/parameters/CountryCodeParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: GeoKrety in country
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/countries/{code}/spotted-geokrety:
+  get:
+    tags:
+    - Countries
+    operationId: getCountrySpottedGeokretyAlias
+    summary: Alias for country GeoKrety listing
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/CountryCodeParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/countries/{code}/geokrety`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

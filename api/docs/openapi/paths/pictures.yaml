@@ -1,0 +1,72 @@
+/api/v3/pictures:
+  get:
+    tags:
+    - Pictures
+    operationId: listPictures
+    summary: List pictures
+    description: 'Paginated list of pictures (metadata only, not binary image content).
+
+      '
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Paginated picture list
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureInfo'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureInfo'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/pictures/{id}:
+  get:
+    tags:
+    - Pictures
+    operationId: getPicture
+    summary: Picture metadata
+    parameters:
+    - $ref: '#/components/parameters/PictureIdParam'
+    responses:
+      '200':
+        description: Picture detail payload
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PictureInfo'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PictureInfo'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

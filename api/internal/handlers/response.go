@@ -2,26 +2,35 @@ package handlers
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type PaginationMeta struct {
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
-	Count  int `json:"count"`
+	Limit  int `json:"limit" xml:"limit"`
+	Offset int `json:"offset" xml:"offset"`
+	Count  int `json:"count" xml:"count"`
 }
 
 type ResponseMeta struct {
-	RequestedAt string         `json:"requestedAt"`
-	QueryMs     int64          `json:"queryMs"`
-	Pagination  PaginationMeta `json:"pagination"`
+	RequestedAt string         `json:"requestedAt" xml:"requestedAt"`
+	QueryMs     int64          `json:"queryMs" xml:"queryMs"`
+	Pagination  PaginationMeta `json:"pagination" xml:"pagination"`
 }
 
 type Envelope struct {
-	Data interface{}  `json:"data"`
-	Meta ResponseMeta `json:"meta"`
+	XMLName xml.Name     `json:"-" xml:"response"`
+	Data    interface{}  `json:"data" xml:"data"`
+	Meta    ResponseMeta `json:"meta" xml:"meta"`
+}
+
+type ErrorResponse struct {
+	XMLName   xml.Name `json:"-" xml:"errorResponse"`
+	Error     string   `json:"error" xml:"error"`
+	Timestamp string   `json:"timestamp" xml:"timestamp"`
 }
 
 func queryInt(r *http.Request, key string, fallback, minValue, maxValue int) int {
@@ -43,7 +52,11 @@ func queryInt(r *http.Request, key string, fallback, minValue, maxValue int) int
 }
 
 func writeEnvelope(w http.ResponseWriter, status int, payload interface{}, started time.Time, limit, offset, count int) {
-	writeJSON(w, status, Envelope{
+	writeEnvelopeForRequest(w, nil, status, payload, started, limit, offset, count)
+}
+
+func writeEnvelopeForRequest(w http.ResponseWriter, r *http.Request, status int, payload interface{}, started time.Time, limit, offset, count int) {
+	envelope := Envelope{
 		Data: payload,
 		Meta: ResponseMeta{
 			RequestedAt: time.Now().UTC().Format(time.RFC3339),
@@ -54,7 +67,12 @@ func writeEnvelope(w http.ResponseWriter, status int, payload interface{}, start
 				Count:  count,
 			},
 		},
-	})
+	}
+	if wantsXML(r) {
+		writeXML(w, status, envelope)
+		return
+	}
+	writeJSON(w, status, envelope)
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -63,9 +81,32 @@ func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
+func writeXML(w http.ResponseWriter, status int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(status)
+	_ = xml.NewEncoder(w).Encode(payload)
+}
+
+func wantsXML(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	accept := strings.ToLower(r.Header.Get("Accept"))
+	return strings.Contains(accept, "application/xml") || strings.Contains(accept, "text/xml")
+}
+
 func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]interface{}{
-		"error":     message,
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
+	writeErrorForRequest(w, nil, status, message)
+}
+
+func writeErrorForRequest(w http.ResponseWriter, r *http.Request, status int, message string) {
+	payload := ErrorResponse{
+		Error:     message,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+	if wantsXML(r) {
+		writeXML(w, status, payload)
+		return
+	}
+	writeJSON(w, status, payload)
 }

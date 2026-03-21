@@ -298,6 +298,7 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/geokrety/recent-watched",
 		"/api/v3/geokrety/GK0001",
 		"/api/v3/geokrety/1",
+		"/api/v3/geokrety/00FF",
 		"/api/v3/geokrety/GK0001/moves",
 		"/api/v3/geokrety/1/moves",
 		"/api/v3/geokrety/1/moves/2",

@@ -1,0 +1,112 @@
+LimitParam:
+  in: query
+  name: limit
+  description: Maximum number of items to return. Default 20, maximum 1000.
+  required: false
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 1000
+    default: 20
+
+OffsetParam:
+  in: query
+  name: offset
+  description: Zero-based starting offset for paginated responses. Default 0.
+  required: false
+  schema:
+    type: integer
+    minimum: 0
+    default: 0
+
+SearchQueryParam:
+  in: query
+  name: q
+  description: Search text. Must be at least 2 characters long.
+  required: true
+  schema:
+    type: string
+    minLength: 2
+  example: gk
+
+GeokretIdParam:
+  in: path
+  name: gkid
+  description: |
+    GeoKret public identifier. Accepts numeric decimal (e.g., 1), bare
+    hexadecimal (e.g., 00FF), or GK-prefixed hexadecimal format (e.g.,
+    GK0001, GKFFFF).
+    Parsing is case-insensitive. Bare digit-only values without a leading zero
+    are treated as decimal, while zero-padded digit-only values are treated as
+    hexadecimal.
+  required: true
+  schema:
+    type: string
+    pattern: '^(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*$'
+  examples:
+    numeric:
+      value: '1'
+      description: Numeric decimal form
+    bareHex:
+      value: '00FF'
+      description: Hexadecimal form without the GK prefix
+    hexPrefixed:
+      value: 'GK0001'
+      description: GK-prefixed hexadecimal form
+    largeHex:
+      value: 'GKFFFF'
+      description: Maximum 16-bit hex value
+
+MoveIdParam:
+  in: path
+  name: moveId
+  description: Internal numeric move identifier.
+  required: true
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+
+UserIdParam:
+  in: path
+  name: id
+  description: Internal numeric user identifier.
+  required: true
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+
+CountryCodeParam:
+  in: path
+  name: code
+  description: Uppercase ISO-3166 alpha-2 country code.
+  required: true
+  schema:
+    type: string
+    minLength: 2
+    maxLength: 2
+    pattern: '^[A-Z]{2}$'
+  example: PL
+
+WaypointCodeParam:
+  in: path
+  name: code
+  description: Waypoint code or source-specific cache identifier.
+  required: true
+  schema:
+    type: string
+    minLength: 2
+    maxLength: 32
+    pattern: '^[A-Za-z0-9_-]{2,32}$'
+  example: GC12345
+
+PictureIdParam:
+  in: path
+  name: id
+  description: Internal numeric picture identifier.
+  required: true
+  schema:
+    type: integer
+    format: int64
+    minimum: 1

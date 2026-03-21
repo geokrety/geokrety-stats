@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/config"
+	"github.com/geokrety/geokrety-stats-api/internal/gkid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -16,214 +17,217 @@ type Store struct {
 }
 
 type PictureTypeStats struct {
-	GeokretAvatars int64 `json:"geokretAvatars"`
-	GeokretMoves   int64 `json:"geokretMoves"`
-	UserAvatars    int64 `json:"userAvatars"`
+	GeokretAvatars int64 `json:"geokretAvatars" xml:"geokretAvatars"`
+	GeokretMoves   int64 `json:"geokretMoves" xml:"geokretMoves"`
+	UserAvatars    int64 `json:"userAvatars" xml:"userAvatars"`
 }
 
 type GeokretyTypeStats struct {
-	Traditional int64 `json:"traditional"`
-	Book        int64 `json:"book"`
-	Human       int64 `json:"human"`
-	Coin        int64 `json:"coin"`
-	Kretypost   int64 `json:"kretypost"`
-	Pebble      int64 `json:"pebble"`
-	Car         int64 `json:"car"`
-	Playingcard int64 `json:"playingcard"`
-	Dogtag      int64 `json:"dogtag"`
-	Jigsaw      int64 `json:"jigsaw"`
-	Easteregg   int64 `json:"easteregg"`
+	Traditional int64 `json:"traditional" xml:"traditional"`
+	Book        int64 `json:"book" xml:"book"`
+	Human       int64 `json:"human" xml:"human"`
+	Coin        int64 `json:"coin" xml:"coin"`
+	Kretypost   int64 `json:"kretypost" xml:"kretypost"`
+	Pebble      int64 `json:"pebble" xml:"pebble"`
+	Car         int64 `json:"car" xml:"car"`
+	Playingcard int64 `json:"playingcard" xml:"playingcard"`
+	Dogtag      int64 `json:"dogtag" xml:"dogtag"`
+	Jigsaw      int64 `json:"jigsaw" xml:"jigsaw"`
+	Easteregg   int64 `json:"easteregg" xml:"easteregg"`
 }
 
 type MoveTypeStats struct {
-	Dropped   int64 `json:"dropped"`
-	Grabbed   int64 `json:"grabbed"`
-	Commented int64 `json:"commented"`
-	Seen      int64 `json:"seen"`
-	Archived  int64 `json:"archived"`
-	Dipped    int64 `json:"dipped"`
+	Dropped   int64 `json:"dropped" xml:"dropped"`
+	Grabbed   int64 `json:"grabbed" xml:"grabbed"`
+	Commented int64 `json:"commented" xml:"commented"`
+	Seen      int64 `json:"seen" xml:"seen"`
+	Archived  int64 `json:"archived" xml:"archived"`
+	Dipped    int64 `json:"dipped" xml:"dipped"`
 }
 
 type GlobalStats struct {
-	TotalGeokrety       int64             `json:"totalGeokrety"`
-	TotalGeokretyHidden int64             `json:"totalGeokretyHidden"`
-	TotalMoves          int64             `json:"totalMoves"`
-	MovesLast30Days     int64             `json:"movesLast30Days"`
-	RegisteredUsers     int64             `json:"registeredUsers"`
-	ActiveUsers         int64             `json:"activeUsers"`
-	ActiveUsersLast30d  int64             `json:"activeUsersLast30d"`
-	CountriesReached    int64             `json:"countriesReached"`
-	PicturesUploaded    int64             `json:"picturesUploaded"`
-	PicturesByType      PictureTypeStats  `json:"picturesByType"`
-	GeokretyByType      GeokretyTypeStats `json:"geokretyByType"`
-	MovesByType         MoveTypeStats     `json:"movesByType"`
+	TotalGeokrety       int64             `json:"totalGeokrety" xml:"totalGeokrety"`
+	TotalGeokretyHidden int64             `json:"totalGeokretyHidden" xml:"totalGeokretyHidden"`
+	TotalMoves          int64             `json:"totalMoves" xml:"totalMoves"`
+	MovesLast30Days     int64             `json:"movesLast30Days" xml:"movesLast30Days"`
+	RegisteredUsers     int64             `json:"registeredUsers" xml:"registeredUsers"`
+	ActiveUsers         int64             `json:"activeUsers" xml:"activeUsers"`
+	ActiveUsersLast30d  int64             `json:"activeUsersLast30d" xml:"activeUsersLast30d"`
+	CountriesReached    int64             `json:"countriesReached" xml:"countriesReached"`
+	PicturesUploaded    int64             `json:"picturesUploaded" xml:"picturesUploaded"`
+	PicturesByType      PictureTypeStats  `json:"picturesByType" xml:"picturesByType"`
+	GeokretyByType      GeokretyTypeStats `json:"geokretyByType" xml:"geokretyByType"`
+	MovesByType         MoveTypeStats     `json:"movesByType" xml:"movesByType"`
 }
 
 type RecentMove struct {
-	ID          int64     `db:"id" json:"id"`
-	GeokretName string    `db:"geokret_name" json:"geokretName"`
-	Type        string    `db:"type" json:"type"`
-	Username    string    `db:"username" json:"username"`
-	Country     string    `db:"country" json:"country"`
-	CountryFlag string    `json:"countryFlag"`
-	Timestamp   time.Time `db:"timestamp" json:"timestamp"`
+	ID          int64     `db:"id" json:"id" xml:"id"`
+	GeokretName string    `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	Type        string    `db:"type" json:"type" xml:"type"`
+	Username    string    `db:"username" json:"username" xml:"username"`
+	Country     string    `db:"country" json:"country" xml:"country"`
+	CountryFlag string    `json:"countryFlag" xml:"countryFlag"`
+	Timestamp   time.Time `db:"timestamp" json:"timestamp" xml:"timestamp"`
 }
 
 type LeaderboardUser struct {
-	Rank        int    `json:"rank"`
-	UserID      int64  `db:"user_id" json:"userId"`
-	Username    string `db:"username" json:"username"`
-	Initials    string `json:"initials"`
-	Points      int64  `db:"points" json:"points"`
-	MovesCount  int64  `db:"moves_count" json:"movesCount"`
-	AvatarColor string `json:"avatarColor"`
+	Rank        int    `json:"rank" xml:"rank"`
+	UserID      int64  `db:"user_id" json:"userId" xml:"userId"`
+	Username    string `db:"username" json:"username" xml:"username"`
+	Initials    string `json:"initials" xml:"initials"`
+	Points      int64  `db:"points" json:"points" xml:"points"`
+	MovesCount  int64  `db:"moves_count" json:"movesCount" xml:"movesCount"`
+	AvatarColor string `json:"avatarColor" xml:"avatarColor"`
 }
 
 type CountryStats struct {
-	Code             string  `db:"code" json:"code"`
-	Name             string  `db:"name" json:"name"`
-	Flag             string  `json:"flag"`
-	MovesCount       int64   `db:"moves_count" json:"movesCount"`
-	UsersHome        int64   `db:"users_home" json:"usersHome"`
-	ActiveUsers      int64   `db:"active_users" json:"activeUsers"`
-	Dropped          int64   `db:"dropped" json:"dropped"`
-	Dipped           int64   `db:"dipped" json:"dipped"`
-	Seen             int64   `db:"seen" json:"seen"`
-	Loves            int64   `db:"loves" json:"loves"`
-	Pictures         int64   `db:"pictures" json:"pictures"`
-	PointsSum        float64 `db:"points_sum" json:"pointsSum"`
-	PointsSumMoves   float64 `db:"points_sum_moves" json:"pointsSumMoves"`
-	GeokretyInCache  int64   `db:"geokrety_in_cache" json:"geokretyInCache"`
-	GeokretyLost     int64   `db:"geokrety_lost" json:"geokretyLost"`
-	AvgPointsPerMove float64 `db:"avg_points_per_move" json:"avgPointsPerMove"`
+	Code             string  `db:"code" json:"code" xml:"code"`
+	Name             string  `db:"name" json:"name" xml:"name"`
+	Flag             string  `json:"flag" xml:"flag"`
+	MovesCount       int64   `db:"moves_count" json:"movesCount" xml:"movesCount"`
+	UsersHome        int64   `db:"users_home" json:"usersHome" xml:"usersHome"`
+	ActiveUsers      int64   `db:"active_users" json:"activeUsers" xml:"activeUsers"`
+	Dropped          int64   `db:"dropped" json:"dropped" xml:"dropped"`
+	Dipped           int64   `db:"dipped" json:"dipped" xml:"dipped"`
+	Seen             int64   `db:"seen" json:"seen" xml:"seen"`
+	Loves            int64   `db:"loves" json:"loves" xml:"loves"`
+	Pictures         int64   `db:"pictures" json:"pictures" xml:"pictures"`
+	PointsSum        float64 `db:"points_sum" json:"pointsSum" xml:"pointsSum"`
+	PointsSumMoves   float64 `db:"points_sum_moves" json:"pointsSumMoves" xml:"pointsSumMoves"`
+	GeokretyInCache  int64   `db:"geokrety_in_cache" json:"geokretyInCache" xml:"geokretyInCache"`
+	GeokretyLost     int64   `db:"geokrety_lost" json:"geokretyLost" xml:"geokretyLost"`
+	AvgPointsPerMove float64 `db:"avg_points_per_move" json:"avgPointsPerMove" xml:"avgPointsPerMove"`
 }
 
 type RecentBorn struct {
-	ID        int64     `db:"id" json:"id"`
-	GKID      int64     `db:"gkid" json:"gkid"`
-	Name      string    `db:"name" json:"name"`
-	Type      int16     `db:"type" json:"type"`
-	BornAt    time.Time `db:"born_at" json:"bornAt"`
-	OwnerID   *int64    `db:"owner_id" json:"ownerId"`
-	OwnerName string    `db:"owner_name" json:"ownerName"`
+	ID        int64          `db:"id" json:"id" xml:"id"`
+	GKID      gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid"`
+	Name      string         `db:"name" json:"name" xml:"name"`
+	Type      int16          `db:"type" json:"type" xml:"type"`
+	TypeName  string         `json:"typeName" xml:"typeName"`
+	BornAt    time.Time      `db:"born_at" json:"bornAt" xml:"bornAt"`
+	OwnerID   *int64         `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
+	OwnerName string         `db:"owner_name" json:"ownerName" xml:"ownerName"`
 }
 
 type RecentLoved struct {
-	GeoKretID   int64     `db:"geokret_id" json:"geokretId"`
-	GeoKretName string    `db:"geokret_name" json:"geokretName"`
-	UserID      int64     `db:"user_id" json:"userId"`
-	Username    string    `db:"username" json:"username"`
-	LovedAt     time.Time `db:"loved_at" json:"lovedAt"`
+	GeoKretID   int64           `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName string          `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	UserID      int64           `db:"user_id" json:"userId" xml:"userId"`
+	Username    string          `db:"username" json:"username" xml:"username"`
+	LovedAt     time.Time       `db:"loved_at" json:"lovedAt" xml:"lovedAt"`
 }
 
 type RecentWatched struct {
-	GeoKretID   int64     `db:"geokret_id" json:"geokretId"`
-	GeoKretName string    `db:"geokret_name" json:"geokretName"`
-	UserID      int64     `db:"user_id" json:"userId"`
-	Username    string    `db:"username" json:"username"`
-	WatchedAt   time.Time `db:"watched_at" json:"watchedAt"`
+	GeoKretID   int64           `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName string          `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	UserID      int64           `db:"user_id" json:"userId" xml:"userId"`
+	Username    string          `db:"username" json:"username" xml:"username"`
+	WatchedAt   time.Time       `db:"watched_at" json:"watchedAt" xml:"watchedAt"`
 }
 
 type ActiveCountry struct {
-	Code           string    `db:"code" json:"code"`
-	Moves          int64     `db:"moves" json:"moves"`
-	UniqueUsers    int64     `db:"unique_users" json:"uniqueUsers"`
-	LastActivityAt time.Time `db:"last_activity_at" json:"lastActivityAt"`
-	Flag           string    `json:"flag"`
+	Code           string    `db:"code" json:"code" xml:"code"`
+	Moves          int64     `db:"moves" json:"moves" xml:"moves"`
+	UniqueUsers    int64     `db:"unique_users" json:"uniqueUsers" xml:"uniqueUsers"`
+	LastActivityAt time.Time `db:"last_activity_at" json:"lastActivityAt" xml:"lastActivityAt"`
+	Flag           string    `json:"flag" xml:"flag"`
 }
 
 type ActiveWaypoint struct {
-	Waypoint       string     `db:"waypoint" json:"waypoint"`
-	Country        *string    `db:"country" json:"country"`
-	Moves          int64      `db:"moves" json:"moves"`
-	LastActivityAt time.Time  `db:"last_activity_at" json:"lastActivityAt"`
-	Lat            *float64   `db:"lat" json:"lat"`
-	Lon            *float64   `db:"lon" json:"lon"`
-	GeoJSON        *GeoJSONPt `json:"geojson"`
+	Waypoint       string     `db:"waypoint" json:"waypoint" xml:"waypoint"`
+	Country        *string    `db:"country" json:"country" xml:"country,omitempty"`
+	Moves          int64      `db:"moves" json:"moves" xml:"moves"`
+	LastActivityAt time.Time  `db:"last_activity_at" json:"lastActivityAt" xml:"lastActivityAt"`
+	Lat            *float64   `db:"lat" json:"lat" xml:"lat,omitempty"`
+	Lon            *float64   `db:"lon" json:"lon" xml:"lon,omitempty"`
+	GeoJSON        *GeoJSONPt `json:"geojson" xml:"geojson,omitempty"`
 }
 
 type GeoJSONPt struct {
-	Type        string    `json:"type"`
-	Coordinates []float64 `json:"coordinates"`
+	Type        string    `json:"type" xml:"type"`
+	Coordinates []float64 `json:"coordinates" xml:"coordinates>coordinate"`
 }
 
 type RecentRegisteredUser struct {
-	ID          int64     `db:"id" json:"id"`
-	Username    string    `db:"username" json:"username"`
-	JoinedAt    time.Time `db:"joined_at" json:"joinedAt"`
-	HomeCountry *string   `db:"home_country" json:"homeCountry"`
+	ID          int64     `db:"id" json:"id" xml:"id"`
+	Username    string    `db:"username" json:"username" xml:"username"`
+	JoinedAt    time.Time `db:"joined_at" json:"joinedAt" xml:"joinedAt"`
+	HomeCountry *string   `db:"home_country" json:"homeCountry" xml:"homeCountry,omitempty"`
 }
 
 type RecentActiveUser struct {
-	UserID         int64     `db:"user_id" json:"userId"`
-	Username       string    `db:"username" json:"username"`
-	MovesCount     int64     `db:"moves_count" json:"movesCount"`
-	CountriesCount int64     `db:"countries_count" json:"countriesCount"`
-	LastMoveAt     time.Time `db:"last_move_at" json:"lastMoveAt"`
+	UserID         int64     `db:"user_id" json:"userId" xml:"userId"`
+	Username       string    `db:"username" json:"username" xml:"username"`
+	MovesCount     int64     `db:"moves_count" json:"movesCount" xml:"movesCount"`
+	CountriesCount int64     `db:"countries_count" json:"countriesCount" xml:"countriesCount"`
+	LastMoveAt     time.Time `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt"`
 }
 
 type HourlyHeatmapCell struct {
-	ActivityDate time.Time `db:"activity_date" json:"activityDate"`
-	HourUTC      int       `db:"hour_utc" json:"hourUtc"`
-	MoveType     int       `db:"move_type" json:"moveType"`
-	MoveCount    int64     `db:"move_count" json:"moveCount"`
+	ActivityDate time.Time `db:"activity_date" json:"activityDate" xml:"activityDate"`
+	HourUTC      int       `db:"hour_utc" json:"hourUtc" xml:"hourUtc"`
+	MoveType     int       `db:"move_type" json:"moveType" xml:"moveType"`
+	MoveCount    int64     `db:"move_count" json:"moveCount" xml:"moveCount"`
 }
 
 type CountryFlow struct {
-	YearMonth     time.Time `db:"year_month" json:"yearMonth"`
-	FromCountry   string    `db:"from_country" json:"fromCountry"`
-	ToCountry     string    `db:"to_country" json:"toCountry"`
-	MoveCount     int64     `db:"move_count" json:"moveCount"`
-	UniqueGKCount int64     `db:"unique_gk_count" json:"uniqueGkCount"`
-	FromFlag      string    `json:"fromFlag"`
-	ToFlag        string    `json:"toFlag"`
+	YearMonth     time.Time `db:"year_month" json:"yearMonth" xml:"yearMonth"`
+	FromCountry   string    `db:"from_country" json:"fromCountry" xml:"fromCountry"`
+	ToCountry     string    `db:"to_country" json:"toCountry" xml:"toCountry"`
+	MoveCount     int64     `db:"move_count" json:"moveCount" xml:"moveCount"`
+	UniqueGKCount int64     `db:"unique_gk_count" json:"uniqueGkCount" xml:"uniqueGkCount"`
+	FromFlag      string    `json:"fromFlag" xml:"fromFlag"`
+	ToFlag        string    `json:"toFlag" xml:"toFlag"`
 }
 
 type TopCache struct {
-	WaypointCode    string `db:"waypoint_code" json:"waypointCode"`
-	TotalGKVisits   int64  `db:"total_gk_visits" json:"totalGkVisits"`
-	DistinctGKCount int64  `db:"distinct_gks" json:"distinctGks"`
+	WaypointCode    string `db:"waypoint_code" json:"waypointCode" xml:"waypointCode"`
+	TotalGKVisits   int64  `db:"total_gk_visits" json:"totalGkVisits" xml:"totalGkVisits"`
+	DistinctGKCount int64  `db:"distinct_gks" json:"distinctGks" xml:"distinctGks"`
 }
 
 type FirstFinderLeaderboardEntry struct {
-	UserID     int64  `db:"user_id" json:"userId"`
-	Username   string `db:"username" json:"username"`
-	FirstFinds int64  `db:"first_finds" json:"firstFinds"`
-	Rank       int    `json:"rank"`
+	UserID     int64  `db:"user_id" json:"userId" xml:"userId"`
+	Username   string `db:"username" json:"username" xml:"username"`
+	FirstFinds int64  `db:"first_finds" json:"firstFinds" xml:"firstFinds"`
+	Rank       int    `json:"rank" xml:"rank"`
 }
 
 type DistanceRecord struct {
-	GeoKretID   int64   `db:"gk_id" json:"geokretId"`
-	GKID        *int64  `db:"gkid" json:"gkid"`
-	GeoKretName string  `db:"name" json:"geokretName"`
-	KMTotal     float64 `db:"km_total" json:"kmTotal"`
-	Rank        int     `json:"rank"`
+	GeoKretID   int64           `db:"gk_id" json:"geokretId" xml:"geokretId"`
+	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName string          `db:"name" json:"geokretName" xml:"geokretName"`
+	KMTotal     float64         `db:"km_total" json:"kmTotal" xml:"kmTotal"`
+	Rank        int             `json:"rank" xml:"rank"`
 }
 
 type UserNetworkEdge struct {
-	UserID              int64     `db:"user_id" json:"userId"`
-	RelatedUserID       int64     `db:"related_user_id" json:"relatedUserId"`
-	RelatedUsername     string    `db:"related_username" json:"relatedUsername"`
-	SharedGeoKretyCount int64     `db:"shared_geokrety_count" json:"sharedGeokretyCount"`
-	FirstSeenAt         time.Time `db:"first_seen_at" json:"firstSeenAt"`
-	LastSeenAt          time.Time `db:"last_seen_at" json:"lastSeenAt"`
+	UserID              int64     `db:"user_id" json:"userId" xml:"userId"`
+	RelatedUserID       int64     `db:"related_user_id" json:"relatedUserId" xml:"relatedUserId"`
+	RelatedUsername     string    `db:"related_username" json:"relatedUsername" xml:"relatedUsername"`
+	SharedGeoKretyCount int64     `db:"shared_geokrety_count" json:"sharedGeokretyCount" xml:"sharedGeokretyCount"`
+	FirstSeenAt         time.Time `db:"first_seen_at" json:"firstSeenAt" xml:"firstSeenAt"`
+	LastSeenAt          time.Time `db:"last_seen_at" json:"lastSeenAt" xml:"lastSeenAt"`
 }
 
 type GeokretTimelineEvent struct {
-	GeoKretID     int64     `db:"gk_id" json:"geokretId"`
-	EventType     string    `db:"event_type" json:"eventType"`
-	OccurredAt    time.Time `db:"occurred_at" json:"occurredAt"`
-	ActorUserID   *int64    `db:"actor_user_id" json:"actorUserId"`
-	ActorUsername *string   `db:"actor_username" json:"actorUsername"`
+	GeoKretID     int64     `db:"gk_id" json:"geokretId" xml:"geokretId"`
+	EventType     string    `db:"event_type" json:"eventType" xml:"eventType"`
+	OccurredAt    time.Time `db:"occurred_at" json:"occurredAt" xml:"occurredAt"`
+	ActorUserID   *int64    `db:"actor_user_id" json:"actorUserId" xml:"actorUserId,omitempty"`
+	ActorUsername *string   `db:"actor_username" json:"actorUsername" xml:"actorUsername,omitempty"`
 }
 
 type GeokretCirculation struct {
-	GeoKretID    int64   `db:"geokrety_id" json:"geokretId"`
-	GKID         *int64  `db:"gkid" json:"gkid"`
-	GeoKretName  string  `db:"name" json:"geokretName"`
-	Users        int64   `db:"users" json:"users"`
-	Interactions int64   `db:"interactions" json:"interactions"`
-	AvgPerUser   float64 `json:"avgInteractionsPerUser"`
+	GeoKretID    int64           `db:"geokrety_id" json:"geokretId" xml:"geokretId"`
+	GKID         *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName  string          `db:"name" json:"geokretName" xml:"geokretName"`
+	Users        int64           `db:"users" json:"users" xml:"users"`
+	Interactions int64           `db:"interactions" json:"interactions" xml:"interactions"`
+	AvgPerUser   float64         `json:"avgInteractionsPerUser" xml:"avgInteractionsPerUser"`
 }
 
 func Open(cfg config.Config) (*Store, error) {
@@ -563,6 +567,9 @@ LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
 		return nil, fmt.Errorf("query recent born: %w", err)
 	}
+	for i := range rows {
+		rows[i].TypeName = geokretTypeName(rows[i].Type)
+	}
 	return rows, nil
 }
 
@@ -571,6 +578,7 @@ func (s *Store) FetchRecentLoved(ctx context.Context, limit, offset int) ([]Rece
 	if err := s.db.SelectContext(ctx, &rows, `
 SELECT
 l.geokret AS geokret_id,
+g.gkid AS gkid,
 g.name AS geokret_name,
 l.user AS user_id,
 COALESCE(u.username, 'unknown') AS username,
@@ -591,6 +599,7 @@ func (s *Store) FetchRecentWatched(ctx context.Context, limit, offset int) ([]Re
 	if err := s.db.SelectContext(ctx, &rows, `
 SELECT
 w.geokret AS geokret_id,
+g.gkid AS gkid,
 g.name AS geokret_name,
 w.user AS user_id,
 COALESCE(u.username, 'unknown') AS username,

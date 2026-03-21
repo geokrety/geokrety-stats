@@ -1,0 +1,835 @@
+/api/v3/users:
+  get:
+    tags:
+    - Users
+    operationId: listUsers
+    summary: List users
+    description: 'Paginated list of users. Can be ordered by registration date, activity,
+      or other ranking criteria.
+
+      '
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Paginated user list
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSearchResult'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSearchResult'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/search:
+  get:
+    tags:
+    - Users
+    operationId: searchUsers
+    summary: Search users
+    parameters:
+    - $ref: '#/components/parameters/SearchQueryParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Matching user summaries
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSearchResult'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSearchResult'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/recent-registered:
+  get:
+    tags:
+    - Users
+    operationId: getRecentRegisteredUsers
+    summary: Recently registered users
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recent registered user rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentRegisteredUser'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentRegisteredUser'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/recent-active:
+  get:
+    tags:
+    - Users
+    operationId: getRecentActiveUsers
+    summary: Recently active users
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Recent active user rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentActiveUser'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentActiveUser'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}:
+  get:
+    tags:
+    - Users
+    operationId: getUser
+    summary: User details
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    responses:
+      '200':
+        description: User detail payload
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserDetails'
+            example:
+              data:
+                id: 1
+                username: filips
+                joinedAt: '2007-10-26T21:46:44+02:00'
+                homeCountry: PL
+                avatarId: 18686
+                picturesCount: 1
+                ownedGeokretyCount: 250
+                movesCount: 1085
+                distinctGeokretyCount: 417
+                activeCountriesCount: 13
+                lastMoveAt: '2017-10-29T09:02:00+01:00'
+                homeCountryFlag: PL
+              meta:
+                requestedAt: '2026-03-16T20:47:24Z'
+                queryMs: 6773
+                pagination:
+                  limit: 1
+                  offset: 0
+                  count: 1
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserDetails'
+            example:
+              data:
+                id: 1
+                username: filips
+                joinedAt: '2007-10-26T21:46:44+02:00'
+                homeCountry: PL
+                avatarId: 18686
+                picturesCount: 1
+                ownedGeokretyCount: 250
+                movesCount: 1085
+                distinctGeokretyCount: 417
+                activeCountriesCount: 13
+                lastMoveAt: '2017-10-29T09:02:00+01:00'
+                homeCountryFlag: PL
+              meta:
+                requestedAt: '2026-03-16T20:47:24Z'
+                queryMs: 6773
+                pagination:
+                  limit: 1
+                  offset: 0
+                  count: 1
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/network:
+  get:
+    tags:
+    - Users
+    operationId: getUserNetwork
+    summary: Shared-GeoKret network edges for a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: User network edges
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserNetworkEdge'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserNetworkEdge'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/geokrety-owned:
+  get:
+    tags:
+    - Users
+    operationId: getUserOwnedGeokrety
+    summary: GeoKrety owned by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Owned GeoKrety rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/owned-geokrety:
+  get:
+    tags:
+    - Users
+    operationId: getUserOwnedGeokretyAlias
+    summary: Deprecated alias for owned GeoKrety
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/users/{id}/geokrety-owned`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/geokrety-found:
+  get:
+    tags:
+    - Users
+    operationId: getUserFoundGeokrety
+    summary: GeoKrety touched by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Found GeoKrety rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/found-geokrety:
+  get:
+    tags:
+    - Users
+    operationId: getUserFoundGeokretyAlias
+    summary: Deprecated alias for found GeoKrety
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/users/{id}/geokrety-found`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/geokrety-loved:
+  get:
+    tags:
+    - Users
+    operationId: getUserLovedGeokrety
+    summary: GeoKrety loved by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Loved GeoKrety rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/loved-geokrety:
+  get:
+    tags:
+    - Users
+    operationId: getUserLovedGeokretyAlias
+    summary: Deprecated alias for loved GeoKrety
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/users/{id}/geokrety-loved`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/geokrety-watched:
+  get:
+    tags:
+    - Users
+    operationId: getUserWatchedGeokrety
+    summary: GeoKrety watched by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Watched GeoKrety rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/watched-geokrety:
+  get:
+    tags:
+    - Users
+    operationId: getUserWatchedGeokretyAlias
+    summary: Deprecated alias for watched GeoKrety
+    deprecated: true
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Alias of `/api/v3/users/{id}/geokrety-watched`
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretListItem'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/pictures:
+  get:
+    tags:
+    - Users
+    operationId: getUserPictures
+    summary: Picture metadata related to a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: User picture rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureInfo'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureInfo'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/countries:
+  get:
+    tags:
+    - Users
+    operationId: getUserCountries
+    summary: Countries visited by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: User country visit rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserCountryVisit'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserCountryVisit'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/waypoints:
+  get:
+    tags:
+    - Users
+    operationId: getUserWaypoints
+    summary: Waypoints visited by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: User waypoint visit rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserWaypointVisit'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserWaypointVisit'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/stats/heatmap/days:
+  get:
+    tags:
+    - Users
+    operationId: getUserDayHeatmap
+    summary: Daily user activity heatmap
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Daily heatmap cells
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DayHeatmapCell'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DayHeatmapCell'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/stats/heatmap/hours:
+  get:
+    tags:
+    - Users
+    operationId: getUserHourHeatmap
+    summary: Hourly user activity heatmap
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Hourly heatmap cells
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HourHeatmapCell'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HourHeatmapCell'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/stats/continent-coverage:
+  get:
+    tags:
+    - Users
+    operationId: getUserContinentCoverage
+    summary: User continent coverage graph
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: Continent coverage rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserContinentCoverage'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserContinentCoverage'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+/api/v3/users/{id}/stats/map/countries:
+  get:
+    tags:
+    - Users
+    operationId: getUserCountryMap
+    summary: User country map counts
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/OffsetParam'
+    responses:
+      '200':
+        description: User country choropleth rows
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+          application/xml:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EnvelopeBase'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryCount'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

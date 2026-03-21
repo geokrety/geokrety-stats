@@ -1,0 +1,60 @@
+BadRequest:
+  description: Request validation failed.
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+      example:
+        error: invalid identifier
+        timestamp: '2026-03-17T09:12:34Z'
+    application/xml:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+      example:
+        error: invalid identifier
+        timestamp: '2026-03-17T09:12:34Z'
+NotFound:
+  description: The requested resource does not exist.
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+      example:
+        error: resource not found
+        timestamp: '2026-03-17T09:12:34Z'
+    application/xml:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+      example:
+        error: resource not found
+        timestamp: '2026-03-17T09:12:34Z'
+InternalServerError:
+  description: The server failed to read or prepare the requested data.
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+      example:
+        error: failed to fetch resource
+        timestamp: '2026-03-17T09:12:34Z'
+    application/xml:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+      example:
+        error: failed to fetch resource
+        timestamp: '2026-03-17T09:12:34Z'
+ServiceUnavailableHealth:
+  description: Health check degraded because the database is unavailable.
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/HealthDegradedStatus'
+      example:
+        status: degraded
+        error: database_unavailable
+    application/xml:
+      schema:
+        $ref: '#/components/schemas/HealthDegradedStatus'
+      example:
+        status: degraded
+        error: database_unavailable

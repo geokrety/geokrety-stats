@@ -1,0 +1,1084 @@
+RootInfo:
+  type: object
+  xml:
+    name: RootInfo
+  required:
+  - name
+  - version
+  - docs
+  - openapi
+  - health
+  - metrics
+  - root
+  properties:
+    name:
+      type: string
+    version:
+      type: string
+    docs:
+      type: string
+    openapi:
+      type: string
+    health:
+      type: string
+    metrics:
+      type: string
+    root:
+      type: string
+HealtzStatus:
+  type: object
+  xml:
+    name: HealtzStatus
+  required:
+  - status
+  - serverTime
+  properties:
+    status:
+      type: string
+      enum:
+      - ok
+    serverTime:
+      type: string
+      format: date-time
+  example:
+    status: ok
+    serverTime: '2026-03-17T09:12:34Z'
+HealthStatus:
+  type: object
+  xml:
+    name: HealthStatus
+  required:
+  - status
+  - activeWsClients
+  - serverTime
+  properties:
+    status:
+      type: string
+      enum:
+      - ok
+    activeWsClients:
+      type: integer
+    serverTime:
+      type: string
+      format: date-time
+HealthDegradedStatus:
+  type: object
+  xml:
+    name: HealthStatus
+  required:
+  - status
+  - error
+  properties:
+    status:
+      type: string
+      enum:
+      - degraded
+    error:
+      type: string
+      enum:
+      - database_unavailable
+ErrorResponse:
+  type: object
+  xml:
+    name: ErrorResponse
+  required:
+  - error
+  - timestamp
+  properties:
+    error:
+      type: string
+      description: Human-readable error message
+    timestamp:
+      type: string
+      format: date-time
+      description: Timestamp when the error occurred
+PaginationMeta:
+  type: object
+  xml:
+    name: PaginationMeta
+  required:
+  - limit
+  - offset
+  - count
+  properties:
+    limit:
+      type: integer
+      description: Requested page size
+    offset:
+      type: integer
+      description: Requested start offset
+    count:
+      type: integer
+      description: Actual count of items returned
+ResponseMeta:
+  type: object
+  xml:
+    name: ResponseMeta
+  required:
+  - requestedAt
+  - queryMs
+  - pagination
+  properties:
+    requestedAt:
+      type: string
+      format: date-time
+      description: Server-side timestamp of request handling
+    queryMs:
+      type: integer
+      description: Milliseconds spent executing the database query
+    pagination:
+      $ref: '#/components/schemas/PaginationMeta'
+EnvelopeBase:
+  type: object
+  xml:
+    name: Envelope
+  required:
+  - data
+  - meta
+  properties:
+    data:
+      description: Response payload (type depends on endpoint)
+    meta:
+      $ref: '#/components/schemas/ResponseMeta'
+GeoJSONPoint:
+  type: object
+  required:
+  - type
+  - coordinates
+  properties:
+    type:
+      type: string
+      enum:
+      - Point
+    coordinates:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        type: number
+      example:
+      - 10.04402
+      - 53.59728
+GeoJSONFeature:
+  type: object
+  required:
+  - type
+  - geometry
+  - properties
+  properties:
+    type:
+      type: string
+      enum:
+      - Feature
+    geometry:
+      $ref: '#/components/schemas/GeoJSONPoint'
+    properties:
+      type: object
+GeoJSONFeatureCollection:
+  type: object
+  required:
+  - type
+  - features
+  properties:
+    type:
+      type: string
+      enum:
+      - FeatureCollection
+    features:
+      type: array
+      items:
+        $ref: '#/components/schemas/GeoJSONFeature'
+PictureTypeStats:
+  type: object
+  properties:
+    geokretAvatars:
+      type: integer
+    geokretMoves:
+      type: integer
+    userAvatars:
+      type: integer
+GeokretyTypeStats:
+  type: object
+  properties:
+    traditional:
+      type: integer
+    book:
+      type: integer
+    human:
+      type: integer
+    coin:
+      type: integer
+    kretypost:
+      type: integer
+    pebble:
+      type: integer
+    car:
+      type: integer
+    playingcard:
+      type: integer
+    dogtag:
+      type: integer
+    jigsaw:
+      type: integer
+    easteregg:
+      type: integer
+MoveTypeStats:
+  type: object
+  properties:
+    dropped:
+      type: integer
+    grabbed:
+      type: integer
+    commented:
+      type: integer
+    seen:
+      type: integer
+    archived:
+      type: integer
+    dipped:
+      type: integer
+GlobalStats:
+  type: object
+  properties:
+    totalGeokrety:
+      type: integer
+      description: Total number of active GeoKrety
+    totalGeokretyHidden:
+      type: integer
+      description: Total hidden GeoKrety
+    totalMoves:
+      type: integer
+      description: Total moves across all GeoKrety
+    movesLast30Days:
+      type: integer
+      description: Moves recorded in the last 30 days
+    registeredUsers:
+      type: integer
+      description: Registered user accounts
+    activeUsers:
+      type: integer
+      description: Users active right now
+    activeUsersLast30d:
+      type: integer
+      description: Distinct users active in last 30 days
+    countriesReached:
+      type: integer
+      description: Countries with at least one GeoKret record
+    picturesUploaded:
+      type: integer
+      description: Total pictures in database
+    picturesByType:
+      $ref: '#/components/schemas/PictureTypeStats'
+    geokretyByType:
+      $ref: '#/components/schemas/GeokretyTypeStats'
+    movesByType:
+      $ref: '#/components/schemas/MoveTypeStats'
+RecentMove:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    geokretName:
+      type: string
+    type:
+      type: string
+    username:
+      type: string
+    country:
+      type: string
+    countryFlag:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+LeaderboardUser:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    username:
+      type: string
+    movesCount:
+      type: integer
+    rank:
+      type: integer
+CountryStats:
+  type: object
+  properties:
+    code:
+      type: string
+      maxLength: 2
+    name:
+      type: string
+    geokretyCount:
+      type: integer
+    visible:
+      type: boolean
+RecentBorn:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      example: GK0001
+    name:
+      type: string
+    type:
+      type: integer
+    ownerId:
+      type: integer
+      format: int64
+      nullable: true
+    ownerName:
+      type: string
+    bornAt:
+      type: string
+      format: date-time
+RecentLoved:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      nullable: true
+      example: GK0001
+    geokretName:
+      type: string
+    userId:
+      type: integer
+      format: int64
+    username:
+      type: string
+    lovedAt:
+      type: string
+      format: date-time
+RecentWatched:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      nullable: true
+      example: GK0001
+    geokretName:
+      type: string
+    userId:
+      type: integer
+      format: int64
+    username:
+      type: string
+    watchedAt:
+      type: string
+      format: date-time
+ActiveCountry:
+  type: object
+  properties:
+    code:
+      type: string
+    moves:
+      type: integer
+    uniqueUsers:
+      type: integer
+    lastActivityAt:
+      type: string
+      format: date-time
+    flag:
+      type: string
+ActiveWaypoint:
+  type: object
+  properties:
+    waypoint:
+      type: string
+    country:
+      type: string
+      nullable: true
+    moves:
+      type: integer
+    lastActivityAt:
+      type: string
+      format: date-time
+    lat:
+      type: number
+      format: double
+      nullable: true
+    lon:
+      type: number
+      format: double
+      nullable: true
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+      nullable: true
+RecentRegisteredUser:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    username:
+      type: string
+    joinedAt:
+      type: string
+      format: date-time
+    homeCountry:
+      type: string
+      nullable: true
+RecentActiveUser:
+  type: object
+  properties:
+    userId:
+      type: integer
+      format: int64
+    username:
+      type: string
+    movesCount:
+      type: integer
+    countriesCount:
+      type: integer
+    lastMoveAt:
+      type: string
+      format: date-time
+HourlyHeatmapCell:
+  type: object
+  properties:
+    activityDate:
+      type: string
+      format: date
+    hourUtc:
+      type: integer
+      description: Hour number (0-23 UTC)
+    moveType:
+      type: integer
+    moveCount:
+      type: integer
+      description: Number of moves in this cell
+CountryFlow:
+  type: object
+  properties:
+    yearMonth:
+      type: string
+      format: date
+    fromCountry:
+      type: string
+    toCountry:
+      type: string
+    moveCount:
+      type: integer
+      description: Number of GeoKret transitions between countries
+    uniqueGkCount:
+      type: integer
+    fromFlag:
+      type: string
+    toFlag:
+      type: string
+TopCache:
+  type: object
+  properties:
+    waypointCode:
+      type: string
+    totalGkVisits:
+      type: integer
+    distinctGks:
+      type: integer
+FirstFinderLeaderboardEntry:
+  type: object
+  properties:
+    userId:
+      type: integer
+      format: int64
+    username:
+      type: string
+    firstFinds:
+      type: integer
+    rank:
+      type: integer
+DistanceRecord:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      nullable: true
+      example: GK0001
+    geokretName:
+      type: string
+    kmTotal:
+      type: number
+      format: double
+    rank:
+      type: integer
+DormancyRecord:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      nullable: true
+      example: GK0001
+    geokretName:
+      type: string
+    lastTouch:
+      type: string
+      format: date-time
+      nullable: true
+    dormancySeconds:
+      type: integer
+    dormancyDays:
+      type: number
+MultiplierVelocityRecord:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      nullable: true
+      example: GK0001
+    geokretName:
+      type: string
+    lastChange:
+      type: string
+      format: date-time
+      nullable: true
+    avgDelta:
+      type: number
+      format: double
+GeokretListItem:
+  type: object
+  xml:
+    name: GeokretListItem
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: Internal database identifier (for API compatibility)
+    gkid:
+      type: string
+      example: GK0001
+      description: Public GeoKret identifier
+    name:
+      type: string
+    type:
+      type: integer
+      description: GeoKret type code
+    missing:
+      type: boolean
+    username:
+      type: string
+      nullable: true
+    lat:
+      type: number
+      format: double
+      nullable: true
+    lon:
+      type: number
+      format: double
+      nullable: true
+    country:
+      type: string
+      maxLength: 2
+      nullable: true
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+      nullable: true
+GeokretDetails:
+  type: object
+  xml:
+    name: GeokretDetails
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: Internal database identifier
+    gkid:
+      type: string
+      example: GK0001
+      description: Public GeoKret identifier
+    name:
+      type: string
+    type:
+      type: integer
+    missing:
+      type: boolean
+    ownerId:
+      type: integer
+      format: int64
+    ownerUsername:
+      type: string
+    holderId:
+      type: integer
+      format: int64
+      nullable: true
+    holderUsername:
+      type: string
+      nullable: true
+    country:
+      type: string
+      maxLength: 2
+      nullable: true
+    waypoint:
+      type: string
+      nullable: true
+    lat:
+      type: number
+      format: double
+      nullable: true
+    lon:
+      type: number
+      format: double
+      nullable: true
+    lovesCount:
+      type: integer
+    picturesCount:
+      type: integer
+    bornAt:
+      type: string
+      format: date-time
+    lastMoveAt:
+      type: string
+      format: date-time
+      nullable: true
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+      nullable: true
+    mission:
+      type: string
+      nullable: true
+    distanceKm:
+      type: number
+      format: double
+    cachesCount:
+      type: integer
+    commentsHidden:
+      type: boolean
+MoveRecord:
+  type: object
+  xml:
+    name: MoveRecord
+  properties:
+    id:
+      type: integer
+      format: int64
+    geokretId:
+      type: integer
+      format: int64
+    moveType:
+      type: integer
+    authorId:
+      type: integer
+      format: int64
+      nullable: true
+    username:
+      type: string
+      nullable: true
+    movedOn:
+      type: string
+      format: date-time
+    createdOn:
+      type: string
+      format: date-time
+    country:
+      type: string
+      maxLength: 2
+      nullable: true
+    waypoint:
+      type: string
+      nullable: true
+    elevation:
+      type: integer
+      format: int64
+      nullable: true
+    kmDistance:
+      type: number
+      format: double
+      nullable: true
+    picturesCount:
+      type: integer
+    commentsCount:
+      type: integer
+    comment:
+      type: string
+      nullable: true
+    commentHidden:
+      type: boolean
+    lat:
+      type: number
+      format: double
+      nullable: true
+    lon:
+      type: number
+      format: double
+      nullable: true
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+      nullable: true
+SocialUserEntry:
+  type: object
+  properties:
+    userId:
+      type: integer
+      format: int64
+    username:
+      type: string
+    at:
+      type: string
+      format: date-time
+UserNetworkEdge:
+  type: object
+  properties:
+    userId:
+      type: integer
+      format: int64
+    relatedUserId:
+      type: integer
+      format: int64
+    relatedUsername:
+      type: string
+    sharedGeokretyCount:
+      type: integer
+    firstSeenAt:
+      type: string
+      format: date-time
+    lastSeenAt:
+      type: string
+      format: date-time
+GeokretTimelineEvent:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    eventType:
+      type: string
+    occurredAt:
+      type: string
+      format: date-time
+    actorUserId:
+      type: integer
+      format: int64
+      nullable: true
+    actorUsername:
+      type: string
+      nullable: true
+GeokretCirculation:
+  type: object
+  properties:
+    geokretId:
+      type: integer
+      format: int64
+    gkid:
+      type: string
+      nullable: true
+      example: GK0001
+    geokretName:
+      type: string
+    users:
+      type: integer
+    interactions:
+      type: integer
+    avgInteractionsPerUser:
+      type: number
+      format: double
+PictureInfo:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    type:
+      type: integer
+    filename:
+      type: string
+      nullable: true
+    caption:
+      type: string
+      nullable: true
+    key:
+      type: string
+      nullable: true
+    geokretId:
+      type: integer
+      format: int64
+      nullable: true
+    moveId:
+      type: integer
+      format: int64
+      nullable: true
+    userId:
+      type: integer
+      format: int64
+      nullable: true
+    authorId:
+      type: integer
+      format: int64
+      nullable: true
+    authorUsername:
+      type: string
+      nullable: true
+    uploadedOn:
+      type: string
+      format: date-time
+      nullable: true
+    createdOn:
+      type: string
+      format: date-time
+GeokretCountryVisit:
+  type: object
+  properties:
+    countryCode:
+      type: string
+      maxLength: 2
+    firstVisitedAt:
+      type: string
+      format: date-time
+    moveCount:
+      type: integer
+    flag:
+      type: string
+GeokretWaypointVisit:
+  type: object
+  properties:
+    waypointCode:
+      type: string
+    country:
+      type: string
+      maxLength: 2
+      nullable: true
+    visitCount:
+      type: integer
+    firstVisitedAt:
+      type: string
+      format: date-time
+    lastVisitedAt:
+      type: string
+      format: date-time
+    lat:
+      type: number
+      format: double
+      nullable: true
+    lon:
+      type: number
+      format: double
+      nullable: true
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+      nullable: true
+CountryCount:
+  type: object
+  properties:
+    countryCode:
+      type: string
+      maxLength: 2
+    value:
+      type: integer
+    firstAt:
+      type: string
+      format: date-time
+      nullable: true
+    flag:
+      type: string
+ElevationPoint:
+  type: object
+  properties:
+    moveId:
+      type: integer
+      format: int64
+    movedOn:
+      type: string
+      format: date-time
+    elevation:
+      type: integer
+      description: Elevation in meters
+    kmDistance:
+      type: number
+      format: double
+      nullable: true
+    country:
+      type: string
+      nullable: true
+    waypoint:
+      type: string
+      nullable: true
+DayHeatmapCell:
+  type: object
+  properties:
+    day:
+      type: string
+      format: date
+    moveCount:
+      type: integer
+HourHeatmapCell:
+  type: object
+  properties:
+    dayOfWeek:
+      type: integer
+      description: Day of week (0-6)
+    hourUtc:
+      type: integer
+      description: Hour of day (0-23 UTC)
+    moveCount:
+      type: integer
+CountryDetails:
+  type: object
+  properties:
+    code:
+      type: string
+      maxLength: 2
+    name:
+      type: string
+    geokretyCount:
+      type: integer
+    visible:
+      type: boolean
+    moves:
+      type: integer
+      description: Total moves in country
+    lastMoveAt:
+      type: string
+      format: date-time
+      nullable: true
+WaypointSummary:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    waypointCode:
+      type: string
+    source:
+      type: string
+      description: Cache source (GC, UK, etc.)
+    country:
+      type: string
+      maxLength: 2
+    lat:
+      type: number
+      format: double
+    lon:
+      type: number
+      format: double
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+WaypointDetails:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    waypointCode:
+      type: string
+    source:
+      type: string
+    country:
+      type: string
+      maxLength: 2
+    name:
+      type: string
+      nullable: true
+    lat:
+      type: number
+      format: double
+    lon:
+      type: number
+      format: double
+    geojson:
+      $ref: '#/components/schemas/GeoJSONPoint'
+    currentGeokretyCount:
+      type: integer
+    totalVisits:
+      type: integer
+UserDetails:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    username:
+      type: string
+    joinedAt:
+      type: string
+      format: date-time
+    homeCountry:
+      type: string
+      maxLength: 2
+      nullable: true
+    avatarId:
+      type: integer
+      format: int64
+      nullable: true
+    picturesCount:
+      type: integer
+    ownedGeokretyCount:
+      type: integer
+    movesCount:
+      type: integer
+    distinctGeokretyCount:
+      type: integer
+      description: Number of unique GeoKrety touched
+    activeCountriesCount:
+      type: integer
+    lastMoveAt:
+      type: string
+      format: date-time
+      nullable: true
+    homeCountryFlag:
+      type: string
+      nullable: true
+UserCountryVisit:
+  type: object
+  properties:
+    country:
+      type: string
+      maxLength: 2
+    visitDate:
+      type: string
+      format: date
+    moveCount:
+      type: integer
+UserWaypointVisit:
+  type: object
+  properties:
+    waypointCode:
+      type: string
+    country:
+      type: string
+      maxLength: 2
+    visitDate:
+      type: string
+      format: date
+UserContinentCoverage:
+  type: object
+  properties:
+    continent:
+      type: string
+    countries:
+      type: integer
+UserSearchResult:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    username:
+      type: string
+    joinedAt:
+      type: string
+      format: date-time
+    movesCount:
+      type: integer
+    lastMoveAt:
+      type: string
+      format: date-time
+      nullable: true

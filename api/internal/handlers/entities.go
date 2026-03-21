@@ -13,23 +13,32 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/db"
+	"github.com/geokrety/geokrety-stats-api/internal/gkid"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 var waypointCodePattern = regexp.MustCompile(`^[A-Za-z0-9_-]{2,32}$`)
 var decimalIdentifierPattern = regexp.MustCompile(`^[0-9]+$`)
-var publicGKIDPattern = regexp.MustCompile(`^(?:GK)?[0-9A-F]+$`)
 
 type geoJSONFeature struct {
-	Type       string         `json:"type"`
-	Geometry   interface{}    `json:"geometry"`
-	Properties map[string]any `json:"properties"`
+	Type       string                   `json:"type" xml:"type"`
+	Geometry   interface{}              `json:"geometry" xml:"geometry"`
+	Properties geoJSONFeatureProperties `json:"properties" xml:"properties"`
 }
 
 type geoJSONFeatureCollection struct {
-	Type     string           `json:"type"`
-	Features []geoJSONFeature `json:"features"`
+	Type     string           `json:"type" xml:"type"`
+	Features []geoJSONFeature `json:"features" xml:"features>feature"`
+}
+
+type geoJSONFeatureProperties struct {
+	MoveID       int64     `json:"moveId" xml:"moveId"`
+	MovedOn      time.Time `json:"movedOn" xml:"movedOn"`
+	MoveType     int16     `json:"moveType" xml:"moveType"`
+	MoveTypeName string    `json:"moveTypeName" xml:"moveTypeName"`
+	Country      *string   `json:"country" xml:"country,omitempty"`
+	Waypoint     *string   `json:"waypoint" xml:"waypoint,omitempty"`
 }
 
 func (h *StatsHandler) GetGeokretyDetailsById(w http.ResponseWriter, r *http.Request) {
@@ -40,10 +49,10 @@ func (h *StatsHandler) GetGeokretyDetailsById(w http.ResponseWriter, r *http.Req
 	}
 	row, err := h.store.FetchGeokrety(r.Context(), geokretID)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch geokret")
+		h.writeStoreError(w, r, err, "failed to fetch geokret")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetGeokrety(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +73,10 @@ func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.R
 	}
 	row, err := h.store.FetchGeokretyByGKID(r.Context(), gkid)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch geokret")
+		h.writeStoreError(w, r, err, "failed to fetch geokret")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetGeokretyMoves(w http.ResponseWriter, r *http.Request) {
@@ -92,10 +101,10 @@ func (h *StatsHandler) GetGeokretyMoveDetails(w http.ResponseWriter, r *http.Req
 	}
 	row, err := h.store.FetchGeokretyMoveDetails(r.Context(), geokretID, moveID)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch geokret move")
+		h.writeStoreError(w, r, err, "failed to fetch geokret move")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetGeokretyLovedBy(w http.ResponseWriter, r *http.Request) {
@@ -222,7 +231,7 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 	offset := queryInt(r, "offset", 0, 0, 1_000_000)
 	rows, err := h.store.FetchGeokretyTripPoints(r.Context(), geokretID, limit, offset)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch geokret trip")
+		h.writeStoreError(w, r, err, "failed to fetch geokret trip")
 		return
 	}
 	features := make([]geoJSONFeature, 0, len(rows))
@@ -230,16 +239,17 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 		features = append(features, geoJSONFeature{
 			Type:     "Feature",
 			Geometry: row.GeoJSON,
-			Properties: map[string]any{
-				"moveId":   row.MoveID,
-				"movedOn":  row.MovedOn,
-				"moveType": row.MoveType,
-				"country":  row.Country,
-				"waypoint": row.Waypoint,
+			Properties: geoJSONFeatureProperties{
+				MoveID:       row.MoveID,
+				MovedOn:      row.MovedOn,
+				MoveType:     row.MoveType,
+				MoveTypeName: row.MoveTypeName,
+				Country:      row.Country,
+				Waypoint:     row.Waypoint,
 			},
 		})
 	}
-	writeEnvelope(w, http.StatusOK, geoJSONFeatureCollection{Type: "FeatureCollection", Features: features}, started, limit, offset, len(features))
+	writeEnvelopeForRequest(w, r, http.StatusOK, geoJSONFeatureCollection{Type: "FeatureCollection", Features: features}, started, limit, offset, len(features))
 }
 
 func (h *StatsHandler) GetCountryDetails(w http.ResponseWriter, r *http.Request) {
@@ -250,10 +260,10 @@ func (h *StatsHandler) GetCountryDetails(w http.ResponseWriter, r *http.Request)
 	}
 	row, err := h.store.FetchCountryDetails(r.Context(), code)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch country details")
+		h.writeStoreError(w, r, err, "failed to fetch country details")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetCountryList(w http.ResponseWriter, r *http.Request) {
@@ -284,10 +294,10 @@ func (h *StatsHandler) GetWaypoint(w http.ResponseWriter, r *http.Request) {
 	}
 	row, err := h.store.FetchWaypoint(r.Context(), code)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch waypoint")
+		h.writeStoreError(w, r, err, "failed to fetch waypoint")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetWaypointCurrentGeokrety(w http.ResponseWriter, r *http.Request) {
@@ -332,10 +342,10 @@ func (h *StatsHandler) GetUserDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	row, err := h.store.FetchUserDetails(r.Context(), userID)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch user details")
+		h.writeStoreError(w, r, err, "failed to fetch user details")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetUserList(w http.ResponseWriter, r *http.Request) {
@@ -448,10 +458,10 @@ func (h *StatsHandler) GetPictureDetails(w http.ResponseWriter, r *http.Request)
 	}
 	row, err := h.store.FetchPicture(r.Context(), pictureID)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to fetch picture")
+		h.writeStoreError(w, r, err, "failed to fetch picture")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetPicture(w http.ResponseWriter, r *http.Request) {
@@ -471,7 +481,7 @@ func (h *StatsHandler) parseGeokretRouteID(w http.ResponseWriter, r *http.Reques
 	}
 	geokretID, err := h.store.ResolveGeokretID(r.Context(), gkid)
 	if err != nil {
-		h.writeStoreError(w, err, "failed to resolve geokret")
+		h.writeStoreError(w, r, err, "failed to resolve geokret")
 		return 0, false
 	}
 	return geokretID, true
@@ -483,7 +493,7 @@ func (h *StatsHandler) getEntityList(w http.ResponseWriter, r *http.Request, fet
 	offset := queryInt(r, "offset", 0, 0, 1_000_000)
 	rows, err := fetch(limit, offset)
 	if err != nil {
-		h.writeStoreError(w, err, errMsg)
+		h.writeStoreError(w, r, err, errMsg)
 		return
 	}
 	count := 0
@@ -491,7 +501,7 @@ func (h *StatsHandler) getEntityList(w http.ResponseWriter, r *http.Request, fet
 	if v.IsValid() && v.Kind() == reflect.Slice {
 		count = v.Len()
 	}
-	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, count)
+	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, count)
 }
 
 func (h *StatsHandler) userListHandler(w http.ResponseWriter, r *http.Request, fetch func(context.Context, int64, int, int) ([]db.GeokretListItem, error), errMsg string) {
@@ -504,20 +514,20 @@ func (h *StatsHandler) userListHandler(w http.ResponseWriter, r *http.Request, f
 	}, errMsg)
 }
 
-func (h *StatsHandler) writeStoreError(w http.ResponseWriter, err error, message string) {
+func (h *StatsHandler) writeStoreError(w http.ResponseWriter, r *http.Request, err error, message string) {
 	if errors.Is(err, sql.ErrNoRows) {
-		writeError(w, http.StatusNotFound, "resource not found")
+		writeErrorForRequest(w, r, http.StatusNotFound, "resource not found")
 		return
 	}
 	h.logger.Error(message, zap.Error(err))
-	writeError(w, http.StatusInternalServerError, message)
+	writeErrorForRequest(w, r, http.StatusInternalServerError, message)
 }
 
 func parseInt64PathParam(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
 	value := chi.URLParam(r, key)
 	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil || parsed <= 0 {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
+		writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
 		return 0, false
 	}
 	return parsed, true
@@ -532,42 +542,26 @@ func parsePublicGKIDParam(w http.ResponseWriter, r *http.Request, keys ...string
 		}
 	}
 	if value == "" {
-		writeError(w, http.StatusBadRequest, "missing geokret identifier")
+		writeErrorForRequest(w, r, http.StatusBadRequest, "missing geokret identifier")
 		return 0, false
 	}
-
-	normalized := strings.ToUpper(value)
-	if decimalIdentifierPattern.MatchString(normalized) {
-		parsed, err := strconv.ParseInt(normalized, 10, 64)
-		if err != nil || parsed <= 0 {
-			writeError(w, http.StatusBadRequest, "invalid geokret identifier")
-			return 0, false
-		}
-		return parsed, true
-	}
-
-	if !publicGKIDPattern.MatchString(normalized) || !strings.HasPrefix(normalized, "GK") {
-		writeError(w, http.StatusBadRequest, "invalid geokret identifier")
+	parsed, err := gkid.New(value)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, err.Error())
 		return 0, false
 	}
-
-	parsed, err := strconv.ParseInt(strings.TrimPrefix(normalized, "GK"), 16, 64)
-	if err != nil || parsed <= 0 {
-		writeError(w, http.StatusBadRequest, "invalid geokret identifier")
-		return 0, false
-	}
-	return parsed, true
+	return parsed.Int(), true
 }
 
 func parseCountryCodeParam(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
 	value := strings.ToUpper(strings.TrimSpace(chi.URLParam(r, key)))
 	if len(value) != 2 {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
+		writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
 		return "", false
 	}
 	for _, ch := range value {
 		if ch < 'A' || ch > 'Z' {
-			writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
+			writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
 			return "", false
 		}
 	}
@@ -577,7 +571,7 @@ func parseCountryCodeParam(w http.ResponseWriter, r *http.Request, key string) (
 func parseWaypointCodeParam(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
 	value := strings.ToUpper(strings.TrimSpace(chi.URLParam(r, key)))
 	if !waypointCodePattern.MatchString(value) {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
+		writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path parameter %q", key))
 		return "", false
 	}
 	return value, true
@@ -586,7 +580,7 @@ func parseWaypointCodeParam(w http.ResponseWriter, r *http.Request, key string) 
 func parseSearchQuery(w http.ResponseWriter, r *http.Request) (string, bool) {
 	value := strings.TrimSpace(r.URL.Query().Get("q"))
 	if len(value) < 2 {
-		writeError(w, http.StatusBadRequest, "query parameter \"q\" must be at least 2 characters")
+		writeErrorForRequest(w, r, http.StatusBadRequest, "query parameter \"q\" must be at least 2 characters")
 		return "", false
 	}
 	return value, true

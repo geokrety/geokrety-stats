@@ -89,10 +89,10 @@ func (h *StatsHandler) GetKPIs(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.store.FetchGlobalStats(r.Context())
 	if err != nil {
 		h.logger.Error("failed to fetch global stats", zap.Error(err))
-		writeError(w, http.StatusInternalServerError, "failed to fetch global stats")
+		writeErrorForRequest(w, r, http.StatusInternalServerError, "failed to fetch global stats")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, stats, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, stats, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) GetCountries(w http.ResponseWriter, r *http.Request) {
@@ -102,10 +102,10 @@ func (h *StatsHandler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.store.FetchCountries(r.Context(), limit, offset)
 	if err != nil {
 		h.logger.Error("failed to fetch countries", zap.Error(err))
-		writeError(w, http.StatusInternalServerError, "failed to fetch countries")
+		writeErrorForRequest(w, r, http.StatusInternalServerError, "failed to fetch countries")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, len(rows))
+	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, len(rows))
 }
 
 func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
@@ -115,10 +115,10 @@ func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.store.FetchLeaderboard(r.Context(), limit, offset)
 	if err != nil {
 		h.logger.Error("failed to fetch leaderboard", zap.Error(err))
-		writeError(w, http.StatusInternalServerError, "failed to fetch leaderboard")
+		writeErrorForRequest(w, r, http.StatusInternalServerError, "failed to fetch leaderboard")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, len(rows))
+	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, len(rows))
 }
 
 func (h *StatsHandler) GetRecentMoves(w http.ResponseWriter, r *http.Request) {
@@ -228,10 +228,10 @@ func (h *StatsHandler) GetGeokretCirculation(w http.ResponseWriter, r *http.Requ
 	row, err := h.store.FetchGeokretCirculation(r.Context(), geokretID)
 	if err != nil {
 		h.logger.Error("failed to fetch geokret circulation", zap.Error(err))
-		writeError(w, http.StatusInternalServerError, "failed to fetch geokret circulation")
+		writeErrorForRequest(w, r, http.StatusInternalServerError, "failed to fetch geokret circulation")
 		return
 	}
-	writeEnvelope(w, http.StatusOK, row, started, 1, 0, 1)
+	writeEnvelopeForRequest(w, r, http.StatusOK, row, started, 1, 0, 1)
 }
 
 func (h *StatsHandler) getRecentList(
@@ -246,7 +246,7 @@ func (h *StatsHandler) getRecentList(
 	rows, err := fetch(r.Context(), limit, offset)
 	if err != nil {
 		h.logger.Error(errMsg, zap.Error(err))
-		writeError(w, http.StatusInternalServerError, errMsg)
+		writeErrorForRequest(w, r, http.StatusInternalServerError, errMsg)
 		return
 	}
 	count := 0
@@ -254,14 +254,14 @@ func (h *StatsHandler) getRecentList(
 	if v.IsValid() && v.Kind() == reflect.Slice {
 		count = v.Len()
 	}
-	writeEnvelope(w, http.StatusOK, rows, started, limit, offset, count)
+	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, count)
 }
 
 func parseInt64Param(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {
 	value := chi.URLParam(r, key)
 	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil || parsed <= 0 {
-		writeError(w, http.StatusBadRequest, "invalid identifier")
+		writeErrorForRequest(w, r, http.StatusBadRequest, "invalid identifier")
 		return 0, false
 	}
 	return parsed, true

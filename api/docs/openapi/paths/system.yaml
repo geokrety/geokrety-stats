@@ -1,0 +1,113 @@
+/:
+  get:
+    tags:
+    - System
+    operationId: getRootInfo
+    summary: API root metadata
+    description: Returns a compact self-describing payload for the running API instance.
+    responses:
+      '200':
+        description: Root metadata payload
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RootInfo'
+            example:
+              name: GeoKrety Stats API
+              version: v3
+              docs: /docs
+              openapi: /openapi.yaml
+              health: /health
+              metrics: /metrics
+              root: /api/v3
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/RootInfo'
+            example: '<RootInfo><name>GeoKrety Stats API</name><version>v3</version><docs>/docs</docs><openapi>/openapi.yaml</openapi><health>/health</health><metrics>/metrics</metrics><root>/api/v3</root></RootInfo>'
+/healtz:
+  get:
+    tags:
+    - System
+    operationId: getLiveness
+    summary: Liveness check
+    description: Lightweight process liveness probe without database dependency.
+    responses:
+      '200':
+        description: Service process is alive
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealtzStatus'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/HealtzStatus'
+/health:
+  get:
+    tags:
+    - System
+    operationId: getHealth
+    summary: Health check
+    description: Comprehensive health check including PostgreSQL connectivity and
+      active websocket client count.
+    responses:
+      '200':
+        description: Service and database are healthy
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthStatus'
+            example:
+              status: ok
+              activeWsClients: 0
+              serverTime: '2026-03-16T20:47:17Z'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/HealthStatus'
+            example: '<HealthStatus><status>ok</status><activeWsClients>0</activeWsClients><serverTime>2026-03-16T20:47:17Z</serverTime></HealthStatus>'
+      '503':
+        $ref: '#/components/responses/ServiceUnavailableHealth'
+/metrics:
+  get:
+    tags:
+    - System
+    operationId: getPrometheusMetrics
+    summary: Prometheus metrics endpoint
+    description: Exposes Prometheus text exposition format metrics.
+    responses:
+      '200':
+        description: Prometheus metrics payload
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: '# HELP http_requests_total Total number of HTTP requests.
+
+              # TYPE http_requests_total counter
+
+              http_requests_total{method="GET",path="/health",status="200"} 12
+
+              '
+/ws:
+  get:
+    tags:
+    - System
+    operationId: openWebsocket
+    summary: WebSocket upgrade endpoint
+    description: Upgrades the connection to a websocket stream for live hub events.
+    responses:
+      '101':
+        description: WebSocket protocol upgrade completed
+/openapi.yaml:
+  get:
+    tags:
+    - System
+    operationId: getOpenApiDocument
+    summary: OpenAPI document
+    description: Serves this OpenAPI contract as YAML when swagger support is enabled.
+    responses:
+      '200':
+        description: OpenAPI YAML document
+        content:
+          application/yaml:
+            schema:
+              type: string

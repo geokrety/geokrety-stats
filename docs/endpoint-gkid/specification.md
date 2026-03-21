@@ -14,7 +14,7 @@ The GeoKrety system manages physical trackable items identified by unique IDs in
 1. **Internal ID** (`int64`): Database-internal identifier used exclusively for foreign keys and internal references
 2. **Public GKID** (`string`): User-facing identifier following the format `GK` + hexadecimal value (e.g., `GK0001`, `GKB65C`, `GKFFFF`)
 
-Currently, the GeoKrety Stats API represents all GKID fields as `*int64` in API response structs, with conversion logic scattered throughout handler functions. This specification defines a centralized, type-safe `GeokretId` type that encapsulates the bidirectional conversion between internal and public ID representations, automatically handles JSON serialization/deserialization, and improves type safety across the API.
+The GeoKrety Stats API exposes GKID fields through a centralized `GeokretId` type instead of scattered ad hoc conversions. This specification defines the contract for that type, including bidirectional conversion between internal and public ID representations, JSON/XML serialization and deserialization, and consistent parsing rules across the API.
 
 ## 1. Purpose & Scope
 
@@ -24,6 +24,7 @@ Currently, the GeoKrety Stats API represents all GKID fields as `*int64` in API 
 - Type definition and constructor methods
 - Conversion algorithms (int ↔ string)
 - JSON marshaling/unmarshaling behavior
+- XML marshaling/unmarshaling behavior
 - Nullable handling using Go's pointer semantics
 - Integration patterns for handlers, store layer, and API response entities
 - Testing strategy and validation
@@ -43,8 +44,9 @@ Currently, the GeoKrety Stats API represents all GKID fields as `*int64` in API 
 |------|-----------|
 | **Internal ID** | 64-bit signed integer stored in database for foreign key relationships; not directly exposed to users |
 | **Public GKID** | User-facing representation of a GeoKret identifier in format `GK` followed by uppercase hexadecimal digits (e.g., `GK0001`, `GKB65C`) |
-| **Marshaling** | Process of converting a Go value to JSON format for API responses |
-| **Unmarshaling** | Process of parsing JSON input to populate Go values |
+| **Marshaling** | Process of converting a Go value to JSON or XML format for API responses |
+| **Unmarshaling** | Process of parsing JSON or XML input to populate Go values |
+| **XML Element** | In XML representation, the GKID string maps to either an XML attribute or element content |
 | **Nullable/Optional** | A value that may or may not be present; represented as `*GeokretId` (pointer) in Go |
 | **Validation** | Ensuring a value conforms to defined constraints (positive, within range, correct format) |
 | **Zero Value** | The default value of a type when not explicitly initialized (for pointers, this is `nil`) |
@@ -55,11 +57,14 @@ Currently, the GeoKrety Stats API represents all GKID fields as `*int64` in API 
 
 - **REQ-001**: The `GeokretId` type shall encapsulate an internal `int64` value and provide safe access through methods
 - **REQ-002**: The type shall convert internal `int64` to public GKID string format (`GK` + uppercase hex; minimum 4 hex digits with zero-padding)
-- **REQ-003**: The type shall parse public GKID strings (with or without `GK` prefix) to create valid instances
-- **REQ-004**: The type shall also accept plain decimal integer input for backward compatibility with legacy systems
+- **REQ-003**: The type shall parse public GKID strings (with or without `GK` prefix, case-insensitive) to create valid instances
+- **REQ-004**: The type shall also accept plain decimal integer input for backward compatibility with legacy systems; digit-only strings without a leading zero are treated as decimal, while zero-padded digit-only strings are treated as hexadecimal
 - **REQ-005**: JSON marshaling shall serialize `GeokretId` to public GKID string format
-- **REQ-006**: JSON unmarshaling shall accept public GKID strings and decimal integers
+- **REQ-006**: JSON unmarshaling shall accept public GKID strings and decimal integers; JSON `null` leaves pointer fields unset through the standard encoder path
 - **REQ-007**: Nil pointers (`*GeokretId`) shall marshal to JSON `null` without error
+- **REQ-007b**: XML marshaling shall serialize `GeokretId` to public GKID string format (as element or attribute)
+- **REQ-007c**: XML unmarshaling shall accept public GKID strings and decimal integers from XML elements or attributes; absent XML elements leave pointer fields unset through the standard decoder path
+- **REQ-007d**: Nil pointers (`*GeokretId`) shall omit the XML element or attribute without error
 - **REQ-008**: The type shall validate that values are positive non-zero integers
 - **REQ-009**: Constructor and parsing functions shall return errors for invalid inputs with descriptive messages
 - **REQ-010**: Go string conversion via `fmt.Stringer` interface shall return public GKID format
@@ -71,6 +76,7 @@ Currently, the GeoKrety Stats API represents all GKID fields as `*int64` in API 
 - **NFR-002**: No memory allocations beyond the pointer/value itself in happy-path scenarios
 - **NFR-003**: Error messages shall be descriptive and aid developers in debugging invalid inputs
 - **NFR-004**: Type shall be compatible with pgx and SQL scanning operations (nullable field support)
+- **NFR-005**: XML marshaling/unmarshaling shall have comparable performance to JSON marshaling
 
 ### Constraints
 
@@ -78,7 +84,7 @@ Currently, the GeoKrety Stats API represents all GKID fields as `*int64` in API 
 - **CON-002**: Only non-zero positive integers shall be accepted (1 to 2^63-1 technically, but practically 1 to 2^32-1 per GeoKrety convention)
 - **CON-003**: Public GKID format is fixed: `GK` + exactly 4 uppercase hex digits minimum, no alternatives
 - **CON-004**: The zero value (uninitialized `GeokretId{}`) is invalid; deliberate construction via `New()` or `FromInt()` is required
-- **CON-005**: Pointer receivers (`*GeokretId`) must handle `nil` gracefully in all exported methods
+- **CON-005**: Pointer receivers (`*GeokretId`) must handle `nil` gracefully in helper and formatting methods; core accessors such as `Int()` and `ToGKID()` may panic on nil as documented below
 - **CON-006**: No constructor should accept or validate values above typical GeoKrety ranges; range checking is the responsibility of business logic
 
 ### Guidelines
@@ -106,7 +112,10 @@ value int64 // unexported; immutable after creation
 
 ```go
 // New creates a GeokretId from a public GKID string (e.g., "GK0001", "GKB65C").
-// Accepts formats: "GK00FF" (standard), "00FF" (without prefix), "255" (decimal).
+// Accepts formats: "GK00FF" or "gk00ff" (standard, case-insensitive),
+// "00FF" (without prefix), and "255" (decimal). Digit-only strings without
+// a leading zero are parsed as decimal; zero-padded digit-only strings are
+// parsed as hexadecimal.
 // Returns an error if the input is invalid or the resulting integer is non-positive.
 func New(gkid string) (*GeokretId, error)
 
@@ -145,19 +154,37 @@ func (g *GeokretId) ToGKIDOrEmpty() string
 
 ```go
 // MarshalJSON encodes the GeokretId as a public GKID string in JSON.
-// Nil receiver marshals as JSON null.
+// Nil pointer fields marshal as JSON null through the standard encoder path.
 // Example output: {"gkid": "GK0001"}
-func (g *GeokretId) MarshalJSON() ([]byte, error)
+func (g GeokretId) MarshalJSON() ([]byte, error)
 
 // UnmarshalJSON decodes a GeokretId from JSON (string or number).
-// Accepts: "GK0001", "0001" (hex without prefix), 1 (decimal integer).
-// Sets receiver to nil if input is JSON null.
+// Accepts: "GK0001" or "gk0001", "0001" (hex without prefix), and
+// 1 (decimal integer). Digit-only strings without a leading zero are decimal;
+// zero-padded digit-only strings are hexadecimal.
+// Pointer fields remain nil on JSON null through the standard decoder path.
 func (g *GeokretId) UnmarshalJSON(data []byte) error
+```
+
+### XML Marshaling Interface
+
+```go
+// MarshalXML encodes the GeokretId as a public GKID string in XML element.
+// Nil pointer fields omit the element through the standard encoder path.
+// Example output: <gkid>GK0001</gkid>
+func (g GeokretId) MarshalXML(e *xml.Encoder, start xml.StartElement) error
+
+// UnmarshalXML decodes a GeokretId from XML element content (string or number).
+// Accepts: "GK0001" or "gk0001", "0001" (hex without prefix), and
+// "1" (decimal integer string). Digit-only strings without a leading zero are
+// decimal; zero-padded digit-only strings are hexadecimal.
+// Pointer fields remain nil when the element is absent through the standard decoder path.
+func (g *GeokretId) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 ```
 
 ### Entity Integration
 
-All existing entity structs containing GKID fields shall migrate from `*int64` to `*GeokretId`:
+Entity structs containing GKID fields shall use `*GeokretId` instead of `*int64`:
 
 **Before:**
 ```go
@@ -209,17 +236,23 @@ type GeokretIdError struct {
 
 - **AC-006**: Given a `*GeokretId` with value `255`, When marshaling to JSON, Then the output is `"GK00FF"` (not `255`)
 
+- **AC-006b**: Given a `*GeokretId` with value `255`, When marshaling to XML, Then the output is `<gkid>GK00FF</gkid>` (public GKID format in element content)
+
 - **AC-007**: Given a nil `*GeokretId` receiver, When calling `String()`, Then it returns `"nil"` without panic
 
 - **AC-008**: Given an invalid input `"GK0000"` (zero value), When calling `New()`, Then an error is returned with reason mentioning "greater than zero"
 
 - **AC-009**: Given an empty or whitespace-only string, When calling `NewNullable()`, Then nil is returned without error
 
-- **AC-010**: Given valid inputs in multiple formats (`"GK0001"`, `"0001"`, `"1"`), When parsing each format, Then all resolve to the same internal value
+- **AC-010**: Given valid inputs in multiple formats (`"GK0001"`, `"gk0001"`, `"0001"`, `"1"`), When parsing each format, Then all resolve to the same internal value, with digit-only inputs without a leading zero interpreted as decimal and zero-padded digit-only inputs interpreted as hexadecimal
 
 - **AC-011**: Given a legacy endpoint accepting both GKID and plain integer parameters, When the field is populated with `*GeokretId`, Then both input formats work transparently
 
+- **AC-011b**: Given XML input with GKID element, When unmarshaling into struct with `*GeokretId` field, Then both `<gkid>GK0001</gkid>` and `<gkid>1</gkid>` formats work transparently
+
 - **AC-012**: Given API response struct with `GKID *GeokretId` field, When marshaling to JSON, Then the output shows public GKID string (e.g., `"gkid": "GK0001"`), not the internal integer
+
+- **AC-012b**: Given API response struct with `GKID *GeokretId` field, When marshaling to XML, Then the output shows public GKID string (e.g., `<gkid>GK0001</gkid>`), not the internal integer
 
 ## 6. Test Automation Strategy
 
@@ -228,6 +261,7 @@ type GeokretIdError struct {
 - **Unit Tests**: Use Go's standard `testing` package; focus on constructor, conversion, and edge cases
 - **Integration Tests**: Test with actual database queries and API routes; use prepared test datasets
 - **JSON Serialization Tests**: Use `encoding/json` package to verify marshaling/unmarshaling in both directions
+- **XML Serialization Tests**: Use `encoding/xml` package to verify marshaling/unmarshaling in both directions
 - **Database Scanning Tests**: Verify `sql.Scanner` and `driver.Valuer` implementations work with pgx
 
 ### Test Coverage Areas
@@ -269,6 +303,18 @@ type GeokretIdError struct {
 ✓ Unmarshal null → nil *GeokretId
 ✓ Unmarshal invalid format → error
 ✓ Round-trip marshal/unmarshal preserves value
+```
+
+#### XML Marshaling Tests
+```
+✓ Marshal *GeokretId → XML element content (e.g., <gkid>GK0001</gkid>)
+✓ Marshal nil *GeokretId → omitted element or empty element
+✓ Unmarshal <gkid>GK0001</gkid> → *GeokretId with value 1
+✓ Unmarshal <gkid>1</gkid> (decimal) → *GeokretId with value 1
+✓ Unmarshal empty or missing element → nil *GeokretId
+✓ Unmarshal invalid format in XML → error
+✓ Round-trip marshal/unmarshal preserves value
+✓ XML attribute parsing (if supported)
 ```
 
 #### Entity Integration Tests
@@ -440,6 +486,18 @@ type Response struct {
 var resp Response
 json.Unmarshal([]byte(`{"gkid": null}`), &resp)
 fmt.Println(resp.GKID)  // Output: <nil>
+
+// XML with missing element
+type XMLResponse struct {
+    GKID *GeokretId `xml:"gkid"`
+}
+var xmlResp XMLResponse
+xml.Unmarshal([]byte(`<XMLResponse></XMLResponse>`), &xmlResp)
+fmt.Println(xmlResp.GKID)  // Output: <nil>
+
+// XML with element content
+xml.Unmarshal([]byte(`<XMLResponse><gkid>GK0001</gkid></XMLResponse>`), &xmlResp)
+fmt.Println(xmlResp.GKID.ToGKID())  // Output: GK0001
 ```
 
 ### Input Format Flexibility
@@ -497,8 +555,33 @@ func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.R
     }
 
     details, err := h.store.FetchGeokretyByGKID(r.Context(), gkidVal.Int())
-    // ...response includes GeokretDetails.GKID (*GeokretId) → auto-serialized
+    // ...response includes GeokretDetails.GKID (*GeokretId) → auto-serialized to JSON or XML
 }
+```
+
+### XML Response Example
+
+```go
+type GeokretListItem struct {
+    ID   int64      `xml:"id"`
+    GKID *GeokretId `xml:"gkid"`
+    Name string     `xml:"name"`
+}
+
+item := GeokretListItem{
+    ID:   123,
+    GKID: NewNullable(255),
+    Name: "Test Geokrety",
+}
+
+data, _ := xml.Marshal(item)
+fmt.Println(string(data))
+// Output:
+// <GeokretListItem>
+//   <id>123</id>
+//   <gkid>GK00FF</gkid>
+//   <name>Test Geokrety</name>
+// </GeokretListItem>
 ```
 
 ## 10. Validation Criteria
@@ -511,6 +594,10 @@ func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.R
 
 ✓ JSON unmarshaling accepts multiple input formats and converts correctly
 
+✓ XML marshaling produces correctly formatted element content ("GK" + hex)
+
+✓ XML unmarshaling accepts multiple input formats and converts correctly
+
 ✓ Nil receiver methods (`String()`, `IntOrZero()`, etc.) don't panic
 
 ✓ Panic-prone methods (`Int()`, `ToGKID()`) clearly document invariant (non-nil receiver)
@@ -521,10 +608,12 @@ func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.R
 
 ✓ Type integrates seamlessly with existing entity structs
 
-✓ Database transaction tests show correct round-trip (DB int → GeokretId → JSON → client)
+✓ Database transaction tests show correct round-trip (DB int → GeokretId → JSON/XML → client)
 
 ✓ Backward compatibility maintained: existing store methods unchanged
 
-✓ New API responses show public GKID format in JSON
+✓ New API responses show public GKID format in JSON and XML
 
-✓ Code coverage ≥95% for the type implementation
+✓ XML attributes and elements both supported (if needed)
+
+✓ Code coverage ≥95% for the type implementation including XML paths
