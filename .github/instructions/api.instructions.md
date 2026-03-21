@@ -5,35 +5,70 @@ applyTo: 'api/**/*.go'
 
 # GeoKrety Stats API Instructions
 
-- MUST Use Go with `chi` for routing and `pgx` + `sqlx`
-- MUST Be compliant with JSON REST API and include metadata, relationships, filtering and pagination if needed
-- MUST support GeoJSON for location data and include relevant fields in responses (leaflet integration)
-- MUST be optimized for performance on datasets used for Data Visualisation (ECharts) and mapping (Leaflet.js)
+## API Design & Structure
+
+- MUST Use Go with `chi` for routing and `pgx` + `sqlx` for database interactions
 - MUST Expose REST endpoints for stats, GeoKrety, users, and countries
-- MUST Implement WebSocket for live updates and connection count
 - MUST Serve OpenAPI spec and Swagger UI for documentation
-- MUST Use structured logging with `zap` and respect `LOG_LEVEL`
-- MUST Implement graceful shutdown and CORS policies for security
-- MUST Use prepared statements for all DB queries
-- MUST sorting, filtering, and pagination for all list endpoints
-- MUST Consistent response formats with error handling
-- MUST Broadcast WebSocket messages on relevant data changes and periodically broadcast connection count
-- MUST Document all endpoints and expected responses in OpenAPI spec
-- MUST Validate input parameters and return appropriate error messages for invalid requests
-- MUST Ensure all endpoints are idempotent and safe to call multiple times
-- MUST Consider response caching for expensive endpoints and implement rate limiting if necessary
-- MUST Ensure proper error handling and status codes for all endpoints (e.g. 400 for bad requests, 500 for server errors)
+- MUST expose only stable view-like contracts, not internal maintenance tables
+
+## Response Format & Data Handling
+
+- MUST Be compliant with JSON REST API and include metadata, relationships, filtering and pagination
+- MUST be able to return response as JSON, XML, or CSV based on Accept header
+- MUST support GeoJSON for location data and include relevant fields in responses (leaflet integration)
+- MUST represent dates as UTC ISO 8601 strings
 - MUST include country codes and names in relevant responses for better frontend integration
 - MUST Include relevant metadata in responses such as total counts, pagination info, and timestamps for better frontend integration
 - MUST include request/query timing statistics in response metadata for monitoring and debugging purposes
-- MUST expose only stable view-like contracts, not internal maintenance tables
-- MUST represent dates as UTC ISO 8601 strings
+- MUST include data_as_of and computed_at fields in responses
 - MUST document freshness for materialized-view backed endpoints as part of the contract
-- MUST include `data_as_of` and `computed_at` fields in responses
-- MUST hide implementation tables such as `backfill_progress` and `job_log` from public endpoints
+
+## Performance & Optimization
+
+- MUST be optimized for performance on datasets used for Data Visualisation (ECharts) and mapping (Leaflet.js)
+- MUST Consider response caching for expensive endpoints and implement rate limiting if necessary
+
+## Security & Privacy
+
+- MUST Implement graceful shutdown and CORS policies for security
+- MUST hide implementation tables such as backfill_progress and job_log from public endpoints
+- MUST Never include secret or sensitive information in the API responses
+
+## Database & Querying
+
+- MUST Use prepared statements for all DB queries
+
+## API Usability & Consistency
+
+- MUST Implement sorting, filtering, and pagination for all list endpoints
+- MUST Ensure consistent response formats with error handling
+- MUST Validate input parameters and return appropriate error messages for invalid requests
+- MUST Ensure all endpoints are idempotent and safe to call multiple times
+- MUST Ensure proper error handling and status codes for all endpoints (e.g. 400 for bad requests, 500 for server errors)
+- MUST include pagination metadata (total count, page size, current page) in list endpoints
+- MUST include pagination compatible with infinite scrolling (e.g. cursor-based pagination) for endpoints with potentially large result sets
+
+## Real-Time & WebSocket
+
+- MUST Implement WebSocket for live updates and connection count
+- MUST Broadcast WebSocket messages on relevant data changes and periodically broadcast connection count
+
+## Logging & Monitoring
+
+- MUST Use structured logging with zap and respect LOG_LEVEL
+
+## Documentation & Testing
+
+- MUST Document all endpoints and expected responses in OpenAPI spec
 - MUST implement Unit tests for all handlers and benchmark tests for critical endpoints
 - MUST codecoverage of at least 80% for all handlers
 - MUST codecoverage of at least 100% for all critical endpoints (e.g. KPIs, recent moves)
+
+## Must build the code and run the tests
+- MUST build the code and run the tests to ensure everything is working correctly before committing any changes
+- MUST ensure that all tests pass successfully and that the code is free of errors before committing any changes
+- MUST ensure code coverage is at least 80% for all handlers and 100% for critical endpoints before committing any changes
 
 ## API Design
 
@@ -57,10 +92,12 @@ applyTo: 'api/**/*.go'
   - Recently active users: /api/v3/users/recent-active
 
 - REST endpoints for GeoKrety and users activity:
+  - Country list: /api/v3/countries
   - Country details: /api/v3/countries/{code}
     - GeoKrety in country: /api/v3/countries/{code}/geokrety
     - Country leaderboard: /api/v3/countries/{code}/leaderboard
 
+  - User list: /api/v3/users
   - User details: /api/v3/users/{id}
     - Owned GeoKrety: /api/v3/users/{id}/geokrety-owned
     - Loved GeoKrety: /api/v3/users/{id}/geokrety-loved
@@ -68,6 +105,7 @@ applyTo: 'api/**/*.go'
     - Country history: /api/v3/users/{id}/countries
     - Waypoint history: /api/v3/users/{id}/waypoints
 
+  - GeoKrety list: /api/v3/geokrety
   - GeoKrety details: /api/v3/geokrety/{id}
     - Move history: /api/v3/geokrety/{id}/moves
     - Current location: /api/v3/geokrety/{id}/location

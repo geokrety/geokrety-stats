@@ -4,13 +4,15 @@ tools: [vscode/askQuestions, execute/runInTerminal, read/problems, read/readFile
 description: 'request an end-to-end migration implementation for a specific task'
 ---
 
-Please run the `create-migration` skill to implement the migration described for the sprint task (given by user instructions).
+Please run the `create-migration` skill to implement the migration described for the sprint task (file given by user instructions).
 
 Requirements:
+- you MUST create a "working folder" in #file:../../tmp/xxx/ where `xxx` is a unique identifier for this task.
+- you MUST use this "working folder" to put all your temporary files, including code snippets, test cases, and any other relevant information you need to complete the task.
 - Implement the Phinx migration PHP file according to the task specification and project conventions.
 - Use skill `create-migration` to implement exhaustive pgTAP tests covering schema, constraints, trigger behavior, and edge cases; place tests in #file:../../../geokrety-website/website/db/tests/ using the proper NNN slot.
 - Update #file:../../../geokrety-website/website/db/tests-copy-schema-geokrety-to-tests.sh if the migration adds data that must be copied into the test DB for the tests to run.
-- Maintain and update #file:../..//docs/xxx/99-IMPLEMENTATION.md (replace xxx with the appropriate directory) with advancement entries and checkboxes as work proceeds.
+- Maintain and update #file:../../tmp/xxx/99-IMPLEMENTATION.md (replace xxx with the appropriate directory) with advancement entries and checkboxes as work proceeds.
 - Apply the migration with the phinx wrapper, copy schema to tests, and run pgTAP. Iterate until all tests pass or a non-trivial open question remains.
 - If the task completes successfully, automatically continue to the next task in the given sprint directory and repeat.
 
@@ -18,8 +20,8 @@ Review loop (must be executed before applying migrations):
 1) Invoke the `dba` agent for a safety/performance/reversibility review of the migration file and tests.
 2) Invoke the `critical-thinking` agent to challenge assumptions and `down()` reversibility.
 3) Invoke the `quality-engineer` agent to verify test coverage and plan counts.
-If any agent raises an unresolved concern, log it in #file:../../docs/xxx/99-OPEN-QUESTIONS.md (replace xxx with the appropriate directory) and present it to the human operator. Do not apply the migration when there are blocking unresolved safety issues.
-4) During each loop always read #file:../../docs/xxx/99-IMPLEMENTATION.md again, the user may have added new information or checkboxes that must be addressed before proceeding.
+If any agent raises an unresolved concern, log it in #file:../../tmp/xxx/99-OPEN-QUESTIONS.md (replace xxx with the appropriate directory) and present it to the human operator. Do not apply the migration when there are blocking unresolved safety issues.
+4) During each loop always read #file:../../tmp/xxx/99-IMPLEMENTATION.md again, the user may have added new information or checkboxes that must be addressed before proceeding.
 
 Execution commands (do not run outside repo wrappers):
 `#file:../../.github/skills/phinx/scripts/phinx.sh migrate --count=1`

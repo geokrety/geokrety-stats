@@ -9,20 +9,20 @@ user-invocable: true
 - Provide a clear, minimal contract for running the project's pgtap tests via the wrapper script.
 
 ## Wrapper script (where it lives)
-- The wrapper script for this skill is located at `./scripts/pgtap.sh` (relative to this `SKILL.md`). Invoke it from the repository root using the explicit path to avoid ambiguity:
+- The wrapper script for this skill is located at #file:./scripts/pg_prove (relative to this #file:./SKILL.md ). Invoke it from the repository root using the explicit path to avoid ambiguity:
 
-  ```bash
-  ./.github/skills/pgtap/scripts/pgtap.sh [args...]
-  ```
+```bash
+./.github/skills/pgtap/scripts/pg_prove [args...]
+```
 
 ## Contract / behavior
 - The wrapper runs `pg_prove` with the repository defaults and search_path required for the tests. By default it runs the equivalent of:
 
-  ```bash
-  PGPASSWORD=geokrety \
-    PGOPTIONS=--search_path=public,pgtap,geokrety \
-    pg_prove -d tests -U geokrety -h localhost -ot ${WORKSPACE:-.}/tests/test*.sql
-  ```
+```bash
+PGPASSWORD=geokrety \
+  PGOPTIONS=--search_path=public,pgtap,geokrety \
+  pg_prove -d tests -U geokrety -h localhost -ot ${WORKSPACE:-.}/tests/test*.sql
+```
 
 - Behavior details:
   - If the environment variable `GEOKRETY_DB_TESTS_PATH` is defined, the wrapper will run tests from that path instead of the default `./tests` directory.
@@ -32,40 +32,40 @@ user-invocable: true
 ## Usage examples (explicit)
 - Run tests from repo root (default path):
 
-  ```bash
-  ./.github/skills/pgtap/scripts/pgtap.sh
-  ```
+```bash
+./.github/skills/pgtap/scripts/pg_prove
+```
 
 - Run tests from a custom path (exported env):
 
-  ```bash
-  GEOKRETY_DB_TESTS_PATH=/path/to/tests ./.github/skills/pgtap/scripts/pgtap.sh
-  ```
+```bash
+GEOKRETY_DB_TESTS_PATH=/path/to/tests ./.github/skills/pgtap/scripts/pg_prove
+```
 
 - Override DB credentials for a single run:
 
-  ```bash
-  PGPASSWORD=secret PGUSER=otheruser ./.github/skills/pgtap/scripts/pgtap.sh
-  ```
+```bash
+PGPASSWORD=secret PGUSER=otheruser ./.github/skills/pgtap/scripts/pg_prove
+```
 
 ## Notes for automation and AI actors
-- Always prefer the explicit `./.github/skills/pgtap/scripts/pgtap.sh` path in automation to avoid invoking a system-wide `pg_prove` or other wrappers.
+- Always prefer the explicit `./.github/skills/pgtap/scripts/pg_prove` path in automation to avoid invoking a system-wide `pg_prove` or other wrappers.
 - This wrapper intentionally implements the repository's canonical `pg_prove` invocation; automation should not reimplement command-line flags unless explicitly required.
  - `direnv` may load and export environment variables (for example `GEOKRETY_DB_TESTS_PATH` or `PGPASSWORD`) when entering the repository; this is expected. Run the wrapper immediately after `direnv` has loaded the environment so the exported variables are available to the test run.
 
 ## Commands supported
-- `run` (default): call `./.github/skills/pgtap/scripts/pgtap.sh` with optional extra args to pass through to `pg_prove`.
+- `run` (default): call `./.github/skills/pgtap/scripts/pg_prove` with optional extra args to pass through to `pg_prove`.
 
 Examples above are copy-paste ready and unambiguous about the wrapper location.
 
 ## Integration with create-migration skill
 - When a new migration is created via the `create-migration` skill, the pgTAP tests are authored as part of that workflow (Step 5) and run here (Step 8).
 - This wrapper runs **all** test files matching `test*.sql`; if you want to run only the tests for the new migration, pass the specific file path:
-  ```bash
-  GEOKRETY_DB_TESTS_PATH=/home/kumy/GIT/geokrety-website/website/db/tests \
-    ./.github/skills/pgtap/scripts/pgtap.sh -- tests/test-NNN-description.sql
-  ```
-- See `.github/skills/create-migration/SKILL.md` for the full test authoring workflow including:
+```bash
+GEOKRETY_DB_TESTS_PATH=/home/kumy/GIT/geokrety-website/website/db/tests \
+  ./.github/skills/pgtap/scripts/pg_prove -- tests/test-NNN-description.sql
+```
+- See #file:../../../.github/skills/create-migration/SKILL.md for the full test authoring workflow including:
   - `SELECT plan(N)` counting strategy
   - Test isolation caveats (sequences, `pg_notify()` side-effects)
   - Coverage targets (trigger branches, constraints, edge cases)

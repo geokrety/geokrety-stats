@@ -11,19 +11,19 @@ user-invocable: true
 ## Wrapper script (where it lives)
 - The wrapper script for this skill is located in the same directory at `./scripts/phinx.sh` (relative to this `SKILL.md`). To avoid ambiguity, use the explicit repository-root path when invoking it from automation or CI:
 
-   - From the repository root:
+- From the repository root:
 
-      ```bash
-      cd ${workspace} # ensure you're at the repo root
-      ./.github/skills/phinx/scripts/phinx.sh <command> [args...]
-      ```
+```bash
+cd ${workspace} # ensure you're at the repo root
+./.github/skills/phinx/scripts/phinx.sh <command> [args...]
+```
 
-   - Or, if you `cd` into the skill directory first:
+- Or, if you `cd` into the skill directory first:
 
-      ```bash
-      cd ${workspace}/.github/skills/phinx/scripts/ # ensure you're at the repo root
-      ./scripts/phinx.sh <command> [args...]
-      ```
+```bash
+cd ${workspace}/.github/skills/phinx/scripts/ # ensure you're at the repo root
+./phinx.sh <command> [args...]
+```
 
 ## Contract / behavior
 - The wrapper forwards arguments to the real Phinx executable inside the project's running stack container, using the project's `phinx.php` configuration (if present). It returns the underlying command's exit status.
@@ -32,21 +32,21 @@ user-invocable: true
 ## Usage examples (explicit)
 - Check status (from repo root):
 
-   ```bash
-   ./.github/skills/phinx/scripts/phinx.sh status
-   ```
+```bash
+./.github/skills/phinx/scripts/phinx.sh status
+```
 
 - Apply all pending migrations (from repo root):
 
-   ```bash
-   ./.github/skills/phinx/scripts/phinx.sh migrate
-   ```
+```bash
+./.github/skills/phinx/scripts/phinx.sh migrate
+```
 
 - Roll back the last migration (from repo root):
 
-   ```bash
-   ./.github/skills/phinx/scripts/phinx.sh rollback
-   ```
+```bash
+./.github/skills/phinx/scripts/phinx.sh rollback
+```
 
 ## Notes for automation and AI actors
 - Always prefer the explicit `./.github/skills/phinx/scripts/phinx.sh` path in automation to avoid invoking a different `phinx` binary that might be installed system-wide.
@@ -56,9 +56,9 @@ user-invocable: true
 
 - Examples (repo root) — default, safe one-by-one migration:
 
-   ```bash
-   ./.github/skills/phinx/scripts/phinx.sh migrate --count=1
-   ```
+```bash
+./.github/skills/phinx/scripts/phinx.sh migrate --count=1
+```
 
 - If a user explicitly requests batching multiple migrations, they must state the desired `--count` or set no `--count` at all to migrate all pending migrations; automation will then run exactly what the user specified.
 
