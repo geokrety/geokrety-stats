@@ -60,20 +60,19 @@ func NewRouter(
 		})
 		api.Route("/geokrety", func(gr chi.Router) {
 			gr.Get("/", statsHandler.GetGeokretyList)
-			gr.Get("/{id}", statsHandler.GetGeokretyById)     // TODO rename `statsHandler.GetGeokretyById` to `statsHandler.GetGeokretyDetailsById`
-			gr.Get("/{gkid}", statsHandler.GetGeokretyDetailsByGkId) // TODO implement `statsHandler.GetGeokretyDetailsByGkId`
+			gr.Get("/search", statsHandler.SearchGeokrety)
+			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
+			gr.Get("/recent-born", statsHandler.GetRecentBorn)
+			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
+			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
+			gr.Get("/{gkid}", statsHandler.GetGeokretyDetailsByGkId)
 			gr.Get("/{gkid}/moves", statsHandler.GetGeokretyMoves)
 			gr.Get("/{gkid}/moves/{moveId}", statsHandler.GetGeokretyMoveDetails)
 			gr.Get("/{gkid}/loved-by", statsHandler.GetGeokretyLovedBy)
 			gr.Get("/{gkid}/watched-by", statsHandler.GetGeokretyWatchedBy)
 			gr.Get("/{gkid}/pictures", statsHandler.GetGeokretyPictures)
-			gr.Get("/search", statsHandler.SearchGeokrety)
 			gr.Get("/{gkid}/loves", statsHandler.GetGeokretyLovedBy)
 			gr.Get("/{gkid}/watches", statsHandler.GetGeokretyWatchedBy)
-			gr.Get("/recent-moves", statsHandler.GetRecentMoves)
-			gr.Get("/recent-born", statsHandler.GetRecentBorn)
-			gr.Get("/recent-loved", statsHandler.GetRecentLoved)
-			gr.Get("/recent-watched", statsHandler.GetRecentWatched)
 			gr.Get("/{gkid}/timeline", statsHandler.GetGeokretTimeline)
 			gr.Get("/{gkid}/countries/timeline", statsHandler.GetGeokretTimeline)
 			gr.Get("/{gkid}/events/timeline", statsHandler.GetGeokretTimeline)
@@ -88,7 +87,8 @@ func NewRouter(
 			gr.Get("/{gkid}/WorldChoropleth", statsHandler.GetGeokretyWorldChoropleth)
 
 		})
-		api.Route("/countries", func(cr chi.Router) { // TODO implement statsHandler.GetCountryList and add `cr.Get("/", statsHandler.GetCountryList)`
+		api.Route("/countries", func(cr chi.Router) {
+			cr.Get("/", statsHandler.GetCountryList)
 			cr.Get("/{code}", statsHandler.GetCountryDetails)
 			cr.Get("/recent-active", statsHandler.GetRecentActiveCountries)
 			cr.Get("/{code}/geokrety", statsHandler.GetCountryGeokrety)
@@ -104,7 +104,7 @@ func NewRouter(
 			wr.Get("/search", statsHandler.SearchWaypoints)
 		})
 		api.Route("/users", func(ur chi.Router) {
-			ur.Get("/", statsHandler.GetUserList) // TODO implement statsHandler.GetUserList
+			ur.Get("/", statsHandler.GetUserList)
 			ur.Get("/{id}", statsHandler.GetUserDetails)
 			ur.Get("/{id}/geokrety-owned", statsHandler.GetUserOwnedGeokrety)
 			ur.Get("/{id}/geokrety-found", statsHandler.GetUserFoundGeokrety)
@@ -127,8 +127,8 @@ func NewRouter(
 			ur.Get("/{id}/stats/map/countries", statsHandler.GetUserStatsMapCountries)
 		})
 		api.Route("/pictures", func(pr chi.Router) {
-			pr.Get("/", statsHandler.GetPictureList) // TODO implement statsHandler.GetPictureList
-			pr.Get("/{id}", statsHandler.GetPicture) // TODO rename `statsHandler.GetPicture` to `statsHandler.GetPictureDetails`
+			pr.Get("/", statsHandler.GetPictureList)
+			pr.Get("/{id}", statsHandler.GetPictureDetails)
 		})
 	})
 

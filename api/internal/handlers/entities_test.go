@@ -49,7 +49,10 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 		expLimit   int
 		expOffset  int
 	}{
+		{"geokret-list", h.GetGeokretyList, "/api/v3/geokrety/?limit=4&offset=1", nil, "FetchGeokretyList", http.StatusOK, true, 4, 1},
 		{"geokret-details", h.GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, "FetchGeokrety", http.StatusOK, false, 0, 0},
+		{"geokret-details-by-numeric-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/1", []string{"gkid", "1"}, "FetchGeokretyByGKID", http.StatusOK, false, 0, 0},
+		{"geokret-details-by-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/GK0001", []string{"gkid", "GK0001"}, "FetchGeokretyByGKID", http.StatusOK, false, 0, 0},
 		{"geokret-moves", h.GetGeokretyMoves, "/api/v3/geokrety/1/moves?limit=7&offset=2", []string{"id", "1"}, "FetchGeokretyMoves", http.StatusOK, true, 7, 2},
 		{"geokret-move-details", h.GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/9", []string{"id", "1", "moveId", "9"}, "FetchGeokretyMoveDetails", http.StatusOK, false, 0, 0},
 		{"geokret-loved-by", h.GetGeokretyLovedBy, "/api/v3/geokrety/1/loved-by?limit=8&offset=1", []string{"id", "1"}, "FetchGeokretyLoves", http.StatusOK, true, 8, 1},
@@ -65,6 +68,7 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 		{"geokret-elevation", h.GetGeokretyStatsElevation, "/api/v3/geokrety/1/stats/elevation", []string{"id", "1"}, "FetchGeokretyStatsElevation", http.StatusOK, true, 20, 0},
 		{"geokret-heatmap-days", h.GetGeokretyStatsHeatmapDays, "/api/v3/geokrety/1/stats/heatmap/days", []string{"id", "1"}, "FetchGeokretyStatsHeatmapDays", http.StatusOK, true, 20, 0},
 		{"geokret-geojson-trip", h.GetGeokretyGeoJSONTrip, "/api/v3/geokrety/1/geojson/trip?limit=6&offset=1", []string{"id", "1"}, "FetchGeokretyTripPoints", http.StatusOK, true, 6, 1},
+		{"country-list", h.GetCountryList, "/api/v3/countries/?limit=4&offset=1", nil, "FetchCountryList", http.StatusOK, true, 4, 1},
 		{"country-details", h.GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, "FetchCountryDetails", http.StatusOK, false, 0, 0},
 		{"country-geokrety", h.GetCountryGeokrety, "/api/v3/countries/PL/geokrety?limit=4&offset=1", []string{"code", "PL"}, "FetchCountryGeokrety", http.StatusOK, true, 4, 1},
 		{"country-geokrety-alias", h.GetCountrySpottedGeokrety, "/api/v3/countries/PL/spotted-geokrety", []string{"code", "PL"}, "FetchCountryGeokrety", http.StatusOK, true, 20, 0},
@@ -73,6 +77,7 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 		{"waypoint-current-alias", h.GetWaypointSpottedGeokrety, "/api/v3/waypoints/GC123/spotted-geokrety", []string{"code", "GC123"}, "FetchWaypointCurrentGeokrety", http.StatusOK, true, 20, 0},
 		{"waypoint-past", h.GetWaypointPastGeokrety, "/api/v3/waypoints/GC123/geokrety-past?limit=5&offset=2", []string{"code", "GC123"}, "FetchWaypointPastGeokrety", http.StatusOK, true, 5, 2},
 		{"waypoint-search", h.SearchWaypoints, "/api/v3/waypoints/search?q=gc&limit=5&offset=2", nil, "SearchWaypoints", http.StatusOK, true, 5, 2},
+		{"user-list", h.GetUserList, "/api/v3/users/?limit=4&offset=1", nil, "FetchUserList", http.StatusOK, true, 4, 1},
 		{"user-details", h.GetUserDetails, "/api/v3/users/1", []string{"id", "1"}, "FetchUserDetails", http.StatusOK, false, 0, 0},
 		{"user-owned", h.GetUserOwnedGeokrety, "/api/v3/users/1/geokrety-owned?limit=5&offset=1", []string{"id", "1"}, "FetchUserOwnedGeokrety", http.StatusOK, true, 5, 1},
 		{"user-found", h.GetUserFoundGeokrety, "/api/v3/users/1/geokrety-found", []string{"id", "1"}, "FetchUserFoundGeokrety", http.StatusOK, true, 20, 0},
@@ -86,7 +91,8 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 		{"user-heatmap-days", h.GetUserStatsHeatmapDays, "/api/v3/users/1/stats/heatmap/days", []string{"id", "1"}, "FetchUserStatsHeatmapDays", http.StatusOK, true, 20, 0},
 		{"user-heatmap-hours", h.GetUserStatsHeatmapHours, "/api/v3/users/1/stats/heatmap/hours", []string{"id", "1"}, "FetchUserStatsHeatmapHours", http.StatusOK, true, 20, 0},
 		{"user-map-countries", h.GetUserStatsMapCountries, "/api/v3/users/1/stats/map/countries", []string{"id", "1"}, "FetchUserStatsMapCountries", http.StatusOK, true, 20, 0},
-		{"picture-details", h.GetPicture, "/api/v3/pictures/1", []string{"id", "1"}, "FetchPicture", http.StatusOK, false, 0, 0},
+		{"picture-list", h.GetPictureList, "/api/v3/pictures/?limit=4&offset=1", nil, "FetchPictureList", http.StatusOK, true, 4, 1},
+		{"picture-details", h.GetPictureDetails, "/api/v3/pictures/1", []string{"id", "1"}, "FetchPicture", http.StatusOK, false, 0, 0},
 	}
 
 	for _, tc := range tests {
@@ -126,6 +132,7 @@ func TestEntityHandlerInvalidRequests(t *testing.T) {
 		params  []string
 	}{
 		{"bad-id", h.GetGeokrety, "/api/v3/geokrety/abc", []string{"id", "abc"}},
+		{"bad-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/GKZZ", []string{"gkid", "GKZZ"}},
 		{"bad-id-moves", h.GetGeokretyMoves, "/api/v3/geokrety/abc/moves", []string{"id", "abc"}},
 		{"bad-id-move-details", h.GetGeokretyMoveDetails, "/api/v3/geokrety/abc/moves/1", []string{"id", "abc", "moveId", "1"}},
 		{"bad-move-id", h.GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/x", []string{"id", "1", "moveId", "x"}},
@@ -152,7 +159,7 @@ func TestEntityHandlerInvalidRequests(t *testing.T) {
 		{"bad-id-user-heatmap-hours", h.GetUserStatsHeatmapHours, "/api/v3/users/abc/stats/heatmap/hours", []string{"id", "abc"}},
 		{"bad-id-user-map-countries", h.GetUserStatsMapCountries, "/api/v3/users/abc/stats/map/countries", []string{"id", "abc"}},
 		{"bad-id-user-continent-coverage", h.GetUserStatsContinentCoverage, "/api/v3/users/abc/stats/continent-coverage", []string{"id", "abc"}},
-		{"bad-id-picture", h.GetPicture, "/api/v3/pictures/abc", []string{"id", "abc"}},
+		{"bad-id-picture", h.GetPictureDetails, "/api/v3/pictures/abc", []string{"id", "abc"}},
 		{"bad-search-users", h.SearchUsers, "/api/v3/users/search?q=x", nil},
 		{"bad-search-geokrety", h.SearchGeokrety, "/api/v3/geokrety/search?q=x", nil},
 		{"bad-search-waypoints", h.SearchWaypoints, "/api/v3/waypoints/search?q=x", nil},
@@ -184,12 +191,13 @@ func TestEntityHandlerStoreErrors(t *testing.T) {
 	}{
 		{"details-500", "FetchGeokrety", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusInternalServerError},
 		{"details-404", "", "FetchGeokrety", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusNotFound},
+		{"details-by-gkid-404", "", "FetchGeokretyByGKID", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyByGKID"}, zap.NewNop()).GetGeokretyDetailsByGkId, "/api/v3/geokrety/GK0001", []string{"gkid", "GK0001"}, http.StatusNotFound},
 		{"move-details-404", "", "FetchGeokretyMoveDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyMoveDetails"}, zap.NewNop()).GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/2", []string{"id", "1", "moveId", "2"}, http.StatusNotFound},
 		{"geojson-500", "FetchGeokretyTripPoints", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokretyTripPoints"}, zap.NewNop()).GetGeokretyGeoJSONTrip, "/api/v3/geokrety/1/geojson/trip", []string{"id", "1"}, http.StatusInternalServerError},
 		{"country-404", "", "FetchCountryDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchCountryDetails"}, zap.NewNop()).GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, http.StatusNotFound},
 		{"waypoint-404", "", "FetchWaypoint", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchWaypoint"}, zap.NewNop()).GetWaypoint, "/api/v3/waypoints/GC123", []string{"code", "GC123"}, http.StatusNotFound},
 		{"user-404", "", "FetchUserDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchUserDetails"}, zap.NewNop()).GetUserDetails, "/api/v3/users/1", []string{"id", "1"}, http.StatusNotFound},
-		{"picture-404", "", "FetchPicture", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchPicture"}, zap.NewNop()).GetPicture, "/api/v3/pictures/1", []string{"id", "1"}, http.StatusNotFound},
+		{"picture-404", "", "FetchPicture", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchPicture"}, zap.NewNop()).GetPictureDetails, "/api/v3/pictures/1", []string{"id", "1"}, http.StatusNotFound},
 	}
 
 	for _, tc := range tests {

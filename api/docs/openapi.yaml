@@ -8,10 +8,10 @@ info:
     Every `/api/v3/...` JSON endpoint returns a response envelope with `data` and `meta`.
     List endpoints support `limit` and `offset`. Search endpoints require a `q` query parameter of at least 2 characters.
 servers:
-  - url: http://localhost:7415
-    description: Local development server
   - url: http://192.168.130.65:7415
     description: Local network development server
+  - url: http://localhost:7415
+    description: Local development server
 tags:
   - name: System
     description: Service metadata, health checks, metrics, and websocket entrypoint

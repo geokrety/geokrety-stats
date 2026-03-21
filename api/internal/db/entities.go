@@ -322,8 +322,60 @@ func hydrateTripPoints(items []TripPoint) []TripPoint {
 }
 
 func (s *Store) FetchGeokrety(ctx context.Context, geokretID int64) (GeokretDetails, error) {
+	return s.fetchGeokretyDetails(ctx, "g.id = $1", geokretID, "query geokret details")
+}
+
+func (s *Store) FetchGeokretyByGKID(ctx context.Context, gkid int64) (GeokretDetails, error) {
+	return s.fetchGeokretyDetails(ctx, "g.gkid = $1", gkid, "query geokret details by gkid")
+}
+
+func (s *Store) FetchGeokretyList(ctx context.Context, limit, offset int) ([]GeokretListItem, error) {
+	rows := []GeokretListItem{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	g.id,
+	g.gkid,
+	g.name,
+	gg.type,
+	gg.missing,
+	gg.owner AS owner_id,
+	NULLIF(g.owner_username, '') AS owner_username,
+	gg.holder AS holder_id,
+	hu.username AS holder_username,
+	UPPER(g.country) AS country,
+	UPPER(g.waypoint) AS waypoint,
+	g.lat,
+	g.lon,
+	gg.loves_count,
+	gg.pictures_count,
+	gg.born_on_datetime AS born_at,
+	g.moved_on_datetime AS last_move_at
+FROM geokrety.gk_geokrety_with_details AS g
+INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
+ORDER BY g.moved_on_datetime DESC, g.id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query geokret list: %w", err)
+	}
+	return hydrateGeokretListItems(rows), nil
+}
+
+func (s *Store) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {
+	var geokretID int64
+	if err := s.db.GetContext(ctx, &geokretID, `
+SELECT id
+FROM geokrety.gk_geokrety
+WHERE gkid = $1
+`, gkid); err != nil {
+		return 0, fmt.Errorf("resolve geokret id: %w", err)
+	}
+	return geokretID, nil
+}
+
+func (s *Store) fetchGeokretyDetails(ctx context.Context, predicate string, value int64, label string) (GeokretDetails, error) {
 	row := GeokretDetails{}
-	if err := s.db.GetContext(ctx, &row, `
+	query := fmt.Sprintf(`
 SELECT
 	g.id,
 	g.gkid,
@@ -349,9 +401,10 @@ SELECT
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
-WHERE g.id = $1
-`, geokretID); err != nil {
-		return GeokretDetails{}, fmt.Errorf("query geokret details: %w", err)
+WHERE %s
+`, predicate)
+	if err := s.db.GetContext(ctx, &row, query, value); err != nil {
+		return GeokretDetails{}, fmt.Errorf("%s: %w", label, err)
 	}
 	row.GeokretListItem = hydrateGeokretListItems([]GeokretListItem{row.GeokretListItem})[0]
 	return row, nil
@@ -758,6 +811,48 @@ LIMIT $2 OFFSET $3
 	return hydrateGeokretListItems(rows), nil
 }
 
+func (s *Store) FetchCountryList(ctx context.Context, limit, offset int) ([]CountryDetails, error) {
+	rows := []CountryDetails{}
+	if err := s.db.SelectContext(ctx, &rows, `
+WITH names AS (
+	SELECT
+		UPPER(original) AS code,
+		MIN(country) AS name
+	FROM geokrety.gk_waypoints_country
+	GROUP BY UPPER(original)
+)
+SELECT
+	UPPER(cds.country_code) AS code,
+	COALESCE(MIN(n.name), UPPER(cds.country_code)) AS name,
+	MAX(cr.continent_code) AS continent_code,
+	MAX(cr.continent_name) AS continent_name,
+	COALESCE(SUM(cds.moves_count), 0)::bigint AS moves_count,
+	COALESCE(SUM(cds.unique_users), 0)::bigint AS unique_users,
+	COALESCE(SUM(cds.unique_gks), 0)::bigint AS unique_gks,
+	COALESCE(SUM(cds.km_contributed), 0)::double precision AS km_contributed,
+	COALESCE(SUM(cds.points_contributed), 0)::double precision AS points_contributed,
+	(
+		SELECT COUNT(*)::bigint
+		FROM geokrety.gk_geokrety_with_details AS g
+		WHERE UPPER(g.country) = UPPER(cds.country_code)
+	) AS current_geokrety,
+	MAX(cds.stats_date)::timestamp AS last_stats_date
+FROM stats.country_daily_stats AS cds
+LEFT JOIN names AS n ON n.code = UPPER(cds.country_code)
+LEFT JOIN stats.continent_reference AS cr ON cr.country_alpha2 = UPPER(cds.country_code)::bpchar
+GROUP BY UPPER(cds.country_code)
+ORDER BY moves_count DESC, code ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query country list: %w", err)
+	}
+	for i := range rows {
+		rows[i].Code = strings.ToUpper(rows[i].Code)
+		rows[i].Flag = countryFlag(rows[i].Code)
+	}
+	return rows, nil
+}
+
 func (s *Store) FetchWaypoint(ctx context.Context, waypointCode string) (WaypointDetails, error) {
 	row := WaypointDetails{}
 	if err := s.db.GetContext(ctx, &row, `
@@ -1121,6 +1216,26 @@ LIMIT $2 OFFSET $3
 	return rows, nil
 }
 
+func (s *Store) FetchUserList(ctx context.Context, limit, offset int) ([]UserSearchResult, error) {
+	rows := []UserSearchResult{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	u.id,
+	u.username,
+	u.joined_on_datetime AS joined_at,
+	UPPER(u.home_country) AS home_country,
+	(
+		SELECT MAX(m.moved_on_datetime) FROM geokrety.gk_moves AS m WHERE m.author = u.id
+	) AS last_move_at
+FROM geokrety.gk_users AS u
+ORDER BY u.username ASC, u.id ASC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query user list: %w", err)
+	}
+	return rows, nil
+}
+
 func (s *Store) FetchUserStatsHeatmapDays(ctx context.Context, userID int64, limit, offset int) ([]DayHeatmapCell, error) {
 	rows := []DayHeatmapCell{}
 	if err := s.db.SelectContext(ctx, &rows, `
@@ -1236,6 +1351,32 @@ WHERE p.id = $1
 		return PictureInfo{}, fmt.Errorf("query picture details: %w", err)
 	}
 	return row, nil
+}
+
+func (s *Store) FetchPictureList(ctx context.Context, limit, offset int) ([]PictureInfo, error) {
+	rows := []PictureInfo{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	p.id,
+	p.type,
+	p.filename,
+	p.caption,
+	p.key,
+	p.geokret AS geokret_id,
+	p.move AS move_id,
+	p.user AS user_id,
+	p.author AS author_id,
+	u.username AS author_username,
+	p.uploaded_on_datetime,
+	p.created_on_datetime
+FROM geokrety.gk_pictures AS p
+LEFT JOIN geokrety.gk_users AS u ON u.id = p.author
+ORDER BY p.created_on_datetime DESC, p.id DESC
+LIMIT $1 OFFSET $2
+`, limit, offset); err != nil {
+		return nil, fmt.Errorf("query picture list: %w", err)
+	}
+	return rows, nil
 }
 
 func (s *Store) fetchUserGeokretyList(ctx context.Context, whereClause string, userID int64, limit, offset int, label string) ([]GeokretListItem, error) {

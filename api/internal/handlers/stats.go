@@ -31,10 +31,14 @@ type StatsStore interface {
 	FetchDistanceRecords(ctx context.Context, limit, offset int) ([]db.DistanceRecord, error)
 	FetchStatsDormancy(ctx context.Context, limit, offset int) ([]db.DormancyRecord, error)
 	FetchStatsMultiplierVelocity(ctx context.Context, limit, offset int) ([]db.MultiplierVelocityRecord, error)
+	FetchCountryList(ctx context.Context, limit, offset int) ([]db.CountryDetails, error)
 	FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error)
 	FetchGeokretTimeline(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretTimelineEvent, error)
 	FetchGeokretCirculation(ctx context.Context, geokretID int64) (db.GeokretCirculation, error)
+	FetchGeokretyList(ctx context.Context, limit, offset int) ([]db.GeokretListItem, error)
 	FetchGeokrety(ctx context.Context, geokretID int64) (db.GeokretDetails, error)
+	FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error)
+	ResolveGeokretID(ctx context.Context, gkid int64) (int64, error)
 	FetchGeokretyMoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.MoveRecord, error)
 	FetchGeokretyMoveDetails(ctx context.Context, geokretID, moveID int64) (db.MoveRecord, error)
 	FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error)
@@ -61,11 +65,13 @@ type StatsStore interface {
 	FetchUserPictures(ctx context.Context, userID int64, limit, offset int) ([]db.PictureInfo, error)
 	FetchUserCountries(ctx context.Context, userID int64, limit, offset int) ([]db.UserCountryVisit, error)
 	FetchUserWaypoints(ctx context.Context, userID int64, limit, offset int) ([]db.UserWaypointVisit, error)
+	FetchUserList(ctx context.Context, limit, offset int) ([]db.UserSearchResult, error)
 	SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error)
 	FetchUserStatsContinentCoverage(ctx context.Context, userID int64, limit, offset int) ([]db.UserContinentCoverage, error)
 	FetchUserStatsHeatmapDays(ctx context.Context, userID int64, limit, offset int) ([]db.DayHeatmapCell, error)
 	FetchUserStatsHeatmapHours(ctx context.Context, userID int64, limit, offset int) ([]db.HourHeatmapCell, error)
 	FetchUserStatsMapCountries(ctx context.Context, userID int64, limit, offset int) ([]db.CountryCount, error)
+	FetchPictureList(ctx context.Context, limit, offset int) ([]db.PictureInfo, error)
 	FetchPicture(ctx context.Context, pictureID int64) (db.PictureInfo, error)
 }
 
@@ -204,7 +210,7 @@ func (h *StatsHandler) GetUserNetwork(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StatsHandler) GetGeokretTimeline(w http.ResponseWriter, r *http.Request) {
-	geokretID, ok := parseInt64Param(w, r, "id")
+	geokretID, ok := h.parseGeokretRouteID(w, r)
 	if !ok {
 		return
 	}
@@ -215,7 +221,7 @@ func (h *StatsHandler) GetGeokretTimeline(w http.ResponseWriter, r *http.Request
 
 func (h *StatsHandler) GetGeokretCirculation(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
-	geokretID, ok := parseInt64Param(w, r, "id")
+	geokretID, ok := h.parseGeokretRouteID(w, r)
 	if !ok {
 		return
 	}

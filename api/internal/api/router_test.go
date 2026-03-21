@@ -108,6 +108,10 @@ func (h *handlersTestStore) FetchStatsMultiplierVelocity(ctx context.Context, li
 	return []db.MultiplierVelocityRecord{}, nil
 }
 
+func (h *handlersTestStore) FetchCountryList(ctx context.Context, limit, offset int) ([]db.CountryDetails, error) {
+	return []db.CountryDetails{}, nil
+}
+
 func (h *handlersTestStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
 	return []db.UserNetworkEdge{}, nil
 }
@@ -122,6 +126,18 @@ func (h *handlersTestStore) FetchGeokretCirculation(ctx context.Context, geokret
 
 func (h *handlersTestStore) FetchGeokrety(ctx context.Context, geokretID int64) (db.GeokretDetails, error) {
 	return db.GeokretDetails{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyList(ctx context.Context, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error) {
+	return db.GeokretDetails{}, nil
+}
+
+func (h *handlersTestStore) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {
+	return gkid, nil
 }
 
 func (h *handlersTestStore) FetchGeokretyMoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.MoveRecord, error) {
@@ -228,6 +244,10 @@ func (h *handlersTestStore) FetchUserWaypoints(ctx context.Context, userID int64
 	return []db.UserWaypointVisit{}, nil
 }
 
+func (h *handlersTestStore) FetchUserList(ctx context.Context, limit, offset int) ([]db.UserSearchResult, error) {
+	return []db.UserSearchResult{}, nil
+}
+
 func (h *handlersTestStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
 	return []db.UserSearchResult{}, nil
 }
@@ -252,6 +272,10 @@ func (h *handlersTestStore) FetchPicture(ctx context.Context, pictureID int64) (
 	return db.PictureInfo{}, nil
 }
 
+func (h *handlersTestStore) FetchPictureList(ctx context.Context, limit, offset int) ([]db.PictureInfo, error) {
+	return []db.PictureInfo{}, nil
+}
+
 func TestV3RoutesReachable(t *testing.T) {
 	r := testRouter(t)
 	paths := []string{
@@ -272,7 +296,9 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/geokrety/recent-born",
 		"/api/v3/geokrety/recent-loved",
 		"/api/v3/geokrety/recent-watched",
+		"/api/v3/geokrety/GK0001",
 		"/api/v3/geokrety/1",
+		"/api/v3/geokrety/GK0001/moves",
 		"/api/v3/geokrety/1/moves",
 		"/api/v3/geokrety/1/moves/2",
 		"/api/v3/geokrety/1/loved-by",
@@ -287,6 +313,7 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/geokrety/1/stats/elevation",
 		"/api/v3/geokrety/1/stats/heatmap/days",
 		"/api/v3/geokrety/1/geojson/trip",
+		"/api/v3/countries/",
 		"/api/v3/countries/PL",
 		"/api/v3/countries/recent-active",
 		"/api/v3/countries/PL/geokrety",
@@ -297,6 +324,7 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/waypoints/search?q=gc",
 		"/api/v3/users/recent-registered",
 		"/api/v3/users/recent-active",
+		"/api/v3/users/",
 		"/api/v3/users/1",
 		"/api/v3/users/1/geokrety-owned",
 		"/api/v3/users/1/geokrety-found",
@@ -311,6 +339,7 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/users/1/stats/heatmap/days",
 		"/api/v3/users/1/stats/heatmap/hours",
 		"/api/v3/users/1/stats/map/countries",
+		"/api/v3/pictures/",
 		"/api/v3/pictures/1",
 	}
 

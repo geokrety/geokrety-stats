@@ -177,6 +177,14 @@ func (m *mockStatsStore) FetchStatsMultiplierVelocity(ctx context.Context, limit
 	return []db.MultiplierVelocityRecord{{GeokretID: 1, GeokretName: "GK", AvgDelta: 0.25}}, nil
 }
 
+func (m *mockStatsStore) FetchCountryList(ctx context.Context, limit, offset int) ([]db.CountryDetails, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchCountryList"); err != nil {
+		return nil, err
+	}
+	return []db.CountryDetails{{Code: "PL", Name: "Poland", CurrentGeokrety: 1, Flag: "🇵🇱"}}, nil
+}
+
 func (m *mockStatsStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
 	m.lastLimit, m.lastOffset = limit, offset
 	if err := m.maybeFail("FetchUserNetwork"); err != nil {
@@ -205,6 +213,28 @@ func (m *mockStatsStore) FetchGeokrety(ctx context.Context, geokretID int64) (db
 		return db.GeokretDetails{}, err
 	}
 	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: geokretID, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyList(ctx context.Context, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchGeokretyList"); err != nil {
+		return nil, err
+	}
+	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error) {
+	if err := m.maybeFail("FetchGeokretyByGKID"); err != nil {
+		return db.GeokretDetails{}, err
+	}
+	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: gkid, GKID: &gkid, Name: "GK"}}, nil
+}
+
+func (m *mockStatsStore) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {
+	if err := m.maybeFail("ResolveGeokretID"); err != nil {
+		return 0, err
+	}
+	return gkid, nil
 }
 
 func (m *mockStatsStore) FetchGeokretyMoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.MoveRecord, error) {
@@ -411,6 +441,14 @@ func (m *mockStatsStore) FetchUserWaypoints(ctx context.Context, userID int64, l
 	return []db.UserWaypointVisit{{WaypointCode: "GC123", VisitCount: 1, FirstVisitedAt: time.Now(), LastVisitedAt: time.Now()}}, nil
 }
 
+func (m *mockStatsStore) FetchUserList(ctx context.Context, limit, offset int) ([]db.UserSearchResult, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchUserList"); err != nil {
+		return nil, err
+	}
+	return []db.UserSearchResult{{ID: 1, Username: "u", JoinedAt: time.Now()}}, nil
+}
+
 func (m *mockStatsStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
 	m.lastLimit, m.lastOffset = limit, offset
 	if err := m.maybeFail("SearchUsers"); err != nil {
@@ -456,6 +494,14 @@ func (m *mockStatsStore) FetchPicture(ctx context.Context, pictureID int64) (db.
 		return db.PictureInfo{}, err
 	}
 	return db.PictureInfo{ID: pictureID, CreatedOn: time.Now()}, nil
+}
+
+func (m *mockStatsStore) FetchPictureList(ctx context.Context, limit, offset int) ([]db.PictureInfo, error) {
+	m.lastLimit, m.lastOffset = limit, offset
+	if err := m.maybeFail("FetchPictureList"); err != nil {
+		return nil, err
+	}
+	return []db.PictureInfo{{ID: 1, CreatedOn: time.Now()}}, nil
 }
 
 func TestStatsHandlerSuccessEndpoints(t *testing.T) {
