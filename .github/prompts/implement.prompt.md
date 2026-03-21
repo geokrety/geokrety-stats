@@ -1,32 +1,44 @@
 ---
 agent: 'GPT 5 Beast Mode'
-tools: [vscode/askQuestions, execute/runInTerminal, read/problems, read/readFile, agent, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, postgresql-mcp/pgsql_connect, postgresql-mcp/pgsql_disconnect, postgresql-mcp/pgsql_list_databases, postgresql-mcp/pgsql_query]
+tools: [vscode/askQuestions, execute/runInTerminal, read/problems, read/readFile, agent, postgresql-mcp/pgsql_connect, postgresql-mcp/pgsql_disconnect, postgresql-mcp/pgsql_list_databases, postgresql-mcp/pgsql_query, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, todo]
 description: 'request implementation of a feature or fix defined in a file.'
 ---
 <!-- model: 'GPT-5.4' -->
 
 # Hard requirements
 
-- you MUST implement ALL the points or fix defined in the file provided in the context.
-- you MUST create a "working folder" in #file:../../tmp/xxx/ where `xxx` is a unique identifier for this task, including the task.md, specs.md, implementation.md, tasks.md, user-inputs.md boilerplate.
+- you MUST implement ALL the points or fix defined in the file specification file provided in the context.
+- you MUST create a "working folder" in #file:../../tmp/xxx/ where `xxx` is a unique identifier (format `code-name-YYYYMMDD`) for this task, including the `tasks.md`, `implementation.md`, `tasks.md`, `user-inputs.md` boilerplate.
 - you MUST use this "working folder" to put all your temporary files, including code snippets, test cases, and any other relevant information you need to complete the task.
 - you CAN access the running database to query for any relevant information that can help you in the implementation process using #pgsql_query tooling or `psql` (using default connection parameters `geokrety` database, `geokrety` user, `geokrety` password, `localhost` host, `5432` port).
 - you MUST write code that is consistent with the existing codebase in terms of style, structure, and conventions.
 - you MUST write tests for your implementation to ensure that it works correctly and does not introduce any regressions.
-- if a #file:../../tmp/xxx/specs.md file is missing, using the skill `critical-thinking` (with agents `requirements-analyst`, `quality-engineer`, `specifications`, `critical-thinking`, `technical-writer`), you MUST create one based on the requirements defined in the file provided in the context and any additional information you can gather from the codebase or database. This specs file should include a clear definition of the feature or fix, the expected behavior, and any relevant edge cases or constraints.
-- if a #file:../../tmp/xxx/specs.md file is provided (or just created), you MUST follow the specifications defined in that file for your implementation.
 - you MUST document your code and the implementation process clearly and thoroughly in the #file:../../tmp/xxx/implementation.md file, including any assumptions you made, the rationale behind your decisions, and any trade-offs you considered.
-- you MUST create a file named #file:../../tmp/xxx/tasks.md in the "working folder" where you will document your implementation process with advancement entries and checkboxes as work proceeds.
 - once you have completed the implementation, you MUST review your work to ensure that it meets the requirements and is of high quality before `git commit` it.
 - once you have completed the implementation, you MUST use the "critical-loop" skill on agents "specification" -> "technical-writer" -> "requirements-analyst" to review your implementation and ensure that it meets the requirements and is of high quality.
+
+## Task management
+
+- you MUST create a file named #file:../../tmp/xxx/tasks.md in the "working folder" where you will document your implementation process with advancement entries and checkboxes as work proceeds.
 - once a "user input" task from the #file:../../tmp/xxx/tasks.md file is read and understood, you MUST immediately tick the corresponding checkbox and include it in the current process. If the spec need updates, you MUST update the spec accordingly and restart the process where appropriate to properly reflect the changes.
 - once a "user input" task from the #file:../../tmp/xxx/tasks.md file is complete you MUST tick the corresponding checkbox.
 
 ## Important and mandatory notes
 
+- do not stop on Open Questions, you MUST make assumptions and move forward with the implementation, but you MUST document these assumptions in the #file:../../tmp/xxx/implementation.md file.
+
+### User inputs and assumptions
+
 - you MUST read the #file:../../tmp/xxx/user-inputs.md every time before making an advancement entry in the #file:../../tmp/xxx/tasks.md file to ensure that you are aligned with the *live* user's expectations and requirements.
 - you MUST read the #file:../../tmp/xxx/user-inputs.md after each agent iteration to check for any updates or changes in the user's requirements or expectations and adjust your implementation process accordingly.
-- do not stop on Open Questions, you MUST make assumptions and move forward with the implementation, but you MUST document these assumptions in the #file:../../tmp/xxx/implementation.md file.
+- you MUST add a reference number to each user input in the #file:../../tmp/xxx/user-inputs.md file, and include this reference number in the corresponding checkbox in the #file:../../tmp/xxx/tasks.md file to ensure traceability and alignment between user inputs and implementation tasks.
+- you MUST sync the #tool:todo with the tasks defined in the #file:../../tmp/xxx/tasks.md file to ensure that you are always working on the most relevant and up-to-date tasks.
+
+### Extremely important notes
+
+- YOU MUST USE THE SKILL "last-user-input" #file:../skills/last-user-input/SKILL.md TO ASK THE USER IF THEY HAVE ANY LAST REQUESTS OR CHANGES BEFORE YOU FINALIZE THE IMPLEMENTATION AND MARK THE TASK AS COMPLETE. THIS IS CRUCIAL TO ENSURE THAT YOU HAVE MET THE USER'S EXPECTATIONS AND REQUIREMENTS AND THAT YOU HAVE NOT MISSED ANY IMPORTANT DETAILS. ALWAYS CONFIRM WITH THE USER BEFORE FINALIZING YOUR IMPLEMENTATION TO AVOID ANY MISALIGNMENT OR UNMET REQUIREMENTS.
+
+- #askQuestions question: "Do you have any last requests or changes before I finalize the implementation? (yes/no)"
 
 # Sample #file:../../tmp/xxx/user-inputs.md
 
