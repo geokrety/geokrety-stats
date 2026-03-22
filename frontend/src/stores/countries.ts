@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useCountries, type CountryStats } from '@/composables/useApi'
+import { getCountriesStats } from '@/services/api/stats'
+import { ApiError } from '@/services/api/client'
+import type { CountryStats } from '@/types/api'
 
 export const useCountriesStore = defineStore('countries', () => {
   // ── State ────────────────────────────────────────────────────────────────
@@ -9,15 +11,15 @@ export const useCountriesStore = defineStore('countries', () => {
   const error = ref<string | null>(null)
 
   // ── Actions ──────────────────────────────────────────────────────────────
-  async function fetchCountries() {
+  async function fetchCountries(): Promise<void> {
     if (countries.value.length > 0) return // already loaded
     loading.value = true
     error.value = null
     try {
-      const { fetchCountries: fetch } = useCountries()
-      countries.value = await fetch()
+      const result = await getCountriesStats()
+      countries.value = result.data
     } catch (e) {
-      error.value = 'Failed to load country statistics'
+      error.value = e instanceof ApiError ? e.userMessage : 'Failed to load country statistics'
       console.error(e)
     } finally {
       loading.value = false

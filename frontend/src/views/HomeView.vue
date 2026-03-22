@@ -1,17 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useStatsStore } from '@/stores/stats'
 import TheHero from '@/components/TheHero.vue'
 import RecentActivity from '@/components/RecentActivity.vue'
 import UserLeaderboard from '@/components/UserLeaderboard.vue'
-import { ArrowUpIcon } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-
-const store = useStatsStore()
-
-onMounted(() => {
-  store.fetchAll()
-})
 </script>
 
 <template>

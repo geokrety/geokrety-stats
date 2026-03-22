@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useStatsStore } from '@/stores/stats'
+import { ref, onMounted, computed } from 'vue'
+import { useGlobalStats } from '@/composables/useGlobalStats'
 import ActivityKpiCard from '@/components/kpi/ActivityKpiCard.vue'
 import GeokretyKpiCard from '@/components/kpi/GeokretyKpiCard.vue'
 import MoveKpiCard from '@/components/kpi/MoveKpiCard.vue'
@@ -9,9 +9,12 @@ import PictureKpiCard from '@/components/kpi/PictureKpiCard.vue'
 const visible = ref(false)
 onMounted(() => {
   setTimeout(() => (visible.value = true), 100)
+  fetch()
 })
 
-const store = useStatsStore()
+const { stats, fetch } = useGlobalStats()
+const geokretyByType = computed(() => (stats.value?.geokretyByType ? { ...stats.value.geokretyByType } : undefined))
+const movesByType = computed(() => (stats.value?.movesByType ? { ...stats.value.movesByType } : undefined))
 </script>
 
 <template>
@@ -40,33 +43,33 @@ const store = useStatsStore()
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <GeokretyKpiCard
           label="GeoKrety"
-          :value="store.globalStats?.totalGeokrety ?? '—'"
-          :hidden-count="store.globalStats?.totalGeokretyHidden ?? 0"
-          :geokrety-by-type="store.globalStats?.geokretyByType"
+          :value="stats?.totalGeokrety ?? '—'"
+          :hidden-count="stats?.totalGeokretyHidden ?? 0"
+          :geokrety-by-type="geokretyByType"
         />
         <MoveKpiCard
           label="Total Moves"
-          :value="store.globalStats?.totalMoves ?? '—'"
-          :moves-by-type="store.globalStats?.movesByType"
-          :moves-last30-days="store.globalStats?.movesLast30Days"
+          :value="stats?.totalMoves ?? '—'"
+          :moves-by-type="movesByType"
+          :moves-last30-days="stats?.movesLast30Days"
         />
         <ActivityKpiCard
           stat="users"
           label="Users"
-          :value="store.globalStats?.registeredUsers ?? '—'"
-          :secondary-value="store.globalStats?.activeUsersLast30d"
+          :value="stats?.registeredUsers ?? '—'"
+          :secondary-value="stats?.activeUsersLast30d"
           secondary-label="active in last 30 days"
         />
         <ActivityKpiCard
           stat="countries"
           label="Countries"
-          :value="store.globalStats?.countriesReached ?? '—'"
+          :value="stats?.countriesReached ?? '—'"
         />
         <PictureKpiCard
           stat="pictures"
           label="Pictures"
-          :value="store.globalStats?.picturesUploaded ?? '—'"
-          :pictures-by-type="store.globalStats?.picturesByType"
+          :value="stats?.picturesUploaded ?? '—'"
+          :pictures-by-type="stats?.picturesByType"
           class="col-span-2 sm:col-span-1"
         />
       </div>

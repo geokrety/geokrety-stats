@@ -15,7 +15,7 @@ interface MoveTypeInfo {
 }
 
 const props = defineProps<{
-  type: 'grabbed' | 'dropped' | 'dipped' | 'seen' | 'commented' | 'archived'
+  type: string
 }>()
 
 // TODO: create custom colors in shadcn theme for each move type and use them here instead of default muted ones
@@ -55,14 +55,15 @@ const moveTypeMeta: Record<string, MoveTypeInfo> = {
   },
 }
 
-const meta = moveTypeMeta[props.type]
+const meta = moveTypeMeta[props.type.toLowerCase()]
 </script>
 
 <template>
   <span
-    class="rounded-full px-2 py-0.5 text-xs font-medium ring-1"
+    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1"
     :class="meta?.classes ?? 'bg-muted text-muted-foreground'"
   >
+    <component :is="meta?.icon" v-if="meta?.icon" class="h-3 w-3" />
     {{ meta?.label ?? 'Unknown' }}
   </span>
 </template>

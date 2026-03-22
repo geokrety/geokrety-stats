@@ -15,7 +15,7 @@ export interface MoveTypeInfo {
 }
 
 const props = defineProps<{
-  type: 'grabbed' | 'dropped' | 'dipped' | 'seen' | 'commented' | 'archived'
+  type: string
 }>()
 
 // TODO: create custom colors in shadcn theme for each move type and use them here instead of default muted ones
@@ -55,7 +55,7 @@ const moveTypeMeta: Record<string, MoveTypeInfo> = {
   },
 }
 
-const meta = moveTypeMeta[props.type]
+const meta = moveTypeMeta[props.type.toLowerCase()]
 </script>
 
 <template>

@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  MapPin,
+  Package,
   BookOpen,
-  User,
-  Coins,
-  Mail,
-  Circle,
+  PersonStanding,
+  CircleDollarSign,
+  MailOpen,
+  Gem,
   Car,
-  Layers,
-  Tag,
-  Grid2X2,
+  Spade,
+  PawPrint,
+  Puzzle,
   Egg,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
@@ -33,16 +33,16 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { size: 'inline' })
 
 const ICON_MAP: Record<GeokretyTypeName, Component> = {
-  traditional: MapPin,
+  traditional: Package,
   book: BookOpen,
-  human: User,
-  coin: Coins,
-  kretypost: Mail,
-  pebble: Circle,
+  human: PersonStanding,
+  coin: CircleDollarSign,
+  kretypost: MailOpen,
+  pebble: Gem,
   car: Car,
-  playingcard: Layers,
-  dogtag: Tag,
-  jigsaw: Grid2X2,
+  playingcard: Spade,
+  dogtag: PawPrint,
+  jigsaw: Puzzle,
   easteregg: Egg,
 }
 

@@ -20,49 +20,27 @@ import WorldChoropleth from '@/components/WorldChoropleth.vue'
 import ViewToggle from '@/components/ViewToggle.vue'
 import MoveTypeBreakdown from '@/components/breakdowns/MoveTypeBreakdown.vue'
 import { Input } from '@/components/ui/input'
-import { useCountriesStore } from '@/stores/countries'
-import type { CountryStats } from '@/composables/useApi'
+import { useCountries } from '@/composables/useCountries'
+import type { CountryStats } from '@/types/api'
+import { countryCodeToFlag } from '@/lib/countryFlag'
 
-// ── Store ───────────────────────────────────────────────────────────────────
-const store = useCountriesStore()
-onMounted(() => store.fetchCountries())
+const { countries, loading, error, fetch } = useCountries()
+onMounted(() => fetch())
 
 // ── View mode: table | cards ─────────────────────────────────────────────────
 const viewMode = ref<'table' | 'cards'>('table')
 
 // ── Sort state ───────────────────────────────────────────────────────────────
-type SortKey =
-  | keyof CountryStats
-  | 'movesByType.dropped'
-  | 'movesByType.dipped'
-  | 'movesByType.seen'
+type SortKey = keyof CountryStats
 
 const sortKey = ref<SortKey>('movesCount')
 const sortDir = ref<'asc' | 'desc'>('desc')
 
 /** Map a sortKey to the metric used for the choropleth (must be a top-level numeric key) */
-const choroplethMetric = computed<keyof CountryStats>(() => {
-  switch (sortKey.value) {
-    case 'movesByType.dropped':
-    case 'movesByType.dipped':
-    case 'movesByType.seen':
-      return 'movesCount'
-    default:
-      return sortKey.value as keyof CountryStats
-  }
-})
+const choroplethMetric = computed<keyof CountryStats>(() => sortKey.value)
 
 function resolveValue(row: CountryStats, key: SortKey): number {
-  switch (key) {
-    case 'movesByType.dropped':
-      return row.movesByType.dropped
-    case 'movesByType.dipped':
-      return row.movesByType.dipped
-    case 'movesByType.seen':
-      return row.movesByType.seen
-    default:
-      return (row[key as keyof CountryStats] as number) ?? 0
-  }
+  return (row[key] as number) ?? 0
 }
 
 function toggleSort(key: SortKey) {
@@ -76,7 +54,7 @@ function toggleSort(key: SortKey) {
 
 // ── Sorted & ranked data ─────────────────────────────────────────────────────
 const sortedCountries = computed<(CountryStats & { rank: number })[]>(() => {
-  const rows = [...store.countries]
+  const rows = [...countries.value]
   rows.sort((a, b) => {
     const va = resolveValue(a, sortKey.value)
     const vb = resolveValue(b, sortKey.value)
@@ -102,19 +80,19 @@ const columns: Column[] = [
     align: 'right',
   },
   {
-    key: 'movesByType.dropped',
+    key: 'dropped',
     label: 'Dropped',
     tooltip: 'Logtype 0 — GeoKret left in a cache',
     align: 'right',
   },
   {
-    key: 'movesByType.dipped',
+    key: 'dipped',
     label: 'Dipped',
     tooltip: 'Logtype 5 — visiting/dipping (always w/ location)',
     align: 'right',
   },
   {
-    key: 'movesByType.seen',
+    key: 'seen',
     label: 'Seen',
     tooltip: 'Logtype 3 — seen/met WITH location confirmed',
     align: 'right',
@@ -235,7 +213,7 @@ const legendMetricLabel = computed(() => {
       <div class="relative h-[380px] overflow-hidden rounded-xl border border-border bg-card">
         <!-- Loading overlay -->
         <div
-          v-if="store.loading"
+          v-if="loading"
           class="absolute inset-0 z-[500] flex items-center justify-center bg-card/80"
         >
           <div
@@ -245,8 +223,8 @@ const legendMetricLabel = computed(() => {
 
         <!-- Map (only render when data is ready) -->
         <WorldChoropleth
-          v-if="store.countries.length > 0"
-          :countries="store.countries"
+          v-if="countries.length > 0"
+          :countries="countries"
           :metric="choroplethMetric"
           class="h-full w-full"
         />
@@ -271,17 +249,17 @@ const legendMetricLabel = computed(() => {
 
     <!-- ── Loading / Error states ────────────────────────────────────────────── -->
     <div
-      v-if="store.loading && store.countries.length === 0"
+      v-if="loading && countries.length === 0"
       class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex justify-center py-16"
     >
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-border/30 border-t-primary" />
     </div>
 
-    <div v-else-if="store.error" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div v-else-if="error" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div
         class="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
       >
-        {{ store.error }}
+        {{ error }}
       </div>
     </div>
 
@@ -349,7 +327,7 @@ const legendMetricLabel = computed(() => {
                   :to="`/countries/${row.code.toLowerCase()}`"
                   class="inline-flex items-center gap-2 font-medium text-foreground hover:text-foreground/80 transition-colors"
                 >
-                  <span class="text-lg leading-none">{{ row.flag }}</span>
+                  <span class="text-lg leading-none">{{ countryCodeToFlag(row.code) }}</span>
                   <span>{{ row.name }}</span>
                   <span class="text-xs text-muted-foreground">({{ row.code }})</span>
                 </RouterLink>
@@ -367,32 +345,32 @@ const legendMetricLabel = computed(() => {
               <td
                 class="px-3 py-2.5 text-right tabular-nums"
                 :class="
-                  sortKey === 'movesByType.dropped'
+                  sortKey === 'dropped'
                     ? 'text-foreground font-medium'
                     : 'text-muted-foreground'
                 "
               >
-                {{ fmt(row.movesByType.dropped) }}
+                {{ fmt(row.dropped) }}
               </td>
               <td
                 class="px-3 py-2.5 text-right tabular-nums"
                 :class="
-                  sortKey === 'movesByType.dipped'
+                  sortKey === 'dipped'
                     ? 'text-foreground font-medium'
                     : 'text-muted-foreground'
                 "
               >
-                {{ fmt(row.movesByType.dipped) }}
+                {{ fmt(row.dipped) }}
               </td>
               <td
                 class="px-3 py-2.5 text-right tabular-nums"
                 :class="
-                  sortKey === 'movesByType.seen'
+                  sortKey === 'seen'
                     ? 'font-medium text-foreground'
                     : 'text-muted-foreground'
                 "
               >
-                {{ fmt(row.movesByType.seen) }}
+                {{ fmt(row.seen) }}
               </td>
               <td
                 class="px-3 py-2.5 text-right tabular-nums"
@@ -485,7 +463,7 @@ const legendMetricLabel = computed(() => {
 
       <!-- Row count -->
       <p class="mt-2 text-right text-xs text-muted-foreground">
-        {{ filteredCountries.length }} of {{ store.countries.length }} countries
+        {{ filteredCountries.length }} of {{ countries.length }} countries
       </p>
     </div>
 
@@ -525,7 +503,7 @@ const legendMetricLabel = computed(() => {
 
           <!-- Flag + Name -->
           <div class="flex items-center gap-2.5 mb-3">
-            <span class="text-3xl leading-none">{{ row.flag }}</span>
+            <span class="text-3xl leading-none">{{ countryCodeToFlag(row.code) }}</span>
             <div>
               <p
                 class="font-semibold text-foreground group-hover:text-foreground/80 transition-colors leading-tight"
@@ -601,7 +579,7 @@ const legendMetricLabel = computed(() => {
           <!-- Move breakdown bar -->
           <div class="mt-3 border-t border-border/50 pt-3">
             <MoveTypeBreakdown
-              :moves-by-type="row.movesByType"
+              :moves-by-type="{ dropped: row.dropped, dipped: row.dipped, seen: row.seen }"
               :moves-count="row.movesCount"
               compact
             />
@@ -627,7 +605,7 @@ const legendMetricLabel = computed(() => {
       </div>
 
       <p class="mt-2 text-right text-xs text-muted-foreground">
-        {{ filteredCountries.length }} of {{ store.countries.length }} countries
+        {{ filteredCountries.length }} of {{ countries.length }} countries
       </p>
     </div>
   </main>

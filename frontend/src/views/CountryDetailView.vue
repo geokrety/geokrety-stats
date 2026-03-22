@@ -2,45 +2,41 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft, Globe } from 'lucide-vue-next'
-import { useCountriesStore } from '@/stores/countries'
-import { useStatsStore } from '@/stores/stats'
+import { useCountries } from '@/composables/useCountries'
+import { countryCodeToFlag } from '@/lib/countryFlag'
 import ActivityKpiCard from '@/components/kpi/ActivityKpiCard.vue'
 import MoveTypeBreakdown from '@/components/breakdowns/MoveTypeBreakdown.vue'
 import PointsSummary from '@/components/PointsSummary.vue'
 import CountryGeokretyMap from '@/components/CountryGeokretyMap.vue'
 import UserLeaderboard from '@/components/UserLeaderboard.vue'
 import RecentActivity from '@/components/RecentActivity.vue'
+import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 
 const route = useRoute()
-const store = useCountriesStore()
-const statsStore = useStatsStore()
+const { countries, loading, fetch } = useCountries()
 
 onMounted(() => {
-  store.fetchCountries()
-  statsStore.fetchAll()
+  fetch()
 })
 
 const code = computed(() => String(route.params.code).toUpperCase())
 
-const country = computed(() => store.countries.find((c) => c.code === code.value) ?? null)
+const country = computed(() => countries.value.find((c) => c.code === code.value) ?? null)
 </script>
 
 <template>
   <div class="min-h-screen bg-background text-foreground pb-16">
-    <!-- ── Back navigation ─────────────────────────────────────── -->
+    <!-- ── Breadcrumb navigation ─────────────────────────────── -->
     <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6">
-      <RouterLink
-        to="/countries"
-        class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft class="h-4 w-4" />
-        All countries
-      </RouterLink>
+      <AppBreadcrumb :items="[
+        { label: 'Countries', to: '/countries' },
+        { label: country ? `${countryCodeToFlag(country.code)} ${country.name}` : code },
+      ]" />
     </div>
 
     <!-- ── Loading state ───────────────────────────────────────── -->
     <div
-      v-if="store.loading && !country"
+      v-if="loading && !country"
       class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 flex justify-center py-24"
     >
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-border/20 border-t-primary" />
@@ -48,7 +44,7 @@ const country = computed(() => store.countries.find((c) => c.code === code.value
 
     <!-- ── Not found ───────────────────────────────────────────── -->
     <div
-      v-else-if="!store.loading && !country"
+      v-else-if="!loading && !country"
       class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-24 text-center"
     >
       <Globe class="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -68,7 +64,7 @@ const country = computed(() => store.countries.find((c) => c.code === code.value
       <header class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex items-center gap-4">
           <span class="text-6xl leading-none" role="img" :aria-label="country.name">
-            {{ country.flag }}
+            {{ countryCodeToFlag(country.code) }}
           </span>
           <div>
             <h1 class="text-3xl font-bold tracking-tight">{{ country.name }}</h1>
@@ -101,7 +97,7 @@ const country = computed(() => store.countries.find((c) => c.code === code.value
         </section>
 
         <!-- ── Move type breakdown ───────────────────────────────── -->
-        <MoveTypeBreakdown :moves-by-type="country.movesByType" :moves-count="country.movesCount" />
+        <MoveTypeBreakdown :moves-by-type="{ dropped: country.dropped, dipped: country.dipped, seen: country.seen }" :moves-count="country.movesCount" />
 
         <!-- ── Points summary ────────────────────────────────────── -->
         <PointsSummary

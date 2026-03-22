@@ -24,11 +24,37 @@ const router = createRouter({
       component: () => import('../views/CountryDetailView.vue'),
     },
     {
-      path: '/stats',
-      redirect: '/',
+      path: '/geokrety',
+      name: 'geokrety',
+      component: () => import('../views/GeokretyView.vue'),
+    },
+    {
+      path: '/geokrety/:gkid',
+      name: 'geokret-detail',
+      component: () => import('../views/GeokretDetailView.vue'),
     },
     {
       path: '/leaderboard',
+      name: 'leaderboard',
+      component: () => import('../views/LeaderboardView.vue'),
+    },
+    {
+      path: '/recent-moves',
+      name: 'recent-moves',
+      component: () => import('../views/RecentMovesView.vue'),
+    },
+    {
+      path: '/users',
+      name: 'users',
+      component: () => import('../views/UsersView.vue'),
+    },
+    {
+      path: '/users/:id',
+      name: 'user-profile',
+      component: () => import('../views/UserProfileView.vue'),
+    },
+    {
+      path: '/stats',
       redirect: '/',
     },
     {

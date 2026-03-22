@@ -3,12 +3,13 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import * as topojson from 'topojson-client'
 import type { Topology, GeometryCollection } from 'topojson-specification'
+import { countryCodeToFlag } from '@/lib/countryFlag'
 // Using ?url avoids bundling the large JSON as an ES module
 import worldAtlasUrl from 'world-atlas/countries-110m.json?url'
 import { scaleSequentialLog } from 'd3'
 import { interpolateGreens } from 'd3'
 import { useRouter } from 'vue-router'
-import type { CountryStats } from '@/composables/useApi'
+import type { CountryStats } from '@/types/api'
 import { numericToAlpha2 } from '@/data/iso3166'
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -110,7 +111,7 @@ function getStyle(
 function countryLabel(feature: GeoFeature, lookup: Map<string, CountryStats>): string {
   const alpha2 = numericToAlpha2(String(feature.id ?? ''))
   const stats = alpha2 ? lookup.get(alpha2) : undefined
-  return stats ? `${stats.flag} ${stats.name}` : (alpha2 ?? 'Unknown')
+  return stats ? `${countryCodeToFlag(stats.code)} ${stats.name}` : (alpha2 ?? 'Unknown')
 }
 
 /**
