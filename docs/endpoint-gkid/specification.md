@@ -26,6 +26,7 @@ The GeoKrety Stats API exposes GKID fields through a centralized `GeokretId` typ
 - JSON marshaling/unmarshaling behavior
 - XML marshaling/unmarshaling behavior
 - Nullable handling using Go's pointer semantics
+- Package placement in a reusable `geokrety` Go package
 - Integration patterns for handlers, store layer, and API response entities
 - Testing strategy and validation
 - Migration path for existing code
@@ -69,6 +70,7 @@ The GeoKrety Stats API exposes GKID fields through a centralized `GeokretId` typ
 - **REQ-009**: Constructor and parsing functions shall return errors for invalid inputs with descriptive messages
 - **REQ-010**: Go string conversion via `fmt.Stringer` interface shall return public GKID format
 - **REQ-011**: Go string formatting (`%v`, `%s`) shall display public GKID by default
+- **REQ-011b**: Go string formatting with `%d` shall display the integer representation of the GKID
 
 ### Non-Functional Requirements
 
@@ -100,6 +102,8 @@ The GeoKrety Stats API exposes GKID fields through a centralized `GeokretId` typ
 
 ### Type Definition
 
+The implementation lives in `gkid.go` under `/home/kumy/GIT/geokrety-stats/geokrety/geokrety`, inside a dedicated reusable `geokrety` Go module. Related helper packages live alongside it in `/home/kumy/GIT/geokrety-stats/geokrety/geokrety` and `/home/kumy/GIT/geokrety-stats/geokrety/move`.
+
 ```go
 // GeokretId represents a GeoKret identifier with internal and public representations.
 // The zero value is not valid; use New() or FromInt() constructors.
@@ -126,6 +130,12 @@ func FromInt(v int64) (*GeokretId, error)
 // NewNullable creates a nullable GeokretId from a public GKID string.
 // Returns nil if the input is empty or whitespace; otherwise behaves like New().
 func NewNullable(gkid string) (*GeokretId, error)
+
+// GeokretTypeName returns the textual GeoKret type label for an integer type code.
+func GeokretTypeName(typeID int16) string
+
+// MoveTypeName returns the textual move type label for an integer type code.
+func MoveTypeName(typeID int16) string
 ```
 
 ### Accessor and Conversion Methods
@@ -218,7 +228,7 @@ type GeokretIdError struct {
 
 // Example errors:
 // Input: "GK0000", Reason: "gkid must be greater than zero"
-// Input: "XYZ123", Reason: "invalid gkid format; expected GK[0-9A-F]+ or decimal integer"
+// Input: "XYZ123", Reason: "invalid gkid format; expected GK[0-9A-F]+, hexadecimal without prefix, or decimal integer"
 // Input: "-5", Reason: "gkid must be positive"
 ```
 
@@ -253,6 +263,10 @@ type GeokretIdError struct {
 - **AC-012**: Given API response struct with `GKID *GeokretId` field, When marshaling to JSON, Then the output shows public GKID string (e.g., `"gkid": "GK0001"`), not the internal integer
 
 - **AC-012b**: Given API response struct with `GKID *GeokretId` field, When marshaling to XML, Then the output shows public GKID string (e.g., `<gkid>GK0001</gkid>`), not the internal integer
+
+- **AC-013**: Given a `*GeokretId` with value `255`, When formatting with `fmt.Sprintf("%d", gkid)`, Then the output is `"255"`
+
+- **AC-014**: Given XML input with `gkid` as an attribute, When unmarshaling into a struct with `*GeokretId` field, Then the value is parsed using the same rules as element content
 
 ## 6. Test Automation Strategy
 
@@ -314,7 +328,7 @@ type GeokretIdError struct {
 ✓ Unmarshal empty or missing element → nil *GeokretId
 ✓ Unmarshal invalid format in XML → error
 ✓ Round-trip marshal/unmarshal preserves value
-✓ XML attribute parsing (if supported)
+✓ XML attribute parsing
 ```
 
 #### Entity Integration Tests
@@ -386,6 +400,8 @@ A dedicated `GeokretId` type provides:
 
 **JSON unmarshaling accepts both string and integer**: Maintains compatibility with legacy clients or systems that may send plain integers instead of GKID strings.
 
+**Reusable package placement**: The implementation lives in a standalone `geokrety` package so other modules in this repository can reuse GKID parsing and the type-label helpers without depending on API internals.
+
 ## 8. Dependencies & External Integrations
 
 ### Data Dependencies
@@ -411,6 +427,8 @@ A dedicated `GeokretId` type provides:
 ### Basic Usage
 
 ```go
+// import geo "github.com/geokrety/geokrety-stats/geokrety/geokrety"
+
 // Constructor from GKID string
 gid, err := geo.New("GK0001")
 if err != nil {
@@ -477,7 +495,7 @@ fmt.Println(err)  // Output: gkid must be positive
 
 // Invalid format
 gid, err := geo.New("INVALID")
-fmt.Println(err)  // Output: invalid gkid format; expected GK[0-9A-F]+ or decimal integer
+fmt.Println(err)  // Output: invalid gkid "INVALID": invalid gkid format; expected GK[0-9A-F]+, hexadecimal without prefix, or decimal integer
 
 // JSON with null
 type Response struct {

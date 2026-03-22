@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/config"
-	"github.com/geokrety/geokrety-stats-api/internal/gkid"
+	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -100,32 +100,32 @@ type CountryStats struct {
 }
 
 type RecentBorn struct {
-	ID        int64          `db:"id" json:"id" xml:"id"`
-	GKID      gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid"`
-	Name      string         `db:"name" json:"name" xml:"name"`
-	Type      int16          `db:"type" json:"type" xml:"type"`
-	TypeName  string         `json:"typeName" xml:"typeName"`
-	BornAt    time.Time      `db:"born_at" json:"bornAt" xml:"bornAt"`
-	OwnerID   *int64         `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
-	OwnerName string         `db:"owner_name" json:"ownerName" xml:"ownerName"`
+	ID        int64              `db:"id" json:"id" xml:"id"`
+	GKID      geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid"`
+	Name      string             `db:"name" json:"name" xml:"name"`
+	Type      int16              `db:"type" json:"type" xml:"type"`
+	TypeName  string             `json:"typeName" xml:"typeName"`
+	BornAt    time.Time          `db:"born_at" json:"bornAt" xml:"bornAt"`
+	OwnerID   *int64             `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
+	OwnerName string             `db:"owner_name" json:"ownerName" xml:"ownerName"`
 }
 
 type RecentLoved struct {
-	GeoKretID   int64           `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeoKretName string          `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	UserID      int64           `db:"user_id" json:"userId" xml:"userId"`
-	Username    string          `db:"username" json:"username" xml:"username"`
-	LovedAt     time.Time       `db:"loved_at" json:"lovedAt" xml:"lovedAt"`
+	GeoKretID   int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	UserID      int64               `db:"user_id" json:"userId" xml:"userId"`
+	Username    string              `db:"username" json:"username" xml:"username"`
+	LovedAt     time.Time           `db:"loved_at" json:"lovedAt" xml:"lovedAt"`
 }
 
 type RecentWatched struct {
-	GeoKretID   int64           `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeoKretName string          `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	UserID      int64           `db:"user_id" json:"userId" xml:"userId"`
-	Username    string          `db:"username" json:"username" xml:"username"`
-	WatchedAt   time.Time       `db:"watched_at" json:"watchedAt" xml:"watchedAt"`
+	GeoKretID   int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	UserID      int64               `db:"user_id" json:"userId" xml:"userId"`
+	Username    string              `db:"username" json:"username" xml:"username"`
+	WatchedAt   time.Time           `db:"watched_at" json:"watchedAt" xml:"watchedAt"`
 }
 
 type ActiveCountry struct {
@@ -197,11 +197,11 @@ type FirstFinderLeaderboardEntry struct {
 }
 
 type DistanceRecord struct {
-	GeoKretID   int64           `db:"gk_id" json:"geokretId" xml:"geokretId"`
-	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeoKretName string          `db:"name" json:"geokretName" xml:"geokretName"`
-	KMTotal     float64         `db:"km_total" json:"kmTotal" xml:"kmTotal"`
-	Rank        int             `json:"rank" xml:"rank"`
+	GeoKretID   int64               `db:"gk_id" json:"geokretId" xml:"geokretId"`
+	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName string              `db:"name" json:"geokretName" xml:"geokretName"`
+	KMTotal     float64             `db:"km_total" json:"kmTotal" xml:"kmTotal"`
+	Rank        int                 `json:"rank" xml:"rank"`
 }
 
 type UserNetworkEdge struct {
@@ -222,12 +222,12 @@ type GeokretTimelineEvent struct {
 }
 
 type GeokretCirculation struct {
-	GeoKretID    int64           `db:"geokrety_id" json:"geokretId" xml:"geokretId"`
-	GKID         *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeoKretName  string          `db:"name" json:"geokretName" xml:"geokretName"`
-	Users        int64           `db:"users" json:"users" xml:"users"`
-	Interactions int64           `db:"interactions" json:"interactions" xml:"interactions"`
-	AvgPerUser   float64         `json:"avgInteractionsPerUser" xml:"avgInteractionsPerUser"`
+	GeoKretID    int64               `db:"geokrety_id" json:"geokretId" xml:"geokretId"`
+	GKID         *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName  string              `db:"name" json:"geokretName" xml:"geokretName"`
+	Users        int64               `db:"users" json:"users" xml:"users"`
+	Interactions int64               `db:"interactions" json:"interactions" xml:"interactions"`
+	AvgPerUser   float64             `json:"avgInteractionsPerUser" xml:"avgInteractionsPerUser"`
 }
 
 func Open(cfg config.Config) (*Store, error) {
@@ -568,7 +568,7 @@ LIMIT $1 OFFSET $2
 		return nil, fmt.Errorf("query recent born: %w", err)
 	}
 	for i := range rows {
-		rows[i].TypeName = geokretTypeName(rows[i].Type)
+		rows[i].TypeName = geokrety.TypeName(rows[i].Type)
 	}
 	return rows, nil
 }

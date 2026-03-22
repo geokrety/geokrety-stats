@@ -6,78 +6,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geokrety/geokrety-stats-api/internal/gkid"
+	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
+	movetypes "github.com/geokrety/geokrety-stats/geokrety/move"
 )
 
-func geokretTypeName(typeID int16) string {
-	switch typeID {
-	case 0:
-		return "Traditional"
-	case 1:
-		return "Book/CD/DVD..."
-	case 2:
-		return "Human/Pet"
-	case 3:
-		return "Coin"
-	case 4:
-		return "KretyPost"
-	case 5:
-		return "Pebble"
-	case 6:
-		return "Car"
-	case 7:
-		return "Playing card"
-	case 8:
-		return "Dog tag/pet"
-	case 9:
-		return "Jigsaw part"
-	case 10:
-		return "Hidden GeoKret"
-	default:
-		return "Unknown"
-	}
-}
-
-func moveTypeName(typeID int16) string {
-	switch typeID {
-	case 0:
-		return "Dropped"
-	case 1:
-		return "Grabbed"
-	case 2:
-		return "Commented"
-	case 3:
-		return "Seen"
-	case 4:
-		return "Archived"
-	case 5:
-		return "Dipped"
-	default:
-		return "Unknown"
-	}
-}
-
 type GeokretListItem struct {
-	ID             int64           `db:"id" json:"id" xml:"id"`
-	GKID           *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	Name           string          `db:"name" json:"name" xml:"name"`
-	Type           int16           `db:"type" json:"type" xml:"type"`
-	TypeName       string          `json:"typeName" xml:"typeName"`
-	Missing        bool            `db:"missing" json:"missing" xml:"missing"`
-	MissingAt      *time.Time      `db:"missing_at" json:"missingAt" xml:"missingAt,omitempty"`
-	OwnerID        *int64          `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
-	OwnerUsername  *string         `db:"owner_username" json:"ownerUsername" xml:"ownerUsername,omitempty"`
-	HolderID       *int64          `db:"holder_id" json:"holderId" xml:"holderId,omitempty"`
-	HolderUsername *string         `db:"holder_username" json:"holderUsername" xml:"holderUsername,omitempty"`
-	Country        *string         `db:"country" json:"country" xml:"country,omitempty"`
-	Waypoint       *string         `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
-	Lat            *float64        `db:"lat" json:"lat" xml:"lat,omitempty"`
-	Lon            *float64        `db:"lon" json:"lon" xml:"lon,omitempty"`
-	LovesCount     int64           `db:"loves_count" json:"lovesCount" xml:"lovesCount"`
-	PicturesCount  int64           `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
-	BornAt         *time.Time      `db:"born_at" json:"bornAt" xml:"bornAt,omitempty"`
-	LastMoveAt     *time.Time      `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt,omitempty"`
-	GeoJSON        *GeoJSONPt      `json:"geojson" xml:"geojson,omitempty"`
+	ID             int64               `db:"id" json:"id" xml:"id"`
+	GKID           *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	Name           string              `db:"name" json:"name" xml:"name"`
+	Type           int16               `db:"type" json:"type" xml:"type"`
+	TypeName       string              `json:"typeName" xml:"typeName"`
+	Missing        bool                `db:"missing" json:"missing" xml:"missing"`
+	MissingAt      *time.Time          `db:"missing_at" json:"missingAt" xml:"missingAt,omitempty"`
+	OwnerID        *int64              `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
+	OwnerUsername  *string             `db:"owner_username" json:"ownerUsername" xml:"ownerUsername,omitempty"`
+	HolderID       *int64              `db:"holder_id" json:"holderId" xml:"holderId,omitempty"`
+	HolderUsername *string             `db:"holder_username" json:"holderUsername" xml:"holderUsername,omitempty"`
+	Country        *string             `db:"country" json:"country" xml:"country,omitempty"`
+	Waypoint       *string             `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
+	Lat            *float64            `db:"lat" json:"lat" xml:"lat,omitempty"`
+	Lon            *float64            `db:"lon" json:"lon" xml:"lon,omitempty"`
+	LovesCount     int64               `db:"loves_count" json:"lovesCount" xml:"lovesCount"`
+	PicturesCount  int64               `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
+	BornAt         *time.Time          `db:"born_at" json:"bornAt" xml:"bornAt,omitempty"`
+	LastMoveAt     *time.Time          `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt,omitempty"`
+	GeoJSON        *GeoJSONPt          `json:"geojson" xml:"geojson,omitempty"`
 }
 
 type GeokretDetails struct {
@@ -177,20 +130,20 @@ type HourHeatmapCell struct {
 }
 
 type DormancyRecord struct {
-	GeokretID       int64           `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	GKID            *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeokretName     string          `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	LastTouch       *time.Time      `db:"last_touch" json:"lastTouch" xml:"lastTouch,omitempty"`
-	DormancySeconds int64           `db:"dormancy_seconds" json:"dormancySeconds" xml:"dormancySeconds"`
-	DormancyDays    float64         `db:"dormancy_days" json:"dormancyDays" xml:"dormancyDays"`
+	GeokretID       int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID            *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeokretName     string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	LastTouch       *time.Time          `db:"last_touch" json:"lastTouch" xml:"lastTouch,omitempty"`
+	DormancySeconds int64               `db:"dormancy_seconds" json:"dormancySeconds" xml:"dormancySeconds"`
+	DormancyDays    float64             `db:"dormancy_days" json:"dormancyDays" xml:"dormancyDays"`
 }
 
 type MultiplierVelocityRecord struct {
-	GeokretID   int64           `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	GKID        *gkid.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeokretName string          `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	LastChange  *time.Time      `db:"last_change" json:"lastChange" xml:"lastChange,omitempty"`
-	AvgDelta    float64         `db:"avg_delta" json:"avgDelta" xml:"avgDelta"`
+	GeokretID   int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeokretName string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	LastChange  *time.Time          `db:"last_change" json:"lastChange" xml:"lastChange,omitempty"`
+	AvgDelta    float64             `db:"avg_delta" json:"avgDelta" xml:"avgDelta"`
 }
 
 type UserContinentCoverage struct {
@@ -215,18 +168,18 @@ type TripPoint struct {
 }
 
 type CountryDetails struct {
-	Code              string     `db:"code" json:"code" xml:"code"`
-	Name              string     `db:"name" json:"name" xml:"name"`
-	ContinentCode     *string    `db:"continent_code" json:"continentCode" xml:"continentCode,omitempty"`
-	ContinentName     *string    `db:"continent_name" json:"continentName" xml:"continentName,omitempty"`
-	MovesCount        int64      `db:"moves_count" json:"movesCount" xml:"movesCount"`
-	UniqueUsers       int64      `db:"unique_users" json:"uniqueUsers" xml:"uniqueUsers"`
-	UniqueGeokrety    int64      `db:"unique_gks" json:"uniqueGeokrety" xml:"uniqueGeokrety"`
-	KMContributed     float64    `db:"km_contributed" json:"kmContributed" xml:"kmContributed"`
-	PointsContributed float64    `db:"points_contributed" json:"pointsContributed" xml:"pointsContributed"`
-	CurrentGeokrety   int64      `db:"current_geokrety" json:"currentGeokrety" xml:"currentGeokrety"`
-	LastStatsDate     *time.Time `db:"last_stats_date" json:"lastStatsDate" xml:"lastStatsDate,omitempty"`
-	Flag              string     `json:"flag" xml:"flag"`
+	Code              string              `db:"code" json:"code" xml:"code"`
+	GKID              *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	ContinentCode     *string             `db:"continent_code" json:"continentCode" xml:"continentCode,omitempty"`
+	ContinentName     *string             `db:"continent_name" json:"continentName" xml:"continentName,omitempty"`
+	MovesCount        int64               `db:"moves_count" json:"movesCount" xml:"movesCount"`
+	UniqueUsers       int64               `db:"unique_users" json:"uniqueUsers" xml:"uniqueUsers"`
+	UniqueGeokrety    int64               `db:"unique_gks" json:"uniqueGeokrety" xml:"uniqueGeokrety"`
+	KMContributed     float64             `db:"km_contributed" json:"kmContributed" xml:"kmContributed"`
+	PointsContributed float64             `db:"points_contributed" json:"pointsContributed" xml:"pointsContributed"`
+	CurrentGeokrety   int64               `db:"current_geokrety" json:"currentGeokrety" xml:"currentGeokrety"`
+	LastStatsDate     *time.Time          `db:"last_stats_date" json:"lastStatsDate" xml:"lastStatsDate,omitempty"`
+	Flag              string              `json:"flag" xml:"flag"`
 }
 
 type WaypointSummary struct {
@@ -291,7 +244,7 @@ type UserSearchResult struct {
 
 func hydrateGeokretListItems(items []GeokretListItem) []GeokretListItem {
 	for i := range items {
-		items[i].TypeName = geokretTypeName(items[i].Type)
+		items[i].TypeName = geokrety.TypeName(items[i].Type)
 		if !items[i].Missing {
 			items[i].MissingAt = nil
 		}
@@ -312,7 +265,7 @@ func hydrateGeokretListItems(items []GeokretListItem) []GeokretListItem {
 
 func hydrateMoveRecords(items []MoveRecord) []MoveRecord {
 	for i := range items {
-		items[i].MoveTypeName = moveTypeName(items[i].MoveType)
+		items[i].MoveTypeName = movetypes.TypeName(items[i].MoveType)
 		if items[i].Country != nil {
 			country := strings.ToUpper(*items[i].Country)
 			items[i].Country = &country
@@ -367,7 +320,7 @@ func hydrateGKWaypointVisits(items []GeokretWaypointVisit) []GeokretWaypointVisi
 
 func hydrateTripPoints(items []TripPoint) []TripPoint {
 	for i := range items {
-		items[i].MoveTypeName = moveTypeName(items[i].MoveType)
+		items[i].MoveTypeName = movetypes.TypeName(items[i].MoveType)
 		items[i].GeoJSON = &GeoJSONPt{Type: "Point", Coordinates: []float64{items[i].Lon, items[i].Lat}}
 		if items[i].Country != nil {
 			country := strings.ToUpper(*items[i].Country)
@@ -428,6 +381,17 @@ LIMIT $1 OFFSET $2
 		return nil, fmt.Errorf("query geokret list: %w", err)
 	}
 	return hydrateGeokretListItems(rows), nil
+}
+
+func (s *Store) FetchGeokretyListTotal(ctx context.Context) (int64, error) {
+	var total int64
+	if err := s.db.GetContext(ctx, &total, `
+SELECT COUNT(*)::bigint
+FROM geokrety.gk_geokrety_with_details
+`); err != nil {
+		return 0, fmt.Errorf("count geokret list: %w", err)
+	}
+	return total, nil
 }
 
 func (s *Store) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {

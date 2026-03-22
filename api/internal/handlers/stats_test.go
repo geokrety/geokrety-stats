@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/db"
-	"github.com/geokrety/geokrety-stats-api/internal/gkid"
+	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -183,7 +183,8 @@ func (m *mockStatsStore) FetchCountryList(ctx context.Context, limit, offset int
 	if err := m.maybeFail("FetchCountryList"); err != nil {
 		return nil, err
 	}
-	return []db.CountryDetails{{Code: "PL", Name: "Poland", CurrentGeokrety: 1, Flag: "🇵🇱"}}, nil
+	continentName := "Europe"
+	return []db.CountryDetails{{Code: "PL", ContinentName: &continentName, CurrentGeokrety: 1, Flag: "🇵🇱"}}, nil
 }
 
 func (m *mockStatsStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
@@ -224,6 +225,18 @@ func (m *mockStatsStore) FetchGeokretyList(ctx context.Context, limit, offset in
 	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
 }
 
+func (m *mockStatsStore) FetchGeokretyListTotal(ctx context.Context) (int64, error) {
+	if m.noRowsMethod == "FetchGeokretyListTotal" {
+		m.lastMethod = "FetchGeokretyListTotal"
+		return 0, sql.ErrNoRows
+	}
+	if m.failMethod == "FetchGeokretyListTotal" {
+		m.lastMethod = "FetchGeokretyListTotal"
+		return 0, errors.New("boom")
+	}
+	return 42, nil
+}
+
 func (m *mockStatsStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error) {
 	if err := m.maybeFail("FetchGeokretyByGKID"); err != nil {
 		return db.GeokretDetails{}, err
@@ -231,17 +244,17 @@ func (m *mockStatsStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (d
 	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: gkid, GKID: mustGeokretIdPtr(gkid), Name: "GK"}}, nil
 }
 
-func mustGeokretId(t *testing.T, value int64) *gkid.GeokretId {
+func mustGeokretId(t *testing.T, value int64) *geokrety.GeokretId {
 	t.Helper()
-	parsed, err := gkid.FromInt(value)
+	parsed, err := geokrety.FromInt(value)
 	if err != nil {
 		t.Fatalf("FromInt(%d) returned error: %v", value, err)
 	}
 	return parsed
 }
 
-func mustGeokretIdPtr(value int64) *gkid.GeokretId {
-	parsed, err := gkid.FromInt(value)
+func mustGeokretIdPtr(value int64) *geokrety.GeokretId {
+	parsed, err := geokrety.FromInt(value)
 	if err != nil {
 		panic(err)
 	}
@@ -354,7 +367,8 @@ func (m *mockStatsStore) FetchCountryDetails(ctx context.Context, countryCode st
 	if err := m.maybeFail("FetchCountryDetails"); err != nil {
 		return db.CountryDetails{}, err
 	}
-	return db.CountryDetails{Code: countryCode, Name: "Poland"}, nil
+	continentName := "Europe"
+	return db.CountryDetails{Code: countryCode, ContinentName: &continentName}, nil
 }
 
 func (m *mockStatsStore) FetchCountryGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]db.GeokretListItem, error) {

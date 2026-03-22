@@ -120,6 +120,13 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 			if payload["meta"] == nil {
 				t.Fatalf("meta field missing")
 			}
+			if tc.name == "geokret-list" {
+				meta := payload["meta"].(map[string]any)
+				pagination := meta["pagination"].(map[string]any)
+				if got := pagination["count"]; got != float64(42) {
+					t.Fatalf("meta.pagination.count = %#v, want 42", got)
+				}
+			}
 			if tc.name == "geokret-details-by-gkid" || tc.name == "geokret-details-by-numeric-gkid" {
 				data := payload["data"].(map[string]any)
 				if got := data["gkid"]; got != "GK0001" {
@@ -237,6 +244,7 @@ func TestEntityHandlerStoreErrors(t *testing.T) {
 		{"details-500", "FetchGeokrety", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusInternalServerError},
 		{"details-404", "", "FetchGeokrety", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusNotFound},
 		{"details-by-gkid-404", "", "FetchGeokretyByGKID", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyByGKID"}, zap.NewNop()).GetGeokretyDetailsByGkId, "/api/v3/geokrety/GK0001", []string{"gkid", "GK0001"}, http.StatusNotFound},
+		{"list-count-500", "FetchGeokretyListTotal", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokretyListTotal"}, zap.NewNop()).GetGeokretyList, "/api/v3/geokrety?limit=1&offset=0", nil, http.StatusInternalServerError},
 		{"move-details-404", "", "FetchGeokretyMoveDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyMoveDetails"}, zap.NewNop()).GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/2", []string{"id", "1", "moveId", "2"}, http.StatusNotFound},
 		{"geojson-500", "FetchGeokretyTripPoints", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokretyTripPoints"}, zap.NewNop()).GetGeokretyGeoJSONTrip, "/api/v3/geokrety/1/geojson/trip", []string{"id", "1"}, http.StatusInternalServerError},
 		{"country-404", "", "FetchCountryDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchCountryDetails"}, zap.NewNop()).GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, http.StatusNotFound},

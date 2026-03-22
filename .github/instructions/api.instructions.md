@@ -161,3 +161,7 @@ applyTo: 'api/**/*.go'
   - `stats.user_countries`
   - `stats.user_related_users`
   - `stats.waypoints`
+
+# Tips for Implementation
+
+- In order to improve the patching, apply updates directly to the existing files instead of replacing them entirely, the user will have direct feedback on the changes and can easily identify what was added or modified. This also helps to maintain the context of the code and reduces the chances of introducing errors during the patching process.

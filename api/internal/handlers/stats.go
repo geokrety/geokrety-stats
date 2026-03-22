@@ -36,6 +36,7 @@ type StatsStore interface {
 	FetchGeokretTimeline(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretTimelineEvent, error)
 	FetchGeokretCirculation(ctx context.Context, geokretID int64) (db.GeokretCirculation, error)
 	FetchGeokretyList(ctx context.Context, limit, offset int) ([]db.GeokretListItem, error)
+	FetchGeokretyListTotal(ctx context.Context) (int64, error)
 	FetchGeokrety(ctx context.Context, geokretID int64) (db.GeokretDetails, error)
 	FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error)
 	ResolveGeokretID(ctx context.Context, gkid int64) (int64, error)

@@ -2,6 +2,10 @@ module github.com/geokrety/geokrety-stats-api
 
 go 1.24.0
 
+require github.com/geokrety/geokrety-stats/geokrety v0.0.0
+
+replace github.com/geokrety/geokrety-stats/geokrety => ../geokrety
+
 require (
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/jackc/pgx/v5 v5.7.4

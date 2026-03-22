@@ -3508,6 +3508,8 @@ components:
           type: string
         type:
           type: integer
+        typeName:
+          type: string
         ownerId:
           type: integer
           format: int64
@@ -3752,9 +3754,26 @@ components:
         type:
           type: integer
           description: GeoKret type code
+        typeName:
+          type: string
         missing:
           type: boolean
-        username:
+        missingAt:
+          type: string
+          format: date-time
+          nullable: true
+        ownerId:
+          type: integer
+          format: int64
+          nullable: true
+        ownerUsername:
+          type: string
+          nullable: true
+        holderId:
+          type: integer
+          format: int64
+          nullable: true
+        holderUsername:
           type: string
           nullable: true
         lat:
@@ -3768,6 +3787,21 @@ components:
         country:
           type: string
           maxLength: 2
+          nullable: true
+        waypoint:
+          type: string
+          nullable: true
+        lovesCount:
+          type: integer
+        picturesCount:
+          type: integer
+        bornAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastMoveAt:
+          type: string
+          format: date-time
           nullable: true
         geojson:
           $ref: '#/components/schemas/GeoJSONPoint'
@@ -3789,13 +3823,21 @@ components:
           type: string
         type:
           type: integer
+        typeName:
+          type: string
+        missingAt:
+          type: string
+          format: date-time
+          nullable: true
         missing:
           type: boolean
         ownerId:
           type: integer
           format: int64
+          nullable: true
         ownerUsername:
           type: string
+          nullable: true
         holderId:
           type: integer
           format: int64
@@ -3855,6 +3897,8 @@ components:
           format: int64
         moveType:
           type: integer
+        moveTypeName:
+          type: string
         authorId:
           type: integer
           format: int64

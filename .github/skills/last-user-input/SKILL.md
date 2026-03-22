@@ -20,20 +20,12 @@ IT IS THEN POSSIBLE YOU ASK THE USER MANY TIMES IF THEY HAVE ANY LAST REQUESTS O
 
 # How to ask the user for last input?
 
-Use tool ask questions:
+YOU MUST USE tool ask questions:
 ```
-#askQuestions question: "Do you have any last requests or changes before I finalize the implementation? (yes/no)"
+#askQuestions
+question: "Do you have any last requests or changes before I finalize the implementation? (yes/no/free field for details)"
+choices: ["yes", "no"] freeForm: true
 ```
+# THE MOST IMPORTANT
 
-Or using the command line:
-```bash
-read -p "Do you have any last requests or changes before I finalize the implementation? (yes/no) " answer
-if [[ "$answer" == "yes" ]]; then
-  # read the user inputs file again and check for updates
-  # adjust implementation process accordingly
-elif [[ "$answer" == "no" ]]; then
-  # finalize implementation and mark task as complete
-else
-  echo "Invalid answer. Please answer yes or no."
-fi
-```
+**YOU ARE ONLY ALLOWED TO STOP WHEN THE USER CONFIRMS ASK YOU TO STOP USING AN EXPLICIT CONFIRMATION.**

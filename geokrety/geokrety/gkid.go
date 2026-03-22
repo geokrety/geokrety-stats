@@ -1,4 +1,4 @@
-package gkid
+package geokrety
 
 import (
 	"database/sql/driver"
@@ -11,13 +11,10 @@ import (
 
 const invalidFormatReason = "invalid gkid format; expected GK[0-9A-F]+, hexadecimal without prefix, or decimal integer"
 
-// GeokretId represents a public GeoKret identifier backed by an internal integer value.
-// The zero value is invalid; use New or FromInt for deliberate construction.
 type GeokretId struct {
 	value int64
 }
 
-// GeokretIdError describes an invalid GeoKret identifier input.
 type GeokretIdError struct {
 	Input  string
 	Reason string
@@ -30,7 +27,6 @@ func (e *GeokretIdError) Error() string {
 	return fmt.Sprintf("invalid gkid %q: %s", e.Input, e.Reason)
 }
 
-// New creates a GeokretId from a public GKID string, bare hex string, or decimal string.
 func New(raw string) (*GeokretId, error) {
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
@@ -39,7 +35,6 @@ func New(raw string) (*GeokretId, error) {
 	return parseString(trimmed)
 }
 
-// NewNullable creates a nullable GeokretId from a string representation.
 func NewNullable(raw string) (*GeokretId, error) {
 	if strings.TrimSpace(raw) == "" {
 		return nil, nil
@@ -47,7 +42,6 @@ func NewNullable(raw string) (*GeokretId, error) {
 	return New(raw)
 }
 
-// FromInt creates a GeokretId from its integer representation.
 func FromInt(value int64) (*GeokretId, error) {
 	switch {
 	case value == 0:
@@ -136,17 +130,14 @@ func (g *GeokretId) mustValue() int64 {
 	return g.value
 }
 
-// Int returns the integer GKID value.
 func (g *GeokretId) Int() int64 {
 	return g.mustValue()
 }
 
-// ToGKID returns the canonical public GKID representation.
 func (g *GeokretId) ToGKID() string {
 	return formatGKID(g.mustValue())
 }
 
-// String returns the canonical public GKID representation, or a safe sentinel for nil/invalid values.
 func (g *GeokretId) String() string {
 	switch {
 	case g == nil:
@@ -158,7 +149,6 @@ func (g *GeokretId) String() string {
 	}
 }
 
-// Format ensures both value and pointer forms render the canonical public GKID for fmt verbs.
 func (g GeokretId) Format(state fmt.State, verb rune) {
 	formatted := "invalid"
 	integerValue := "0"
@@ -179,7 +169,6 @@ func (g GeokretId) Format(state fmt.State, verb rune) {
 	}
 }
 
-// IntOrZero returns the integer value or zero for nil/invalid receivers.
 func (g *GeokretId) IntOrZero() int64 {
 	if g == nil || g.value <= 0 {
 		return 0
@@ -187,7 +176,6 @@ func (g *GeokretId) IntOrZero() int64 {
 	return g.value
 }
 
-// ToGKIDOrEmpty returns the canonical public GKID or an empty string for nil/invalid receivers.
 func (g *GeokretId) ToGKIDOrEmpty() string {
 	if g == nil || g.value <= 0 {
 		return ""
@@ -195,7 +183,6 @@ func (g *GeokretId) ToGKIDOrEmpty() string {
 	return formatGKID(g.value)
 }
 
-// MarshalJSON encodes the identifier as the canonical public GKID string.
 func (g GeokretId) MarshalJSON() ([]byte, error) {
 	if g.value <= 0 {
 		return nil, fmt.Errorf("cannot marshal invalid gkid")
@@ -203,7 +190,6 @@ func (g GeokretId) MarshalJSON() ([]byte, error) {
 	return json.Marshal(formatGKID(g.value))
 }
 
-// MarshalText encodes the identifier as canonical text for XML and other text serializers.
 func (g GeokretId) MarshalText() ([]byte, error) {
 	if g.value <= 0 {
 		return nil, fmt.Errorf("cannot marshal invalid gkid")
@@ -211,7 +197,6 @@ func (g GeokretId) MarshalText() ([]byte, error) {
 	return []byte(formatGKID(g.value)), nil
 }
 
-// UnmarshalJSON decodes a GeoKret identifier from a string or decimal integer.
 func (g *GeokretId) UnmarshalJSON(data []byte) error {
 	trimmed := strings.TrimSpace(string(data))
 	if trimmed == "null" {
@@ -249,12 +234,10 @@ func (g *GeokretId) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalText decodes a GeoKret identifier from text content.
 func (g *GeokretId) UnmarshalText(text []byte) error {
 	trimmed := strings.TrimSpace(string(text))
 	if trimmed == "" {
-		g.value = 0
-		return nil
+		return &GeokretIdError{Input: string(text), Reason: invalidFormatReason}
 	}
 	parsed, err := New(trimmed)
 	if err != nil {
@@ -264,7 +247,6 @@ func (g *GeokretId) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MarshalXML encodes the identifier as XML element content.
 func (g GeokretId) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	text, err := g.MarshalText()
 	if err != nil {
@@ -273,7 +255,6 @@ func (g GeokretId) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	return enc.EncodeElement(string(text), start)
 }
 
-// UnmarshalXML decodes the identifier from XML element content.
 func (g *GeokretId) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
 	var raw string
 	if err := dec.DecodeElement(&raw, &start); err != nil {
@@ -282,7 +263,6 @@ func (g *GeokretId) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 	return g.UnmarshalText([]byte(raw))
 }
 
-// MarshalXMLAttr encodes the identifier as an XML attribute value.
 func (g GeokretId) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	text, err := g.MarshalText()
 	if err != nil {
@@ -291,12 +271,10 @@ func (g GeokretId) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	return xml.Attr{Name: name, Value: string(text)}, nil
 }
 
-// UnmarshalXMLAttr decodes the identifier from an XML attribute value.
 func (g *GeokretId) UnmarshalXMLAttr(attr xml.Attr) error {
 	return g.UnmarshalText([]byte(attr.Value))
 }
 
-// Scan reads a GeoKret identifier from SQL values.
 func (g *GeokretId) Scan(src any) error {
 	if src == nil {
 		g.value = 0
@@ -330,7 +308,6 @@ func (g *GeokretId) Scan(src any) error {
 	return nil
 }
 
-// Value writes a GeoKret identifier as its integer representation for SQL.
 func (g GeokretId) Value() (driver.Value, error) {
 	if g.value <= 0 {
 		return nil, fmt.Errorf("cannot store invalid gkid")

@@ -132,6 +132,10 @@ func (h *handlersTestStore) FetchGeokretyList(ctx context.Context, limit, offset
 	return []db.GeokretListItem{}, nil
 }
 
+func (h *handlersTestStore) FetchGeokretyListTotal(ctx context.Context) (int64, error) {
+	return 0, nil
+}
+
 func (h *handlersTestStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error) {
 	return db.GeokretDetails{}, nil
 }

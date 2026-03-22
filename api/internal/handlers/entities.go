@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/geokrety/geokrety-stats-api/internal/db"
-	"github.com/geokrety/geokrety-stats-api/internal/gkid"
+	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -60,9 +60,20 @@ func (h *StatsHandler) GetGeokrety(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StatsHandler) GetGeokretyList(w http.ResponseWriter, r *http.Request) {
-	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
-		return h.store.FetchGeokretyList(r.Context(), limit, offset)
-	}, "failed to fetch geokrety")
+	started := time.Now()
+	limit := queryInt(r, "limit", 20, 1, 100)
+	offset := queryInt(r, "offset", 0, 0, 1_000_000)
+	rows, err := h.store.FetchGeokretyList(r.Context(), limit, offset)
+	if err != nil {
+		h.writeStoreError(w, r, err, "failed to fetch geokrety")
+		return
+	}
+	total, err := h.store.FetchGeokretyListTotal(r.Context())
+	if err != nil {
+		h.writeStoreError(w, r, err, "failed to count geokrety")
+		return
+	}
+	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, int(total))
 }
 
 func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.Request) {
@@ -545,7 +556,7 @@ func parsePublicGKIDParam(w http.ResponseWriter, r *http.Request, keys ...string
 		writeErrorForRequest(w, r, http.StatusBadRequest, "missing geokret identifier")
 		return 0, false
 	}
-	parsed, err := gkid.New(value)
+	parsed, err := geokrety.New(value)
 	if err != nil {
 		writeErrorForRequest(w, r, http.StatusBadRequest, err.Error())
 		return 0, false
