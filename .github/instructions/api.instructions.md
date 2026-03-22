@@ -24,6 +24,51 @@ applyTo: 'api/**/*.go'
 - MUST include data_as_of and computed_at fields in responses
 - MUST document freshness for materialized-view backed endpoints as part of the contract
 
+## Data Type Marshaling Standards
+
+For all custom type structs and registries (e.g., GeoKret types, move types, status types), implement consistent marshaling/unmarshaling support across multiple data formats:
+
+### JSON Marshaling
+
+- MUST implement `MarshalJSON()` and `UnmarshalJSON()` methods on all type structs
+- MUST serialize type labels (not numeric IDs) as the primary JSON representation for human readability in API responses
+- MUST support unmarshaling from both string labels and numeric type IDs in requests for flexibility
+- MAY include optional metadata fields (e.g., `{id: 0, label: "Traditional"}`) in complex responses
+- SHOULD follow the pattern established in `GeokretId` type implementation for consistency
+
+### XML Marshaling
+
+- MUST implement `MarshalXML()` and `UnmarshalXML()` methods on all type structs
+- MUST support both element and attribute serialization patterns
+- MUST implement `MarshalXMLAttr()` and `UnmarshalXMLAttr()` for XML attribute contexts
+- SHOULD serialize type labels as element text or attribute values for XML compatibility
+
+### CSV Marshaling
+
+- MUST implement `MarshalCSV()` and `UnmarshalCSV()` methods or helper functions for bulk export/import operations
+- MUST use a standardized CSV format: `ID,Label` (e.g., "0,Traditional" for GeoKret types)
+- MUST support unmarshaling from multiple CSV formats: ID-only, label-only, or ID,Label pairs
+- SHOULD include CSV header rows in bulk export endpoints that document the schema
+
+### YAML Marshaling
+
+- MUST implement `MarshalYAML()` and `UnmarshalYAML()` methods for configuration and documentation purposes
+- MUST support both simple formats (single scalar value) and structured formats (e.g., `{id: 0, label: "Traditional"}`)
+- SHOULD enable YAML configuration files to reference types by either ID or label
+- MUST maintain backward compatibility with existing YAML-based configurations
+
+### Implementation Guidance
+
+- All type registries MUST use struct-based architectures with receiver methods (not package-level functions)
+- Type IDs MUST be defined as exported constants to enable compile-time type checking
+- Marshaling errors MUST provide clear error messages indicating which type ID or value was invalid
+- All marshaling methods SHOULD be thoroughly unit tested with 100% code coverage
+- Type registries SHOULD provide both singleton instances (for convenience) and support constructor injection (for testability)
+
+### Reference Implementation
+
+See [Type-Label Helpers Refactoring Specification](../../tmp/20260322-refactor-types/specification.md) for complete guidance on refactoring type-label helpers with comprehensive marshaling support across JSON, XML, CSV, and YAML formats.
+
 ## Performance & Optimization
 
 - MUST be optimized for performance on datasets used for Data Visualisation (ECharts) and mapping (Leaflet.js)
