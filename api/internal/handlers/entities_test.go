@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/geokrety/geokrety-stats-api/internal/pagination"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -110,8 +111,8 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 			if store.lastMethod != tc.expMethod {
 				t.Fatalf("expected method %s, got %s", tc.expMethod, store.lastMethod)
 			}
-			if tc.checkLimit && (store.lastLimit != tc.expLimit || store.lastOffset != tc.expOffset) {
-				t.Fatalf("expected limit/offset %d/%d, got %d/%d", tc.expLimit, tc.expOffset, store.lastLimit, store.lastOffset)
+			if tc.checkLimit && (store.lastLimit != tc.expLimit+1 || store.lastOffset != tc.expOffset) {
+				t.Fatalf("expected limit/offset %d/%d, got %d/%d", tc.expLimit+1, tc.expOffset, store.lastLimit, store.lastOffset)
 			}
 			payload := decodeMap(t, w)
 			if payload["data"] == nil {
@@ -123,8 +124,11 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 			if tc.name == "geokret-list" {
 				meta := payload["meta"].(map[string]any)
 				pagination := meta["pagination"].(map[string]any)
-				if got := pagination["count"]; got != float64(42) {
-					t.Fatalf("meta.pagination.count = %#v, want 42", got)
+				if got := pagination["count"]; got != float64(1) {
+					t.Fatalf("meta.pagination.count = %#v, want 1", got)
+				}
+				if got, ok := pagination["totalItems"]; ok {
+					t.Fatalf("meta.pagination.totalItems = %#v, want omitted on non-first page", got)
 				}
 			}
 			if tc.name == "geokret-details-by-gkid" || tc.name == "geokret-details-by-numeric-gkid" {
@@ -152,6 +156,101 @@ func TestEntityHandlerAcceptsBareHexGKID(t *testing.T) {
 	data := payload["data"].(map[string]any)
 	if got := data["gkid"]; got != "GK00FF" {
 		t.Fatalf("data.gkid = %#v, want GK00FF", got)
+	}
+}
+
+func TestEntityHandlerAcceptsCursorPagination(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	cursor := pagination.EncodeCursor(pagination.CurrentCursorVersion, 5)
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&cursor="+cursor.String()+"&includeTotal=true", nil)
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyList(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if store.lastLimit != 5 || store.lastOffset != 5 {
+		t.Fatalf("expected limit/offset 5/5, got %d/%d", store.lastLimit, store.lastOffset)
+	}
+	payload := decodeMap(t, w)
+	meta := payload["meta"].(map[string]any)
+	page := meta["pagination"].(map[string]any)
+	if got := page["cursor"]; got != cursor.String() {
+		t.Fatalf("pagination.cursor = %#v, want %q", got, cursor.String())
+	}
+	if got := page["totalItems"]; got != float64(42) {
+		t.Fatalf("pagination.totalItems = %#v, want 42", got)
+	}
+	if got := page["count"]; got != float64(1) {
+		t.Fatalf("pagination.count = %#v, want 1", got)
+	}
+	if got := page["hasMore"]; got != true {
+		t.Fatalf("pagination.hasMore = %#v, want true", got)
+	}
+}
+
+func TestEntityHandlerIncludesTotalItemsOnFirstPage(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&offset=0", nil)
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyList(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	meta := payload["meta"].(map[string]any)
+	page := meta["pagination"].(map[string]any)
+	if got := page["totalItems"]; got != float64(42) {
+		t.Fatalf("pagination.totalItems = %#v, want 42", got)
+	}
+}
+
+func TestEntityHandlerRejectsInvalidCursor(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?cursor=abc", nil)
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyList(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestEntityHandlerRejectsUnsupportedCursorVersion(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	cursor := pagination.EncodeCursor(pagination.CurrentCursorVersion+1, 5)
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?cursor="+cursor.String(), nil)
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyList(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if got := payload["error"]; got != "unsupported cursor version" {
+		t.Fatalf("error = %#v, want unsupported cursor version", got)
+	}
+}
+
+func TestEntityHandlerRejectsInvalidLimit(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=abc", nil)
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyList(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -61,19 +60,28 @@ func (h *StatsHandler) GetGeokrety(w http.ResponseWriter, r *http.Request) {
 
 func (h *StatsHandler) GetGeokretyList(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
-	limit := queryInt(r, "limit", 20, 1, 100)
-	offset := queryInt(r, "offset", 0, 0, 1_000_000)
-	rows, err := h.store.FetchGeokretyList(r.Context(), limit, offset)
+	req, err := queryPagination(r, 20, 100)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		return
+	}
+	rows, err := h.store.FetchGeokretyList(r.Context(), req.Limit+1, req.Offset)
 	if err != nil {
 		h.writeStoreError(w, r, err, "failed to fetch geokrety")
 		return
 	}
-	total, err := h.store.FetchGeokretyListTotal(r.Context())
-	if err != nil {
-		h.writeStoreError(w, r, err, "failed to count geokrety")
-		return
+	pageRows, _, hasMore := trimPaginatedPayload(rows, req.Limit)
+	var totalItems *int
+	if req.Offset == 0 || r.URL.Query().Get("includeTotal") == "true" {
+		total, err := h.store.FetchGeokretyListTotal(r.Context())
+		if err != nil {
+			h.writeStoreError(w, r, err, "failed to count geokrety")
+			return
+		}
+		totalValue := int(total)
+		totalItems = &totalValue
 	}
-	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, int(total))
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, totalItems, &hasMore, nil)
 }
 
 func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.Request) {
@@ -238,15 +246,20 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 	if !ok {
 		return
 	}
-	limit := queryInt(r, "limit", 500, 1, 5000)
-	offset := queryInt(r, "offset", 0, 0, 1_000_000)
-	rows, err := h.store.FetchGeokretyTripPoints(r.Context(), geokretID, limit, offset)
+	req, err := queryPagination(r, 500, 5000)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		return
+	}
+	rows, err := h.store.FetchGeokretyTripPoints(r.Context(), geokretID, req.Limit+1, req.Offset)
 	if err != nil {
 		h.writeStoreError(w, r, err, "failed to fetch geokret trip")
 		return
 	}
-	features := make([]geoJSONFeature, 0, len(rows))
-	for _, row := range rows {
+	trimmedRows, returned, hasMore := trimPaginatedPayload(rows, req.Limit)
+	tripRows, _ := trimmedRows.([]db.TripPoint)
+	features := make([]geoJSONFeature, 0, len(tripRows))
+	for _, row := range tripRows {
 		features = append(features, geoJSONFeature{
 			Type:     "Feature",
 			Geometry: row.GeoJSON,
@@ -260,7 +273,7 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 			},
 		})
 	}
-	writeEnvelopeForRequest(w, r, http.StatusOK, geoJSONFeatureCollection{Type: "FeatureCollection", Features: features}, started, limit, offset, len(features))
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, geoJSONFeatureCollection{Type: "FeatureCollection", Features: features}, started, req, nil, &hasMore, &returned)
 }
 
 func (h *StatsHandler) GetCountryDetails(w http.ResponseWriter, r *http.Request) {
@@ -500,19 +513,18 @@ func (h *StatsHandler) parseGeokretRouteID(w http.ResponseWriter, r *http.Reques
 
 func (h *StatsHandler) getEntityList(w http.ResponseWriter, r *http.Request, fetch func(limit, offset int) (interface{}, error), errMsg string) {
 	started := time.Now()
-	limit := queryInt(r, "limit", 20, 1, 1000)
-	offset := queryInt(r, "offset", 0, 0, 1_000_000)
-	rows, err := fetch(limit, offset)
+	req, err := queryPagination(r, 20, 1000)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		return
+	}
+	rows, err := fetch(req.Limit+1, req.Offset)
 	if err != nil {
 		h.writeStoreError(w, r, err, errMsg)
 		return
 	}
-	count := 0
-	v := reflect.ValueOf(rows)
-	if v.IsValid() && v.Kind() == reflect.Slice {
-		count = v.Len()
-	}
-	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, count)
+	pageRows, returned, hasMore := trimPaginatedPayload(rows, req.Limit)
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, nil, &hasMore, &returned)
 }
 
 func (h *StatsHandler) userListHandler(w http.ResponseWriter, r *http.Request, fetch func(context.Context, int64, int, int) ([]db.GeokretListItem, error), errMsg string) {

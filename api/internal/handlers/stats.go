@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -98,28 +97,36 @@ func (h *StatsHandler) GetKPIs(w http.ResponseWriter, r *http.Request) {
 
 func (h *StatsHandler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
-	limit := queryInt(r, "limit", 50, 1, 1000)
-	offset := queryInt(r, "offset", 0, 0, 1_000_000)
-	rows, err := h.store.FetchCountries(r.Context(), limit, offset)
+	req, err := queryPagination(r, 50, 1000)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		return
+	}
+	rows, err := h.store.FetchCountries(r.Context(), req.Limit+1, req.Offset)
 	if err != nil {
 		h.logger.Error("failed to fetch countries", zap.Error(err))
 		writeErrorForRequest(w, r, http.StatusInternalServerError, "failed to fetch countries")
 		return
 	}
-	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, len(rows))
+	pageRows, returned, hasMore := trimPaginatedPayload(rows, req.Limit)
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, nil, &hasMore, &returned)
 }
 
 func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
-	limit := queryInt(r, "limit", 20, 1, 1000)
-	offset := queryInt(r, "offset", 0, 0, 1_000_000)
-	rows, err := h.store.FetchLeaderboard(r.Context(), limit, offset)
+	req, err := queryPagination(r, 20, 1000)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		return
+	}
+	rows, err := h.store.FetchLeaderboard(r.Context(), req.Limit+1, req.Offset)
 	if err != nil {
 		h.logger.Error("failed to fetch leaderboard", zap.Error(err))
 		writeErrorForRequest(w, r, http.StatusInternalServerError, "failed to fetch leaderboard")
 		return
 	}
-	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, len(rows))
+	pageRows, returned, hasMore := trimPaginatedPayload(rows, req.Limit)
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, nil, &hasMore, &returned)
 }
 
 func (h *StatsHandler) GetRecentMoves(w http.ResponseWriter, r *http.Request) {
@@ -242,20 +249,19 @@ func (h *StatsHandler) getRecentList(
 	errMsg string,
 ) {
 	started := time.Now()
-	limit := queryInt(r, "limit", 20, 1, 1000)
-	offset := queryInt(r, "offset", 0, 0, 1_000_000)
-	rows, err := fetch(r.Context(), limit, offset)
+	req, err := queryPagination(r, 20, 1000)
+	if err != nil {
+		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		return
+	}
+	rows, err := fetch(r.Context(), req.Limit+1, req.Offset)
 	if err != nil {
 		h.logger.Error(errMsg, zap.Error(err))
 		writeErrorForRequest(w, r, http.StatusInternalServerError, errMsg)
 		return
 	}
-	count := 0
-	v := reflect.ValueOf(rows)
-	if v.IsValid() && v.Kind() == reflect.Slice {
-		count = v.Len()
-	}
-	writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, limit, offset, count)
+	pageRows, returned, hasMore := trimPaginatedPayload(rows, req.Limit)
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, nil, &hasMore, &returned)
 }
 
 func parseInt64Param(w http.ResponseWriter, r *http.Request, key string) (int64, bool) {

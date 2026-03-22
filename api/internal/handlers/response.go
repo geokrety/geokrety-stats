@@ -4,21 +4,18 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/geokrety/geokrety-stats-api/internal/pagination"
 )
 
-type PaginationMeta struct {
-	Limit  int `json:"limit" xml:"limit"`
-	Offset int `json:"offset" xml:"offset"`
-	Count  int `json:"count" xml:"count"`
-}
-
 type ResponseMeta struct {
-	RequestedAt string         `json:"requestedAt" xml:"requestedAt"`
-	QueryMs     int64          `json:"queryMs" xml:"queryMs"`
-	Pagination  PaginationMeta `json:"pagination" xml:"pagination"`
+	RequestedAt string                 `json:"requestedAt" xml:"requestedAt"`
+	QueryMs     int64                  `json:"queryMs" xml:"queryMs"`
+	Pagination  *pagination.OffsetInfo `json:"pagination,omitempty" xml:"pagination,omitempty"`
 }
 
 type Envelope struct {
@@ -61,11 +58,6 @@ func writeEnvelopeForRequest(w http.ResponseWriter, r *http.Request, status int,
 		Meta: ResponseMeta{
 			RequestedAt: time.Now().UTC().Format(time.RFC3339),
 			QueryMs:     time.Since(started).Milliseconds(),
-			Pagination: PaginationMeta{
-				Limit:  limit,
-				Offset: offset,
-				Count:  count,
-			},
 		},
 	}
 	if wantsXML(r) {
@@ -73,6 +65,111 @@ func writeEnvelopeForRequest(w http.ResponseWriter, r *http.Request, status int,
 		return
 	}
 	writeJSON(w, status, envelope)
+}
+
+func writeEnvelopeForOffsetRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+	status int,
+	payload interface{},
+	started time.Time,
+	req pagination.OffsetRequest,
+	totalItems *int,
+	hasMore *bool,
+	overrideReturned *int,
+) {
+	returned, _ := payloadCount(payload)
+	if overrideReturned != nil {
+		returned = *overrideReturned
+	}
+	envelope := Envelope{
+		Data: payload,
+		Meta: ResponseMeta{
+			RequestedAt: time.Now().UTC().Format(time.RFC3339),
+			QueryMs:     time.Since(started).Milliseconds(),
+			Pagination:  offsetPaginationInfo(req, returned, totalItems, hasMore),
+		},
+	}
+	if wantsXML(r) {
+		writeXML(w, status, envelope)
+		return
+	}
+	writeJSON(w, status, envelope)
+}
+
+func offsetPaginationInfo(req pagination.OffsetRequest, returned int, totalItems *int, hasMore *bool) *pagination.OffsetInfo {
+	info := pagination.NewOffsetInfo(req.Offset, req.Limit, returned, totalItems, hasMore)
+	return &info
+}
+
+func queryPagination(r *http.Request, defaultLimit, maxLimit int) (pagination.OffsetRequest, error) {
+	return pagination.ParseOffsetRequest(r, pagination.RequestConfig{
+		LimitParam:    "limit",
+		OffsetParam:   "offset",
+		CursorParam:   "cursor",
+		DefaultLimit:  defaultLimit,
+		MinLimit:      1,
+		MaxLimit:      maxLimit,
+		DefaultOffset: 0,
+		MinOffset:     0,
+		MaxOffset:     1_000_000,
+	})
+}
+
+func payloadCount(payload interface{}) (int, bool) {
+	if payload == nil {
+		return 0, false
+	}
+	value := reflect.ValueOf(payload)
+	for value.IsValid() && value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return 0, false
+		}
+		value = value.Elem()
+	}
+	if !value.IsValid() {
+		return 0, false
+	}
+	if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+		return value.Len(), true
+	}
+	return 1, false
+}
+
+func trimPaginatedPayload(payload interface{}, limit int) (interface{}, int, bool) {
+	value := reflect.ValueOf(payload)
+	for value.IsValid() && value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return payload, 0, false
+		}
+		value = value.Elem()
+	}
+	if !value.IsValid() || (value.Kind() != reflect.Slice && value.Kind() != reflect.Array) {
+		count, _ := payloadCount(payload)
+		return payload, count, false
+	}
+	returned := value.Len()
+	if returned <= limit {
+		return payload, returned, false
+	}
+	return value.Slice(0, limit).Interface(), limit, true
+}
+
+func paginationErrorMessage(err error) string {
+	switch err {
+	case pagination.ErrInvalidCursor:
+		return "invalid cursor"
+	case pagination.ErrUnsupportedCursorVersion:
+		return "unsupported cursor version"
+	case pagination.ErrInvalidLimit:
+		return "invalid limit"
+	case pagination.ErrInvalidOffset:
+		return "invalid offset"
+	case pagination.ErrAmbiguousPagination:
+		return "cannot combine cursor with offset"
+	default:
+		return "invalid pagination parameters"
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {

@@ -585,8 +585,8 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 				t.Fatalf("expected method %s, got %s", tc.expMethod, store.lastMethod)
 			}
 			if tc.checkLimit {
-				if store.lastLimit != tc.expLimit || store.lastOffset != tc.expOffset {
-					t.Fatalf("expected limit/offset %d/%d, got %d/%d", tc.expLimit, tc.expOffset, store.lastLimit, store.lastOffset)
+				if store.lastLimit != tc.expLimit+1 || store.lastOffset != tc.expOffset {
+					t.Fatalf("expected limit/offset %d/%d, got %d/%d", tc.expLimit+1, tc.expOffset, store.lastLimit, store.lastOffset)
 				}
 			}
 
