@@ -20,12 +20,8 @@ IT IS THEN POSSIBLE YOU ASK THE USER MANY TIMES IF THEY HAVE ANY LAST REQUESTS O
 
 # How to ask the user for last input?
 
-YOU MUST USE tool ask questions:
-```
-#askQuestions
-question: "Do you have any last requests or changes before I finalize the implementation? (yes/no/free field for details)"
-choices: ["yes", "no"] freeForm: true
-```
+- you MUST use the #tool:vscode/askQuestions (or other ask user tool) to present the question interactively to the user. The question should be a simple "yes/no/free text" question asking if they have any last requests or changes before you finalize the implementation and mark the task as complete. For example: "Do you have any last requests or changes before I finalize the implementation? Please answer 'yes' or 'no' or provide your own input."
+
 # THE MOST IMPORTANT
 
 **YOU ARE ONLY ALLOWED TO STOP WHEN THE USER CONFIRMS ASK YOU TO STOP USING AN EXPLICIT CONFIRMATION.**
