@@ -568,7 +568,7 @@ LIMIT $1 OFFSET $2
 		return nil, fmt.Errorf("query recent born: %w", err)
 	}
 	for i := range rows {
-		rows[i].TypeName = geokrety.TypeName(rows[i].Type)
+		rows[i].TypeName = geokrety.DefaultGeokretTypeRegistry.Name(rows[i].Type)
 	}
 	return rows, nil
 }

@@ -244,7 +244,7 @@ type UserSearchResult struct {
 
 func hydrateGeokretListItems(items []GeokretListItem) []GeokretListItem {
 	for i := range items {
-		items[i].TypeName = geokrety.TypeName(items[i].Type)
+		items[i].TypeName = geokrety.DefaultGeokretTypeRegistry.Name(items[i].Type)
 		if !items[i].Missing {
 			items[i].MissingAt = nil
 		}
@@ -265,7 +265,7 @@ func hydrateGeokretListItems(items []GeokretListItem) []GeokretListItem {
 
 func hydrateMoveRecords(items []MoveRecord) []MoveRecord {
 	for i := range items {
-		items[i].MoveTypeName = movetypes.TypeName(items[i].MoveType)
+		items[i].MoveTypeName = movetypes.DefaultMoveTypeRegistry.Name(items[i].MoveType)
 		if items[i].Country != nil {
 			country := strings.ToUpper(*items[i].Country)
 			items[i].Country = &country
@@ -320,7 +320,7 @@ func hydrateGKWaypointVisits(items []GeokretWaypointVisit) []GeokretWaypointVisi
 
 func hydrateTripPoints(items []TripPoint) []TripPoint {
 	for i := range items {
-		items[i].MoveTypeName = movetypes.TypeName(items[i].MoveType)
+		items[i].MoveTypeName = movetypes.DefaultMoveTypeRegistry.Name(items[i].MoveType)
 		items[i].GeoJSON = &GeoJSONPt{Type: "Point", Coordinates: []float64{items[i].Lon, items[i].Lat}}
 		if items[i].Country != nil {
 			country := strings.ToUpper(*items[i].Country)
