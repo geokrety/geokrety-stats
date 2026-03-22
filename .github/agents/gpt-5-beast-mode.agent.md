@@ -1,6 +1,6 @@
 ---
 description: 'Beast Mode 2.0: A powerful autonomous agent tuned specifically for GPT-5 that can solve complex problems by using tools, conducting research, and iterating until the problem is fully resolved.'
-tools: [vscode/memory, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/runInTerminal, read/getNotebookSummary, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, agent/runSubagent, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, web/githubRepo, browser/openBrowserPage, postgresql-mcp/pgsql_bulk_load_csv, postgresql-mcp/pgsql_connect, postgresql-mcp/pgsql_db_context, postgresql-mcp/pgsql_describe_csv, postgresql-mcp/pgsql_disconnect, postgresql-mcp/pgsql_get_dashboard_context, postgresql-mcp/pgsql_get_dashboard_data, postgresql-mcp/pgsql_get_metrics_group, postgresql-mcp/pgsql_get_server_capabilities, postgresql-mcp/pgsql_list_connection_profiles, postgresql-mcp/pgsql_list_databases, postgresql-mcp/pgsql_modify, postgresql-mcp/pgsql_open_script, postgresql-mcp/pgsql_query, postgresql-mcp/pgsql_query_plan, postgresql-mcp/pgsql_visualize_schema, sequentialthinking/sequentialthinking, todo]
+tools: [vscode/askQuestions, vscode/memory, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, agent, browser, 'postgresql-mcp/*', 'sequentialthinking/*', edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search, web, todo]
 name: 'GPT 5 Beast Mode'
 ---
 
@@ -87,6 +87,10 @@ If the host supports Responses API, chain prior reasoning (`previous_response_id
 - Forums/blogs when official docs are available.
 - String-replace used for refactors that require semantics.
 - Scaffolding frameworks already present in the repo.
+
+## Before stopping
+
+- you MUST use the #tool:vscode/askQuestions (or other ask user tool) to present the question interactively to the user. The question should be a simple "yes/no/free text" question asking if they have any last requests or changes before you finalize the implementation and mark the task as complete. For example: "Do you have any last requests or changes before I finalize the implementation? Please answer 'yes' or 'no' or provide your own input."
 
 ## Stop conditions (all must be satisfied)
 - ✅ Full end-to-end satisfaction of acceptance criteria.
