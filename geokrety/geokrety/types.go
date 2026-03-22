@@ -54,6 +54,18 @@ type GeokretType struct {
 // DefaultGeokretTypeRegistry exposes the shared GeoKret type registry.
 var DefaultGeokretTypeRegistry = NewGeokretTypeRegistry()
 
+// TypeName returns the label for a GeoKret type ID.
+// Deprecated: Use DefaultGeokretTypeRegistry.Name(typeID) instead.
+func TypeName(typeID int16) string {
+	return DefaultGeokretTypeRegistry.Name(typeID)
+}
+
+// GeokretTypeName returns the label for a GeoKret type ID.
+// Deprecated: Use DefaultGeokretTypeRegistry.Name(typeID) instead.
+func GeokretTypeName(typeID int16) string {
+	return TypeName(typeID)
+}
+
 func (e *GeokretTypeError) Error() string {
 	if strings.TrimSpace(e.Input) == "" {
 		return e.Reason

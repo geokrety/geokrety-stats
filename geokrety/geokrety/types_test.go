@@ -41,6 +41,13 @@ func TestGeokretTypeRegistryNameValidityAndWrapper(t *testing.T) {
 		}
 	}
 
+	if got := TypeName(GeokretTypeTraditional); got != "Traditional" {
+		t.Fatalf("TypeName() = %q, want Traditional", got)
+	}
+	if got := GeokretTypeName(GeokretTypeHidden); got != "Hidden GeoKret" {
+		t.Fatalf("GeokretTypeName() = %q, want Hidden GeoKret", got)
+	}
+
 }
 
 func TestGeokretTypeRegistryAllReturnsCopy(t *testing.T) {
@@ -185,6 +192,9 @@ func TestGeokretTypeJSONHelpersAndRoundTrip(t *testing.T) {
 	if _, err := registry.DecodeJSON([]byte(`32768`)); err == nil || !strings.Contains(err.Error(), "out of int16 range") {
 		t.Fatalf("DecodeJSON overflow error = %v, want int16 range error", err)
 	}
+	if _, err := registry.DecodeJSON([]byte(`-32769`)); err == nil || !strings.Contains(err.Error(), "out of int16 range") {
+		t.Fatalf("DecodeJSON negative overflow error = %v, want int16 range error", err)
+	}
 
 	type payload struct {
 		Type *GeokretType `json:"type"`
@@ -230,6 +240,9 @@ func TestGeokretTypeJSONHelpersAndRoundTrip(t *testing.T) {
 	}
 	if err := invalid.UnmarshalJSON([]byte(`32768`)); err == nil {
 		t.Fatal("invalid UnmarshalJSON should fail for overflow")
+	}
+	if err := invalid.UnmarshalJSON([]byte(`-32769`)); err == nil {
+		t.Fatal("invalid UnmarshalJSON should fail for negative overflow")
 	}
 	if err := invalid.UnmarshalJSON([]byte(`null`)); err != nil {
 		t.Fatalf("UnmarshalJSON null returned error: %v", err)
@@ -287,6 +300,14 @@ func TestGeokretTypeTextXMLAndXMLAttr(t *testing.T) {
 	}
 	if decodedID != GeokretTypeHidden {
 		t.Fatalf("registry UnmarshalXML() = %d, want %d", decodedID, GeokretTypeHidden)
+	}
+	dec, start = newXMLStart(t, `<type>10</type>`)
+	decodedID, err = registry.DecodeXML(dec, start)
+	if err != nil {
+		t.Fatalf("registry UnmarshalXML numeric returned error: %v", err)
+	}
+	if decodedID != GeokretTypeHidden {
+		t.Fatalf("registry UnmarshalXML() = %d, want %d for numeric element", decodedID, GeokretTypeHidden)
 	}
 	dec, start = newXMLStart(t, `<type></type>`)
 	if _, err := registry.DecodeXML(dec, start); err == nil {

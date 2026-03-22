@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"strings"
 	"testing"
 
@@ -36,6 +37,13 @@ func TestMoveTypeRegistryNameValidityAndWrapper(t *testing.T) {
 		}
 	}
 
+	if got := TypeName(MoveTypeDropped); got != "Dropped" {
+		t.Fatalf("TypeName() = %q, want Dropped", got)
+	}
+	if got := MoveTypeName(MoveTypeDipped); got != "Dipped" {
+		t.Fatalf("MoveTypeName() = %q, want Dipped", got)
+	}
+
 }
 
 func TestMoveTypeRegistryAllReturnsCopy(t *testing.T) {
@@ -51,11 +59,37 @@ func TestMoveTypeRegistryAllReturnsCopy(t *testing.T) {
 }
 
 func TestMoveTypeErrorFormatting(t *testing.T) {
-	if got := (&TypeError{Reason: "broken"}).Error(); got != "broken" {
+	if got := (&MoveTypeError{Reason: "broken"}).Error(); got != "broken" {
 		t.Fatalf("Error() = %q, want broken", got)
 	}
-	if got := (&TypeError{Input: "oops", Reason: "broken"}).Error(); !strings.Contains(got, "oops") {
+	if got := (&MoveTypeError{Input: "oops", Reason: "broken"}).Error(); !strings.Contains(got, "oops") {
 		t.Fatalf("Error() = %q, want input included", got)
+	}
+}
+
+func TestMoveTypeSpecFacingAPI(t *testing.T) {
+	registry := NewMoveTypeRegistry()
+	var typedRegistry *MoveTypeRegistry = registry
+	if got := typedRegistry.Name(MoveTypeSeen); got != "Seen" {
+		t.Fatalf("MoveTypeRegistry.Name() = %q, want Seen", got)
+	}
+
+	parsed, err := typedRegistry.Parse("Dropped")
+	if err != nil {
+		t.Fatalf("MoveTypeRegistry.Parse returned error: %v", err)
+	}
+	var typedValue *MoveType = parsed
+	if got := typedValue.Name(); got != "Dropped" {
+		t.Fatalf("MoveType.Name() = %q, want Dropped", got)
+	}
+
+	_, err = typedRegistry.Parse("")
+	if err == nil {
+		t.Fatal("MoveTypeRegistry.Parse empty should fail")
+	}
+	var typedErr *MoveTypeError
+	if !errors.As(err, &typedErr) {
+		t.Fatalf("Parse error = %T, want *MoveTypeError", err)
 	}
 }
 
@@ -112,7 +146,7 @@ func TestMoveTypeConstructorsAndAccessors(t *testing.T) {
 		t.Fatalf("TypeFromInt invalid error = %v, want unknown-id error", err)
 	}
 
-	var nilType *Type
+	var nilType *MoveType
 	if got := nilType.ID(); got != 0 {
 		t.Fatalf("nil ID() = %d, want 0", got)
 	}
@@ -126,7 +160,7 @@ func TestMoveTypeConstructorsAndAccessors(t *testing.T) {
 		t.Fatalf("nil String() = %q, want nil", got)
 	}
 
-	zero := Type{}
+	zero := MoveType{}
 	if got := zero.String(); got != "invalid" {
 		t.Fatalf("zero String() = %q, want invalid", got)
 	}
@@ -180,9 +214,12 @@ func TestMoveTypeJSONHelpersAndRoundTrip(t *testing.T) {
 	if _, err := registry.DecodeJSON([]byte(`32768`)); err == nil || !strings.Contains(err.Error(), "out of int16 range") {
 		t.Fatalf("DecodeJSON overflow error = %v, want int16 range error", err)
 	}
+	if _, err := registry.DecodeJSON([]byte(`-32769`)); err == nil || !strings.Contains(err.Error(), "out of int16 range") {
+		t.Fatalf("DecodeJSON negative overflow error = %v, want int16 range error", err)
+	}
 
 	type payload struct {
-		Type *Type `json:"type"`
+		Type *MoveType `json:"type"`
 	}
 	var decoded payload
 	if err := json.Unmarshal([]byte(`{"type":"Grabbed"}`), &decoded); err != nil {
@@ -216,7 +253,7 @@ func TestMoveTypeJSONHelpersAndRoundTrip(t *testing.T) {
 		t.Fatalf("decoded.Type = %#v, want nil", decoded.Type)
 	}
 
-	invalid := Type{}
+	invalid := MoveType{}
 	if _, err := invalid.MarshalJSON(); err == nil {
 		t.Fatal("invalid MarshalJSON should fail")
 	}
@@ -225,6 +262,9 @@ func TestMoveTypeJSONHelpersAndRoundTrip(t *testing.T) {
 	}
 	if err := invalid.UnmarshalJSON([]byte(`32768`)); err == nil {
 		t.Fatal("invalid UnmarshalJSON should fail for overflow")
+	}
+	if err := invalid.UnmarshalJSON([]byte(`-32769`)); err == nil {
+		t.Fatal("invalid UnmarshalJSON should fail for negative overflow")
 	}
 	if err := invalid.UnmarshalJSON([]byte(`null`)); err != nil {
 		t.Fatalf("UnmarshalJSON null returned error: %v", err)
@@ -249,7 +289,7 @@ func TestMoveTypeTextXMLAndXMLAttr(t *testing.T) {
 		t.Fatalf("MarshalText() = %q, want Archived", got)
 	}
 
-	var fromText Type
+	var fromText MoveType
 	if err := fromText.UnmarshalText([]byte("4")); err != nil {
 		t.Fatalf("UnmarshalText returned error: %v", err)
 	}
@@ -283,6 +323,14 @@ func TestMoveTypeTextXMLAndXMLAttr(t *testing.T) {
 	if decodedID != MoveTypeDipped {
 		t.Fatalf("registry UnmarshalXML() = %d, want %d", decodedID, MoveTypeDipped)
 	}
+	dec, start = newXMLStart(t, `<type>5</type>`)
+	decodedID, err = registry.DecodeXML(dec, start)
+	if err != nil {
+		t.Fatalf("registry UnmarshalXML numeric returned error: %v", err)
+	}
+	if decodedID != MoveTypeDipped {
+		t.Fatalf("registry UnmarshalXML() = %d, want %d for numeric element", decodedID, MoveTypeDipped)
+	}
 	dec, start = newXMLStart(t, `<type></type>`)
 	if _, err := registry.DecodeXML(dec, start); err == nil {
 		t.Fatal("registry UnmarshalXML empty element should fail")
@@ -314,9 +362,9 @@ func TestMoveTypeTextXMLAndXMLAttr(t *testing.T) {
 	}
 
 	type xmlPayload struct {
-		XMLName xml.Name `xml:"payload"`
-		Type    *Type    `xml:"type"`
-		Attr    *Type    `xml:"attr,attr"`
+		XMLName xml.Name  `xml:"payload"`
+		Type    *MoveType `xml:"type"`
+		Attr    *MoveType `xml:"attr,attr"`
 	}
 	var payload xmlPayload
 	if err := xml.Unmarshal([]byte(`<payload attr="3"><type>Dropped</type></payload>`), &payload); err != nil {
@@ -335,7 +383,7 @@ func TestMoveTypeTextXMLAndXMLAttr(t *testing.T) {
 	if !strings.Contains(string(marshaledXML), `<type>Dropped</type>`) || !strings.Contains(string(marshaledXML), `attr="Seen"`) {
 		t.Fatalf("xml.Marshal output = %q, want canonical element and attribute labels", string(marshaledXML))
 	}
-	invalid := Type{}
+	invalid := MoveType{}
 	dec, start = newXMLStart(t, `<type></type>`)
 	if err := invalid.UnmarshalXML(dec, start); err == nil {
 		t.Fatal("invalid UnmarshalXML should fail on empty element")
@@ -407,14 +455,14 @@ func TestMoveTypeCSVAndYAML(t *testing.T) {
 	if line != "2,Commented" {
 		t.Fatalf("Type MarshalCSV() = %q, want 2,Commented", line)
 	}
-	var fromCSV Type
+	var fromCSV MoveType
 	if err := fromCSV.UnmarshalCSV("4,Archived"); err != nil {
 		t.Fatalf("Type UnmarshalCSV returned error: %v", err)
 	}
 	if fromCSV.Name() != "Archived" {
 		t.Fatalf("Type UnmarshalCSV Name() = %q, want Archived", fromCSV.Name())
 	}
-	invalid := Type{}
+	invalid := MoveType{}
 	if _, err := invalid.MarshalCSV(); err == nil {
 		t.Fatal("invalid MarshalCSV should fail")
 	}

@@ -25,8 +25,8 @@ const (
 	MoveTypeDipped    int16 = 5
 )
 
-// TypeRegistry resolves move type IDs to their human-readable labels.
-type TypeRegistry struct {
+// MoveTypeRegistry resolves move type IDs to their human-readable labels.
+type MoveTypeRegistry struct {
 	types     map[int16]string
 	labels    map[string]int16
 	ordered   []int16
@@ -34,22 +34,43 @@ type TypeRegistry struct {
 	formatErr string
 }
 
-// TypeError describes invalid move type parsing or encoding input.
-type TypeError struct {
+// MoveTypeError describes invalid move type parsing or encoding input.
+type MoveTypeError struct {
 	Input  string
 	Reason string
 }
 
-// Type stores a validated move type ID and provides serialization helpers.
-type Type struct {
+// MoveType stores a validated move type ID and provides serialization helpers.
+type MoveType struct {
 	value int16
 	valid bool
 }
 
+// TypeRegistry is the backward-compatible alias for MoveTypeRegistry.
+type TypeRegistry = MoveTypeRegistry
+
+// Type is the backward-compatible alias for MoveType.
+type Type = MoveType
+
+// TypeError is the backward-compatible alias for MoveTypeError.
+type TypeError = MoveTypeError
+
 // DefaultMoveTypeRegistry exposes the shared move type registry.
 var DefaultMoveTypeRegistry = NewMoveTypeRegistry()
 
-func (e *TypeError) Error() string {
+// TypeName returns the label for a move type ID.
+// Deprecated: Use DefaultMoveTypeRegistry.Name(typeID) instead.
+func TypeName(typeID int16) string {
+	return DefaultMoveTypeRegistry.Name(typeID)
+}
+
+// MoveTypeName returns the label for a move type ID.
+// Deprecated: Use DefaultMoveTypeRegistry.Name(typeID) instead.
+func MoveTypeName(typeID int16) string {
+	return TypeName(typeID)
+}
+
+func (e *MoveTypeError) Error() string {
 	if strings.TrimSpace(e.Input) == "" {
 		return e.Reason
 	}
@@ -57,7 +78,7 @@ func (e *TypeError) Error() string {
 }
 
 // NewMoveTypeRegistry builds the default move type-label registry.
-func NewMoveTypeRegistry() *TypeRegistry {
+func NewMoveTypeRegistry() *MoveTypeRegistry {
 	entries := []struct {
 		id    int16
 		label string
@@ -70,7 +91,7 @@ func NewMoveTypeRegistry() *TypeRegistry {
 		{id: MoveTypeDipped, label: "Dipped"},
 	}
 
-	registry := &TypeRegistry{
+	registry := &MoveTypeRegistry{
 		types:     make(map[int16]string, len(entries)),
 		labels:    make(map[string]int16, len(entries)),
 		ordered:   make([]int16, 0, len(entries)),
@@ -88,12 +109,12 @@ func NewMoveTypeRegistry() *TypeRegistry {
 }
 
 // NewType parses a label or integer string into a validated move type.
-func NewType(raw string) (*Type, error) {
+func NewType(raw string) (*MoveType, error) {
 	return DefaultMoveTypeRegistry.Parse(raw)
 }
 
 // NewNullableType parses a label or integer string unless it is blank.
-func NewNullableType(raw string) (*Type, error) {
+func NewNullableType(raw string) (*MoveType, error) {
 	if strings.TrimSpace(raw) == "" {
 		return nil, nil
 	}
@@ -101,12 +122,12 @@ func NewNullableType(raw string) (*Type, error) {
 }
 
 // TypeFromInt validates a raw integer move type ID.
-func TypeFromInt(value int16) (*Type, error) {
+func TypeFromInt(value int16) (*MoveType, error) {
 	return DefaultMoveTypeRegistry.FromInt(value)
 }
 
 // Name returns the human-readable label for a move type ID.
-func (r *TypeRegistry) Name(typeID int16) string {
+func (r *MoveTypeRegistry) Name(typeID int16) string {
 	if name, ok := r.types[typeID]; ok {
 		return name
 	}
@@ -114,13 +135,13 @@ func (r *TypeRegistry) Name(typeID int16) string {
 }
 
 // IsValid reports whether the provided move type ID exists in the registry.
-func (r *TypeRegistry) IsValid(typeID int16) bool {
+func (r *MoveTypeRegistry) IsValid(typeID int16) bool {
 	_, ok := r.types[typeID]
 	return ok
 }
 
 // All returns a defensive copy of the registered move type labels.
-func (r *TypeRegistry) All() map[int16]string {
+func (r *MoveTypeRegistry) All() map[int16]string {
 	copyOfTypes := make(map[int16]string, len(r.types))
 	for _, id := range r.ordered {
 		copyOfTypes[id] = r.types[id]
@@ -129,31 +150,31 @@ func (r *TypeRegistry) All() map[int16]string {
 }
 
 // Parse converts a label or integer string to a validated move type.
-func (r *TypeRegistry) Parse(raw string) (*Type, error) {
+func (r *MoveTypeRegistry) Parse(raw string) (*MoveType, error) {
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
-		return nil, &TypeError{Input: raw, Reason: r.formatErr}
+		return nil, &MoveTypeError{Input: raw, Reason: r.formatErr}
 	}
 	if typeID, ok := r.labels[trimmed]; ok {
-		return &Type{value: typeID, valid: true}, nil
+		return &MoveType{value: typeID, valid: true}, nil
 	}
 	parsed, err := strconv.ParseInt(trimmed, 10, 16)
 	if err != nil {
-		return nil, &TypeError{Input: raw, Reason: r.formatErr}
+		return nil, &MoveTypeError{Input: raw, Reason: r.formatErr}
 	}
 	return r.FromInt(int16(parsed))
 }
 
 // FromInt converts a raw integer type ID to a validated move type.
-func (r *TypeRegistry) FromInt(value int16) (*Type, error) {
+func (r *MoveTypeRegistry) FromInt(value int16) (*MoveType, error) {
 	if !r.IsValid(value) {
-		return nil, &TypeError{Input: strconv.FormatInt(int64(value), 10), Reason: fmt.Sprintf("unknown move type id: %d", value)}
+		return nil, &MoveTypeError{Input: strconv.FormatInt(int64(value), 10), Reason: fmt.Sprintf("unknown move type id: %d", value)}
 	}
-	return &Type{value: value, valid: true}, nil
+	return &MoveType{value: value, valid: true}, nil
 }
 
 // EncodeJSON serializes a move type ID as its label.
-func (r *TypeRegistry) EncodeJSON(typeID int16) ([]byte, error) {
+func (r *MoveTypeRegistry) EncodeJSON(typeID int16) ([]byte, error) {
 	if !r.IsValid(typeID) {
 		return nil, fmt.Errorf("invalid move type id: %d", typeID)
 	}
@@ -161,10 +182,10 @@ func (r *TypeRegistry) EncodeJSON(typeID int16) ([]byte, error) {
 }
 
 // DecodeJSON accepts either a string label or an integer ID.
-func (r *TypeRegistry) DecodeJSON(data []byte) (int16, error) {
+func (r *MoveTypeRegistry) DecodeJSON(data []byte) (int16, error) {
 	trimmed := strings.TrimSpace(string(data))
 	if trimmed == "null" || trimmed == "" {
-		return 0, &TypeError{Input: string(data), Reason: r.formatErr}
+		return 0, &MoveTypeError{Input: string(data), Reason: r.formatErr}
 	}
 	if trimmed[0] == '"' {
 		var raw string
@@ -179,11 +200,11 @@ func (r *TypeRegistry) DecodeJSON(data []byte) (int16, error) {
 	}
 	var number json.Number
 	if err := json.Unmarshal(data, &number); err != nil {
-		return 0, &TypeError{Input: string(data), Reason: "invalid move type JSON value; expected string or integer"}
+		return 0, &MoveTypeError{Input: string(data), Reason: "invalid move type JSON value; expected string or integer"}
 	}
 	value, err := number.Int64()
 	if err != nil {
-		return 0, &TypeError{Input: number.String(), Reason: "move type must be an integer"}
+		return 0, &MoveTypeError{Input: number.String(), Reason: "move type must be an integer"}
 	}
 	parsed, err := r.fromInt64(value)
 	if err != nil {
@@ -193,7 +214,7 @@ func (r *TypeRegistry) DecodeJSON(data []byte) (int16, error) {
 }
 
 // EncodeXML serializes a move type ID as element text.
-func (r *TypeRegistry) EncodeXML(typeID int16, enc *xml.Encoder, start xml.StartElement) error {
+func (r *MoveTypeRegistry) EncodeXML(typeID int16, enc *xml.Encoder, start xml.StartElement) error {
 	if !r.IsValid(typeID) {
 		return fmt.Errorf("invalid move type id: %d", typeID)
 	}
@@ -201,7 +222,7 @@ func (r *TypeRegistry) EncodeXML(typeID int16, enc *xml.Encoder, start xml.Start
 }
 
 // DecodeXML deserializes a move type ID from element text.
-func (r *TypeRegistry) DecodeXML(dec *xml.Decoder, start xml.StartElement) (int16, error) {
+func (r *MoveTypeRegistry) DecodeXML(dec *xml.Decoder, start xml.StartElement) (int16, error) {
 	var raw string
 	if err := dec.DecodeElement(&raw, &start); err != nil {
 		return 0, err
@@ -214,7 +235,7 @@ func (r *TypeRegistry) DecodeXML(dec *xml.Decoder, start xml.StartElement) (int1
 }
 
 // EncodeXMLAttr serializes a move type ID as an XML attribute.
-func (r *TypeRegistry) EncodeXMLAttr(typeID int16, name xml.Name) (xml.Attr, error) {
+func (r *MoveTypeRegistry) EncodeXMLAttr(typeID int16, name xml.Name) (xml.Attr, error) {
 	if !r.IsValid(typeID) {
 		return xml.Attr{}, fmt.Errorf("invalid move type id: %d", typeID)
 	}
@@ -222,7 +243,7 @@ func (r *TypeRegistry) EncodeXMLAttr(typeID int16, name xml.Name) (xml.Attr, err
 }
 
 // DecodeXMLAttr deserializes a move type ID from an XML attribute.
-func (r *TypeRegistry) DecodeXMLAttr(attr xml.Attr) (int16, error) {
+func (r *MoveTypeRegistry) DecodeXMLAttr(attr xml.Attr) (int16, error) {
 	parsed, err := r.Parse(attr.Value)
 	if err != nil {
 		return 0, err
@@ -231,7 +252,7 @@ func (r *TypeRegistry) DecodeXMLAttr(attr xml.Attr) (int16, error) {
 }
 
 // EncodeCSV serializes a move type ID as `ID,Label`.
-func (r *TypeRegistry) EncodeCSV(typeID int16) (string, error) {
+func (r *MoveTypeRegistry) EncodeCSV(typeID int16) (string, error) {
 	if !r.IsValid(typeID) {
 		return "", fmt.Errorf("invalid move type id: %d", typeID)
 	}
@@ -239,7 +260,7 @@ func (r *TypeRegistry) EncodeCSV(typeID int16) (string, error) {
 }
 
 // DecodeCSV accepts `ID`, `Label`, or `ID,Label` input.
-func (r *TypeRegistry) DecodeCSV(csvLine string) (int16, error) {
+func (r *MoveTypeRegistry) DecodeCSV(csvLine string) (int16, error) {
 	parts := strings.Split(csvLine, ",")
 	if len(parts) == 1 {
 		parsed, err := r.Parse(parts[0])
@@ -249,7 +270,7 @@ func (r *TypeRegistry) DecodeCSV(csvLine string) (int16, error) {
 		return parsed.value, nil
 	}
 	if len(parts) != 2 {
-		return 0, &TypeError{Input: csvLine, Reason: "invalid CSV format for move type"}
+		return 0, &MoveTypeError{Input: csvLine, Reason: "invalid CSV format for move type"}
 	}
 
 	idPart := strings.TrimSpace(parts[0])
@@ -258,7 +279,7 @@ func (r *TypeRegistry) DecodeCSV(csvLine string) (int16, error) {
 		parsed, err := r.Parse(idPart)
 		if err == nil {
 			if labelPart != "" && r.Name(parsed.value) != labelPart {
-				return 0, &TypeError{Input: csvLine, Reason: "move type CSV label does not match id"}
+				return 0, &MoveTypeError{Input: csvLine, Reason: "move type CSV label does not match id"}
 			}
 			return parsed.value, nil
 		}
@@ -270,11 +291,11 @@ func (r *TypeRegistry) DecodeCSV(csvLine string) (int16, error) {
 		}
 		return parsed.value, nil
 	}
-	return 0, &TypeError{Input: csvLine, Reason: "invalid CSV format for move type"}
+	return 0, &MoveTypeError{Input: csvLine, Reason: "invalid CSV format for move type"}
 }
 
 // EncodeYAML serializes a move type ID as `{id, label}`.
-func (r *TypeRegistry) EncodeYAML(typeID int16) (any, error) {
+func (r *MoveTypeRegistry) EncodeYAML(typeID int16) (any, error) {
 	if !r.IsValid(typeID) {
 		return nil, fmt.Errorf("invalid move type id: %d", typeID)
 	}
@@ -282,7 +303,7 @@ func (r *TypeRegistry) EncodeYAML(typeID int16) (any, error) {
 }
 
 // DecodeYAML accepts YAML scalar or `{id, label}` forms.
-func (r *TypeRegistry) DecodeYAML(data []byte) (int16, error) {
+func (r *MoveTypeRegistry) DecodeYAML(data []byte) (int16, error) {
 	var node yaml.Node
 	if err := yaml.Unmarshal(data, &node); err != nil {
 		return 0, err
@@ -295,7 +316,7 @@ func (r *TypeRegistry) DecodeYAML(data []byte) (int16, error) {
 }
 
 // ID returns the raw integer move type ID, or zero when invalid.
-func (t *Type) ID() int16 {
+func (t *MoveType) ID() int16 {
 	if t == nil || !t.valid {
 		return 0
 	}
@@ -303,12 +324,12 @@ func (t *Type) ID() int16 {
 }
 
 // Valid reports whether the move type holds a known value.
-func (t *Type) Valid() bool {
+func (t *MoveType) Valid() bool {
 	return t != nil && t.valid
 }
 
 // Name returns the label for the type or `Unknown` when invalid.
-func (t *Type) Name() string {
+func (t *MoveType) Name() string {
 	if t == nil || !t.valid {
 		return UnknownTypeName
 	}
@@ -316,7 +337,7 @@ func (t *Type) Name() string {
 }
 
 // String renders the label for a valid type and a diagnostic marker otherwise.
-func (t *Type) String() string {
+func (t *MoveType) String() string {
 	switch {
 	case t == nil:
 		return "nil"
@@ -328,7 +349,7 @@ func (t *Type) String() string {
 }
 
 // MarshalJSON serializes the type as its label.
-func (t Type) MarshalJSON() ([]byte, error) {
+func (t MoveType) MarshalJSON() ([]byte, error) {
 	if !t.valid {
 		return nil, fmt.Errorf("cannot marshal invalid move type")
 	}
@@ -336,7 +357,7 @@ func (t Type) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON accepts a string label or integer ID.
-func (t *Type) UnmarshalJSON(data []byte) error {
+func (t *MoveType) UnmarshalJSON(data []byte) error {
 	if strings.TrimSpace(string(data)) == "null" {
 		t.value = 0
 		t.valid = false
@@ -352,7 +373,7 @@ func (t *Type) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalText serializes the type as its label.
-func (t Type) MarshalText() ([]byte, error) {
+func (t MoveType) MarshalText() ([]byte, error) {
 	if !t.valid {
 		return nil, fmt.Errorf("cannot marshal invalid move type")
 	}
@@ -360,7 +381,7 @@ func (t Type) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText accepts a label or integer ID.
-func (t *Type) UnmarshalText(text []byte) error {
+func (t *MoveType) UnmarshalText(text []byte) error {
 	parsed, err := DefaultMoveTypeRegistry.Parse(string(text))
 	if err != nil {
 		return err
@@ -371,7 +392,7 @@ func (t *Type) UnmarshalText(text []byte) error {
 }
 
 // MarshalXML serializes the type as element text.
-func (t Type) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
+func (t MoveType) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	if !t.valid {
 		return fmt.Errorf("cannot marshal invalid move type")
 	}
@@ -379,7 +400,7 @@ func (t Type) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 }
 
 // UnmarshalXML deserializes the type from element text.
-func (t *Type) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
+func (t *MoveType) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
 	typeID, err := DefaultMoveTypeRegistry.DecodeXML(dec, start)
 	if err != nil {
 		return err
@@ -390,7 +411,7 @@ func (t *Type) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
 }
 
 // MarshalXMLAttr serializes the type as an XML attribute.
-func (t Type) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+func (t MoveType) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	if !t.valid {
 		return xml.Attr{}, fmt.Errorf("cannot marshal invalid move type")
 	}
@@ -398,7 +419,7 @@ func (t Type) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 }
 
 // UnmarshalXMLAttr deserializes the type from an XML attribute.
-func (t *Type) UnmarshalXMLAttr(attr xml.Attr) error {
+func (t *MoveType) UnmarshalXMLAttr(attr xml.Attr) error {
 	typeID, err := DefaultMoveTypeRegistry.DecodeXMLAttr(attr)
 	if err != nil {
 		return err
@@ -409,7 +430,7 @@ func (t *Type) UnmarshalXMLAttr(attr xml.Attr) error {
 }
 
 // MarshalCSV serializes the type as `ID,Label`.
-func (t Type) MarshalCSV() (string, error) {
+func (t MoveType) MarshalCSV() (string, error) {
 	if !t.valid {
 		return "", fmt.Errorf("cannot marshal invalid move type")
 	}
@@ -417,7 +438,7 @@ func (t Type) MarshalCSV() (string, error) {
 }
 
 // UnmarshalCSV accepts `ID`, `Label`, or `ID,Label` input.
-func (t *Type) UnmarshalCSV(csvLine string) error {
+func (t *MoveType) UnmarshalCSV(csvLine string) error {
 	typeID, err := DefaultMoveTypeRegistry.DecodeCSV(csvLine)
 	if err != nil {
 		return err
@@ -428,7 +449,7 @@ func (t *Type) UnmarshalCSV(csvLine string) error {
 }
 
 // MarshalYAML serializes the type as `{id, label}`.
-func (t Type) MarshalYAML() (any, error) {
+func (t MoveType) MarshalYAML() (any, error) {
 	if !t.valid {
 		return nil, fmt.Errorf("cannot marshal invalid move type")
 	}
@@ -436,7 +457,7 @@ func (t Type) MarshalYAML() (any, error) {
 }
 
 // UnmarshalYAML accepts YAML scalar or `{id, label}` forms.
-func (t *Type) UnmarshalYAML(node *yaml.Node) error {
+func (t *MoveType) UnmarshalYAML(node *yaml.Node) error {
 	parsed, err := DefaultMoveTypeRegistry.parseYAMLNode(node)
 	if err != nil {
 		return err
@@ -446,18 +467,18 @@ func (t *Type) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-func (r *TypeRegistry) parseYAMLNode(node *yaml.Node) (*Type, error) {
+func (r *MoveTypeRegistry) parseYAMLNode(node *yaml.Node) (*MoveType, error) {
 	current := unwrapYAMLNode(node)
 	if current == nil {
-		return nil, &TypeError{Reason: "invalid YAML structure for move type"}
+		return nil, &MoveTypeError{Reason: "invalid YAML structure for move type"}
 	}
 
 	switch current.Kind {
 	case yaml.ScalarNode:
 		return r.Parse(current.Value)
 	case yaml.MappingNode:
-		var idValue *Type
-		var labelValue *Type
+		var idValue *MoveType
+		var labelValue *MoveType
 		for i := 0; i+1 < len(current.Content); i += 2 {
 			key := strings.TrimSpace(current.Content[i].Value)
 			valueNode := unwrapYAMLNode(current.Content[i+1])
@@ -477,17 +498,17 @@ func (r *TypeRegistry) parseYAMLNode(node *yaml.Node) (*Type, error) {
 			}
 		}
 		if idValue == nil && labelValue == nil {
-			return nil, &TypeError{Reason: "invalid YAML structure for move type"}
+			return nil, &MoveTypeError{Reason: "invalid YAML structure for move type"}
 		}
 		if idValue != nil && labelValue != nil && idValue.value != labelValue.value {
-			return nil, &TypeError{Reason: "move type YAML id and label do not match"}
+			return nil, &MoveTypeError{Reason: "move type YAML id and label do not match"}
 		}
 		if idValue != nil {
 			return idValue, nil
 		}
 		return labelValue, nil
 	default:
-		return nil, &TypeError{Reason: fmt.Sprintf("invalid YAML node kind %d for move type", current.Kind)}
+		return nil, &MoveTypeError{Reason: fmt.Sprintf("invalid YAML node kind %d for move type", current.Kind)}
 	}
 }
 
@@ -502,9 +523,9 @@ func unwrapYAMLNode(node *yaml.Node) *yaml.Node {
 	return current
 }
 
-func (r *TypeRegistry) fromInt64(value int64) (*Type, error) {
+func (r *MoveTypeRegistry) fromInt64(value int64) (*MoveType, error) {
 	if value < -32768 || value > 32767 {
-		return nil, &TypeError{Input: strconv.FormatInt(value, 10), Reason: "move type id is out of int16 range"}
+		return nil, &MoveTypeError{Input: strconv.FormatInt(value, 10), Reason: "move type id is out of int16 range"}
 	}
 	return r.FromInt(int16(value))
 }
