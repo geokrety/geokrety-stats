@@ -3,12 +3,14 @@
 This runbook describes the manual steps and commands used to apply and validate the snapshot/materialized-view/index migrations and to run scoped snapshot runs (1-month and 3-month). Use a safe test/staging copy first and always take a backup.
 
 **Prerequisites**
+
 - PostgreSQL client tools: `psql`, `pg_dump`, `pg_restore` (or equivalent)
 - `pg_prove` (optional) for running pgTAP tests
 - Project's phinx helper script at `.github/skills/phinx/scripts/phinx.sh`
 - Database credentials with a user `geokrety` (adjust as necessary)
 
 **Backup (required)**
+
 - Full custom-format dump (fast restore):
 
 ```bash
@@ -19,6 +21,7 @@ ls -lh "$BACKUP"
 ```
 
 **Apply migrations**
+
 - From repository root apply migrations in `website/db` using the project script:
 
 ```bash
@@ -59,6 +62,7 @@ Pass `NULL::text[]` to run the default phase list. Use a tstzrange for `p_period
 For full historical backfills, do not call the full runner with `NULL` period. Run the full pre-phases once, replay the sliceable phases month by month from `2007-10-01` up to tomorrow `00:00 UTC`, then run the full post-phases once.
 
 The four new full rebuild phases for the backfilled tables are:
+
 - `fn_snapshot_daily_entity_counts`
 - `fn_snapshot_gk_country_history`
 - `fn_snapshot_first_finder_events`
@@ -128,6 +132,7 @@ run_full_phase_replica "fn_snapshot_gk_milestone_events"
 ```
 
 Notes:
+
 - `fn_snapshot_entity_counters` is fast enough to run once without slicing and does not use replica mode.
 - `fn_snapshot_daily_entity_counts` runs once before the monthly loop because it rebuilds the entire trend table from source history.
 - `fn_backfill_heavy_previous_move_id_all` and other sliced phases run once per month (monthly basis) for efficient backfill.
@@ -150,6 +155,7 @@ python /home/kumy/GIT/geokrety-stats/docs/database-refactor/run_snapshot_backfil
 ```
 
 The script provides:
+
 - **Live progress tracking** with table format showing phase, slice period, elapsed time, and ETA datetime
 - **Color-coded output** for easy visual scanning
 - **Emoji indicators** for status (⏳ pending, ⚙️ running, ✅ done, 📊 stats)
@@ -219,6 +225,7 @@ Example output:
 **Sliced heavy phases**
 
 The `fn_backfill_heavy_previous_move_id_all` function runs on a per-month basis (sliced). This allows:
+
 - Progressive backfill of historical data
 - Better resource usage with bounded batch sizes
 - Resumable runs if one month fails (re-run just that month)
@@ -242,10 +249,12 @@ psql -U geokrety -d geokrety -c "SELECT stats.fn_run_all_snapshots(NULL::text[],
 ```
 
 Notes:
+
 - If you want to run a single phase only, pass the phase names as the first argument, e.g. `ARRAY['fn_snapshot_hourly_activity']::text[]`.
 - If the snapshot run is long or times out, lower `p_batch_size` (third argument) and retry.
 
 **Run focused pgTAP tests**
+
 - Preferred: `pg_prove` (if available):
 
 ```bash
@@ -259,6 +268,7 @@ psql -U geokrety -d geokrety -f website/db/tests/test-250-materialized-views.sql
 ```
 
 **Full test suite**
+
 - Use your project test runner or `pg_prove` over the `website/db/tests` directory if set up. Example:
 
 ```bash
@@ -268,6 +278,7 @@ pg_prove -d geokrety website/db/tests/*.sql
 or use the project's test script if present.
 
 **Verification queries**
+
 - Check recent snapshot job results:
 
 ```sql
@@ -305,6 +316,7 @@ ORDER BY indexname;
 ```
 
 **Rollback plan (if a run fails or you need to undo a migration)**
+
 - Rollback last migration:
 
 ```bash
@@ -318,6 +330,7 @@ pg_restore -U geokrety -d geokrety --clean --no-owner /path/to/geokrety-YYYYMMDD
 ```
 
 **Troubleshooting & tips**
+
 - If pgTAP reports "duplicate plan()" errors, inspect the SQL test file for multiple `plan()` declarations and remove duplicates.
 - Pre-commit hooks may auto-fix EOF/trailing whitespace; if a commit fails, `git add` the modified files again and re-commit.
 - Long-running `REFRESH MATERIALIZED VIEW` should be run with `CONCURRENTLY` when possible to avoid exclusive locks.
@@ -328,4 +341,5 @@ psql -U geokrety -d geokrety -c "SELECT stats.fn_run_all_snapshots(NULL::text[],
 ```
 
 **Change log & notes**
+
 - This runbook covers the manual steps used during the March 2026 recovery: restoring orchestration functions, materialized views, runtime snapshot indexes, index cleanup, and move-history view. Adjust dates and phase lists to your environment.

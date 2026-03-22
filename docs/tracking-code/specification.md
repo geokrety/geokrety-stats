@@ -56,11 +56,13 @@ This specification does not define:
 ## 2.5 Why Masking Matters (Security Context)
 
 Tracking codes function as authentication credentials for GeoKrety operations. Full exposure of a tracking code through logs, error messages, network captures, or debug output enables attackers to:
+
 - Impersonate users and falsify tracking history
-- Manipulate GeoKrety movement data  
+- Manipulate GeoKrety movement data
 - Harvest credentials from unencrypted logs or backups
 
 This specification mitigates exposure risk by defaulting to masked representation (e.g., `ABCDEF` → `A*****`). This approach:
+
 - **Reduces accidental exposure**: Public APIs and formatters never expose the full code without explicit developer action
 - **Maintains usability**: Masked codes are still readable in logs (visible prefix aids debugging)
 - **Keeps raw access explicit**: Developers using `RawForInternalUseOnly()` must acknowledge the sensitivity

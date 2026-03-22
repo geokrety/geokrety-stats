@@ -21,6 +21,7 @@ The GeoKrety Stats API exposes GKID fields through a centralized `GeokretId` typ
 **Purpose:** Define a robust, encapsulated `GeokretId` type that centralizes GeoKret ID conversion logic, ensures consistent handling across all API boundaries, and reduces error-prone manual conversions.
 
 **Scope:**
+
 - Type definition and constructor methods
 - Conversion algorithms (int ↔ string)
 - JSON marshaling/unmarshaling behavior
@@ -34,6 +35,7 @@ The GeoKrety Stats API exposes GKID fields through a centralized `GeokretId` typ
 **Intended Audience:** Backend API developers, systems architects, and code reviewers working with the GeoKrety Stats API codebase.
 
 **Assumptions:**
+
 - GeoKrety IDs are always positive non-zero integers (1–4294967295 range suitable for 32-bit values)
 - Public GKID format uses uppercase hexadecimal with leading zeros (4 hex digits minimum)
 - The type will be used in all places where GKID values appear in API responses
@@ -349,6 +351,7 @@ type GeokretIdError struct {
 ### Test Data
 
 Use representative samples:
+
 - **Boundary values**: 1, 255, 65535, 2^32-1
 - **Special values**: high values for stress testing
 - **Invalid formats**: empty string, null, non-hex characters, zero, negative numbers
@@ -364,6 +367,7 @@ Use representative samples:
 ### Coverage Threshold
 
 Minimum 95% code coverage including:
+
 - All constructor paths
 - All error branches
 - Nil receiver handling
@@ -374,12 +378,14 @@ Minimum 95% code coverage including:
 ### Why a Type Wrapper?
 
 The current approach of using `int64` fields directly scatters conversion logic throughout handler code, leading to:
+
 - Repeated validation logic
 - Inconsistent error handling
 - Difficulty ensuring JSON serialization formats correctly
 - Lack of type safety (easy to confuse internal ID with public GKID)
 
 A dedicated `GeokretId` type provides:
+
 - **Single source of truth** for conversion logic
 - **Type safety** at compile time; Go compiler prevents mixing GKID with plain integers
 - **Automatic serialization** to public format in API responses

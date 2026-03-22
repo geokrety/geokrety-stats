@@ -69,10 +69,13 @@ END LOOP;
 ```
 
 For May 2016: **7,325 waypoints** are touched → 7,325 iterations of each loop:
+
 - `fn_snapshot_cache_visits`: 7,325 × 2 INSERTs = 14,650 individual queries → 91s → **6.2ms/query**
+
 - `fn_snapshot_waypoints`: 7,325 iterations → 73s → **10ms/iteration**
 
 **Per-iteration overhead breakdown:**
+
 - PL/pgSQL executor overhead: ~0.5–1ms per iteration
 - Index scan (using `idx_gk_moves_waypoint_code_hist`): ~0.3ms per iteration
 - Individual INSERT into indexed table: ~5ms per iteration (buffer flush, index maintenance)
@@ -84,12 +87,14 @@ For May 2016: **7,325 waypoints** are touched → 7,325 iterations of each loop:
 The 8 monthly phases run **sequentially** but only `fn_backfill_heavy_previous_move_id_all` is truly dependent (writes `previous_move_id`). All other 7 phases write to distinct tables and can run **in parallel**.
 
 For May 2016 with estimated optimized times:
+
 - Serial: ~30s
 - Parallel (critical path = fn_snapshot_relationship_tables): ~11.5s
 
 ### #3 — `fn_normalize_country_code` is VOLATILE (prevents parallelism)
 
 `geokrety.fn_normalize_country_code` is declared VOLATILE despite being a pure computation. This prevents:
+
 - PostgreSQL from executing aggregates in parallel
 - Creation of functional indexes on the country code
 
@@ -153,6 +158,7 @@ CROSS JOIN LATERAL (
 Change from `VOLATILE` to `IMMUTABLE STRICT PARALLEL SAFE`. This function is a pure computation (BTRIM + UPPER + length check) with no side effects.
 
 **Enables**:
+
 - Parallel aggregate queries in `fn_snapshot_daily_country_stats`, `fn_snapshot_user_country_stats`, `fn_snapshot_gk_country_stats`
 - Functional indexes on `fn_normalize_country_code(country)`
 
@@ -267,6 +273,7 @@ OPT-3 (`fn_normalize_country_code` IMMUTABLE): **Not needed** — DBA review con
 The final full backfill was executed and completed successfully. Key facts from the run and verification:
 
 - Completed steps: **1777**
+
 - Wall time (real): **00:46:42.538** (46m42s)
 - Throughput: **2282.8 steps/hour** (measured)
 

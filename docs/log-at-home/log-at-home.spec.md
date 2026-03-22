@@ -445,11 +445,13 @@ The exact timestamp is assigned during implementation.
 This migration depends on the following pre-existing database objects:
 
 **Required Triggers:**
+
 - `geokrety.before_20_gis_updates` trigger on `geokrety.gk_moves` must exist and be functional
   - This trigger (defined in geokrety-schema.sql, line 5911) synchronizes `position` geography from `lat`/`lon` scalar coordinates
   - Failure to execute this trigger before our trigger will result in incorrect matching logic
 
 **Required Versions:**
+
 - PostgreSQL ≥ 10 (supports BEFORE INSERT OR UPDATE trigger syntax)
 - PostGIS ≥ 2.4 (supports `ST_DWithin` on geography type with meter-based distance)
 
@@ -470,6 +472,7 @@ END $$;
 ```
 
 **Rollback Safety:**
+
 - If other migrations depend on `logged_at_author_home` column existing, rollback will fail
 - Future migrations should NOT depend on this column; instead, they should check for its existence before using it
 - The backfill function created by this migration should be dropped explicitly in `down()` to avoid orphaned function definitions

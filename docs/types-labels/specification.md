@@ -470,6 +470,7 @@ geokrety/
 ```
 
 **Placement guidelines:**
+
 - **GeokretTypeRegistry**: All struct definition, constants, and methods in `geokrety/geokrety/types.go`
 - **MoveTypeRegistry**: All struct definition, constants, and methods in `geokrety/move/types.go`
 - **Singleton instances**: Include package-level singletons in the same file as their struct definitions (optional)
@@ -578,7 +579,6 @@ The singleton pattern is **optional** and should be used based on the following 
 1. **Use singletons** (`DefaultGeokretTypeRegistry`, `DefaultMoveTypeRegistry`) if:
    - Most callers need a registry instance and would benefit from a convenient, pre-initialized default
    - The overhead of creating a new registry instance for every call is undesirable
-   - Backward compatibility with existing `TypeName()` function is required
 
 2. **Avoid singletons** if:
    - Dependency injection patterns are preferred in the codebase
@@ -720,6 +720,7 @@ Table-Driven Tests:
 ### Reference Pattern: GeokretId
 
 The `GeokretId` struct in `geokrety/gkid.go` demonstrates idiomatic Go patterns used as inspiration:
+
 - Uses a struct with a private value field
 - Provides constructor functions (`New`, `NewNullable`, `FromInt`)
 - Implements receiver methods for behavior
@@ -857,13 +858,6 @@ To confirm compliance with this specification, the following validation criteria
 - [ ] CSV marshaling methods implemented: `MarshalCSV()`, `UnmarshalCSV()`
 - [ ] YAML marshaling methods implemented: `MarshalYAML()`, `UnmarshalYAML()`
 - [ ] Godoc comments present on all exported types and methods
-
-### Backward Compatibility Validation
-
-- [ ] Original `TypeName()` function behavior preserved (via wrapper function or direct replacement)
-- [ ] All existing callers of `TypeName()` continue to work without code changes
-- [ ] Identical output for all valid type IDs compared to original switch statement implementation
-- [ ] Identical behavior for unknown/invalid type IDs (returns "Unknown" string)
 
 ### Test Coverage Validation
 

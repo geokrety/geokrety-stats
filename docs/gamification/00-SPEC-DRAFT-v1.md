@@ -166,6 +166,7 @@ Every Geokret starts with a **multiplier of 1.0x** that rises and falls based on
 - **Example:** When User A drops, multiplier +0.01. When User B grabs, multiplier +0.01. When User C drops, multiplier +0.01. = Total +0.03
 
 **On Country Crossing:**
+
 - When GK reaches a country for the first time: +0.05 (counts once globally per GK, regardless of actor)
 
 **Total possible:** Multiple users add +0.01 each for first drop/grab/seen, plus +0.05 per new country
@@ -173,10 +174,12 @@ Every Geokret starts with a **multiplier of 1.0x** that rises and falls based on
 #### Multiplier Decreases
 
 **Time in Holder's Hands:**
+
 - Every day GK stays with same holder: -0.008/day
 - (Encouraged to drop, not carry. A GK with 1.5x multiplier returns to 1.0x in ~62 days)
 
 **Time in Cache:**
+
 - Every week GK sits in same cache: -0.02/week
 - (Encourages picking up abandoned GKs. A GK with 1.5x multiplier returns to 1.0x in ~6 months)
 
@@ -185,6 +188,7 @@ Every Geokret starts with a **multiplier of 1.0x** that rises and falls based on
 
 #### Recomputation Timing
 - Multiplier recalculated **after log is registered**
+
 - User points calculated **before multiplier updates** (so they benefit from old multiplier)
 
 ---
@@ -196,20 +200,24 @@ Every Geokret starts with a **multiplier of 1.0x** that rises and falls based on
 **Per Move (Per User, Per GK):**
 
 **Waypoint Requirement (Anti-Farming Rule):**
+
 - DROP, SEEN, and DIP moves **require a waypoint** to earn points
 - If waypoint is null: Those moves earn **0 points** regardless of whether coordinates exist
 - **Design:** Ensures points are only awarded for verified locations (official caches/POIs); prevents gaming via unregistered coordinates
 - **Exception:** GRAB from inventory does not require waypoint (no physical location involved)
 
 **For Regular Users (not GK owner):**
+
 - First GRAB/DROP/SEEN by user on this GK: **+3 base points** (DROP/SEEN must have waypoint; GRAB unrestricted)
   - Multiplied by GK's current multiplier
   - Example: Drop non-own GK worth +3 base, GK has 1.2x multiplier = 3 × 1.2 = 3.6 points
   - Example: Drop without waypoint = 0 points (waypoint required)
 - Further moves by same user on same GK: **0 points**
+
 - DIPs (same user/cache): **0 points** (requires waypoint to earn points)
 
 **For GK Owner (moving own GK):**
+
 - **Standard Types**
   - ALL moves (DROP, GRAB, SEEN, DIP): **0 points**
   - Owner earns points ONLY through bonuses from other players' actions (see Owner-Specific Rules)
@@ -236,6 +244,7 @@ Every Geokret starts with a **multiplier of 1.0x** that rises and falls based on
 **Design:** Prevents rapid multi-drop farming at a single cache. User earns full points for first move, progressively reduced for subsequent moves at same location. Only 3 GKs per user per location per month earn points. Location is identified by waypoint first, then coordinates as secondary identifier.
 
 **Technical Notes:**
+
 - **Move Type Support**: DROP (always has waypoint/coordinates), DIP (always has waypoint/coordinates), and SEEN (may have waypoint OR coordinates) can all contribute to the location counter. GRAB from inventory has neither and is not penalized.
 - **SEEN Special Case**: SEEN can be logged with coordinates but without a waypoint (field observation at non-listed location); location tracking still applies via coordinates fallback.
 - **Penalty Scope**: Only affects `base_move` awards. Other bonuses (relay, rescuer, country crossing, etc.) are not penalized by location frequency.
@@ -245,6 +254,7 @@ Every Geokret starts with a **multiplier of 1.0x** that rises and falls based on
 **Chain Bonus Formula:** `bonus_per_user = min(chain_length², 8 × chain_length)`
 
 When a movement chain ends (3+ different users in sequence):
+
 - Each user in chain receives: **bonus points capped to prevent explosion**
   - Formula ensures growth up to 8-person chains, then soft cap applies
   - Example: Chain of 3 users → Each gets +9 bonus (min(9, 24) = 9)
@@ -268,6 +278,7 @@ When a movement chain ends (3+ different users in sequence):
 
 **Bonus Stacking:** Diversity country bonus +5 is cumulative with Movement country bonus +3 when both apply:
 Example:
+
 - user move GK1 in a new country A, it receive +3 (movement) + new country for the GK bonus +3
 - same user move GK1 in a the same country A -> receive +3 (movement)
 - same user move GK1 in a new country B -> receive +3 (movement) + new country for the GK bonus +3
@@ -340,6 +351,7 @@ Example:
 A chain is a sequence of **hand-to-hand exchanges** between distinct users. Chain length = **count of unique users** in the chain.
 
 **Chain Membership:**
+
 - Both **DROP actors** and **GRAB actors** add themselves to chain members (each counted once per chain)
 - GRAB with holder change (new user): adds to chain
 - GRAB self-grab (grabber == current_holder): treated as DIP, no chain membership, timer extended
@@ -348,6 +360,7 @@ A chain is a sequence of **hand-to-hand exchanges** between distinct users. Chai
 - DIP: adds to chain (counted once per user per chain); extends timer by ≤1 day
 
 **Chain Pattern:**
+
 - `A:DROP → B:GRAB → B:DROP → C:GRAB → ...`
 - User A drops: A joins chain [A]
 - User B grabs: B joins chain [A, B]
@@ -369,15 +382,18 @@ A chain is a sequence of **hand-to-hand exchanges** between distinct users. Chai
 ### Chain Timeout: 14-Day Inactivity Rule
 
 **Chain officially ends when:**
+
 - **14 consecutive days** pass with no GRAB, DROP, SEEN, or DIP by any user
 - GK is archived or deleted by owner
 
 **Timer behavior:**
+
 - GRAB, DROP, SEEN: Fully reset the 14-day countdown
 - DIP: Extends remaining time by small amount (1-2 days max), contributing less to chain timer extension than active moves, but total countdown never exceeds 14 days from holder's initial acquisition
 - COMMENT: Does not affect timer
 
 **Bonus awarded when chain ends (if chain_length >= 3):**
+
 - Each user in chain receives: `min(chain_length², 8 × chain_length)` bonus points
   - **Anti-Farming Rule:** A player can earn chain bonus from **only ONE chain per GK per 6-month period**. Further chain bonuses within 6 months = 0 points (prevents repetitive chain farming)
 - GK Owner receives: 25% of total chain points distributed
@@ -458,11 +474,14 @@ Unless C grabs by Feb 21 (14-day mark), chain dies with no bonus (length < 3)
 **Country bonus counted once globally per GK per country (one-time only, starting from 2nd country)**
 
 **Home Country (First Country):**
+
 - When GK is created/dropped in its mother-country: NO multiplier increase, NO country bonus
 - This is the baseline; bonuses start from second distinct country visit
 
 **When GK reaches NEW country (via DROP/DIPPED/SEEN move, starting from 2nd country):**
+
 - GK multiplier increases: **+0.05**
+
 - for **Standard Types**
   - **The actor (who moved it to new country) receives:** +3 points
     - **Exception:** If actor is GK owner → owner receives +2 to their points (for Non-transferable GK - +4 points once per user/country/gk_type)
@@ -478,6 +497,7 @@ Unless C grabs by Feb 21 (14-day mark), chain dies with no bonus (length < 3)
 ## 📐 System Logic Summary
 
 **GK Multiplier System:**
+
 - ✅ Starts at 1.0x per GK
 - ✅ Increases on first move types by each user (+0.01 each: drop, grab, seen, dip per user)
 - ✅ Increases on country crossing (+0.05 once per country per GK)
@@ -485,6 +505,7 @@ Unless C grabs by Feb 21 (14-day mark), chain dies with no bonus (length < 3)
 - ✅ Minimum floor: 1.0x per GK (never goes lower)
 
 **User Points Calculation:**
+
 - ✅ Base +3 per first move by non-owner (multiplied by GK's multiplier)
 - ✅ Owner gets 0 points for direct moves on **Standard type** GKs (only earns from bonuses)
 - ✅ Owner gets +3 base points for direct moves on **Non-Transferable type** GKs (once per GK type per waypoint per month; these cannot transfer, so owner movement is rewarded)
@@ -501,6 +522,7 @@ Unless C grabs by Feb 21 (14-day mark), chain dies with no bonus (length < 3)
 - ✅ First Finder: +3 base (non-owner) within 7 days; owner earns 0 on first drop
 
 **Owner Incentives (Standard Type GKs only):**
+
 - ✅ Owner gets 0 points for direct moves, incentivizing them to release GKs for others to circulate
 - ✅ Owner gets +1 when others hand over their GK (per handover event)
 - ✅ Owner gets +2 or +4 when GK reaches new country (depending on GK type)
