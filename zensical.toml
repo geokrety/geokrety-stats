@@ -14,9 +14,10 @@ copyright = "2026 GeoKrety Team"
 language = "en"
 nav = [
  	{ Home = "index.md" },
- 	{ "Endpoint GKID" = "endpoint-gkid/specification.md" },
  	{ "Schema: GeoKrety Stats" = "schema/specs.md" },
  	{ "Log At Home" = "log-at-home/index.md" },
+ 	{ "Type GKID" = "type-gkid/specification.md" },
+ 	{ "Types labels" = "types-labels/specification.md" },
  	{ "Legacy: Gamification Draft" = "gamification/00-SPEC-DRAFT-v1.md" },
 ]
 

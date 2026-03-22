@@ -8,7 +8,8 @@ icon: material/home
 
 * [Schema: GeoKret Stats](schema/specs.md)
 * [Exlude log at home from stats](log-at-home/index.md)
-* [GeokretId Type Implementation](endpoint-gkid/specification.md) — Public GKID string representation in API responses
+* [GeokretId Type Implementation](type-gkid/specification.md) — Public GKID string representation in API responses
+* [Type-Label Helpers](types-labels/specification.md) — Type-label helpers to idiomatic Go structs with JSON/XML/CSV/YAML marshaling support
 
 ### Simple ideas
 
