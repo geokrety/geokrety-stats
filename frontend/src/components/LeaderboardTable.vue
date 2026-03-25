@@ -2,15 +2,12 @@
 import type { LeaderboardUser } from '@/types/api'
 import AvatarDisplay from '@/components/AvatarDisplay.vue'
 import RankBadge from '@/components/RankBadge.vue'
+import { formatNumber } from '@/lib/format'
 import { RouterLink } from 'vue-router'
 
 defineProps<{
   users: LeaderboardUser[]
 }>()
-
-function fmt(n: number): string {
-  return n.toLocaleString('en-US')
-}
 </script>
 
 <template>
@@ -46,10 +43,10 @@ function fmt(n: number): string {
           </RouterLink>
         </td>
         <td class="py-3 px-3 text-right tabular-nums text-muted-foreground">
-          {{ fmt(user.movesCount) }}
+          {{ formatNumber(user.movesCount) }}
         </td>
         <td class="py-3 px-3 text-right tabular-nums font-semibold">
-          {{ fmt(user.points) }}
+          {{ formatNumber(user.points) }}
         </td>
       </tr>
     </tbody>

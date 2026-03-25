@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import type { GeokretListItem } from '@/types/api'
 import type { UserGeokretyPage } from '@/services/api/users'
 import GeokretListCard from '@/components/GeokretListCard.vue'
-import { Button } from '@/components/ui/button'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 
 const props = defineProps<{
   fetchFn: (limit: number, cursor?: string) => Promise<UserGeokretyPage>
@@ -29,7 +29,19 @@ async function load(append = false): Promise<void> {
   }
 }
 
+const { sentinel, observe } = useInfiniteScroll(() => {
+  if (!loading.value && hasMore.value) {
+    load(true)
+  }
+})
+
 onMounted(() => load())
+
+watch([items, hasMore], () => {
+  nextTick(() => {
+    if (hasMore.value) observe()
+  })
+})
 </script>
 
 <template>
@@ -43,8 +55,6 @@ onMounted(() => load())
     <div v-if="loading" class="flex justify-center py-2">
       <div class="h-5 w-5 animate-spin rounded-full border-2 border-border/20 border-t-primary" />
     </div>
-    <Button v-if="hasMore && !loading" variant="ghost" size="sm" class="w-full mt-2" @click="load(true)">
-      Load more
-    </Button>
+    <div ref="sentinel" class="h-1" />
   </div>
 </template>

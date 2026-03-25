@@ -120,9 +120,9 @@ export const STAT_KPI_COLORS: Record<StatKpiName, StatKpiColors> = {
     bg: 'bg-muted',
   },
   loves: {
-    icon: 'text-muted-foreground',
-    text: 'text-foreground',
-    bg: 'bg-muted',
+    icon: 'text-rose-500',
+    text: 'text-rose-700 dark:text-rose-200',
+    bg: 'bg-rose-50 dark:bg-rose-950/20',
   },
   inCache: {
     icon: 'text-muted-foreground',

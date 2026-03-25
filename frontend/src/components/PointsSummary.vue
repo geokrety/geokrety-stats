@@ -2,6 +2,7 @@
 import { TrendingUp } from 'lucide-vue-next'
 import { STAT_KPI_COLORS } from '@/constants/moveTypes'
 import { Card, CardContent } from '@/components/ui/card'
+import { formatNumber } from '@/lib/format'
 
 interface Props {
   countryName: string
@@ -10,10 +11,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-
-function fmt(n: number): string {
-  return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
 
 function pct(part: number, total: number): string {
   if (!total) return '0%'
@@ -38,7 +35,7 @@ function pct(part: number, total: number): string {
             Points Σ — home users
           </p>
           <p class="text-3xl font-bold tabular-nums" :class="STAT_KPI_COLORS.pointsHome.text">
-            {{ fmt(pointsSum) }}
+            {{ formatNumber(pointsSum) }}
           </p>
           <p class="text-xs text-muted-foreground mt-1">
             Sum of all points earned by users whose home coordinates are in {{ countryName }}.
@@ -50,7 +47,7 @@ function pct(part: number, total: number): string {
             Points Σ — moves
           </p>
           <p class="text-3xl font-bold tabular-nums" :class="STAT_KPI_COLORS.pointsMoves.text">
-            {{ fmt(pointsSumMoves) }}
+            {{ formatNumber(pointsSumMoves) }}
           </p>
           <p class="text-xs text-muted-foreground mt-1">
             Sum of all points earned by moves physically made inside {{ countryName }}.

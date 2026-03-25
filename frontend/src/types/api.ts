@@ -114,8 +114,10 @@ export interface LeaderboardUser {
 
 export interface RecentMove {
   id: number
+  geokretGkid?: number | null
   geokretName: string
   type: string
+  userId?: number | null
   username: string
   country: string
   countryFlag: string

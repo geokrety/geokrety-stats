@@ -611,6 +611,7 @@ LEFT JOIN LATERAL (
 	LIMIT 1
 ) AS missing_comment ON TRUE
 WHERE g.name ILIKE '%' || $1 || '%'
+	OR ('GK' || LPAD(UPPER(TO_HEX(g.gkid)), 4, '0')) ILIKE UPPER($1) || '%'
 	OR CAST(g.gkid AS text) = $1
 	OR CAST(g.id AS text) = $1
 ORDER BY g.moved_on_datetime DESC, g.id DESC

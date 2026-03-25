@@ -61,13 +61,15 @@ type GlobalStats struct {
 }
 
 type RecentMove struct {
-	ID          int64     `db:"id" json:"id" xml:"id"`
-	GeokretName string    `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	Type        string    `db:"type" json:"type" xml:"type"`
-	Username    string    `db:"username" json:"username" xml:"username"`
-	Country     string    `db:"country" json:"country" xml:"country"`
-	CountryFlag string    `json:"countryFlag" xml:"countryFlag"`
-	Timestamp   time.Time `db:"timestamp" json:"timestamp" xml:"timestamp"`
+	ID          int64                `db:"id" json:"id" xml:"id"`
+	GeokretGKID *geokrety.GeokretId  `db:"geokret_gkid" json:"geokretGkid,omitempty" xml:"geokretGkid,omitempty"`
+	GeokretName string               `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	Type        string               `db:"type" json:"type" xml:"type"`
+	UserID      *int64               `db:"user_id" json:"userId,omitempty" xml:"userId,omitempty"`
+	Username    string               `db:"username" json:"username" xml:"username"`
+	Country     string               `db:"country" json:"country" xml:"country"`
+	CountryFlag string               `json:"countryFlag" xml:"countryFlag"`
+	Timestamp   time.Time            `db:"timestamp" json:"timestamp" xml:"timestamp"`
 }
 
 type LeaderboardUser struct {
@@ -391,6 +393,7 @@ func (s *Store) FetchRecentMoves(ctx context.Context, limit, offset int) ([]Rece
 	if err := s.db.SelectContext(ctx, &rows, `
 SELECT
 m.id,
+g.gkid AS geokret_gkid,
 COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
 CASE m.move_type
 WHEN 0 THEN 'dropped'
@@ -401,6 +404,7 @@ WHEN 4 THEN 'archived'
 WHEN 5 THEN 'dipped'
 ELSE 'unknown'
 END AS type,
+u.id AS user_id,
 COALESCE(u.username, m.username, 'unknown') AS username,
 COALESCE(UPPER(m.country), '') AS country,
 m.moved_on_datetime AS timestamp

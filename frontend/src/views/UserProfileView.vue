@@ -5,6 +5,7 @@ import { useUserProfile } from '@/composables/useUserProfile'
 import UserInfoHeader from '@/components/UserInfoHeader.vue'
 import UserStatsGrid from '@/components/UserStatsGrid.vue'
 import UserGeokretyList from '@/components/UserGeokretyList.vue'
+import UserOwnedGeokretyMap from '@/components/UserOwnedGeokretyMap.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -49,6 +50,9 @@ onMounted(() => fetchUser(userId.value))
       <div v-else-if="user">
         <UserInfoHeader :user="user" />
         <UserStatsGrid :user="user" />
+        <div class="mb-8">
+          <UserOwnedGeokretyMap :fetch-fn="getOwned" />
+        </div>
 
         <Tabs default-value="owned" class="w-full">
           <TabsList class="grid w-full grid-cols-2">

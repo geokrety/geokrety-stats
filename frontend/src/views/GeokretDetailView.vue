@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, nextTick } from 'vue'
+import { onMounted, computed, nextTick, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useGeokretDetail } from '@/composables/useGeokretDetail'
 import { useGkid } from '@/composables/useGkid'
@@ -12,6 +12,7 @@ import MoveTypeBadge from '@/components/MoveTypeBadge.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatNumber } from '@/lib/format'
 import { User, Calendar } from 'lucide-vue-next'
 import { formatDateTime, relativeTime } from '@/lib/dates'
 import { countryCodeToFlag } from '@/lib/countryFlag'
@@ -44,10 +45,12 @@ onMounted(async () => {
   if (movesHasMore.value) observe()
 })
 
-function fmt(n: number | null | undefined): string {
-  if (n === undefined || n === null) return '—'
-  return n.toLocaleString('en')
-}
+watch([moves, movesHasMore], () => {
+  nextTick(() => {
+    if (movesHasMore.value) observe()
+  })
+})
+
 </script>
 
 <template>
@@ -194,7 +197,7 @@ function fmt(n: number | null | undefined): string {
                     </div>
                   </div>
                   <div v-if="m.kmDistance" class="text-xs text-muted-foreground whitespace-nowrap">
-                    {{ fmt(m.kmDistance) }} km
+                    {{ formatNumber(m.kmDistance, 1) }} km
                   </div>
                 </div>
               </li>
@@ -217,3 +220,19 @@ function fmt(n: number | null | undefined): string {
     </div>
   </main>
 </template>
+
+<style>
+.leaflet-dark-tooltip {
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+
+.leaflet-dark-tooltip::before {
+  border-top-color: hsl(var(--popover)) !important;
+}
+</style>

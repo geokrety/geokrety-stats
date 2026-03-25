@@ -21,6 +21,7 @@ import ViewToggle from '@/components/ViewToggle.vue'
 import MoveTypeBreakdown from '@/components/breakdowns/MoveTypeBreakdown.vue'
 import { Input } from '@/components/ui/input'
 import { useCountries } from '@/composables/useCountries'
+import { formatNumber } from '@/lib/format'
 import type { CountryStats } from '@/types/api'
 import { countryCodeToFlag } from '@/lib/countryFlag'
 
@@ -172,8 +173,7 @@ const filteredCountries = computed(() =>
 
 // ── Number formatting ─────────────────────────────────────────────────────────
 function fmt(n: number | undefined, decimals = 0): string {
-  if (n === undefined || n === null) return '—'
-  return n.toLocaleString('en', { maximumFractionDigits: decimals })
+  return formatNumber(n, decimals)
 }
 
 // ── Map legend ────────────────────────────────────────────────────────────────

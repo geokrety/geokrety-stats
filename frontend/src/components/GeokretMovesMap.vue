@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { watch } from 'vue'
 import L from 'leaflet'
+import LeafletMap from '@/components/LeafletMap.vue'
+import { escapeHtml } from '@/lib/html'
 import type { MoveRecord } from '@/types/api'
 
 interface Props {
@@ -9,23 +11,14 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const mapRef = ref<HTMLElement | null>(null)
 let map: L.Map | null = null
 let markerLayer: L.LayerGroup | null = null
 let polylineLayer: L.Polyline | null = null
 
-function initMap(): void {
-  if (!mapRef.value || map) return
-  map = L.map(mapRef.value, {
-    center: [30, 0],
-    zoom: 2,
-    scrollWheelZoom: true,
-  })
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18,
-  }).addTo(map)
+function handleMapReady(instance: L.Map): void {
+  map = instance
   markerLayer = L.layerGroup().addTo(map)
+  renderMoves()
 }
 
 function renderMoves(): void {
@@ -68,7 +61,7 @@ function renderMoves(): void {
 
     const label = isFirst ? '🏠 Born' : isLast ? '📍 Current' : m.moveTypeName
     marker.bindTooltip(
-      `<strong>${label}</strong><br/>${m.waypoint ?? ''} ${m.country ?? ''}<br/>${new Date(m.movedOn).toLocaleDateString()}${m.username ? `<br/>by ${m.username}` : ''}`,
+      `<strong>${escapeHtml(label)}</strong><br/>${escapeHtml(m.waypoint)} ${escapeHtml(m.country)}<br/>${new Date(m.movedOn).toLocaleDateString()}${m.username ? `<br/>by ${escapeHtml(m.username)}` : ''}`,
       { className: 'leaflet-dark-tooltip', sticky: true },
     )
   }
@@ -79,20 +72,14 @@ function renderMoves(): void {
 }
 
 watch(() => props.moves, renderMoves, { deep: true })
-
-onMounted(() => {
-  initMap()
-  if (props.moves.length > 0) renderMoves()
-})
-
-onUnmounted(() => {
-  map?.remove()
-  map = null
-})
 </script>
 
 <template>
-  <div ref="mapRef" class="w-full h-[400px] rounded-lg border border-border overflow-hidden" />
+  <LeafletMap
+    :require-two-finger-pan-on-mobile="true"
+    height="400px"
+    @ready="handleMapReady"
+  />
 </template>
 
 <style scoped>

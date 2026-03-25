@@ -5,6 +5,7 @@ import { ArrowLeft, Globe } from 'lucide-vue-next'
 import { useCountries } from '@/composables/useCountries'
 import { countryCodeToFlag } from '@/lib/countryFlag'
 import ActivityKpiCard from '@/components/kpi/ActivityKpiCard.vue'
+import LovesKpiCard from '@/components/kpi/LovesKpiCard.vue'
 import MoveTypeBreakdown from '@/components/breakdowns/MoveTypeBreakdown.vue'
 import PointsSummary from '@/components/PointsSummary.vue'
 import CountryGeokretyMap from '@/components/CountryGeokretyMap.vue'
@@ -89,7 +90,7 @@ const country = computed(() => countries.value.find((c) => c.code === code.value
               :value="country.avgPointsPerMove"
               :decimals="2"
             />
-            <ActivityKpiCard stat="loves" label="Loves" :value="country.loves" />
+            <LovesKpiCard label="Loves" :value="country.loves" />
             <ActivityKpiCard stat="pictures" label="Pictures" :value="country.pictures" />
             <ActivityKpiCard stat="inCache" label="In cache" :value="country.geokretyInCache" />
             <ActivityKpiCard stat="lost" label="Lost" :value="country.geokretyLost" />

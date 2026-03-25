@@ -3,6 +3,7 @@ import { onMounted, ref, watch, nextTick } from 'vue'
 import { useGeokrety } from '@/composables/useGeokrety'
 import { useGkid } from '@/composables/useGkid'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { formatNumber } from '@/lib/format'
 import GeokretyTypeBadge from '@/components/GeokretyTypeBadge.vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -49,10 +50,6 @@ function getGkid(gk: { gkid?: string | null; id: number }): string {
   return gk.gkid ?? intToGkid(gk.id)
 }
 
-function fmt(n: number | undefined): string {
-  if (n === undefined || n === null) return '—'
-  return n.toLocaleString('en')
-}
 </script>
 
 <template>
@@ -116,8 +113,8 @@ function fmt(n: number | undefined): string {
                 </div>
               </div>
               <div class="flex-shrink-0 text-right text-sm text-muted-foreground">
-                <div>❤️ {{ fmt(gk.lovesCount) }}</div>
-                <div>📷 {{ fmt(gk.picturesCount) }}</div>
+                <div>❤️ {{ formatNumber(gk.lovesCount) }}</div>
+                <div>📷 {{ formatNumber(gk.picturesCount) }}</div>
               </div>
             </CardContent>
           </Card>

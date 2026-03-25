@@ -2,18 +2,13 @@
 import { RouterLink, useRoute } from 'vue-router'
 import { Wifi } from 'lucide-vue-next'
 import {
-  BarChart3,
   ChevronsLeft,
   ChevronsRight,
-  Globe,
-  Home,
   MapPin,
-  Package,
-  Activity,
-  Users,
 } from 'lucide-vue-next'
 import LiveBadge from '@/components/LiveBadge.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { PRIMARY_NAV_ITEMS } from '@/constants/navigation'
 import { cycleColorMode } from '@/lib/theme'
 import {
   Sidebar,
@@ -32,15 +27,6 @@ import {
 
 const route = useRoute()
 const { state, toggleSidebar } = useSidebar()
-
-const items = [
-  { title: 'Home', to: '/', icon: Home },
-  { title: 'Countries', to: '/countries', icon: Globe },
-  { title: 'GeoKrety', to: '/geokrety', icon: Package },
-  { title: 'Leaderboard', to: '/leaderboard', icon: BarChart3 },
-  { title: 'Recent Moves', to: '/recent-moves', icon: Activity },
-  { title: 'Users', to: '/users', icon: Users },
-]
 
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
@@ -80,7 +66,7 @@ function isActive(path: string) {
         <SidebarGroupLabel>Navigation</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem v-for="item in items" :key="item.to">
+            <SidebarMenuItem v-for="item in PRIMARY_NAV_ITEMS" :key="item.to">
               <SidebarMenuButton as-child :is-active="isActive(item.to)">
                 <RouterLink :to="item.to">
                   <component :is="item.icon" class="size-4" />

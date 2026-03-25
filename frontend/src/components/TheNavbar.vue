@@ -4,13 +4,9 @@ import { RouterLink } from 'vue-router'
 import { MapPin, Menu, X } from 'lucide-vue-next'
 import LiveBadge from '@/components/LiveBadge.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { PRIMARY_NAV_ITEMS } from '@/constants/navigation'
 
 const mobileOpen = ref(false)
-
-const navLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'Countries', to: '/countries' },
-]
 </script>
 
 <template>
@@ -55,14 +51,15 @@ const navLinks = [
     >
       <div v-if="mobileOpen" class="border-t bg-background px-4 pb-4 pt-2">
         <RouterLink
-          v-for="link in navLinks"
+          v-for="link in PRIMARY_NAV_ITEMS"
           :key="link.to"
           :to="link.to"
-          class="block rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           active-class="bg-accent text-accent-foreground"
           @click="mobileOpen = false"
         >
-          {{ link.label }}
+          <component :is="link.icon" class="h-4 w-4" />
+          {{ link.title }}
         </RouterLink>
       </div>
     </Transition>
