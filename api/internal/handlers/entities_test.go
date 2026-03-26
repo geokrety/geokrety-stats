@@ -141,6 +141,42 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 	}
 }
 
+func TestEntityHandlerUserListIncludesAvatarID(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/users/?limit=1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetUserList(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].([]any)
+	item := data[0].(map[string]any)
+	if got := item["avatarId"]; got != float64(33) {
+		t.Fatalf("data[0].avatarId = %#v, want 33", got)
+	}
+}
+
+func TestEntityHandlerUserFoundGeokretyIncludesAvatarID(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/users/1/geokrety-found?limit=1", nil), "id", "1")
+	w := httptest.NewRecorder()
+
+	h.GetUserFoundGeokrety(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].([]any)
+	item := data[0].(map[string]any)
+	if got := item["avatarId"]; got != float64(22) {
+		t.Fatalf("data[0].avatarId = %#v, want 22", got)
+	}
+}
+
 func TestEntityHandlerAcceptsBareHexGKID(t *testing.T) {
 	store := &mockStatsStore{}
 	h := NewStatsHandler(store, zap.NewNop())

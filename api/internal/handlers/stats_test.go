@@ -55,7 +55,7 @@ func (m *mockStatsStore) FetchLeaderboard(ctx context.Context, limit, offset int
 	if err := m.maybeFail("FetchLeaderboard"); err != nil {
 		return nil, err
 	}
-	return []db.LeaderboardUser{{UserID: 1, Username: "user", MovesCount: 1, Points: 1}}, nil
+	return []db.LeaderboardUser{{UserID: 1, Username: "user", AvatarID: int64Ptr(77), MovesCount: 1, Points: 1}}, nil
 }
 
 func (m *mockStatsStore) FetchRecentMoves(ctx context.Context, limit, offset int) ([]db.RecentMove, error) {
@@ -63,7 +63,19 @@ func (m *mockStatsStore) FetchRecentMoves(ctx context.Context, limit, offset int
 	if err := m.maybeFail("FetchRecentMoves"); err != nil {
 		return nil, err
 	}
-	return []db.RecentMove{{ID: 1, GeokretName: "GK"}}, nil
+	return []db.RecentMove{{
+		ID:              1,
+		GeokretGKID:     mustGeokretIdPtr(255),
+		GeokretName:     "GK",
+		GeokretType:     int16Ptr(10),
+		GeokretAvatarID: int64Ptr(42),
+		Type:            "grabbed",
+		UserID:          int64Ptr(1),
+		UserAvatarID:    int64Ptr(84),
+		Username:        "user",
+		Country:         "PL",
+		Timestamp:       time.Now(),
+	}}, nil
 }
 
 func (m *mockStatsStore) FetchRecentBorn(ctx context.Context, limit, offset int) ([]db.RecentBorn, error) {
@@ -261,6 +273,14 @@ func mustGeokretIdPtr(value int64) *geokrety.GeokretId {
 	return parsed
 }
 
+func int64Ptr(value int64) *int64 {
+	return &value
+}
+
+func int16Ptr(value int16) *int16 {
+	return &value
+}
+
 func (m *mockStatsStore) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {
 	if err := m.maybeFail("ResolveGeokretID"); err != nil {
 		return 0, err
@@ -430,7 +450,7 @@ func (m *mockStatsStore) FetchUserFoundGeokrety(ctx context.Context, userID int6
 	if err := m.maybeFail("FetchUserFoundGeokrety"); err != nil {
 		return nil, err
 	}
-	return []db.GeokretListItem{{ID: 1, Name: "GK"}}, nil
+	return []db.GeokretListItem{{ID: 1, GKID: mustGeokretIdPtr(1), Name: "GK", AvatarID: int64Ptr(22), Type: 1}}, nil
 }
 
 func (m *mockStatsStore) FetchUserLovedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
@@ -478,7 +498,7 @@ func (m *mockStatsStore) FetchUserList(ctx context.Context, limit, offset int) (
 	if err := m.maybeFail("FetchUserList"); err != nil {
 		return nil, err
 	}
-	return []db.UserSearchResult{{ID: 1, Username: "u", JoinedAt: time.Now()}}, nil
+	return []db.UserSearchResult{{ID: 1, Username: "u", JoinedAt: time.Now(), AvatarID: int64Ptr(33)}}, nil
 }
 
 func (m *mockStatsStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
@@ -486,7 +506,7 @@ func (m *mockStatsStore) SearchUsers(ctx context.Context, query string, limit, o
 	if err := m.maybeFail("SearchUsers"); err != nil {
 		return nil, err
 	}
-	return []db.UserSearchResult{{ID: 1, Username: query, JoinedAt: time.Now()}}, nil
+	return []db.UserSearchResult{{ID: 1, Username: query, JoinedAt: time.Now(), AvatarID: int64Ptr(33)}}, nil
 }
 
 func (m *mockStatsStore) FetchUserStatsContinentCoverage(ctx context.Context, userID int64, limit, offset int) ([]db.UserContinentCoverage, error) {
@@ -601,6 +621,48 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 				t.Fatalf("meta field missing")
 			}
 		})
+	}
+}
+
+func TestStatsHandlerRecentMovesIncludesEnrichedFields(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/recent-moves?limit=1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetRecentMoves(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].([]any)
+	item := data[0].(map[string]any)
+	if got := item["geokretType"]; got != float64(10) {
+		t.Fatalf("data[0].geokretType = %#v, want 10", got)
+	}
+	if got := item["geokretAvatarId"]; got != float64(42) {
+		t.Fatalf("data[0].geokretAvatarId = %#v, want 42", got)
+	}
+	if got := item["userAvatarId"]; got != float64(84) {
+		t.Fatalf("data[0].userAvatarId = %#v, want 84", got)
+	}
+}
+
+func TestStatsHandlerLeaderboardIncludesAvatarID(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/stats/leaderboard?limit=1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetLeaderboard(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].([]any)
+	item := data[0].(map[string]any)
+	if got := item["avatarId"]; got != float64(77) {
+		t.Fatalf("data[0].avatarId = %#v, want 77", got)
 	}
 }
 

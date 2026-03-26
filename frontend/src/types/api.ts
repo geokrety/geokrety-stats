@@ -104,6 +104,7 @@ export interface LeaderboardUser {
   rank: number
   userId: number
   username: string
+  avatarId?: number | null
   initials: string
   points: number
   movesCount: number
@@ -116,8 +117,11 @@ export interface RecentMove {
   id: number
   geokretGkid?: number | null
   geokretName: string
+  geokretType?: number | null
+  geokretAvatarId?: number | null
   type: string
   userId?: number | null
+  userAvatarId?: number | null
   username: string
   country: string
   countryFlag: string
@@ -135,6 +139,7 @@ export interface GeokretListItem {
   id: number
   gkid?: string | null
   name: string
+  avatarId?: number | null
   type: number
   typeName: string
   missing: boolean
@@ -161,6 +166,7 @@ export interface UserListItem {
   username: string
   joinedAt: string
   homeCountry?: string | null
+  avatarId?: number | null
   lastMoveAt?: string | null
 }
 
@@ -172,6 +178,7 @@ export interface MoveRecord {
   moveType: number
   moveTypeName: string
   authorId?: number | null
+  authorAvatarId?: number | null
   username?: string | null
   country?: string | null
   waypoint?: string | null

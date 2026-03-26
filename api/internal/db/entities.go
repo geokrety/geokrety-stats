@@ -14,6 +14,7 @@ type GeokretListItem struct {
 	ID             int64               `db:"id" json:"id" xml:"id"`
 	GKID           *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
 	Name           string              `db:"name" json:"name" xml:"name"`
+	AvatarID       *int64              `db:"avatar_id" json:"avatarId" xml:"avatarId,omitempty"`
 	Type           int16               `db:"type" json:"type" xml:"type"`
 	TypeName       string              `json:"typeName" xml:"typeName"`
 	Missing        bool                `db:"missing" json:"missing" xml:"missing"`
@@ -47,6 +48,7 @@ type MoveRecord struct {
 	MoveType      int16      `db:"move_type" json:"moveType" xml:"moveType"`
 	MoveTypeName  string     `json:"moveTypeName" xml:"moveTypeName"`
 	AuthorID      *int64     `db:"author_id" json:"authorId" xml:"authorId,omitempty"`
+	AuthorAvatarID *int64    `db:"author_avatar_id" json:"authorAvatarId,omitempty" xml:"authorAvatarId,omitempty"`
 	Username      *string    `db:"username" json:"username" xml:"username,omitempty"`
 	Country       *string    `db:"country" json:"country" xml:"country,omitempty"`
 	Waypoint      *string    `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
@@ -239,6 +241,7 @@ type UserSearchResult struct {
 	Username    string     `db:"username" json:"username" xml:"username"`
 	JoinedAt    time.Time  `db:"joined_at" json:"joinedAt" xml:"joinedAt"`
 	HomeCountry *string    `db:"home_country" json:"homeCountry" xml:"homeCountry,omitempty"`
+	AvatarID    *int64     `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
 	LastMoveAt  *time.Time `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt,omitempty"`
 }
 
@@ -349,6 +352,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	CASE WHEN gg.missing THEN missing_comment.created_on_datetime END AS missing_at,
@@ -413,6 +417,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	CASE WHEN gg.missing THEN missing_comment.created_on_datetime END AS missing_at,
@@ -460,6 +465,7 @@ SELECT
 	m.geokret AS geokret_id,
 	m.move_type,
 	m.author AS author_id,
+	u.avatar AS author_avatar_id,
 	COALESCE(u.username, m.username) AS username,
 	UPPER(m.country) AS country,
 	UPPER(m.waypoint) AS waypoint,
@@ -492,6 +498,7 @@ SELECT
 	m.geokret AS geokret_id,
 	m.move_type,
 	m.author AS author_id,
+	u.avatar AS author_avatar_id,
 	COALESCE(u.username, m.username) AS username,
 	UPPER(m.country) AS country,
 	UPPER(m.waypoint) AS waypoint,
@@ -584,6 +591,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	CASE WHEN gg.missing THEN missing_comment.created_on_datetime END AS missing_at,
@@ -837,6 +845,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	gg.owner AS owner_id,
@@ -951,6 +960,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	gg.owner AS owner_id,
@@ -984,6 +994,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	g.avatar AS avatar_id,
 	g.type,
 	g.missing,
 	g.owner AS owner_id,
@@ -1019,6 +1030,7 @@ SELECT
 	id,
 	waypoint_code,
 	source,
+	u.avatar AS avatar_id,
 	UPPER(country) AS country,
 	lat,
 	lon
@@ -1082,6 +1094,7 @@ SELECT DISTINCT ON (g.id)
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	gg.owner AS owner_id,
@@ -1116,6 +1129,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	gg.owner AS owner_id,
@@ -1150,6 +1164,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	gg.owner AS owner_id,
@@ -1255,6 +1270,7 @@ SELECT
 	u.username,
 	u.joined_on_datetime AS joined_at,
 	UPPER(u.home_country) AS home_country,
+	u.avatar AS avatar_id,
 	(
 		SELECT MAX(m.moved_on_datetime) FROM geokrety.gk_moves AS m WHERE m.author = u.id
 	) AS last_move_at
@@ -1276,6 +1292,7 @@ SELECT
 	u.username,
 	u.joined_on_datetime AS joined_at,
 	UPPER(u.home_country) AS home_country,
+	u.avatar AS avatar_id,
 	(
 		SELECT MAX(m.moved_on_datetime) FROM geokrety.gk_moves AS m WHERE m.author = u.id
 	) AS last_move_at
@@ -1438,6 +1455,7 @@ SELECT
 	g.id,
 	g.gkid,
 	g.name,
+	gg.avatar AS avatar_id,
 	gg.type,
 	gg.missing,
 	gg.owner AS owner_id,

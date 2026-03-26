@@ -64,8 +64,11 @@ type RecentMove struct {
 	ID          int64                `db:"id" json:"id" xml:"id"`
 	GeokretGKID *geokrety.GeokretId  `db:"geokret_gkid" json:"geokretGkid,omitempty" xml:"geokretGkid,omitempty"`
 	GeokretName string               `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	GeokretType *int16               `db:"geokret_type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
+	GeokretAvatarID *int64           `db:"geokret_avatar_id" json:"geokretAvatarId,omitempty" xml:"geokretAvatarId,omitempty"`
 	Type        string               `db:"type" json:"type" xml:"type"`
 	UserID      *int64               `db:"user_id" json:"userId,omitempty" xml:"userId,omitempty"`
+	UserAvatarID *int64              `db:"user_avatar_id" json:"userAvatarId,omitempty" xml:"userAvatarId,omitempty"`
 	Username    string               `db:"username" json:"username" xml:"username"`
 	Country     string               `db:"country" json:"country" xml:"country"`
 	CountryFlag string               `json:"countryFlag" xml:"countryFlag"`
@@ -76,6 +79,7 @@ type LeaderboardUser struct {
 	Rank        int    `json:"rank" xml:"rank"`
 	UserID      int64  `db:"user_id" json:"userId" xml:"userId"`
 	Username    string `db:"username" json:"username" xml:"username"`
+	AvatarID    *int64 `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
 	Initials    string `json:"initials" xml:"initials"`
 	Points      int64  `db:"points" json:"points" xml:"points"`
 	MovesCount  int64  `db:"moves_count" json:"movesCount" xml:"movesCount"`
@@ -395,6 +399,8 @@ SELECT
 m.id,
 g.gkid AS geokret_gkid,
 COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
+g.type AS geokret_type,
+g.avatar AS geokret_avatar_id,
 CASE m.move_type
 WHEN 0 THEN 'dropped'
 WHEN 1 THEN 'grabbed'
@@ -405,6 +411,7 @@ WHEN 5 THEN 'dipped'
 ELSE 'unknown'
 END AS type,
 u.id AS user_id,
+u.avatar AS user_avatar_id,
 COALESCE(u.username, m.username, 'unknown') AS username,
 COALESCE(UPPER(m.country), '') AS country,
 m.moved_on_datetime AS timestamp
@@ -430,11 +437,12 @@ func (s *Store) FetchLeaderboard(ctx context.Context, limit, offset int) ([]Lead
 SELECT
 u.id AS user_id,
 u.username,
+u.avatar AS avatar_id,
 COUNT(*)::bigint AS points,
 COUNT(*)::bigint AS moves_count
 FROM geokrety.gk_moves AS m
 INNER JOIN geokrety.gk_users AS u ON u.id = m.author
-GROUP BY u.id, u.username
+GROUP BY u.id, u.username, u.avatar
 ORDER BY points DESC, u.username ASC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
