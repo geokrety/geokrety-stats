@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { useCountries } from '@/composables/useCountries'
 import { formatNumber } from '@/lib/format'
 import type { CountryStats } from '@/types/api'
-import { countryCodeToFlag } from '@/lib/countryFlag'
+import { countryCodeToFlag, countryCodeToName } from '@/lib/countryFlag'
 
 const { countries, loading, error, fetch } = useCountries()
 onMounted(() => fetch())
@@ -328,7 +328,7 @@ const legendMetricLabel = computed(() => {
                   class="inline-flex items-center gap-2 font-medium text-foreground hover:text-foreground/80 transition-colors"
                 >
                   <span class="text-lg leading-none">{{ countryCodeToFlag(row.code) }}</span>
-                  <span>{{ row.name }}</span>
+                  <span>{{ countryCodeToName(row.code) }}</span>
                   <span class="text-xs text-muted-foreground">({{ row.code }})</span>
                 </RouterLink>
               </td>
@@ -508,7 +508,7 @@ const legendMetricLabel = computed(() => {
               <p
                 class="font-semibold text-foreground group-hover:text-foreground/80 transition-colors leading-tight"
               >
-                {{ row.name }}
+                {{ countryCodeToName(row.code) }}
               </p>
               <p class="text-xs text-muted-foreground">{{ row.code }}</p>
             </div>

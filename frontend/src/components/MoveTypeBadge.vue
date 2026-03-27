@@ -60,10 +60,12 @@ const meta = moveTypeMeta[props.type.toLowerCase()]
 
 <template>
   <span
-    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1"
+    class="inline-flex items-center justify-center rounded-full p-1 text-xs font-medium ring-1"
     :class="meta?.classes ?? 'bg-muted text-muted-foreground'"
+    :title="meta?.label ?? props.type"
+    :aria-label="meta?.label ?? props.type"
   >
-    <component :is="meta?.icon" v-if="meta?.icon" class="h-3 w-3" />
-    {{ meta?.label ?? 'Unknown' }}
+    <component :is="meta?.icon" v-if="meta?.icon" class="h-3.5 w-3.5" />
+    <span v-else class="px-1 text-[10px]">?</span>
   </span>
 </template>

@@ -7,6 +7,7 @@ import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import GeokretyTypeBadge from '@/components/GeokretyTypeBadge.vue'
 import GeokretDetailKpis from '@/components/GeokretDetailKpis.vue'
 import GeokretMovesMap from '@/components/GeokretMovesMap.vue'
+import MultilingualMarkdown from '@/components/MultilingualMarkdown.vue'
 import MarkdownContent from '@/components/MarkdownContent.vue'
 import MoveTypeBadge from '@/components/MoveTypeBadge.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
@@ -142,7 +143,7 @@ watch([moves, movesHasMore], () => {
             </div>
             <div v-if="geokret.mission" class="text-sm">
               <span class="text-muted-foreground">Mission:</span>
-              <MarkdownContent class="mt-1" :source="geokret.mission" />
+              <MultilingualMarkdown class="mt-1" :source="geokret.mission" />
             </div>
           </CardContent>
         </Card>
@@ -171,8 +172,7 @@ watch([moves, movesHasMore], () => {
                     <MoveTypeBadge :type="m.moveTypeName" class="mt-0.5 shrink-0" />
                     <div class="min-w-0">
                       <div class="text-sm font-medium">
-                        {{ m.moveTypeName }}
-                        <span v-if="m.waypoint" class="font-mono text-xs text-muted-foreground ml-1">{{ m.waypoint }}</span>
+                        <span v-if="m.waypoint" class="font-mono text-xs text-muted-foreground">{{ m.waypoint }}</span>
                         <span v-if="m.country" class="text-xs text-muted-foreground ml-1">{{ countryCodeToFlag(m.country) }} {{ m.country }}</span>
                       </div>
                       <div class="text-xs text-muted-foreground mt-0.5">

@@ -154,8 +154,10 @@ export interface GeokretListItem {
   lon?: number | null
   lovesCount: number
   picturesCount: number
+  cachesCount: number
   bornAt?: string | null
   lastMoveAt?: string | null
+  lastMoveType?: number | null
   geojson?: GeoJSONPoint | null
 }
 

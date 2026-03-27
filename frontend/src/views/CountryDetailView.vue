@@ -3,7 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft, Globe } from 'lucide-vue-next'
 import { useCountries } from '@/composables/useCountries'
-import { countryCodeToFlag } from '@/lib/countryFlag'
+import { countryCodeToFlag, countryCodeToName } from '@/lib/countryFlag'
 import ActivityKpiCard from '@/components/kpi/ActivityKpiCard.vue'
 import LovesKpiCard from '@/components/kpi/LovesKpiCard.vue'
 import MoveTypeBreakdown from '@/components/breakdowns/MoveTypeBreakdown.vue'
@@ -31,7 +31,7 @@ const country = computed(() => countries.value.find((c) => c.code === code.value
     <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6">
       <AppBreadcrumb :items="[
         { label: 'Countries', to: '/countries' },
-        { label: country ? `${countryCodeToFlag(country.code)} ${country.name}` : code },
+        { label: country ? `${countryCodeToFlag(country.code)} ${countryCodeToName(country.code)}` : code },
       ]" />
     </div>
 
@@ -64,11 +64,11 @@ const country = computed(() => countries.value.find((c) => c.code === code.value
       <!-- Header -->
       <header class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex items-center gap-4">
-          <span class="text-6xl leading-none" role="img" :aria-label="country.name">
+          <span class="text-6xl leading-none" role="img" :aria-label="countryCodeToName(country.code)">
             {{ countryCodeToFlag(country.code) }}
           </span>
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">{{ country.name }}</h1>
+            <h1 class="text-3xl font-bold tracking-tight">{{ countryCodeToName(country.code) }}</h1>
             <p class="mt-0.5 font-mono text-sm text-muted-foreground">{{ country.code }}</p>
           </div>
         </div>
@@ -102,7 +102,7 @@ const country = computed(() => countries.value.find((c) => c.code === code.value
 
         <!-- ── Points summary ────────────────────────────────────── -->
         <PointsSummary
-          :country-name="country.name"
+          :country-name="countryCodeToName(country.code)"
           :points-sum="country.pointsSum"
           :points-sum-moves="country.pointsSumMoves"
         />
@@ -117,7 +117,7 @@ const country = computed(() => countries.value.find((c) => c.code === code.value
         <!-- ── Leaderboards ──────────────────────────────────────── -->
         <section>
           <h2 class="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Leaderboard — {{ country.name }}
+            Leaderboard — {{ countryCodeToName(country.code) }}
           </h2>
           <p class="-mt-2 mb-4 text-xs text-muted-foreground">
             Top users and GeoKrety activity in this country (global data shown until
@@ -130,7 +130,7 @@ const country = computed(() => countries.value.find((c) => c.code === code.value
         <section class="overflow-hidden rounded-xl border border-border bg-card/70">
           <div class="px-5 pt-5 pb-1">
             <h2 class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Recent activity — {{ country.name }}
+              Recent activity — {{ countryCodeToName(country.code) }}
             </h2>
             <p class="mt-1 text-xs text-muted-foreground">
               Latest GeoKret moves in this country (global feed shown until country-specific API is
