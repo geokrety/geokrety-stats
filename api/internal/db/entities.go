@@ -29,8 +29,10 @@ type GeokretListItem struct {
 	Lon            *float64            `db:"lon" json:"lon" xml:"lon,omitempty"`
 	LovesCount     int64               `db:"loves_count" json:"lovesCount" xml:"lovesCount"`
 	PicturesCount  int64               `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
+	CachesCount    int64               `db:"caches_count" json:"cachesCount" xml:"cachesCount"`
 	BornAt         *time.Time          `db:"born_at" json:"bornAt" xml:"bornAt,omitempty"`
 	LastMoveAt     *time.Time          `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt,omitempty"`
+	LastMoveType   *int16              `db:"last_move_type" json:"lastMoveType,omitempty" xml:"lastMoveType,omitempty"`
 	GeoJSON        *GeoJSONPt          `json:"geojson" xml:"geojson,omitempty"`
 }
 
@@ -366,6 +368,7 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
@@ -431,11 +434,11 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	g.moved_on_datetime AS last_move_at,
 	gg.mission,
 	gg.distance,
-	gg.caches_count,
 	gg.comments_hidden
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
@@ -605,6 +608,7 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
@@ -858,6 +862,7 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
@@ -973,6 +978,7 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
@@ -1107,6 +1113,7 @@ SELECT DISTINCT ON (g.id)
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	m.moved_on_datetime AS last_move_at
 FROM geokrety.gk_moves AS m
@@ -1142,6 +1149,7 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	l.created_on_datetime AS last_move_at
 FROM geokrety.gk_loves AS l
@@ -1177,6 +1185,7 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
 	w.created_on_datetime AS last_move_at
 FROM geokrety.gk_watched AS w
@@ -1480,10 +1489,13 @@ SELECT
 	g.lon,
 	gg.loves_count,
 	gg.pictures_count,
+	gg.caches_count,
 	gg.born_on_datetime AS born_at,
-	g.moved_on_datetime AS last_move_at
+	g.moved_on_datetime AS last_move_at,
+	lm.move_type AS last_move_type
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_moves AS lm ON lm.id = gg.last_position
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 WHERE %s
 ORDER BY g.moved_on_datetime DESC, g.id DESC

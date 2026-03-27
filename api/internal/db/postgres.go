@@ -500,12 +500,12 @@ WHERE home_country IS NOT NULL
 GROUP BY UPPER(home_country)
 ), country_loves AS (
 SELECT
-				UPPER(d.country) AS code,
+				UPPER(m.country) AS code,
 				COALESCE(SUM(g.loves_count), 0)::bigint AS loves
-			FROM geokrety.gk_geokrety_with_details AS d
-			INNER JOIN geokrety.gk_geokrety AS g ON g.id = d.id
-WHERE country IS NOT NULL
-			GROUP BY UPPER(d.country)
+			FROM geokrety.gk_geokrety AS g
+			INNER JOIN geokrety.gk_moves AS m ON m.id = g.last_position
+			WHERE m.country IS NOT NULL
+			GROUP BY UPPER(m.country)
 ), country_pictures AS (
 SELECT
 UPPER(country) AS code,
