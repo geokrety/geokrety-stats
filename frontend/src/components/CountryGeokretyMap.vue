@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { escapeHtml } from '@/lib/html'
 
 // ── Country center lookup (lat, lon, zoom) ────────────────────────────────
 const COUNTRY_CENTERS: Record<string, [number, number, number]> = {
@@ -128,13 +129,13 @@ const visibleMarkers = computed(() => {
 
 // ── Marker icons ──────────────────────────────────────────────────────────
 const ICON_CACHE = L.divIcon({
-  html: '<span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:50%;border:2px solid #064e3b;box-shadow:0 0 4px rgba(16,185,129,0.6)"></span>',
+  html: '<span class="leaflet-marker-dot leaflet-marker-dot--cache"></span>',
   iconSize: [10, 10],
   iconAnchor: [5, 5],
   className: '',
 })
 const ICON_LOST = L.divIcon({
-  html: '<span style="display:inline-block;width:10px;height:10px;background:#f87171;border-radius:50%;border:2px solid #7f1d1d;box-shadow:0 0 4px rgba(248,113,113,0.6)"></span>',
+  html: '<span class="leaflet-marker-dot leaflet-marker-dot--lost"></span>',
   iconSize: [10, 10],
   iconAnchor: [5, 5],
   className: '',
@@ -154,9 +155,9 @@ function renderMarkers() {
     const icon = m.status === 'cache' ? ICON_CACHE : ICON_LOST
     const marker = L.marker([m.lat, m.lon], { icon })
     marker.bindTooltip(
-      `<div style="font-size:0.75rem;white-space:nowrap">
-        <strong>${m.gkid}</strong> — ${m.name}<br/>
-        <span style="opacity:0.7">${m.status === 'lost' ? '🔴 Missing' : '🟢 In cache'} · Last: ${relativeDate(m.lastActivity)}</span>
+      `<div class="leaflet-tooltip-panel">
+        <strong>${escapeHtml(m.gkid)}</strong> — ${escapeHtml(m.name)}<br/>
+        <span class="leaflet-tooltip-meta">${m.status === 'lost' ? '🔴 Missing' : '🟢 In cache'} · Last: ${escapeHtml(relativeDate(m.lastActivity))}</span>
        </div>`,
       { className: 'leaflet-dark-tooltip', sticky: true },
     )

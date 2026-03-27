@@ -69,14 +69,17 @@ provideSidebarContext({
   <TooltipProvider :delay-duration="0">
     <div
       data-slot="sidebar-wrapper"
-      :style="{
-        '--sidebar-width': SIDEBAR_WIDTH,
-        '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-      }"
-      :class="cn('group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full', props.class)"
+      :class="cn('sidebar-provider-root group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full', props.class)"
       v-bind="$attrs"
     >
       <slot />
     </div>
   </TooltipProvider>
 </template>
+
+<style scoped>
+.sidebar-provider-root {
+  --sidebar-width: v-bind(SIDEBAR_WIDTH);
+  --sidebar-width-icon: v-bind(SIDEBAR_WIDTH_ICON);
+}
+</style>

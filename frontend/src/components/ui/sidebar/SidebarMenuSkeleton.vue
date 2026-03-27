@@ -27,9 +27,14 @@ const width = computed(() => {
     />
 
     <Skeleton
-      class="h-4 max-w-(--skeleton-width) flex-1"
+      class="sidebar-menu-skeleton__text h-4 max-w-(--skeleton-width) flex-1"
       data-sidebar="menu-skeleton-text"
-      :style="{ '--skeleton-width': width }"
     />
   </div>
 </template>
+
+<style scoped>
+.sidebar-menu-skeleton__text {
+  --skeleton-width: v-bind(width);
+}
+</style>

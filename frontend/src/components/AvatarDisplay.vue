@@ -57,8 +57,7 @@ const SIZE_MAP: Record<string, number> = { xs: 24, sm: 32, md: 40, lg: 56, xl: 8
 const px = computed(() =>
   typeof props.size === 'number' ? props.size : (SIZE_MAP[props.size] ?? 40),
 )
-
-const sizeStyle = computed(() => ({ width: `${px.value}px`, height: `${px.value}px` }))
+const avatarDimension = computed(() => `${px.value}px`)
 
 // ── Derived image URLs ────────────────────────────────────────────────────────
 const thumbSrc = computed(() => props.thumbnailSrc ?? props.src ?? props.fallback)
@@ -89,8 +88,8 @@ function closeLightbox() {
   <HoverCard v-if="hoverDelay > 0" :open-delay="hoverDelay">
     <HoverCardTrigger as-child>
       <Avatar
-        :style="sizeStyle"
         :class="[
+          'avatar-display',
           shapeClass,
           'cursor-pointer ring-2 ring-border/10 transition-opacity hover:opacity-90',
         ]"
@@ -104,9 +103,8 @@ function closeLightbox() {
         <!-- Level / badge (bottom-right corner) -->
         <span
           v-if="badge"
-          class="pointer-events-none absolute bottom-0 right-0 flex items-center justify-center rounded-full ring-2 ring-border text-foreground text-[9px] font-bold leading-none"
+          class="avatar-display__badge pointer-events-none absolute bottom-0 right-0 flex items-center justify-center rounded-full ring-2 ring-border text-foreground text-[9px] font-bold leading-none"
           :class="badge.color ?? 'bg-emerald-500'"
-          style="width: 40%; height: 40%; min-width: 14px; min-height: 14px"
         >
           <img
             v-if="badge.iconSrc"
@@ -138,8 +136,8 @@ function closeLightbox() {
   <!-- Avatar without hover preview -->
   <Avatar
     v-else
-    :style="sizeStyle"
     :class="[
+      'avatar-display',
       shapeClass,
       'cursor-pointer ring-2 ring-border/10 transition-opacity hover:opacity-90',
     ]"
@@ -153,9 +151,8 @@ function closeLightbox() {
     <!-- Level / badge (bottom-right corner) -->
     <span
       v-if="badge"
-      class="pointer-events-none absolute bottom-0 right-0 flex items-center justify-center rounded-full ring-2 ring-border text-foreground text-[9px] font-bold leading-none"
+      class="avatar-display__badge pointer-events-none absolute bottom-0 right-0 flex items-center justify-center rounded-full ring-2 ring-border text-foreground text-[9px] font-bold leading-none"
       :class="badge.color ?? 'bg-emerald-500'"
-      style="width: 40%; height: 40%; min-width: 14px; min-height: 14px"
     >
       <img
         v-if="badge.iconSrc"
@@ -194,3 +191,17 @@ function closeLightbox() {
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.avatar-display {
+  height: v-bind(avatarDimension);
+  width: v-bind(avatarDimension);
+}
+
+.avatar-display__badge {
+  height: 40%;
+  min-height: 14px;
+  min-width: 14px;
+  width: 40%;
+}
+</style>

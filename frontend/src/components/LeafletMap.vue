@@ -114,8 +114,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative overflow-hidden rounded-lg border border-border">
-    <div ref="mapRef" class="w-full" :style="{ height }" />
+  <div class="leaflet-map-shell relative overflow-hidden rounded-lg border border-border">
+    <div ref="mapRef" class="leaflet-map-canvas w-full" />
     <div
       v-if="showTouchHint"
       class="pointer-events-none absolute inset-x-4 top-4 rounded-md bg-background/90 px-3 py-2 text-center text-xs text-muted-foreground shadow-sm backdrop-blur"
@@ -126,6 +126,15 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.leaflet-map-shell {
+  min-height: v-bind(height);
+}
+
+.leaflet-map-canvas {
+  height: v-bind(height);
+  min-height: v-bind(height);
+}
+
 :deep(.leaflet-container) {
   height: 100%;
   width: 100%;

@@ -41,6 +41,9 @@ const list = computed<AvatarItem[]>(() =>
 
 const visible = computed(() => list.value.slice(0, props.max))
 const overflow = computed(() => Math.max(0, list.value.length - props.max))
+const avatarSize = computed(() => `${props.size}px`)
+const overlapOffset = computed(() => `-${props.overlap}px`)
+const overflowFontSize = computed(() => `${Math.max(9, props.size * 0.27)}px`)
 
 // Track which index is being hovered to bring it to the front
 const hoveredIndex = ref<number | null>(null)
@@ -53,9 +56,7 @@ function zIndex(i: number): number {
 }
 
 const itemStyle = computed(() => (i: number) => ({
-  marginLeft: i === 0 ? '0px' : `-${props.overlap}px`,
-  zIndex: zIndex(i),
-  transition: 'z-index 0s', // instant z-index change
+  '--avatar-group-z-index': zIndex(i),
 }))
 </script>
 
@@ -64,7 +65,7 @@ const itemStyle = computed(() => (i: number) => ({
     <div
       v-for="(avatar, i) in visible"
       :key="avatar.id"
-      class="relative"
+      class="avatar-group__item relative"
       :style="itemStyle(i)"
       @mouseenter="hoveredIndex = i"
       @mouseleave="hoveredIndex = null"
@@ -83,21 +84,37 @@ const itemStyle = computed(() => (i: number) => ({
     <!-- Overflow indicator using shadcn Avatar -->
     <Avatar
       v-if="overflow > 0"
-      class="relative ring-2 ring-border"
-      :style="{
-        width: `${size}px`,
-        height: `${size}px`,
-        marginLeft: `-${overlap}px`,
-        zIndex: 1,
-      }"
+      class="avatar-group__overflow relative ring-2 ring-border"
     >
       <div
-        class="flex h-full w-full select-none items-center justify-center bg-muted font-semibold text-muted-foreground"
+        class="avatar-group__overflow-label flex h-full w-full select-none items-center justify-center bg-muted font-semibold text-muted-foreground"
         :class="shape === 'rounded' ? 'rounded-lg' : 'rounded-full'"
-        :style="{ fontSize: `${Math.max(9, size * 0.27)}px` }"
       >
         +{{ overflow }}
       </div>
     </Avatar>
   </div>
 </template>
+
+<style scoped>
+.avatar-group__item {
+  margin-left: v-bind(overlapOffset);
+  transition: z-index 0s;
+  z-index: var(--avatar-group-z-index);
+}
+
+.avatar-group__item:first-child {
+  margin-left: 0;
+}
+
+.avatar-group__overflow {
+  height: v-bind(avatarSize);
+  margin-left: v-bind(overlapOffset);
+  width: v-bind(avatarSize);
+  z-index: 1;
+}
+
+.avatar-group__overflow-label {
+  font-size: v-bind(overflowFontSize);
+}
+</style>

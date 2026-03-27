@@ -36,10 +36,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
       data-slot="sidebar"
       data-mobile="true"
       :side="side"
-      class="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
-      :style="{
-        '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
-      }"
+      class="sidebar-mobile-sheet bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
     >
       <SheetHeader class="sr-only">
         <SheetTitle>Sidebar</SheetTitle>
@@ -94,3 +91,9 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     </div>
   </div>
 </template>
+
+<style scoped>
+.sidebar-mobile-sheet {
+  --sidebar-width: v-bind(SIDEBAR_WIDTH_MOBILE);
+}
+</style>

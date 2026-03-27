@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { TrendingUp } from 'lucide-vue-next'
 import { STAT_KPI_COLORS } from '@/constants/moveTypes'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,6 +17,8 @@ function pct(part: number, total: number): string {
   if (!total) return '0%'
   return ((part / total) * 100).toFixed(1) + '%'
 }
+
+const homePointsWidth = computed(() => pct(props.pointsSum, props.pointsSum + props.pointsSumMoves))
 </script>
 
 <template>
@@ -60,8 +63,7 @@ function pct(part: number, total: number): string {
         <p class="text-xs text-muted-foreground mb-2">Home vs moves points ratio</p>
         <div class="flex gap-1 h-2 rounded-full overflow-hidden bg-muted">
           <div
-            class="bg-primary rounded-full transition-all duration-500"
-            :style="{ width: pct(pointsSum, pointsSum + pointsSumMoves) }"
+            class="points-summary__fill bg-primary rounded-full transition-all duration-500"
             title="Home users pts"
           />
         </div>
@@ -73,3 +75,9 @@ function pct(part: number, total: number): string {
     </CardContent>
   </Card>
 </template>
+
+<style scoped>
+.points-summary__fill {
+  width: v-bind(homePointsWidth);
+}
+</style>

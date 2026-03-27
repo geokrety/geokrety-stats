@@ -107,15 +107,3 @@ onMounted(() => {
     />
   </section>
 </template>
-
-<style scoped>
-:deep(.leaflet-dark-tooltip) {
-  background: hsl(var(--popover));
-  color: hsl(var(--popover-foreground));
-  border: 1px solid hsl(var(--border));
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 0.75rem;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
-}
-</style>

@@ -2,3 +2,68 @@
 @import 'tw-animate-css';
 @custom-variant dark (&:where(.dark, .dark *));
 @import './tailwind.css';
+
+@layer components {
+	.leaflet-dark-tooltip {
+		background: hsl(var(--popover)) !important;
+		border: 1px solid hsl(var(--border)) !important;
+		border-radius: 0.5rem !important;
+		box-shadow: 0 10px 30px rgb(15 23 42 / 18%) !important;
+		color: hsl(var(--popover-foreground)) !important;
+		font-size: 0.75rem;
+		opacity: 1 !important;
+		padding: 0.5rem 0.75rem !important;
+	}
+
+	.leaflet-dark-tooltip::before {
+		border-top-color: hsl(var(--border)) !important;
+	}
+
+	.leaflet-dark-tooltip.leaflet-tooltip-left::before {
+		border-left-color: hsl(var(--border)) !important;
+	}
+
+	.leaflet-dark-tooltip.leaflet-tooltip-right::before {
+		border-right-color: hsl(var(--border)) !important;
+	}
+
+	.leaflet-dark-tooltip.leaflet-tooltip-top::before {
+		border-top-color: hsl(var(--border)) !important;
+	}
+
+	.leaflet-dark-tooltip.leaflet-tooltip-bottom::before {
+		border-bottom-color: hsl(var(--border)) !important;
+	}
+
+	.leaflet-tooltip-panel {
+		font-size: 0.75rem;
+		line-height: 1.35;
+		white-space: nowrap;
+	}
+
+	.leaflet-tooltip-meta {
+		color: hsl(var(--muted-foreground));
+	}
+
+	.leaflet-marker-dot {
+		border-radius: 9999px;
+		border-style: solid;
+		border-width: 2px;
+		box-shadow: 0 0 4px rgb(15 23 42 / 18%);
+		display: inline-block;
+		height: 10px;
+		width: 10px;
+	}
+
+	.leaflet-marker-dot--cache {
+		background: #10b981;
+		border-color: #064e3b;
+		box-shadow: 0 0 4px rgb(16 185 129 / 60%);
+	}
+
+	.leaflet-marker-dot--lost {
+		background: #f87171;
+		border-color: #7f1d1d;
+		box-shadow: 0 0 4px rgb(248 113 113 / 60%);
+	}
+}
