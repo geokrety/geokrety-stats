@@ -43,26 +43,26 @@ type GeokretDetails struct {
 }
 
 type MoveRecord struct {
-	ID            int64      `db:"id" json:"id" xml:"id"`
-	GeokretID     int64      `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	MoveType      int16      `db:"move_type" json:"moveType" xml:"moveType"`
-	MoveTypeName  string     `json:"moveTypeName" xml:"moveTypeName"`
-	AuthorID      *int64     `db:"author_id" json:"authorId" xml:"authorId,omitempty"`
-	AuthorAvatarID *int64    `db:"author_avatar_id" json:"authorAvatarId,omitempty" xml:"authorAvatarId,omitempty"`
-	Username      *string    `db:"username" json:"username" xml:"username,omitempty"`
-	Country       *string    `db:"country" json:"country" xml:"country,omitempty"`
-	Waypoint      *string    `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
-	Lat           *float64   `db:"lat" json:"lat" xml:"lat,omitempty"`
-	Lon           *float64   `db:"lon" json:"lon" xml:"lon,omitempty"`
-	Elevation     *int64     `db:"elevation" json:"elevation" xml:"elevation,omitempty"`
-	KMDistance    *float64   `db:"km_distance" json:"kmDistance" xml:"kmDistance,omitempty"`
-	MovedOn       time.Time  `db:"moved_on_datetime" json:"movedOn" xml:"movedOn"`
-	CreatedOn     time.Time  `db:"created_on_datetime" json:"createdOn" xml:"createdOn"`
-	PicturesCount int64      `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
-	CommentsCount int64      `db:"comments_count" json:"commentsCount" xml:"commentsCount"`
-	Comment       *string    `db:"comment" json:"comment" xml:"comment,omitempty"`
-	CommentHidden bool       `db:"comment_hidden" json:"commentHidden" xml:"commentHidden"`
-	GeoJSON       *GeoJSONPt `json:"geojson" xml:"geojson,omitempty"`
+	ID             int64      `db:"id" json:"id" xml:"id"`
+	GeokretID      int64      `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	MoveType       int16      `db:"move_type" json:"moveType" xml:"moveType"`
+	MoveTypeName   string     `json:"moveTypeName" xml:"moveTypeName"`
+	AuthorID       *int64     `db:"author_id" json:"authorId" xml:"authorId,omitempty"`
+	AuthorAvatarID *int64     `db:"author_avatar_id" json:"authorAvatarId,omitempty" xml:"authorAvatarId,omitempty"`
+	Username       *string    `db:"username" json:"username" xml:"username,omitempty"`
+	Country        *string    `db:"country" json:"country" xml:"country,omitempty"`
+	Waypoint       *string    `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
+	Lat            *float64   `db:"lat" json:"lat" xml:"lat,omitempty"`
+	Lon            *float64   `db:"lon" json:"lon" xml:"lon,omitempty"`
+	Elevation      *int64     `db:"elevation" json:"elevation" xml:"elevation,omitempty"`
+	KMDistance     *float64   `db:"km_distance" json:"kmDistance" xml:"kmDistance,omitempty"`
+	MovedOn        time.Time  `db:"moved_on_datetime" json:"movedOn" xml:"movedOn"`
+	CreatedOn      time.Time  `db:"created_on_datetime" json:"createdOn" xml:"createdOn"`
+	PicturesCount  int64      `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
+	CommentsCount  int64      `db:"comments_count" json:"commentsCount" xml:"commentsCount"`
+	Comment        *string    `db:"comment" json:"comment" xml:"comment,omitempty"`
+	CommentHidden  bool       `db:"comment_hidden" json:"commentHidden" xml:"commentHidden"`
+	GeoJSON        *GeoJSONPt `json:"geojson" xml:"geojson,omitempty"`
 }
 
 type SocialUserEntry struct {
@@ -1271,10 +1271,16 @@ SELECT
 	u.joined_on_datetime AS joined_at,
 	UPPER(u.home_country) AS home_country,
 	u.avatar AS avatar_id,
-	(
-		SELECT MAX(m.moved_on_datetime) FROM geokrety.gk_moves AS m WHERE m.author = u.id
-	) AS last_move_at
+	last_move.last_move_at
 FROM geokrety.gk_users AS u
+LEFT JOIN LATERAL (
+	SELECT
+		m.moved_on_datetime AS last_move_at
+	FROM geokrety.gk_moves AS m
+	WHERE m.author = u.id
+	ORDER BY m.moved_on_datetime DESC
+	LIMIT 1
+) AS last_move ON TRUE
 WHERE u.username ILIKE '%' || $1 || '%'
 ORDER BY u.username ASC
 LIMIT $2 OFFSET $3
@@ -1293,10 +1299,16 @@ SELECT
 	u.joined_on_datetime AS joined_at,
 	UPPER(u.home_country) AS home_country,
 	u.avatar AS avatar_id,
-	(
-		SELECT MAX(m.moved_on_datetime) FROM geokrety.gk_moves AS m WHERE m.author = u.id
-	) AS last_move_at
+	last_move.last_move_at
 FROM geokrety.gk_users AS u
+LEFT JOIN LATERAL (
+	SELECT
+		m.moved_on_datetime AS last_move_at
+	FROM geokrety.gk_moves AS m
+	WHERE m.author = u.id
+	ORDER BY m.moved_on_datetime DESC
+	LIMIT 1
+) AS last_move ON TRUE
 ORDER BY u.username ASC, u.id ASC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
