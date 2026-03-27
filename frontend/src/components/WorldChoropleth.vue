@@ -267,20 +267,6 @@ watch(
   background-color: hsl(var(--card));
 }
 
-.leaflet-dark-tooltip {
-  background: color-mix(in oklab, hsl(var(--card)) 92%, transparent);
-  border: 1px solid hsl(var(--border));
-  border-radius: 6px;
-  color: hsl(var(--foreground));
-  font-size: 0.78rem;
-  padding: 5px 9px;
-  white-space: nowrap;
-}
-
-.leaflet-dark-tooltip::before {
-  border-top-color: hsl(var(--border)) !important;
-}
-
 .world-choropleth .leaflet-control-attribution {
   background: color-mix(in oklab, hsl(var(--card)) 70%, transparent) !important;
   color: hsl(var(--muted-foreground));

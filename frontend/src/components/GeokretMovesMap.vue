@@ -15,6 +15,11 @@ let map: L.Map | null = null
 let markerLayer: L.LayerGroup | null = null
 let polylineLayer: L.Polyline | null = null
 
+function moveTimestamp(value: string | Date | null | undefined): number {
+  if (!value) return 0
+  return new Date(value).getTime()
+}
+
 function handleMapReady(instance: L.Map): void {
   map = instance
   markerLayer = L.layerGroup().addTo(map)
@@ -33,7 +38,13 @@ function renderMoves(): void {
   if (geoMoves.length === 0) return
 
   // Draw polyline connecting the path (chronological order — oldest first)
-  const sortedMoves = [...geoMoves].sort((a, b) => new Date(a.movedOn).getTime() - new Date(b.movedOn).getTime())
+  const sortedMoves = [...geoMoves].sort((a, b) => {
+    const movedOnDiff = moveTimestamp(a.movedOn) - moveTimestamp(b.movedOn)
+    if (movedOnDiff !== 0) return movedOnDiff
+    const createdOnDiff = moveTimestamp(a.createdOn) - moveTimestamp(b.createdOn)
+    if (createdOnDiff !== 0) return createdOnDiff
+    return a.id - b.id
+  })
   const latlngs: L.LatLngExpression[] = sortedMoves.map((m) => [m.lat!, m.lon!])
   polylineLayer = L.polyline(latlngs, {
     color: 'hsl(210, 80%, 55%)',

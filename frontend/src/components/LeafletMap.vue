@@ -44,14 +44,7 @@ function enableTouchInteraction(): void {
   map.touchZoom.enable()
 }
 
-function handleTouchStart(event: TouchEvent): void {
-  if (!props.requireTwoFingerPanOnMobile || !isTouchDevice.value) return
-  if (event.touches.length >= 2) {
-    showTouchHint.value = false
-    enableTouchInteraction()
-    return
-  }
-  disableSingleFingerPan()
+function showTwoFingerHint(): void {
   showTouchHint.value = true
   if (touchHintTimer) window.clearTimeout(touchHintTimer)
   touchHintTimer = window.setTimeout(() => {
@@ -59,11 +52,32 @@ function handleTouchStart(event: TouchEvent): void {
   }, 1600)
 }
 
+function syncTouchInteraction(touchCount: number): void {
+  if (!props.requireTwoFingerPanOnMobile || !isTouchDevice.value) return
+  if (touchCount >= 2) {
+    showTouchHint.value = false
+    enableTouchInteraction()
+    return
+  }
+  disableSingleFingerPan()
+  showTwoFingerHint()
+}
+
+function handleTouchStart(event: TouchEvent): void {
+  syncTouchInteraction(event.touches.length)
+}
+
+function handleTouchMove(event: TouchEvent): void {
+  syncTouchInteraction(event.touches.length)
+}
+
 function handleTouchEnd(event: TouchEvent): void {
   if (!props.requireTwoFingerPanOnMobile || !isTouchDevice.value) return
-  if (event.touches.length < 2) {
-    disableSingleFingerPan()
+  if (event.touches.length >= 2) {
+    enableTouchInteraction()
+    return
   }
+  disableSingleFingerPan()
 }
 
 onMounted(() => {
@@ -84,6 +98,7 @@ onMounted(() => {
   if (props.requireTwoFingerPanOnMobile && isTouchDevice.value) {
     disableSingleFingerPan()
     mapRef.value.addEventListener('touchstart', handleTouchStart, { passive: true })
+    mapRef.value.addEventListener('touchmove', handleTouchMove, { passive: true })
     mapRef.value.addEventListener('touchend', handleTouchEnd, { passive: true })
     mapRef.value.addEventListener('touchcancel', handleTouchEnd, { passive: true })
   }
@@ -102,6 +117,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (mapRef.value && props.requireTwoFingerPanOnMobile && isTouchDevice.value) {
     mapRef.value.removeEventListener('touchstart', handleTouchStart)
+    mapRef.value.removeEventListener('touchmove', handleTouchMove)
     mapRef.value.removeEventListener('touchend', handleTouchEnd)
     mapRef.value.removeEventListener('touchcancel', handleTouchEnd)
   }

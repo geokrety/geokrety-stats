@@ -5,34 +5,34 @@
 
 @layer components {
 	.leaflet-dark-tooltip {
-		background: hsl(var(--popover)) !important;
-		border: 1px solid hsl(var(--border)) !important;
+		background: var(--popover) !important;
+		border: 1px solid var(--border) !important;
 		border-radius: 0.5rem !important;
 		box-shadow: 0 10px 30px rgb(15 23 42 / 18%) !important;
-		color: hsl(var(--popover-foreground)) !important;
+		color: var(--popover-foreground) !important;
 		font-size: 0.75rem;
 		opacity: 1 !important;
 		padding: 0.5rem 0.75rem !important;
 	}
 
 	.leaflet-dark-tooltip::before {
-		border-top-color: hsl(var(--border)) !important;
+		border-top-color: var(--border) !important;
 	}
 
 	.leaflet-dark-tooltip.leaflet-tooltip-left::before {
-		border-left-color: hsl(var(--border)) !important;
+		border-left-color: var(--border) !important;
 	}
 
 	.leaflet-dark-tooltip.leaflet-tooltip-right::before {
-		border-right-color: hsl(var(--border)) !important;
+		border-right-color: var(--border) !important;
 	}
 
 	.leaflet-dark-tooltip.leaflet-tooltip-top::before {
-		border-top-color: hsl(var(--border)) !important;
+		border-top-color: var(--border) !important;
 	}
 
 	.leaflet-dark-tooltip.leaflet-tooltip-bottom::before {
-		border-bottom-color: hsl(var(--border)) !important;
+		border-bottom-color: var(--border) !important;
 	}
 
 	.leaflet-tooltip-panel {
@@ -42,7 +42,7 @@
 	}
 
 	.leaflet-tooltip-meta {
-		color: hsl(var(--muted-foreground));
+		color: var(--muted-foreground);
 	}
 
 	.leaflet-marker-dot {
