@@ -6,7 +6,8 @@ info:
   description: |
     Read-only API for GeoKrety statistics, activity feeds, entity exploration, and visualization workloads.
 
-    Every `/api/v3/...` JSON endpoint returns a response envelope with `data` and `meta`.
+    The JSON documentation contract for `/api/v3/...` endpoints uses a response envelope with `data`, `meta`, and collection `links`.
+    Collection items follow the GeoKrety JSON REST resource-object model: `id`, `type`, `attributes`, optional `relationships`, and optional `links`.
     List endpoints support `limit` and `offset` pagination. Search endpoints require a `q` query parameter of at least 2 characters.
 
     ## GeoKret Public Identifiers (GKID)

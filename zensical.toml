@@ -18,7 +18,8 @@ nav = [
  	{ "Log At Home" = "log-at-home/index.md" },
  	{ "Type GKID" = "type-gkid/specification.md" },
  	{ "Types labels" = "types-labels/specification.md" },
-	{ "Pagination/Sort" = "pagination/specification.md" },
+	{ "JSON REST API" = "json-rest/index.md" },
+	{ "Pagination and Sorting" = "pagination/specification.md" },
  	{ "Legacy: Gamification Draft" = "gamification/00-SPEC-DRAFT-v1.md" },
 ]
 

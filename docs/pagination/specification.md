@@ -1,409 +1,412 @@
 ---
-title: Generic Pagination Implementation for JSON REST APIs and Infinity Scrolling
-version: 1.0
+title: GeoKrety Pagination and Sorting for JSON REST Collections
+version: 2.0
 date_created: 2026-03-22
-last_updated: 2026-03-22
+last_updated: 2026-03-28
 owner: GeoKrety Development Team
-tags: [architecture, infrastructure, design, pagination, api, frontend]
+tags: [architecture, infrastructure, design, pagination, api, frontend, json-rest]
 ---
 
-# Specification: Generic Pagination Implementation for JSON REST APIs and Infinity Scrolling
+# Specification: GeoKrety Pagination and Sorting for JSON REST Collections
 
 ## 1. Introduction
 
-This specification defines a robust, generic, and reusable pagination system for GeoKrety that supports both **cursor-based pagination** (for infinite scrolling scenarios) and **offset-based pagination** (for traditional page-by-page navigation). The system is designed to work across different data sources (SQL databases, REST APIs, GraphQL, in-memory), provide strong type safety in both Go (backend) and TypeScript (frontend), and eliminate pagination implementation inconsistencies across the codebase.
+This specification defines how GeoKrety paginates JSON collections inside the shared JSON REST envelope documented in [../json-rest/specification.md](../json-rest/specification.md). It covers page-based pagination, cursor-based pagination, sorting, filtering, and infinite-scroll client behavior.
 
-The pagination system is intentionally lightweight and library-like, not a framework, to ensure flexibility and minimal coupling with specific business logic. It provides clean abstractions for both API developers (who emit paginated responses) and frontend developers (who consume pagination through Vue 3 composition functions with transparent state management).
-
----
+The previous pagination document mixed response-envelope design with pagination mechanics. This revision keeps the useful operational guidance, but treats the JSON REST envelope as a shared contract instead of a pagination-specific helper.
 
 ## 2. Purpose & Scope
 
 ### Purpose
-To provide a unified, generic pagination abstraction that:
 
-- Eliminates inconsistent pagination implementations across GeoKrety APIs
-- Enables infinite scrolling user experiences without complex frontend state management
-- Supports high-performance pagination over large datasets (millions of records)
-- Maintains type safety throughout the pagination lifecycle (Go + TypeScript)
-- Prevents common pagination bugs (SQL injection, incorrect offset handling, state management issues)
-- Makes pagination a straightforward, reusable pattern rather than a per-endpoint concern
+- Make paginated GeoKrety JSON collections consistent across endpoints
+- Standardize page-based navigation for catalog-style lists
+- Standardize cursor-based navigation for large collections and infinite scroll
+- Keep sorting and filtering deterministic so clients can page safely
+- Document client behavior around link-driven pagination
 
-### Scope
-**In Scope:**
+### In Scope
 
-- Generic type definitions and implementations (Go backend, TypeScript frontend)
-- Cursor-based pagination for infinite scroll use cases
-- Offset-based pagination for traditional page-by-page navigation
-- API response envelope patterns and examples
-- Vue 3 composition functions for state management
-- Example endpoint implementations
-- Unit and integration test patterns
-- Security considerations and attack prevention strategies
+- Page-based pagination with `page` and `per_page`
+- Cursor-based pagination with `limit` and opaque `cursor`
+- Top-level pagination links in JSON REST collection responses
+- Sorting and filtering rules that affect page identity
+- Infinite-scroll frontend behavior
+- Backend and frontend implementation guidance
+- Validation and testing expectations
 
-**Out of Scope:**
+### Out of Scope
 
-- GraphQL pagination (different conventions; separate concern)
-- UI-specific frameworks beyond Vue 3 (patterns are reusable)
-- Database-specific optimizations (core logic remains DB-agnostic)
-- ORM-specific implementations (examples use raw SQL for clarity)
+- Redefining the generic JSON REST resource-object model
+- XML pagination behavior
+- GraphQL pagination
+- Bidirectional cursor navigation
 
-### Intended Audience
-- Backend API developers (Go) extending GeoKrety with new paginated endpoints
-- Frontend developers (TypeScript/Vue 3) integrating pagination into UI components
-- Database architects optimizing pagination query performance
-- Security reviewers auditing pagination implementations
+## 3. Shared Collection Contract
 
----
-
-## 3. Definitions
-
-- **Cursor**: An opaque, versioned token representing a position in a paginated result set. Clients pass it back to request subsequent pages. The internal structure is not client-visible.
-
-- **Offset**: A numeric position (0-based) in a sorted result set, used alongside a limit to define page bounds.
-
-- **Limit / Page Size**: Maximum number of items to return in a single response. Server enforces reasonable defaults and maximums.
-
-- **Pagination (Generic Type)**: A type parameter `Pagination<T>` representing a typed collection that can be paginated (T = item type).
-
-- **Page<T>**: Response envelope containing paginated items of type T, along with metadata (cursors, totals, etc.).
-
-- **Cursor-Based Pagination**: Pagination strategy using opaque cursors; optimal for infinite scroll, real-time feeds, and append-only data. Stateless from client perspective.
-
-- **Offset-Based Pagination**: Pagination strategy using offset + limit; suitable for traditional page-by-page navigation, filters/sorts that are stable.
-
-- **Infinity Scrolling**: Progressive loading pattern where new items appear as user scrolls to bottom; implemented via cursor-based pagination with automatic `fetchNextPage()` calls.
-
-- **Cursor Enumeration Attack**: Security threat where attacker potentially guesses cursor values. **NOTE: Pagination data is public; threat model assumes adversary uses different cursors via URL params.** Real mitigation is authorization (don't return unauthorized data) + SQL safety (no injection), NOT cursor obfuscation.
-
-- **Stable Sort Order**: A sort order that remains consistent across queries (e.g., `ORDER BY created_at DESC, id DESC`). Required for reliable cursor-based pagination.
-
-- **Versioning**: Pagination cursors include a version identifier, allowing cursor format evolution without breaking existing clients.
-
----
-
-## 4. Requirements, Constraints & Guidelines
-
-### Functional Requirements
-
-- **FR-001**: System must support cursor-based pagination for infinite scroll use cases with opaque, versioned cursors.
-
-- **FR-002**: System must support offset-based pagination for traditional page-by-page navigation, with optional total counts when the endpoint chooses to expose page-number UX.
-
-- **FR-003**: Cursors must be versioned to support backward compatibility when cursor format changes.
-
-- **FR-004**: System must work with any data type `T` (generic implementation); not coupled to GeoKrety-specific types.
-
-- **FR-005**: Cursor format must be opaque and versioned; invalid, malformed, or context-mismatched cursors must be rejected with clear error messages.
-
-- **FR-006**: Response envelopes must be consistent across all paginated endpoints (cursor-based and offset-based).
-
-- **FR-007**: System must gracefully handle empty result sets, returning empty `data[]` with appropriate metadata.
-
-- **FR-008**: System must support filtering and sorting alongside pagination; any change to filter or sort context must invalidate existing cursors and require a reset to the first page.
-
-- **FR-009**: Frontend Vue 3 composables must provide transparent state management for infinity scroll without requiring manual cursor handling.
-
-- **FR-010**: System must enforce server-side limits (max page size, reasonable defaults) to prevent resource exhaustion.
-
-### Non-Functional Requirements
-
-- **NFR-001** (Performance): Pagination logic must not degrade with large datasets (millions of records). Cursor encoding/decoding < 1ms. Database queries with pagination must use indexed sorts.
-
-- **NFR-002** (Type Safety): TypeScript implementation must be fully typed; no `any` types or implicit `unknown`. Go implementation must use generics where applicable.
-
-- **NFR-003** (Security): Authorization checks must prevent unauthorized data access across paginated endpoints. SQL queries must use parameterized statements to prevent injection. Cursor formats may remain simple base64-encoded payloads as long as clients treat them as opaque.
-
-- **NFR-004** (Maintainability): All functions, types, and methods must have JSDoc (TS) / GoDoc (Go) comments explaining purpose and usage. Examples in comments encouraged.
-
-- **NFR-005** (Testing): Unit tests must achieve >90% code coverage for pagination logic. Integration tests must validate cursor handling with real database backends.
-
-### Constraints
-
-- **CON-001**: No external pagination library dependencies. Implement from first principles to demonstrate understanding of pagination mechanics.
-
-- **CON-002**: Cursor encodings must support versioning; breaking changes to cursor format must increment version identifier.
-
-- **CON-003**: Total item counts (for offset pagination) are optional; expensive for large datasets and should default to `undefined` unless explicitly enabled.
-
-- **CON-004**: Pagination is unidirectional (forward-only via `nextCursor`); bidirectional pagination adds complexity and is deferred.
-
-- **CON-005**: Sort order must be stable (deterministic) to ensure reliable cursor-based pagination. Avoid non-deterministic sorts like database-assigned UUIDs without secondary sort keys.
-
-### Guidelines
-
-- **GUD-001**: Prefer cursor-based pagination for append-only, real-time feeds (user activity, notifications, comments). Prefer offset-based for catalog-like results with stable filters/sorts.
-
-- **GUD-002**: Cursor opacity is non-negotiable; clients must never parse cursor structure. Server reserves right to change cursor format in next version.
-
-- **GUD-003**: API endpoints should default to cursor-based pagination for new features; migrate existing offset-based endpoints only if necessary.
-
-- **GUD-004**: Document the stable sort order explicitly in API reference. Example: `ORDER BY created_at DESC, id DESC`.
-
-- **GUD-005**: Frontend components should use `usePagination()` composition for infinite scroll patterns to minimize boilerplate.
-
----
-
-## 5. Pagination Patterns
-
-### Pagination Patterns
-
-#### 5.1 Cursor-Based Pagination
-
-**What it is:** Pagination using an opaque token (cursor) representing the last visible row in a deterministic sort order. Clients request the first page, receive items plus a `nextCursor`, and use that cursor to seek the next window without relying on SQL OFFSET.
-
-**When to use:**
-
-- Infinite scroll feeds (user activity, notifications)
-- Real-time data that changes during pagination (new items appear)
-- Append-only datasets (logs, transactions, audit trails)
-- Performance-critical scenarios (avoids expensive OFFSET queries on large tables)
-
-**Why:**
-
-- Stateless from client perspective (cursor encapsulates position)
-- Efficient for large datasets when backed by matching keyset predicates and indexes
-- More resilient to concurrent inserts than OFFSET-based pagination because the next page is anchored on the last visible row
-- Natural fit for infinite scroll UX patterns
-
-**Trade-offs:**
-
-- ❌ Cannot jump to arbitrary page (must follow cursor chain)
-- ❌ Cannot navigate backward (cursor points forward only)
-- ✅ Better performance than offset pagination on large tables
-- ✅ More stable under concurrent inserts when using deterministic keyset ordering
-
-#### 5.2 Offset-Based Pagination
-
-**What it is:** Pagination using numeric offset (position) and limit (page size). Clients specify which range of items they want (`offset=20&limit=10`).
-
-**When to use:**
-
-- Catalog-like features (product listings, search results, filterable lists)
-- UI with "page 1, 2, 3" navigation
-- Stable result sets (filters/sort order don't change mid-pagination)
-- Small-to-medium datasets where OFFSET cost is acceptable
-
-**Why:**
-
-- Intuitive for users ("Page 5 of 20")
-- Easy to jump to arbitrary pages
-- Supports backward pagination (previous page)
-- Familiar RESTful pattern
-
-**Trade-offs:**
-
-- ❌ OFFSET becomes expensive on large tables (O(n) cost to scan to position)
-- ❌ Sensitive to concurrent data changes (new items shift offsets)
-- ✅ Jump-to-page UX is simpler
-- ✅ Total count is meaningful
-
-#### 5.3 Infinity Scrolling State Model
-
-Infinity scrolling is implemented via cursor-based pagination + frontend state management:
-
-```
-State: {
-  items: T[]              // Accumulated items from all fetched pages
-  currentCursor: string | null
-  nextCursor: string | null
-  hasMore: boolean        // true if nextCursor is not null
-  isLoading: boolean      // true during fetch
-  error: Error | null
-}
-
-User scrolls to bottom:
-  - Call fetchNextPage()
-  - Set isLoading = true, issueFetch(nextCursor)
-  - On response: append items, update nextCursor, setisLoading = false
-  - If nextCursor is null, set hasMore = false (end reached)
-```
-
-#### 5.4 Comparison Matrix
-
-| Criterion | Cursor-Based | Offset-Based |
-|-----------|-------------|------------|
-| **Jump to Page** | ❌ No | ✅ Yes |
-| **Backward Pagination** | ❌ No | ✅ Yes |
-| **Large Datasets** | ✅ Fast | ❌ Slow (OFFSET) |
-| **Real-time Updates** | ✅ Resilient | ❌ Fragile |
-| **Infinity Scroll** | ✅ Natural | ⚠️ Possible but awkward |
-| **Implementation Complexity** | ⚠️ Medium | ✅ Simple |
-| **User Pagination Display** | ❌ Can't show "2/47" | ✅ Can show "Page 2 of 47" |
-
----
-
-### 5.5 Sorting Specification
-
-### API Contract (Request)
-
-```
-GET /api/v3/users/{id}/geokrety-found?sort=last_move_at:desc,id:asc&limit=20
-GET /api/v3/geokrety/search?q=geokrety&sort=relevance:desc,last_move_at:desc&limit=20&offset=0
-```
-
-**Format:** `field1:order1,field2:order2`
-**Orders:** `asc` (ascending), `desc` (descending)
-
-### Sorting Rules
-
-- **Stable Sort**: Must include a unique tiebreaker, usually `id`, as the final sort column to ensure pagination stability
-- **Default Sort**: Each endpoint documents its default sort order
-- **Allowed Fields**: API response should include `sortableFields: ["last_move_at", "relevance", "id"]`
-- **Multi-Column**: Supports up to 3 sort columns (prevent complexity)
-
-### Response Indication
-
-Include current sort in response metadata:
+Every paginated JSON collection response uses the shared top-level envelope:
 
 ```json
 {
-  "data": [...],
-  "meta": {
-    "sort": ["last_move_at:desc", "id:asc"],
-    "pagination": {...}
-  }
+    "data": [],
+    "meta": {},
+    "links": {
+        "self": "/api/v3/example"
+    }
 }
 ```
 
-### Sorting + Cursor Interaction
+Rules:
 
-- **Cursor-based pagination**: When user changes sort mid-pagination, reset to first page (new sort may reorder results)
-- **Offset-based pagination**: When user changes sort mid-pagination, reset offset to 0
-- Document this in error message when old cursor used with new sort
+- `data` contains resource objects as defined in [../json-rest/specification.md](../json-rest/specification.md)
+- `meta` describes the current page state
+- `links` carries navigation URLs
+- Collection navigation is link-driven, not field-driven
+- Canonical pagination examples must not use nested `meta.pagination`
 
-### Sorting + Filtering Interaction
+## 4. Page-Based Pagination
 
-- Filters can change which rows match; sorting still applies consistently
-- If filtering changes mid-pagination, reset to first page
-- Example: Search results sorted by relevance; user adds new filter term; start from page 0
+### 4.1 When to Use It
 
-### Examples
+Use page-based pagination when:
 
-- **Recent GeoKrety feed** (cursor-based): `?sort=last_move_at:desc,id:desc&cursor=...`
-- **Search results** (offset-based): `?sort=relevance:desc,last_move_at:desc&offset=0&limit=20`
-- **Comment thread** (cursor-based): `?sort=created_at:asc,id:asc&cursor=...` (oldest first)
+- users expect numbered pages
+- the result set is stable enough for page navigation
+- exact total counts are meaningful for the UI
+- direct jumps to page N are more important than append-only scrolling
 
----
+### 4.2 Request Contract
 
-## 6. API Contract & Data Models
+Example request:
 
-### 6.1 Request Envelope: Cursor-Based Pagination
-
-**Query Parameters:**
+```text
+GET /api/v1/users?page=2&per_page=2&status=active&sort=-created_at
 ```
-GET /api/v3/users/{id}/geokrety-found?limit=20&cursor=eyJWIjoxLCJLIjp7Imxhc3RNb3ZlQXQiOiIyMDI2LTAzLTIyVDEwOjMwOjAwWiIsImlkIjo0Mn0sIkMiOiJ1c2VyOjQyfHNvcnQ6bGFzdF9tb3ZlX2F0OmRlc2MsaWQ6ZGVzY3xmaWx0ZXI6YWxsIn0=
-```
+
+Parameters:
 
 | Parameter | Type | Required | Notes |
 |-----------|------|----------|-------|
-| `limit` | int | No | Page size (items per request). Default: 20. Max: 100. |
-| `cursor` | string | No | Opaque pagination token. Omit for first page. |
-| `sort` | string | No | Sort expression using `field:order[,field:order]`. Defaults are endpoint-specific and must be documented. |
+| `page` | integer | No | 1-based page number, defaults to `1` |
+| `per_page` | integer | No | Defaults to `20`, maximum `100` |
+| `sort` | string | No | Comma-separated fields, `-field` means descending |
+| filters | varies | No | Endpoint-specific filter parameters |
 
-**Default Behavior:**
+### 4.3 Response Contract
 
-- Omitting `cursor` requests the first page
-- Omitting `limit` uses server default (20)
-- Server enforces `limit ≤ maxLimit` (100)
-
-### 6.2 Request Envelope: Offset-Based Pagination
-
-**Query Parameters:**
+```json
+{
+    "data": [
+        {
+            "id": "101",
+            "type": "user",
+            "attributes": {
+                "username": "alice",
+                "email": "alice@example.com",
+                "status": "active",
+                "created_at": "2026-03-01T12:00:00Z"
+            },
+            "relationships": {
+                "profile": {
+                    "data": {
+                        "type": "profile",
+                        "id": "501"
+                    },
+                    "links": {
+                        "related": "/api/v1/profiles/501"
+                    }
+                }
+            },
+            "links": {
+                "self": "/api/v1/users/101"
+            }
+        },
+        {
+            "id": "102",
+            "type": "user",
+            "attributes": {
+                "username": "bob",
+                "email": "bob@example.com",
+                "status": "active",
+                "created_at": "2026-03-02T08:30:00Z"
+            },
+            "links": {
+                "self": "/api/v1/users/102"
+            }
+        }
+    ],
+    "meta": {
+        "page": 2,
+        "per_page": 2,
+        "total_items": 50,
+        "total_pages": 25,
+        "execution_time_ms": 14,
+        "filters": {
+            "status": "active"
+        },
+        "sort": "-created_at"
+    },
+    "links": {
+        "self": "/api/v1/users?page=2&per_page=2&status=active&sort=-created_at",
+        "first": "/api/v1/users?page=1&per_page=2&status=active&sort=-created_at",
+        "prev": "/api/v1/users?page=1&per_page=2&status=active&sort=-created_at",
+        "next": "/api/v1/users?page=3&per_page=2&status=active&sort=-created_at",
+        "last": "/api/v1/users?page=25&per_page=2&status=active&sort=-created_at"
+    }
+}
 ```
-GET /api/v3/geokrety/search?q=geocaching&limit=20&offset=40
+
+Rules:
+
+- `links.self` always matches the current normalized request
+- `links.prev` is omitted on the first page
+- `links.next` is omitted on the last page
+- `total_items` and `total_pages` are part of the external page-based contract
+- backends may still compute the page internally with `LIMIT` and `OFFSET`, but the public contract remains page-based
+
+Validation behavior:
+
+- `page < 1` returns `INVALID_PAGE` with HTTP 400
+- missing or too-small `per_page` resolves to the server default of `20`
+- `per_page > 100` returns `LIMIT_EXCEEDED` with HTTP 400
+- a first-page request against an empty collection returns HTTP 200 with `data: []`, `page: 1`, `total_items: 0`, `total_pages: 0`, and only the links that still make sense for that empty result
+- a request for `page > total_pages` on a non-empty collection returns `OUT_OF_BOUNDS` with HTTP 400
+
+## 5. Cursor-Based Pagination
+
+### 5.1 When to Use It
+
+Use cursor-based pagination when:
+
+- the collection can grow very large
+- the UI is append-only or infinite-scroll oriented
+- new rows may appear while the client is paging
+- deep page jumps are not required
+
+### 5.2 Request Contract
+
+Example request:
+
+```text
+GET /api/v1/moves?limit=20&cursor=eyJpZCI6MjAxfQ==&sort=-created_at,id
 ```
+
+Parameters:
 
 | Parameter | Type | Required | Notes |
 |-----------|------|----------|-------|
-| `q` | string | No | Search query (example). |
-| `limit` | int | No | Page size. Default: 20. Max: 100. |
-| `offset` | int | No | Numeric position (0-based). Default: 0. |
-| `sort` | string | No | Sort expression using `field:order[,field:order]`. Defaults are endpoint-specific and must be documented. |
+| `limit` | integer | No | Defaults to `20`, maximum `100` |
+| `cursor` | string | No | Opaque, versioned token for the next window |
+| `sort` | string | No | Deterministic sort expression |
+| filters | varies | No | Endpoint-specific filter parameters |
 
-### 6.3 Response Envelope: Cursor-Based Pagination
-
-```json
-{
-  "data": [
-    {
-      "gkid": "GK0001",
-      "type": "geocached",
-      "lastMoveAt": "2026-03-22T10:30:00Z",
-      "location": "Eiffel Tower, Paris"
-    },
-    ...
-  ],
-  "meta": {
-    "requestedAt": "2026-03-22T15:00:01Z",
-    "queryMs": 12,
-    "pagination": {
-      "cursor": null,
-      "nextCursor": "eyJWIjoxLCJLIjp7Imxhc3RNb3ZlQXQiOiIyMDI2LTAzLTIyVDEwOjEwOjAwWiIsImlkIjoyMn0sIkMiOiJ1c2VyOjQyfHNvcnQ6bGFzdF9tb3ZlX2F0OmRlc2MsaWQ6ZGVzY3xmaWx0ZXI6YWxsIn0=",
-      "hasMore": true,
-      "count": 20
-    }
-  }
-}
-```
-
-**Fields:**
-
-- `data`: Array of items (type `T[]`)
-- `meta.requestedAt`, `meta.queryMs`: Reuse the repository's shared response metadata so paginated endpoints stay compatible with the existing response envelope helpers
-- `meta.pagination.cursor`: Cursor used to fetch this page. `null` on the first page because the request omitted `cursor`
-- `meta.pagination.nextCursor`: Cursor for next page. `null` if no more pages.
-- `meta.pagination.hasMore`: Boolean convenience flag (`nextCursor !== null`)
-- `meta.pagination.count`: Items in this response (0 to limit)
-
-**Repository alignment:** In GeoKrety Stats, cursor pagination extends the existing shared `meta` envelope rather than replacing it. `requestedAt` and `queryMs` remain present, and `meta.pagination` is expanded from the current offset-only helper to also carry cursor fields.
-
-### 6.4 Response Envelope: Offset-Based Pagination
+### 5.3 Response Contract
 
 ```json
 {
-  "data": [
-    {
-      "gkid": "GK0A1F",
-      "name": "Hidden Treasure",
-      "lastMoveAt": "2025-10-15T14:22:00Z"
+    "data": [
+        {
+            "id": "201",
+            "type": "move",
+            "attributes": {
+                "lat": 48.8566,
+                "lon": 2.3522,
+                "created_at": "2026-03-28T10:00:00Z"
+            }
+        },
+        {
+            "id": "200",
+            "type": "move",
+            "attributes": {
+                "lat": 51.5074,
+                "lon": -0.1278,
+                "created_at": "2026-03-28T09:58:00Z"
+            }
+        }
+    ],
+    "meta": {
+        "limit": 20,
+        "has_more": true,
+        "execution_time_ms": 9
     },
-    ...
-  ],
-  "meta": {
-    "requestedAt": "2025-10-15T14:22:03Z",
-    "queryMs": 18,
-    "pagination": {
-      "offset": 40,
-      "limit": 20,
-      "totalItems": 847,
-      "totalPages": 43,
-      "hasMore": true,
-      "count": 20
+    "links": {
+        "self": "/api/v1/moves?limit=20&cursor=eyJpZCI6MjAxfQ==&sort=-created_at,id",
+        "next": "/api/v1/moves?limit=20&cursor=eyJpZCI6MjAwfQ==&sort=-created_at,id"
     }
-  }
 }
 ```
 
-**Fields:**
+Rules:
 
-- `data`: Array of items
-- `meta.pagination.offset`: Position of first item in this response
-- `meta.pagination.limit`: Requested page size
-- `meta.pagination.totalItems`: Total items matching query (may be expensive; consider optional)
-- `meta.pagination.totalPages`: `ceil(totalItems / limit)`
-- `meta.pagination.hasMore`: `offset + limit < totalItems`
-- `meta.pagination.count`: Items in this response
+- `links.next` is present only when `meta.has_more` is `true`
+- the cursor remains opaque to clients even if its implementation is a base64-encoded JSON payload
+- the response body does not expose `nextCursor` as a canonical field
+- cursor pagination is forward-only in this specification
 
-**Note on totalItems:** Including `totalItems` requires a full table scan (expensive). Consider:
+## 6. Infinite Scroll Contract
 
-- Returning it only on first request
-- Returning `null` after first page (client caches total)
-- Using a fast approximation (last known count) instead of exact count
+The frontend contract for infinite-scroll collections is:
 
-### 6.5 Error Responses
+1. Request the first page without a cursor.
+2. Append `data` to the current list.
+3. If `meta.has_more` is true, call `links.next`.
+4. Repeat until `links.next` is absent or `meta.has_more` is false.
 
-#### Invalid Cursor
+Minimal pseudocode:
+
+```text
+GET /moves?limit=20
+append data
+if meta.has_more:
+        call links.next
+repeat
+```
+
+## 7. Sorting and Filtering
+
+### 7.1 Sort Syntax
+
+Canonical sort syntax is:
+
+- `sort=-created_at`
+- `sort=-last_move_at,id`
+- `sort=name`
+
+Rules:
+
+- a leading `-` means descending order
+- no prefix means ascending order
+- multiple fields are comma-separated
+- endpoints should allow at most three sort columns
+- the final sort field must make the result deterministic
+
+### 7.2 Stable Sort Requirement
+
+Cursor-based pagination requires a stable sort order, for example:
+
+```sql
+ORDER BY created_at DESC, id DESC
+```
+
+Avoid non-deterministic or mutable primary ordering such as:
+
+- `ORDER BY RANDOM()`
+- `ORDER BY created_at DESC` without a unique tie-breaker
+- `ORDER BY updated_at DESC` when `updated_at` can change during pagination
+
+### 7.3 Filter and Sort Reset Behavior
+
+- page-based navigation must reset to `page=1` when filters or sort change
+- cursor-based navigation must restart from the first request when filters or sort change
+- stale cursors must be rejected if they no longer match the active sort or filter context
+- servers should preserve active filters and sort expressions in every navigation link they generate
+
+### 7.4 Sort Discovery
+
+OpenAPI is the authoritative place to document allowed sort fields. If an endpoint wants runtime discovery, it may also expose `meta.sortable_fields`, but that is optional and must not replace OpenAPI.
+
+## 8. Cursor Semantics and Security
+
+### 8.1 Cursor Design
+
+Cursor internals may include:
+
+- a version field
+- the last visible stable-sort key
+- a context fingerprint for filters and sort
+
+These internals are server concerns. Clients only see a string cursor carried inside request URLs and pagination links.
+
+### 8.2 Error Cases
+
+- malformed cursor: return `INVALID_CURSOR`
+- unsupported cursor version: return `CURSOR_VERSION_MISMATCH`
+- requested page size above the server maximum: return `LIMIT_EXCEEDED`
+- stale cursor after filter or sort changes: return `INVALID_CURSOR`
+
+### 8.3 Security Model
+
+Pagination security is based on:
+
+- authorization checks on the underlying data
+- parameterized SQL queries
+- server-enforced page-size limits
+
+Pagination security is not based on hiding cursor structure. Cursor opacity is a contract boundary, not a secrecy boundary.
+
+## 9. Backend and Frontend Implementation Guidance
+
+### 9.1 Backend Guidance
+
+- Generate `links.self` from the normalized request URL
+- Generate page-based `first`, `prev`, `next`, and `last` links on the server
+- Generate cursor-based `links.next` only when more rows exist
+- Preserve all active filters and sort expressions in generated links
+- Validate `page`, `per_page`, `limit`, and `cursor` before querying data
+- Page-based handlers may translate `page` and `per_page` into internal `LIMIT` and `OFFSET`
+
+### 9.2 Frontend Guidance
+
+Frontend composables should store the current `links.next` URL rather than parsing cursor internals. A minimal state model is:
+
+```text
+items: T[]
+next_link: string | null
+has_more: boolean
+is_loading: boolean
+error: Error | null
+```
+
+Behavior:
+
+- call the first URL explicitly
+- append returned `data`
+- set `next_link` from `links.next`
+- stop when `next_link` is absent or `meta.has_more` is false
+- reset local state when filters or sort change
+
+## 10. Testing and Rollout Guidance
+
+### 10.1 Contract Tests
+
+- validate that page-based responses always include the expected top-level links
+- validate that cursor-based responses omit `links.next` on the final page
+- validate first-page, middle-page, last-page, and empty-page behavior
+- validate stale cursor rejection after filter or sort changes
+- validate that generated links preserve filters and sort expressions
+
+### 10.2 Documentation Validation
+
+- keep all canonical examples valid JSON
+- ensure the pagination page links to the global JSON REST page
+- ensure docs navigation includes the new JSON REST section
+- ensure OpenAPI examples and top-level wording do not contradict this page
+
+### 10.3 Operational Guidance
+
+- verify stable-sort indexes before production rollout of cursor endpoints
+- enforce `per_page` and `limit` maximums server-side
+- prefer cursor-based pagination for large and append-only collections
+- use page-based pagination only where exact page navigation is part of the product requirement
+
+## 11. Acceptance Criteria
+
+- Canonical paginated examples use top-level `data`, `meta`, and `links`
+- Page-based examples use `page`, `per_page`, `total_items`, and `total_pages`
+- Cursor-based examples use `limit`, `has_more`, and `links.next`
+- Infinite-scroll guidance tells clients to follow `links.next` instead of parsing cursor fields from the response body
+- Sort syntax is documented with a JSON REST-friendly expression such as `-created_at,id`
+- Stable sort, filter reset, and cursor-versioning guidance from the previous spec remain documented
+- The page references the shared JSON REST envelope instead of redefining it from scratch
+
+## 12. Implementation Checklist
+
+- [x] Rewrite canonical examples to use resource objects inside `data`
+- [x] Replace `meta.pagination` examples with top-level `links`
+- [x] Change public page-based examples from offset-oriented to page-oriented
+- [x] Keep cursor-based examples link-driven and forward-only
+- [x] Preserve stable sorting, filter-reset, and validation guidance
+- [x] Link this page to the global JSON REST API specification
 
 ```json
 {
