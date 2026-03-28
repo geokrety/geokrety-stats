@@ -8,7 +8,7 @@ info:
 
     The JSON documentation contract for `/api/v3/...` endpoints uses a response envelope with `data`, `meta`, and collection `links`.
     Collection items follow the GeoKrety JSON REST resource-object model: `id`, `type`, `attributes`, optional `relationships`, and optional `links`.
-    List endpoints support `limit` and `offset` pagination. Search endpoints require a `q` query parameter of at least 2 characters.
+    The Markdown specs under `docs/json-rest/` and `docs/pagination/` define the target JSON REST contract for new and migrated endpoints. The OpenAPI source tree may still contain legacy schemas or pagination parameters for non-migrated endpoints, and those legacy fragments must remain explicit until they are migrated. Search endpoints require a `q` query parameter of at least 2 characters.
 
     ## GeoKret Public Identifiers (GKID)
 
@@ -16,6 +16,9 @@ info:
     - **Numeric decimal**: `1`, `123`, `65535` (direct GKID number)
     - **Bare hexadecimal**: `0001`, `00FF`, `FFFF` (hex without the `GK` prefix)
     - **GK-prefixed hexadecimal**: `GK0001`, `GK00FF`, `GKFFFF` (padded hex representation)
+
+    Bare digit-only values without a leading zero are treated as decimal.
+    Zero-padded digit-only values are treated as hexadecimal.
 
     All forms resolve to the same GeoKret object. Examples:
     - `/api/v3/geokrety/1` and `/api/v3/geokrety/GK0001` fetch the same GeoKret

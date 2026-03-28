@@ -15,6 +15,8 @@ This specification defines the canonical JSON wire format for GeoKrety JSON endp
 
 Pagination is part of this contract, but its operational details are documented separately in [../pagination/specification.md](../pagination/specification.md). This page defines the shared envelope that all JSON collection responses must use.
 
+This contract is normative for new and explicitly migrated JSON endpoints. Existing endpoints that still emit legacy payloads must document that exception clearly until they are migrated.
+
 ## 2. Purpose & Scope
 
 ### Purpose
@@ -55,6 +57,13 @@ Every successful JSON response uses these top-level members:
 
 Collection endpoints must always return top-level `links`. Single-resource endpoints should return `links` when a canonical `self` URL or related navigation is useful.
 
+Universal `meta` rule:
+
+- every successful JSON response includes `meta`
+- `meta.execution_time_ms` is the shared baseline field across success responses
+- collection endpoints add pagination-mode-specific fields such as `page`, `per_page`, `total_items`, `total_pages`, `limit`, or `has_more`
+- endpoint-specific metadata may be added, but it must not contradict the shared envelope or pagination contract
+
 ### 3.2 Naming Policy
 
 The canonical JSON REST contract uses `snake_case` for:
@@ -90,7 +99,6 @@ Each item in `data` must use the following structure:
   "type": "user",
   "attributes": {
     "username": "alice",
-    "email": "alice@example.com",
     "status": "active",
     "created_at": "2026-03-01T12:00:00Z"
   },
@@ -129,7 +137,7 @@ Each item in `data` must use the following structure:
     "type": "geokret",
     "attributes": {
       "name": "Hidden Treasure",
-      "type": 1,
+      "type_label": "traditional",
       "missing": false,
       "last_move_at": "2026-03-28T10:00:00Z"
     },
@@ -207,6 +215,12 @@ GeoKrety accepts three request forms for GeoKret identifiers:
 
 These are request-parsing rules. In JSON responses, the canonical GeoKret resource identifier is always the public GKID string.
 
+Disambiguation rule:
+
+- bare digit-only values without a leading zero are parsed as decimal
+- zero-padded digit-only values are parsed as hexadecimal
+- parsing is case-insensitive for hexadecimal input
+
 ### 6.2 JSON and XML Boundary
 
 This specification governs JSON responses only. GeoKrety may continue to expose XML payloads, but XML does not redefine the JSON REST contract described here.
@@ -214,6 +228,12 @@ This specification governs JSON responses only. GeoKrety may continue to expose 
 ### 6.3 Legacy Payloads
 
 Legacy JSON payloads that flatten domain DTOs directly into `data` or use camelCase keys remain implementation history, not the normative contract. Any page documenting a legacy payload must label it explicitly instead of presenting it as the canonical response model.
+
+Migration rule:
+
+- new endpoints follow this contract by default
+- migrated endpoints replace older examples with this contract
+- non-migrated legacy endpoints must document the exception in OpenAPI and endpoint notes until the migration is complete
 
 ## 7. Error Responses
 
@@ -248,6 +268,7 @@ Rules:
 - Collection examples must show top-level `links`
 - Resource examples must use `id`, `type`, and `attributes`
 - OpenAPI descriptions and examples should describe the same top-level envelope used here
+- Until the OpenAPI source tree is fully migrated, non-migrated endpoints must keep their legacy schema fragments explicit instead of implying they already match this contract
 - Endpoint pages may add domain-specific metadata, but they must not contradict the envelope defined here
 
 ## 10. Acceptance Criteria
