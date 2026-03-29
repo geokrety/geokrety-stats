@@ -5,20 +5,45 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strconv"
 	"strings"
 	"testing"
+	"time"
 
-	sharedjsonrest "github.com/geokrety/geokrety-stats/geokrety/jsonrest"
+	"github.com/geokrety/geokrety-stats-api/internal/db"
+	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
-func withRouteParam(r *http.Request, key, value string) *http.Request {
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add(key, value)
-	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+type mockStatsStore struct {
+	lastMethod        string
+	lastLimit         int
+	lastOffset        int
+	lastMoveFilters   db.MoveFilters
+	lastMoveIDs       []int64
+	lastPictureIDs    []int64
+	lastRequestedGKID int64
+}
+
+func gkidPtr(value int64) *geokrety.GeokretId {
+	parsed, err := geokrety.FromInt(value)
+	if err != nil {
+		panic(err)
+	}
+	return parsed
+}
+
+func int64Ptr(value int64) *int64 { return &value }
+
+func testStringPtr(value string) *string { return &value }
+
+func decodePayload(t *testing.T, body *httptest.ResponseRecorder) map[string]any {
+	t.Helper()
+	var payload map[string]any
+	if err := json.Unmarshal(body.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	return payload
 }
 
 func withRouteParams(r *http.Request, pairs ...string) *http.Request {
@@ -29,438 +54,329 @@ func withRouteParams(r *http.Request, pairs ...string) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 }
 
-func decodeMap(t *testing.T, body *httptest.ResponseRecorder) map[string]any {
-	t.Helper()
-	var payload map[string]any
-	if err := json.Unmarshal(body.Body.Bytes(), &payload); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-	return payload
-}
-
-func normalizePaginationTarget(target string) string {
-	parsed, err := url.Parse(target)
-	if err != nil {
-		return target
-	}
-	query := parsed.Query()
-	offsetValue := query.Get("offset")
-	if offsetValue == "" {
-		return target
-	}
-	query.Del("offset")
-	offset, err := strconv.Atoi(offsetValue)
-	if err == nil && offset > 0 {
-		cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, int64(offset))
-		query.Set("cursor", cursor.String())
-	}
-	parsed.RawQuery = query.Encode()
-	return parsed.String()
-}
-
-func resourceAttributes(resource map[string]any) map[string]any {
-	attributes, _ := resource["attributes"].(map[string]any)
-	return attributes
-}
-
-func firstResourceAttributes(payload map[string]any) map[string]any {
-	data := payload["data"].([]any)
-	resource := data[0].(map[string]any)
-	return resourceAttributes(resource)
-}
-
-func TestEntityHandlerSuccessEndpoints(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
-
-	tests := []struct {
-		name       string
-		handler    http.HandlerFunc
-		target     string
-		params     []string
-		expMethod  string
-		expStatus  int
-		checkLimit bool
-		expLimit   int
-		expOffset  int
-	}{
-		{"geokret-list", h.GetGeokretyList, "/api/v3/geokrety/?limit=4&offset=1", nil, "FetchGeokretyList", http.StatusOK, true, 4, 1},
-		{"geokret-details", h.GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, "FetchGeokrety", http.StatusOK, false, 0, 0},
-		{"geokret-details-by-numeric-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/1", []string{"gkid", "1"}, "FetchGeokretyByGKID", http.StatusOK, false, 0, 0},
-		{"geokret-details-by-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/GK0001", []string{"gkid", "GK0001"}, "FetchGeokretyByGKID", http.StatusOK, false, 0, 0},
-		{"geokret-moves", h.GetGeokretyMoves, "/api/v3/geokrety/1/moves?limit=7&offset=2", []string{"id", "1"}, "FetchGeokretyMoves", http.StatusOK, true, 7, 2},
-		{"geokret-move-details", h.GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/9", []string{"id", "1", "moveId", "9"}, "FetchGeokretyMoveDetails", http.StatusOK, false, 0, 0},
-		{"geokret-loved-by", h.GetGeokretyLovedBy, "/api/v3/geokrety/1/loved-by?limit=8&offset=1", []string{"id", "1"}, "FetchGeokretyLoves", http.StatusOK, true, 8, 1},
-		{"geokret-watched-by", h.GetGeokretyWatchedBy, "/api/v3/geokrety/1/watched-by?limit=8&offset=1", []string{"id", "1"}, "FetchGeokretyWatches", http.StatusOK, true, 8, 1},
-		{"geokret-loves-alias", h.GetGeokretyLoves, "/api/v3/geokrety/1/loves", []string{"id", "1"}, "FetchGeokretyLoves", http.StatusOK, true, 20, 0},
-		{"geokret-watches-alias", h.GetGeokretyWatches, "/api/v3/geokrety/1/watches", []string{"id", "1"}, "FetchGeokretyWatches", http.StatusOK, true, 20, 0},
-		{"geokret-pictures", h.GetGeokretyPictures, "/api/v3/geokrety/1/pictures?limit=3&offset=4", []string{"id", "1"}, "FetchGeokretyPictures", http.StatusOK, true, 3, 4},
-		{"geokret-search", h.SearchGeokrety, "/api/v3/geokrety/search?q=gk&limit=9&offset=2", nil, "SearchGeokrety", http.StatusOK, true, 9, 2},
-		{"geokret-countries", h.GetGeokretyCountries, "/api/v3/geokrety/1/countries", []string{"id", "1"}, "FetchGeokretyCountries", http.StatusOK, true, 20, 0},
-		{"geokret-waypoints", h.GetGeokretyWaypoints, "/api/v3/geokrety/1/waypoints", []string{"id", "1"}, "FetchGeokretyWaypoints", http.StatusOK, true, 20, 0},
-		{"geokret-map-countries", h.GetGeokretyStatsMapCountries, "/api/v3/geokrety/1/stats/map/countries", []string{"id", "1"}, "FetchGeokretyStatsMapCountries", http.StatusOK, true, 20, 0},
-		{"geokret-choropleth-alias", h.GetGeokretyWorldChoropleth, "/api/v3/geokrety/1/world-choropleth", []string{"id", "1"}, "FetchGeokretyStatsMapCountries", http.StatusOK, true, 20, 0},
-		{"geokret-elevation", h.GetGeokretyStatsElevation, "/api/v3/geokrety/1/stats/elevation", []string{"id", "1"}, "FetchGeokretyStatsElevation", http.StatusOK, true, 20, 0},
-		{"geokret-heatmap-days", h.GetGeokretyStatsHeatmapDays, "/api/v3/geokrety/1/stats/heatmap/days", []string{"id", "1"}, "FetchGeokretyStatsHeatmapDays", http.StatusOK, true, 20, 0},
-		{"geokret-geojson-trip", h.GetGeokretyGeoJSONTrip, "/api/v3/geokrety/1/geojson/trip?limit=6&offset=1", []string{"id", "1"}, "FetchGeokretyTripPoints", http.StatusOK, true, 6, 1},
-		{"country-list", h.GetCountryList, "/api/v3/countries/?limit=4&offset=1", nil, "FetchCountryList", http.StatusOK, true, 4, 1},
-		{"country-details", h.GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, "FetchCountryDetails", http.StatusOK, false, 0, 0},
-		{"country-geokrety", h.GetCountryGeokrety, "/api/v3/countries/PL/geokrety?limit=4&offset=1", []string{"code", "PL"}, "FetchCountryGeokrety", http.StatusOK, true, 4, 1},
-		{"country-spotted-geokrety", h.GetCountrySpottedGeokrety, "/api/v3/countries/PL/spotted-geokrety", []string{"code", "PL"}, "FetchCountrySpottedGeokrety", http.StatusOK, true, 20, 0},
-		{"waypoint-details", h.GetWaypoint, "/api/v3/waypoints/GC123", []string{"code", "GC123"}, "FetchWaypoint", http.StatusOK, false, 0, 0},
-		{"waypoint-current", h.GetWaypointCurrentGeokrety, "/api/v3/waypoints/GC123/geokrety-current?limit=5&offset=2", []string{"code", "GC123"}, "FetchWaypointCurrentGeokrety", http.StatusOK, true, 5, 2},
-		{"waypoint-spotted-geokrety", h.GetWaypointSpottedGeokrety, "/api/v3/waypoints/GC123/spotted-geokrety", []string{"code", "GC123"}, "FetchWaypointSpottedGeokrety", http.StatusOK, true, 20, 0},
-		{"waypoint-past", h.GetWaypointPastGeokrety, "/api/v3/waypoints/GC123/geokrety-past?limit=5&offset=2", []string{"code", "GC123"}, "FetchWaypointPastGeokrety", http.StatusOK, true, 5, 2},
-		{"waypoint-search", h.SearchWaypoints, "/api/v3/waypoints/search?q=gc&limit=5&offset=2", nil, "SearchWaypoints", http.StatusOK, true, 5, 2},
-		{"user-list", h.GetUserList, "/api/v3/users/?limit=4&offset=1", nil, "FetchUserList", http.StatusOK, true, 4, 1},
-		{"user-details", h.GetUserDetails, "/api/v3/users/1", []string{"id", "1"}, "FetchUserDetails", http.StatusOK, false, 0, 0},
-		{"user-owned", h.GetUserOwnedGeokrety, "/api/v3/users/1/geokrety-owned?limit=5&offset=1", []string{"id", "1"}, "FetchUserOwnedGeokrety", http.StatusOK, true, 5, 1},
-		{"user-found", h.GetUserFoundGeokrety, "/api/v3/users/1/geokrety-found", []string{"id", "1"}, "FetchUserFoundGeokrety", http.StatusOK, true, 20, 0},
-		{"user-loved", h.GetUserLovedGeokrety, "/api/v3/users/1/geokrety-loved", []string{"id", "1"}, "FetchUserLovedGeokrety", http.StatusOK, true, 20, 0},
-		{"user-watched", h.GetUserWatchedGeokrety, "/api/v3/users/1/geokrety-watched", []string{"id", "1"}, "FetchUserWatchedGeokrety", http.StatusOK, true, 20, 0},
-		{"user-pictures", h.GetUserPictures, "/api/v3/users/1/pictures?limit=4&offset=1", []string{"id", "1"}, "FetchUserPictures", http.StatusOK, true, 4, 1},
-		{"user-countries", h.GetUserCountries, "/api/v3/users/1/countries", []string{"id", "1"}, "FetchUserCountries", http.StatusOK, true, 20, 0},
-		{"user-waypoints", h.GetUserWaypoints, "/api/v3/users/1/waypoints", []string{"id", "1"}, "FetchUserWaypoints", http.StatusOK, true, 20, 0},
-		{"user-search", h.SearchUsers, "/api/v3/users/search?q=us&limit=2&offset=3", nil, "SearchUsers", http.StatusOK, true, 2, 3},
-		{"user-continent-coverage", h.GetUserStatsContinentCoverage, "/api/v3/users/1/stats/continent-coverage?limit=2&offset=1", []string{"id", "1"}, "FetchUserStatsContinentCoverage", http.StatusOK, true, 2, 1},
-		{"user-heatmap-days", h.GetUserStatsHeatmapDays, "/api/v3/users/1/stats/heatmap/days", []string{"id", "1"}, "FetchUserStatsHeatmapDays", http.StatusOK, true, 20, 0},
-		{"user-heatmap-hours", h.GetUserStatsHeatmapHours, "/api/v3/users/1/stats/heatmap/hours", []string{"id", "1"}, "FetchUserStatsHeatmapHours", http.StatusOK, true, 20, 0},
-		{"user-map-countries", h.GetUserStatsMapCountries, "/api/v3/users/1/stats/map/countries", []string{"id", "1"}, "FetchUserStatsMapCountries", http.StatusOK, true, 20, 0},
-		{"picture-list", h.GetPictureList, "/api/v3/pictures/?limit=4&offset=1", nil, "FetchPictureList", http.StatusOK, true, 4, 1},
-		{"picture-details", h.GetPictureDetails, "/api/v3/pictures/1", []string{"id", "1"}, "FetchPicture", http.StatusOK, false, 0, 0},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, normalizePaginationTarget(tc.target), nil)
-			if len(tc.params) > 0 {
-				r = withRouteParams(r, tc.params...)
-			}
-			w := httptest.NewRecorder()
-			tc.handler(w, r)
-			if w.Code != tc.expStatus {
-				t.Fatalf("expected status %d, got %d", tc.expStatus, w.Code)
-			}
-			if store.lastMethod != tc.expMethod {
-				t.Fatalf("expected method %s, got %s", tc.expMethod, store.lastMethod)
-			}
-			if tc.checkLimit && (store.lastLimit != tc.expLimit+1 || store.lastOffset != tc.expOffset) {
-				t.Fatalf("expected limit/offset %d/%d, got %d/%d", tc.expLimit+1, tc.expOffset, store.lastLimit, store.lastOffset)
-			}
-			payload := decodeMap(t, w)
-			if payload["data"] == nil {
-				t.Fatalf("data field missing")
-			}
-			if payload["meta"] == nil {
-				t.Fatalf("meta field missing")
-			}
-			if tc.name == "geokret-list" {
-				meta := payload["meta"].(map[string]any)
-				if got := meta["limit"]; got != float64(4) {
-					t.Fatalf("meta.limit = %#v, want 4", got)
-				}
-				if got, ok := meta["total_items"]; ok {
-					t.Fatalf("meta.total_items = %#v, want omitted on cursor collection", got)
-				}
-			}
-			if tc.name == "geokret-details-by-gkid" || tc.name == "geokret-details-by-numeric-gkid" {
-				data := payload["data"].(map[string]any)
-				if got := data["id"]; got != "GK0001" {
-					t.Fatalf("data.id = %#v, want GK0001", got)
-				}
-				if got := data["type"]; got != "geokret" {
-					t.Fatalf("data.type = %#v, want geokret", got)
-				}
-				resourceLinks := data["links"].(map[string]any)
-				if got := resourceLinks["self"]; got != "/api/v3/geokrety/GK0001" {
-					t.Fatalf("data.links.self = %#v, want /api/v3/geokrety/GK0001", got)
-				}
-			}
-		})
+func sampleGeokret(gkid int64) db.GeokretListItem {
+	ownerID := int64(1)
+	holderID := int64(2)
+	lastPositionID := int64(77)
+	lastLogID := int64(78)
+	country := "PL"
+	waypoint := "OC146C3"
+	avatarURL := "https://cdn.example/avatar.jpg"
+	ownerUsername := "owner"
+	holderUsername := "holder"
+	mission := "Keep moving"
+	now := time.Date(2026, 3, 28, 12, 0, 0, 0, time.UTC)
+	lat := 52.23
+	lon := 21.01
+	return db.GeokretListItem{
+		ID:             gkid,
+		GKID:           gkidPtr(gkid),
+		Name:           "Traveler",
+		AvatarID:       int64Ptr(10),
+		AvatarURL:      &avatarURL,
+		Type:           1,
+		TypeName:       "Traditional",
+		Missing:        false,
+		OwnerID:        &ownerID,
+		OwnerUsername:  &ownerUsername,
+		HolderID:       &holderID,
+		HolderUsername: &holderUsername,
+		Country:        &country,
+		Waypoint:       &waypoint,
+		Lat:            &lat,
+		Lon:            &lon,
+		BornAt:         &now,
+		LastMoveAt:     &now,
+		LastPositionID: &lastPositionID,
+		LastLogID:      &lastLogID,
+		Mission:        &mission,
+		CommentsHidden: true,
+		GeoJSON: &db.GeoJSONPt{
+			Type:        "Point",
+			Coordinates: []float64{21.01, 52.23},
+		},
 	}
 }
 
-func TestEntityHandlerUserListIncludesAvatarID(t *testing.T) {
+func sampleMove(id int64) db.MoveRecord {
+	country := "PL"
+	waypoint := "OC146C3"
+	comment := "Moved"
+	now := time.Date(2026, 3, 29, 10, 30, 0, 0, time.UTC)
+	return db.MoveRecord{
+		ID:                 id,
+		GeokretID:          1,
+		GeokretGKID:        gkidPtr(1),
+		MoveType:           0,
+		MoveTypeName:       "Dropped",
+		AuthorID:           int64Ptr(1),
+		AuthorAvatarID:     int64Ptr(15),
+		AuthorAvatarURL:    testStringPtr("https://cdn.example/u.jpg"),
+		Username:           "walker",
+		Country:            &country,
+		Waypoint:           &waypoint,
+		MovedOn:            now,
+		CreatedOn:          now,
+		Comment:            &comment,
+		PreviousMoveID:     int64Ptr(7),
+		PreviousPositionID: int64Ptr(8),
+		GeoJSON: &db.GeoJSONPt{
+			Type:        "Point",
+			Coordinates: []float64{21.01, 52.23},
+		},
+	}
+}
+
+func sampleUser(id int64) db.UserDetails {
+	homeCountry := "PL"
+	avatarURL := "https://cdn.example/user.jpg"
+	joinedAt := time.Date(2026, 1, 2, 13, 0, 0, 0, time.UTC)
+	lastMoveAt := time.Date(2026, 3, 29, 6, 30, 0, 0, time.UTC)
+	return db.UserDetails{
+		ID:              id,
+		Username:        "alice",
+		JoinedAt:        joinedAt,
+		HomeCountry:     &homeCountry,
+		HomeCountryFlag: "🇵🇱",
+		AvatarID:        int64Ptr(22),
+		AvatarURL:       &avatarURL,
+		LastMoveAt:      &lastMoveAt,
+	}
+}
+
+func (m *mockStatsStore) ResolveGeokretID(ctx context.Context, gkid int64) (int64, error) {
+	m.lastRequestedGKID = gkid
+	return gkid, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyList(ctx context.Context, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod, m.lastLimit, m.lastOffset = "FetchGeokretyList", limit, offset
+	return []db.GeokretListItem{sampleGeokret(1)}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyByGKIDs(ctx context.Context, gkids []int64) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchGeokretyByGKIDs"
+	rows := make([]db.GeokretListItem, 0, len(gkids))
+	for _, gkid := range gkids {
+		rows = append(rows, sampleGeokret(gkid))
+	}
+	return rows, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.GeokretDetails, error) {
+	m.lastMethod = "FetchGeokretyByGKID"
+	return db.GeokretDetails{GeokretListItem: sampleGeokret(gkid)}, nil
+}
+
+func (m *mockStatsStore) SearchGeokrety(ctx context.Context, query string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod, m.lastLimit, m.lastOffset = "SearchGeokrety", limit, offset
+	item := sampleGeokret(1)
+	item.Name = query
+	return []db.GeokretListItem{item}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretStats(ctx context.Context, geokretID int64) (db.GeokretStats, error) {
+	m.lastMethod = "FetchGeokretStats"
+	currentCountry := "PL"
+	currentWaypoint := "OC146C3"
+	return db.GeokretStats{
+		GeokretID:             geokretID,
+		GKID:                  gkidPtr(geokretID),
+		CachesCount:           4,
+		PicturesCount:         3,
+		LovesCount:            2,
+		MovesCount:            9,
+		CountriesVisitedCount: 5,
+		WaypointsVisitedCount: 6,
+		FindersCount:          7,
+		WatchersCount:         8,
+		LoversCount:           2,
+		CurrentCountryCode:    &currentCountry,
+		CurrentWaypointCode:   &currentWaypoint,
+	}, nil
+}
+
+func (m *mockStatsStore) FetchMoveList(ctx context.Context, filters db.MoveFilters, limit, offset int) ([]db.MoveRecord, error) {
+	m.lastMethod, m.lastLimit, m.lastOffset, m.lastMoveFilters = "FetchMoveList", limit, offset, filters
+	return []db.MoveRecord{sampleMove(9)}, nil
+}
+
+func (m *mockStatsStore) FetchMoveListByIDs(ctx context.Context, filters db.MoveFilters, moveIDs []int64) ([]db.MoveRecord, error) {
+	m.lastMethod, m.lastMoveFilters = "FetchMoveListByIDs", filters
+	m.lastMoveIDs = append([]int64(nil), moveIDs...)
+	rows := make([]db.MoveRecord, 0, len(moveIDs))
+	for _, moveID := range moveIDs {
+		rows = append(rows, sampleMove(moveID))
+	}
+	return rows, nil
+}
+
+func (m *mockStatsStore) FetchMove(ctx context.Context, moveID int64) (db.MoveRecord, error) {
+	m.lastMethod = "FetchMove"
+	return sampleMove(moveID), nil
+}
+
+func (m *mockStatsStore) FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	m.lastMethod = "FetchGeokretyLoves"
+	return []db.SocialUserEntry{{UserID: 1, Username: "lover", At: time.Now().UTC()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyWatches(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	m.lastMethod = "FetchGeokretyWatches"
+	return []db.SocialUserEntry{{UserID: 2, Username: "watcher", At: time.Now().UTC()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyFinders(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+	m.lastMethod = "FetchGeokretyFinders"
+	return []db.SocialUserEntry{{UserID: 3, Username: "finder", At: time.Now().UTC()}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyCountries(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretCountryVisit, error) {
+	m.lastMethod = "FetchGeokretyCountries"
+	return []db.GeokretCountryVisit{{CountryCode: "PL", FirstVisitedAt: time.Now().UTC(), MoveCount: 1, Flag: "🇵🇱"}}, nil
+}
+
+func (m *mockStatsStore) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretWaypointVisit, error) {
+	m.lastMethod = "FetchGeokretyWaypoints"
+	return []db.GeokretWaypointVisit{{WaypointCode: "OC146C3", VisitCount: 1, FirstVisitedAt: time.Now().UTC(), LastVisitedAt: time.Now().UTC()}}, nil
+}
+
+func (m *mockStatsStore) FetchCountryList(ctx context.Context, limit, offset int) ([]db.CountryDetails, error) {
+	m.lastMethod = "FetchCountryList"
+	return []db.CountryDetails{{Code: "PL", Name: "Poland", Flag: "🇵🇱"}}, nil
+}
+
+func (m *mockStatsStore) FetchCountryListByCodes(ctx context.Context, codes []string) ([]db.CountryDetails, error) {
+	m.lastMethod = "FetchCountryListByCodes"
+	rows := make([]db.CountryDetails, 0, len(codes))
+	for _, code := range codes {
+		rows = append(rows, db.CountryDetails{Code: code, Name: code, Flag: countryFlagFromCode(code)})
+	}
+	return rows, nil
+}
+
+func (m *mockStatsStore) FetchCountryDetails(ctx context.Context, countryCode string) (db.CountryDetails, error) {
+	m.lastMethod = "FetchCountryDetails"
+	return db.CountryDetails{Code: countryCode, Name: "Poland", Flag: countryFlagFromCode(countryCode)}, nil
+}
+
+func (m *mockStatsStore) FetchCountryGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchCountryGeokrety"
+	item := sampleGeokret(1)
+	item.Country = &countryCode
+	return []db.GeokretListItem{item}, nil
+}
+
+func (m *mockStatsStore) FetchWaypoint(ctx context.Context, waypointCode string) (db.WaypointDetails, error) {
+	m.lastMethod = "FetchWaypoint"
+	return db.WaypointDetails{WaypointSummary: db.WaypointSummary{WaypointCode: waypointCode, Source: "opencaching"}}, nil
+}
+
+func (m *mockStatsStore) FetchWaypointCurrentGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchWaypointCurrentGeokrety"
+	item := sampleGeokret(1)
+	item.Waypoint = &waypointCode
+	return []db.GeokretListItem{item}, nil
+}
+
+func (m *mockStatsStore) FetchWaypointPastGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchWaypointPastGeokrety"
+	item := sampleGeokret(2)
+	item.Waypoint = &waypointCode
+	return []db.GeokretListItem{item}, nil
+}
+
+func (m *mockStatsStore) SearchWaypoints(ctx context.Context, query string, limit, offset int) ([]db.WaypointSummary, error) {
+	m.lastMethod = "SearchWaypoints"
+	return []db.WaypointSummary{{WaypointCode: "OC146C3", Source: "opencaching"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserList(ctx context.Context, limit, offset int) ([]db.UserSearchResult, error) {
+	m.lastMethod = "FetchUserList"
+	user := sampleUser(1)
+	return []db.UserSearchResult{{ID: user.ID, Username: user.Username, JoinedAt: user.JoinedAt, HomeCountry: user.HomeCountry, HomeCountryFlag: user.HomeCountryFlag, AvatarID: user.AvatarID, AvatarURL: user.AvatarURL, LastMoveAt: user.LastMoveAt}}, nil
+}
+
+func (m *mockStatsStore) FetchUserListByIDs(ctx context.Context, userIDs []int64) ([]db.UserSearchResult, error) {
+	m.lastMethod = "FetchUserListByIDs"
+	rows := make([]db.UserSearchResult, 0, len(userIDs))
+	for _, userID := range userIDs {
+		user := sampleUser(userID)
+		rows = append(rows, db.UserSearchResult{ID: user.ID, Username: user.Username, JoinedAt: user.JoinedAt, HomeCountry: user.HomeCountry, HomeCountryFlag: user.HomeCountryFlag, AvatarID: user.AvatarID, AvatarURL: user.AvatarURL, LastMoveAt: user.LastMoveAt})
+	}
+	return rows, nil
+}
+
+func (m *mockStatsStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
+	m.lastMethod = "SearchUsers"
+	user := sampleUser(1)
+	user.Username = query
+	return []db.UserSearchResult{{ID: user.ID, Username: user.Username, JoinedAt: user.JoinedAt, HomeCountry: user.HomeCountry, HomeCountryFlag: user.HomeCountryFlag, AvatarID: user.AvatarID, AvatarURL: user.AvatarURL, LastMoveAt: user.LastMoveAt}}, nil
+}
+
+func (m *mockStatsStore) FetchUserDetails(ctx context.Context, userID int64) (db.UserDetails, error) {
+	m.lastMethod = "FetchUserDetails"
+	return sampleUser(userID), nil
+}
+
+func (m *mockStatsStore) FetchUserStats(ctx context.Context, userID int64) (db.UserStats, error) {
+	m.lastMethod = "FetchUserStats"
+	return db.UserStats{UserID: userID, OwnedGeokretyCount: 2, FoundGeokretyCount: 3, LovedGeokretyCount: 4, WatchedGeokretyCount: 5, PicturesCount: 6, CountriesVisitedCount: 7, WaypointsVisitedCount: 8, MovesCount: 9, DistinctGeokretyCount: 10}, nil
+}
+
+func (m *mockStatsStore) FetchUserOwnedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchUserOwnedGeokrety"
+	return []db.GeokretListItem{sampleGeokret(1)}, nil
+}
+
+func (m *mockStatsStore) FetchUserFoundGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchUserFoundGeokrety"
+	return []db.GeokretListItem{sampleGeokret(1)}, nil
+}
+
+func (m *mockStatsStore) FetchUserLovedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchUserLovedGeokrety"
+	return []db.GeokretListItem{sampleGeokret(1)}, nil
+}
+
+func (m *mockStatsStore) FetchUserWatchedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+	m.lastMethod = "FetchUserWatchedGeokrety"
+	return []db.GeokretListItem{sampleGeokret(1)}, nil
+}
+
+func (m *mockStatsStore) FetchUserCountries(ctx context.Context, userID int64, limit, offset int) ([]db.UserCountryVisit, error) {
+	m.lastMethod = "FetchUserCountries"
+	return []db.UserCountryVisit{{CountryCode: "PL", MoveCount: 1, FirstVisit: time.Now().UTC(), LastVisit: time.Now().UTC(), Flag: "🇵🇱"}}, nil
+}
+
+func (m *mockStatsStore) FetchUserWaypoints(ctx context.Context, userID int64, limit, offset int) ([]db.UserWaypointVisit, error) {
+	m.lastMethod = "FetchUserWaypoints"
+	return []db.UserWaypointVisit{{WaypointCode: "OC146C3", VisitCount: 1, FirstVisitedAt: time.Now().UTC(), LastVisitedAt: time.Now().UTC()}}, nil
+}
+
+func (m *mockStatsStore) FetchPictureList(ctx context.Context, filters db.PictureFilters, limit, offset int) ([]db.PictureInfo, error) {
+	m.lastMethod = "FetchPictureList"
+	return []db.PictureInfo{{ID: 1, GeokretID: int64Ptr(1), GeokretGKID: gkidPtr(1), MoveID: int64Ptr(9), UserID: int64Ptr(1), AuthorID: int64Ptr(1), AuthorUsername: testStringPtr("alice"), CreatedOn: time.Now().UTC()}}, nil
+}
+
+func (m *mockStatsStore) FetchPictureListByIDs(ctx context.Context, pictureIDs []int64) ([]db.PictureInfo, error) {
+	m.lastMethod = "FetchPictureListByIDs"
+	m.lastPictureIDs = append([]int64(nil), pictureIDs...)
+	rows := make([]db.PictureInfo, 0, len(pictureIDs))
+	for _, pictureID := range pictureIDs {
+		rows = append(rows, db.PictureInfo{ID: pictureID, GeokretID: int64Ptr(1), GeokretGKID: gkidPtr(1), MoveID: int64Ptr(9), UserID: int64Ptr(1), AuthorID: int64Ptr(1), AuthorUsername: testStringPtr("alice"), CreatedOn: time.Now().UTC()})
+	}
+	return rows, nil
+}
+
+func (m *mockStatsStore) FetchPicture(ctx context.Context, pictureID int64) (db.PictureInfo, error) {
+	m.lastMethod = "FetchPicture"
+	return db.PictureInfo{ID: pictureID, GeokretID: int64Ptr(1), GeokretGKID: gkidPtr(1), MoveID: int64Ptr(9), UserID: int64Ptr(1), AuthorID: int64Ptr(1), AuthorUsername: testStringPtr("alice"), CreatedOn: time.Now().UTC()}, nil
+}
+
+func TestGetGeokretyDetailsIncludesRelationshipLinks(t *testing.T) {
 	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/users/?limit=1", nil)
-	w := httptest.NewRecorder()
-
-	h.GetUserList(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	attributes := firstResourceAttributes(payload)
-	if got := attributes["avatar_id"]; got != float64(33) {
-		t.Fatalf("data[0].attributes.avatar_id = %#v, want 33", got)
-	}
-}
-
-func TestEntityHandlerUserFoundGeokretyIncludesAvatarID(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/users/1/geokrety-found?limit=1", nil), "id", "1")
-	w := httptest.NewRecorder()
-
-	h.GetUserFoundGeokrety(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	attributes := firstResourceAttributes(payload)
-	if got := attributes["avatar_id"]; got != float64(22) {
-		t.Fatalf("data[0].attributes.avatar_id = %#v, want 22", got)
-	}
-}
-
-func TestEntityHandlerAcceptsBareHexGKID(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
-	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/00FF", nil), "gkid", "00FF")
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyDetailsByGkId(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	data := payload["data"].(map[string]any)
-	if got := data["id"]; got != "GK00FF" {
-		t.Fatalf("data.id = %#v, want GK00FF", got)
-	}
-	resourceLinks := data["links"].(map[string]any)
-	if got := resourceLinks["self"]; got != "/api/v3/geokrety/GK00FF" {
-		t.Fatalf("data.links.self = %#v, want /api/v3/geokrety/GK00FF", got)
-	}
-}
-
-func TestEntityHandlerCanonicalizesMoveSelfLink(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
-	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/00FF/moves/9", nil), "gkid", "00FF", "moveId", "9")
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyMoveDetails(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	data := payload["data"].(map[string]any)
-	resourceLinks := data["links"].(map[string]any)
-	if got := resourceLinks["self"]; got != "/api/v3/geokrety/GK00FF/moves/9" {
-		t.Fatalf("data.links.self = %#v, want /api/v3/geokrety/GK00FF/moves/9", got)
-	}
-}
-
-func TestEntityHandlerPictureRelationshipsUsePublicGKID(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/pictures/1", nil), "id", "1")
-	w := httptest.NewRecorder()
-
-	h.GetPictureDetails(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	data := payload["data"].(map[string]any)
-	relationships := data["relationships"].(map[string]any)
-	geokret := relationships["geokret"].(map[string]any)
-	identifier := geokret["data"].(map[string]any)
-	if got := identifier["id"]; got != "GK0001" {
-		t.Fatalf("relationships.geokret.data.id = %#v, want GK0001", got)
-	}
-}
-
-func TestEntityHandlerBatchIDs(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
-	tests := []struct {
-		name      string
-		handler   http.HandlerFunc
-		target    string
-		params    []string
-		wantStore string
-		wantCount int
-	}{
-		{name: "geokrety", handler: h.GetGeokretyList, target: "/api/v3/geokrety?ids=GK0001,GK0002", wantStore: "FetchGeokretyByGKIDs", wantCount: 2},
-		{name: "moves", handler: h.GetGeokretyMoves, target: "/api/v3/geokrety/GK0001/moves?ids=7,9", params: []string{"gkid", "GK0001"}, wantStore: "FetchGeokretyMovesByIDs", wantCount: 2},
-		{name: "countries", handler: h.GetCountryList, target: "/api/v3/countries?ids=PL,DE", wantStore: "FetchCountryListByCodes", wantCount: 2},
-		{name: "users", handler: h.GetUserList, target: "/api/v3/users?ids=1,2", wantStore: "FetchUserListByIDs", wantCount: 2},
-		{name: "pictures", handler: h.GetPictureList, target: "/api/v3/pictures?ids=1,2", wantStore: "FetchPictureListByIDs", wantCount: 2},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
-			if len(tc.params) > 0 {
-				r = withRouteParams(r, tc.params...)
-			}
-			w := httptest.NewRecorder()
-			tc.handler(w, r)
-			if w.Code != http.StatusOK {
-				t.Fatalf("expected 200, got %d", w.Code)
-			}
-			if store.lastMethod != tc.wantStore {
-				t.Fatalf("expected store method %s, got %s", tc.wantStore, store.lastMethod)
-			}
-			payload := decodeMap(t, w)
-			data := payload["data"].([]any)
-			if len(data) != tc.wantCount {
-				t.Fatalf("data length = %d, want %d", len(data), tc.wantCount)
-			}
-		})
-	}
-}
-
-func TestEntityHandlerRejectsInvalidBatchIDs(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/users?ids=1,abc", nil)
-	w := httptest.NewRecorder()
-
-	h.GetUserList(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-}
-
-func TestEntityHandlerAcceptsCursorPagination(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
-	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, 5)
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&cursor="+cursor.String(), nil)
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyList(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	if store.lastLimit != 5 || store.lastOffset != 5 {
-		t.Fatalf("expected limit/offset 5/5, got %d/%d", store.lastLimit, store.lastOffset)
-	}
-	payload := decodeMap(t, w)
-	meta := payload["meta"].(map[string]any)
-	if got := meta["limit"]; got != float64(4) {
-		t.Fatalf("meta.limit = %#v, want 4", got)
-	}
-	links := payload["links"].(map[string]any)
-	if got := links["self"]; got == nil || !strings.Contains(got.(string), "cursor=") {
-		t.Fatalf("links.self = %#v, want cursor query parameter", got)
-	}
-}
-
-func TestEntityHandlerIncludesTotalItemsOnFirstPage(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4", nil)
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyList(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	meta := payload["meta"].(map[string]any)
-	if got, ok := meta["total_items"]; ok {
-		t.Fatalf("meta.total_items = %#v, want omitted for cursor collection", got)
-	}
-	links := payload["links"].(map[string]any)
-	if got := links["self"]; got == nil || got == "" {
-		t.Fatalf("links.self = %#v, want non-empty string", got)
-	}
-}
-
-func TestEntityHandlerRejectsInvalidCursor(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?cursor=abc", nil)
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyList(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-}
-
-func TestEntityHandlerRejectsLegacyOffsetPagination(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&offset=1", nil)
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyList(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	errorPayload := payload["error"].(map[string]any)
-	if got := errorPayload["code"]; got != "INVALID_PAGINATION_MODE" {
-		t.Fatalf("error.code = %#v, want INVALID_PAGINATION_MODE", got)
-	}
-}
-
-func TestEntityHandlerRejectsUnsupportedCursorVersion(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion+1, 5)
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?cursor="+cursor.String(), nil)
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyList(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-	errorPayload := payload["error"].(map[string]any)
-	if got := errorPayload["code"]; got != "CURSOR_VERSION_MISMATCH" {
-		t.Fatalf("error.code = %#v, want CURSOR_VERSION_MISMATCH", got)
-	}
-}
-
-func TestEntityHandlerRejectsInvalidLimit(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=abc", nil)
-	w := httptest.NewRecorder()
-
-	h.GetGeokretyList(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-}
-
-func TestSearchHandlersRejectStaleCursorFingerprint(t *testing.T) {
-	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, 5, "/api/v3/geokrety/search?q=one&limit=3")
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/search?q=two&limit=3&cursor="+cursor.String(), nil)
-	w := httptest.NewRecorder()
-
-	h.SearchGeokrety(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-	payload := decodeMap(t, w)
-	errorPayload := payload["error"].(map[string]any)
-	if got := errorPayload["code"]; got != "INVALID_CURSOR" {
-		t.Fatalf("error.code = %#v, want INVALID_CURSOR", got)
-	}
-}
-
-func TestEntityHandlerXMLResponseUsesCanonicalGKID(t *testing.T) {
-	store := &mockStatsStore{}
-	h := NewStatsHandler(store, zap.NewNop())
 	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/GK0001", nil), "gkid", "GK0001")
-	r.Header.Set("Accept", "application/xml")
 	w := httptest.NewRecorder()
 
 	h.GetGeokretyDetailsByGkId(w, r)
@@ -468,152 +384,141 @@ func TestEntityHandlerXMLResponseUsesCanonicalGKID(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
-	if got := w.Header().Get("Content-Type"); got != "application/xml" {
-		t.Fatalf("content-type = %q, want application/xml", got)
+	payload := decodePayload(t, w)
+	data := payload["data"].(map[string]any)
+	if got := data["type"]; got != "geokrety" {
+		t.Fatalf("data.type = %#v, want geokrety", got)
 	}
-	if body := w.Body.String(); !strings.Contains(body, "<gkid>GK0001</gkid>") {
-		t.Fatalf("expected XML body to contain canonical gkid, got %s", body)
+	attributes := data["attributes"].(map[string]any)
+	if _, ok := attributes["type_icon_url"]; ok {
+		t.Fatal("type_icon_url should not be present")
+	}
+	if got := attributes["collectible"]; got != true {
+		t.Fatalf("attributes.collectible = %#v, want true", got)
+	}
+	relationships := data["relationships"].(map[string]any)
+	owner := relationships["owner"].(map[string]any)
+	ownerLinks := owner["links"].(map[string]any)
+	if got := ownerLinks["related"]; got != "/api/v3/users/1" {
+		t.Fatalf("owner related link = %#v, want /api/v3/users/1", got)
+	}
+	ownerData := owner["data"].(map[string]any)
+	ownerAttributes := ownerData["attributes"].(map[string]any)
+	if got := ownerAttributes["username"]; got != "owner" {
+		t.Fatalf("owner username = %#v, want owner", got)
+	}
+	if got := relationships["last_position"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/moves/77" {
+		t.Fatalf("last_position related link = %#v, want /api/v3/moves/77", got)
+	}
+	if got := relationships["stats"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/geokrety/GK0001/stats" {
+		t.Fatalf("stats related link = %#v, want /api/v3/geokrety/GK0001/stats", got)
+	}
+	if got := relationships["finders"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/geokrety/GK0001/finders" {
+		t.Fatalf("finders related link = %#v, want /api/v3/geokrety/GK0001/finders", got)
 	}
 }
 
-func TestEntityHandlerInvalidRequests(t *testing.T) {
+func TestGetUserDetailsUsesDateOnlyAndHomeCountryRelationship(t *testing.T) {
 	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	tests := []struct {
-		name    string
-		handler http.HandlerFunc
-		target  string
-		params  []string
-	}{
-		{"bad-id", h.GetGeokrety, "/api/v3/geokrety/abc", []string{"id", "abc"}},
-		{"bad-gkid", h.GetGeokretyDetailsByGkId, "/api/v3/geokrety/GKZZ", []string{"gkid", "GKZZ"}},
-		{"bad-id-moves", h.GetGeokretyMoves, "/api/v3/geokrety/GKZZ/moves", []string{"id", "GKZZ"}},
-		{"bad-id-move-details", h.GetGeokretyMoveDetails, "/api/v3/geokrety/GKZZ/moves/1", []string{"id", "GKZZ", "moveId", "1"}},
-		{"bad-move-id", h.GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/x", []string{"id", "1", "moveId", "x"}},
-		{"bad-id-loved-by", h.GetGeokretyLovedBy, "/api/v3/geokrety/GKZZ/loved-by", []string{"id", "GKZZ"}},
-		{"bad-id-watched-by", h.GetGeokretyWatchedBy, "/api/v3/geokrety/GKZZ/watched-by", []string{"id", "GKZZ"}},
-		{"bad-id-pictures", h.GetGeokretyPictures, "/api/v3/geokrety/GKZZ/pictures", []string{"id", "GKZZ"}},
-		{"bad-id-countries", h.GetGeokretyCountries, "/api/v3/geokrety/GKZZ/countries", []string{"id", "GKZZ"}},
-		{"bad-id-waypoints", h.GetGeokretyWaypoints, "/api/v3/geokrety/GKZZ/waypoints", []string{"id", "GKZZ"}},
-		{"bad-id-map-countries", h.GetGeokretyStatsMapCountries, "/api/v3/geokrety/GKZZ/stats/map/countries", []string{"id", "GKZZ"}},
-		{"bad-id-elevation", h.GetGeokretyStatsElevation, "/api/v3/geokrety/GKZZ/stats/elevation", []string{"id", "GKZZ"}},
-		{"bad-id-heatmap-days", h.GetGeokretyStatsHeatmapDays, "/api/v3/geokrety/GKZZ/stats/heatmap/days", []string{"id", "GKZZ"}},
-		{"bad-id-geojson-trip", h.GetGeokretyGeoJSONTrip, "/api/v3/geokrety/GKZZ/geojson/trip", []string{"id", "GKZZ"}},
-		{"bad-country", h.GetCountryDetails, "/api/v3/countries/POL", []string{"code", "POL"}},
-		{"bad-country-symbols", h.GetCountryGeokrety, "/api/v3/countries/1!/geokrety", []string{"code", "1!"}},
-		{"bad-waypoint", h.GetWaypoint, "/api/v3/waypoints/*", []string{"code", "*"}},
-		{"bad-waypoint-current", h.GetWaypointCurrentGeokrety, "/api/v3/waypoints/*/geokrety-current", []string{"code", "*"}},
-		{"bad-waypoint-past", h.GetWaypointPastGeokrety, "/api/v3/waypoints/*/geokrety-past", []string{"code", "*"}},
-		{"bad-id-user-details", h.GetUserDetails, "/api/v3/users/abc", []string{"id", "abc"}},
-		{"bad-id-user-owned", h.GetUserOwnedGeokrety, "/api/v3/users/abc/geokrety-owned", []string{"id", "abc"}},
-		{"bad-id-user-pictures", h.GetUserPictures, "/api/v3/users/abc/pictures", []string{"id", "abc"}},
-		{"bad-id-user-countries", h.GetUserCountries, "/api/v3/users/abc/countries", []string{"id", "abc"}},
-		{"bad-id-user-waypoints", h.GetUserWaypoints, "/api/v3/users/abc/waypoints", []string{"id", "abc"}},
-		{"bad-id-user-heatmap-days", h.GetUserStatsHeatmapDays, "/api/v3/users/abc/stats/heatmap/days", []string{"id", "abc"}},
-		{"bad-id-user-heatmap-hours", h.GetUserStatsHeatmapHours, "/api/v3/users/abc/stats/heatmap/hours", []string{"id", "abc"}},
-		{"bad-id-user-map-countries", h.GetUserStatsMapCountries, "/api/v3/users/abc/stats/map/countries", []string{"id", "abc"}},
-		{"bad-id-user-continent-coverage", h.GetUserStatsContinentCoverage, "/api/v3/users/abc/stats/continent-coverage", []string{"id", "abc"}},
-		{"bad-id-picture", h.GetPictureDetails, "/api/v3/pictures/abc", []string{"id", "abc"}},
-		{"bad-search-users", h.SearchUsers, "/api/v3/users/search?q=x", nil},
-		{"bad-search-geokrety", h.SearchGeokrety, "/api/v3/geokrety/search?q=x", nil},
-		{"bad-search-waypoints", h.SearchWaypoints, "/api/v3/waypoints/search?q=x", nil},
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/users/1", nil), "id", "1")
+	w := httptest.NewRecorder()
+
+	h.GetUserDetails(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
 	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
-			if len(tc.params) > 0 {
-				r = withRouteParams(r, tc.params...)
-			}
-			w := httptest.NewRecorder()
-			tc.handler(w, r)
-			if w.Code != http.StatusBadRequest {
-				t.Fatalf("expected 400, got %d", w.Code)
-			}
-		})
+	payload := decodePayload(t, w)
+	data := payload["data"].(map[string]any)
+	attributes := data["attributes"].(map[string]any)
+	if joinedAt, ok := attributes["joined_at"].(string); !ok || strings.Contains(joinedAt, "T") {
+		t.Fatalf("joined_at = %#v, want date-only string", attributes["joined_at"])
+	}
+	if _, ok := attributes["home_country"]; ok {
+		t.Fatal("home_country should be exposed through relationship data")
+	}
+	homeCountry := data["relationships"].(map[string]any)["home_country"].(map[string]any)
+	if got := homeCountry["links"].(map[string]any)["related"]; got != "/api/v3/countries/PL" {
+		t.Fatalf("home_country related link = %#v, want /api/v3/countries/PL", got)
+	}
+	homeCountryData := homeCountry["data"].(map[string]any)
+	if got := homeCountryData["attributes"].(map[string]any)["flag"]; got != "🇵🇱" {
+		t.Fatalf("home_country flag = %#v, want 🇵🇱", got)
+	}
+	if got := data["relationships"].(map[string]any)["stats"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/users/1/stats" {
+		t.Fatalf("stats related link = %#v, want /api/v3/users/1/stats", got)
 	}
 }
 
-func TestEntityHandlerStoreErrors(t *testing.T) {
-	tests := []struct {
-		name       string
-		failMethod string
-		noRows     string
-		handler    http.HandlerFunc
-		target     string
-		params     []string
-		expStatus  int
-	}{
-		{"details-500", "FetchGeokrety", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusInternalServerError},
-		{"details-404", "", "FetchGeokrety", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusNotFound},
-		{"details-by-gkid-404", "", "FetchGeokretyByGKID", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyByGKID"}, zap.NewNop()).GetGeokretyDetailsByGkId, "/api/v3/geokrety/GK0001", []string{"gkid", "GK0001"}, http.StatusNotFound},
-		{"move-details-404", "", "FetchGeokretyMoveDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyMoveDetails"}, zap.NewNop()).GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/2", []string{"id", "1", "moveId", "2"}, http.StatusNotFound},
-		{"geojson-500", "FetchGeokretyTripPoints", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokretyTripPoints"}, zap.NewNop()).GetGeokretyGeoJSONTrip, "/api/v3/geokrety/1/geojson/trip", []string{"id", "1"}, http.StatusInternalServerError},
-		{"country-404", "", "FetchCountryDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchCountryDetails"}, zap.NewNop()).GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, http.StatusNotFound},
-		{"waypoint-404", "", "FetchWaypoint", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchWaypoint"}, zap.NewNop()).GetWaypoint, "/api/v3/waypoints/GC123", []string{"code", "GC123"}, http.StatusNotFound},
-		{"user-404", "", "FetchUserDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchUserDetails"}, zap.NewNop()).GetUserDetails, "/api/v3/users/1", []string{"id", "1"}, http.StatusNotFound},
-		{"picture-404", "", "FetchPicture", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchPicture"}, zap.NewNop()).GetPictureDetails, "/api/v3/pictures/1", []string{"id", "1"}, http.StatusNotFound},
-	}
+func TestGetMoveDetailsUsesRootSelfLinkAndPicturesRelationship(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/moves/9", nil), "id", "9")
+	w := httptest.NewRecorder()
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, normalizePaginationTarget(tc.target), nil)
-			r = withRouteParams(r, tc.params...)
-			w := httptest.NewRecorder()
-			tc.handler(w, r)
-			if w.Code != tc.expStatus {
-				t.Fatalf("expected status %d, got %d", tc.expStatus, w.Code)
-			}
-		})
+	h.GetMoveDetails(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodePayload(t, w)
+	data := payload["data"].(map[string]any)
+	if got := data["links"].(map[string]any)["self"]; got != "/api/v3/moves/9" {
+		t.Fatalf("move self link = %#v, want /api/v3/moves/9", got)
+	}
+	attributes := data["attributes"].(map[string]any)
+	if got := attributes["type"]; got != "drop" {
+		t.Fatalf("attributes.type = %#v, want drop", got)
+	}
+	relationships := data["relationships"].(map[string]any)
+	if got := relationships["pictures"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/pictures?move=9" {
+		t.Fatalf("pictures related link = %#v, want /api/v3/pictures?move=9", got)
+	}
+	if got := relationships["geokret"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/geokrety/GK0001" {
+		t.Fatalf("geokret related link = %#v, want /api/v3/geokrety/GK0001", got)
 	}
 }
 
-func TestEntityListHandlersInternalServerError(t *testing.T) {
-	tests := []struct {
-		name    string
-		store   *mockStatsStore
-		handler http.HandlerFunc
-		target  string
-		params  []string
-	}{
-		{"geokret-moves", &mockStatsStore{failMethod: "FetchGeokretyMoves"}, nil, "/api/v3/geokrety/1/moves", []string{"id", "1"}},
-		{"geokret-loved-by", &mockStatsStore{failMethod: "FetchGeokretyLoves"}, nil, "/api/v3/geokrety/1/loved-by", []string{"id", "1"}},
-		{"country-geokrety", &mockStatsStore{failMethod: "FetchCountryGeokrety"}, nil, "/api/v3/countries/PL/geokrety", []string{"code", "PL"}},
-		{"waypoint-current", &mockStatsStore{failMethod: "FetchWaypointCurrentGeokrety"}, nil, "/api/v3/waypoints/GC123/geokrety-current", []string{"code", "GC123"}},
-		{"user-owned", &mockStatsStore{failMethod: "FetchUserOwnedGeokrety"}, nil, "/api/v3/users/1/geokrety-owned", []string{"id", "1"}},
-		{"user-pictures", &mockStatsStore{failMethod: "FetchUserPictures"}, nil, "/api/v3/users/1/pictures", []string{"id", "1"}},
-		{"user-countries", &mockStatsStore{failMethod: "FetchUserCountries"}, nil, "/api/v3/users/1/countries", []string{"id", "1"}},
-		{"user-waypoints", &mockStatsStore{failMethod: "FetchUserWaypoints"}, nil, "/api/v3/users/1/waypoints", []string{"id", "1"}},
-		{"user-heatmap-days", &mockStatsStore{failMethod: "FetchUserStatsHeatmapDays"}, nil, "/api/v3/users/1/stats/heatmap/days", []string{"id", "1"}},
-		{"user-heatmap-hours", &mockStatsStore{failMethod: "FetchUserStatsHeatmapHours"}, nil, "/api/v3/users/1/stats/heatmap/hours", []string{"id", "1"}},
-		{"user-map-countries", &mockStatsStore{failMethod: "FetchUserStatsMapCountries"}, nil, "/api/v3/users/1/stats/map/countries", []string{"id", "1"}},
-		{"user-continent-coverage", &mockStatsStore{failMethod: "FetchUserStatsContinentCoverage"}, nil, "/api/v3/users/1/stats/continent-coverage", []string{"id", "1"}},
+func TestGetMoveListParsesFiltersAndBatchIDs(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/moves?geokret=GK0001&user=1&country=pl&waypoint=oc146c3&date_from=2026-03-01&date_to=2026-03-29&limit=2", nil)
+	w := httptest.NewRecorder()
+
+	h.GetMoveList(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if store.lastMethod != "FetchMoveList" {
+		t.Fatalf("store method = %s, want FetchMoveList", store.lastMethod)
+	}
+	if store.lastMoveFilters.GeokretID == nil || *store.lastMoveFilters.GeokretID != 1 {
+		t.Fatalf("geokret filter = %#v, want 1", store.lastMoveFilters.GeokretID)
+	}
+	if store.lastMoveFilters.Country == nil || *store.lastMoveFilters.Country != "PL" {
+		t.Fatalf("country filter = %#v, want PL", store.lastMoveFilters.Country)
+	}
+	if store.lastMoveFilters.Waypoint == nil || *store.lastMoveFilters.Waypoint != "OC146C3" {
+		t.Fatalf("waypoint filter = %#v, want OC146C3", store.lastMoveFilters.Waypoint)
+	}
+	if store.lastMoveFilters.DateTo == nil || store.lastMoveFilters.DateTo.UTC().Format("2006-01-02") != "2026-03-30" {
+		t.Fatalf("date_to filter = %#v, want exclusive 2026-03-30", store.lastMoveFilters.DateTo)
 	}
 
-	for i := range tests {
-		tests[i].handler = map[string]http.HandlerFunc{
-			"geokret-moves":           NewStatsHandler(tests[i].store, zap.NewNop()).GetGeokretyMoves,
-			"geokret-loved-by":        NewStatsHandler(tests[i].store, zap.NewNop()).GetGeokretyLovedBy,
-			"country-geokrety":        NewStatsHandler(tests[i].store, zap.NewNop()).GetCountryGeokrety,
-			"waypoint-current":        NewStatsHandler(tests[i].store, zap.NewNop()).GetWaypointCurrentGeokrety,
-			"user-owned":              NewStatsHandler(tests[i].store, zap.NewNop()).GetUserOwnedGeokrety,
-			"user-pictures":           NewStatsHandler(tests[i].store, zap.NewNop()).GetUserPictures,
-			"user-countries":          NewStatsHandler(tests[i].store, zap.NewNop()).GetUserCountries,
-			"user-waypoints":          NewStatsHandler(tests[i].store, zap.NewNop()).GetUserWaypoints,
-			"user-heatmap-days":       NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsHeatmapDays,
-			"user-heatmap-hours":      NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsHeatmapHours,
-			"user-map-countries":      NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsMapCountries,
-			"user-continent-coverage": NewStatsHandler(tests[i].store, zap.NewNop()).GetUserStatsContinentCoverage,
-		}[tests[i].name]
+	batchReq := httptest.NewRequest(http.MethodGet, "/api/v3/moves?ids=7,9", nil)
+	batchResp := httptest.NewRecorder()
+	h.GetMoveList(batchResp, batchReq)
+	if batchResp.Code != http.StatusOK {
+		t.Fatalf("expected 200 for batch ids, got %d", batchResp.Code)
 	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
-			r = withRouteParams(r, tc.params...)
-			w := httptest.NewRecorder()
-			tc.handler(w, r)
-			if w.Code != http.StatusInternalServerError {
-				t.Fatalf("expected 500, got %d", w.Code)
-			}
-		})
+	if store.lastMethod != "FetchMoveListByIDs" {
+		t.Fatalf("store method = %s, want FetchMoveListByIDs", store.lastMethod)
+	}
+	if len(store.lastMoveIDs) != 2 || store.lastMoveIDs[0] != 7 || store.lastMoveIDs[1] != 9 {
+		t.Fatalf("move ids = %#v, want [7 9]", store.lastMoveIDs)
+	}
+	batchPayload := decodePayload(t, batchResp)
+	if got := len(batchPayload["data"].([]any)); got != 2 {
+		t.Fatalf("batch data length = %d, want 2", got)
 	}
 }

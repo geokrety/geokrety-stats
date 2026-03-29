@@ -4,6 +4,8 @@ JsonRestResourceLinks:
   properties:
     self:
       type: string
+    related:
+      type: string
 
 JsonRestDocumentLinks:
   type: object
@@ -25,11 +27,17 @@ JsonRestIdentifier:
     id:
       type: string
 
+JsonRestRelationshipData:
+  oneOf:
+  - $ref: '#/components/schemas/JsonRestIdentifier'
+  - type: object
+    additionalProperties: true
+
 JsonRestRelationship:
   type: object
   properties:
     data:
-      $ref: '#/components/schemas/JsonRestIdentifier'
+      $ref: '#/components/schemas/JsonRestRelationshipData'
     links:
       $ref: '#/components/schemas/JsonRestResourceLinks'
 
@@ -137,7 +145,7 @@ GeokretResource:
       type:
         type: string
         enum:
-        - geokret
+        - geokrety
 
 MoveResource:
   allOf:
@@ -208,6 +216,26 @@ WaypointVisitResource:
         type: string
         enum:
         - waypoint_visit
+
+GeokretStatsResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - geokrety_stats
+
+UserStatsResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - user_stats
 
 RootInfo:
   type: object

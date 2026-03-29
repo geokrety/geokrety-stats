@@ -235,6 +235,32 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /api/v3/geokrety/{gkid}/stats:
+    get:
+      tags:
+      - Geokrety
+      operationId: getGeokretStats
+      summary: GeoKret statistics
+      parameters:
+      - $ref: '#/components/parameters/GeokretIdParam'
+      responses:
+        '200':
+          description: Single GeoKret stats resource document.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/GeokretStatsResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/moves:
     get:
       tags:
@@ -353,6 +379,36 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /api/v3/geokrety/{gkid}/finders:
+    get:
+      tags:
+      - Geokrety
+      operationId: listGeokretFinders
+      summary: Users who have logged a GeoKret
+      parameters:
+      - $ref: '#/components/parameters/GeokretIdParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/CursorParam'
+      responses:
+        '200':
+          description: Cursor-paginated finder collection.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/UserResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/pictures:
     get:
       tags:
@@ -437,6 +493,66 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/WaypointVisitResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v3/moves:
+    get:
+      tags:
+      - Moves
+      operationId: listMoves
+      summary: List GeoKret moves
+      parameters:
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/CursorParam'
+      - $ref: '#/components/parameters/MoveIdsParam'
+      - $ref: '#/components/parameters/GeokretFilterParam'
+      - $ref: '#/components/parameters/UserFilterParam'
+      - $ref: '#/components/parameters/CountryFilterParam'
+      - $ref: '#/components/parameters/WaypointFilterParam'
+      - $ref: '#/components/parameters/DateFromParam'
+      - $ref: '#/components/parameters/DateToParam'
+      responses:
+        '200':
+          description: Cursor-paginated move collection.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MoveResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v3/moves/{id}:
+    get:
+      tags:
+      - Moves
+      operationId: getMove
+      summary: Move details
+      parameters:
+      - $ref: '#/components/parameters/MoveResourceIdParam'
+      responses:
+        '200':
+          description: Single move resource document.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/MoveResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -723,6 +839,32 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /api/v3/users/{id}/stats:
+    get:
+      tags:
+      - Users
+      operationId: getUserStats
+      summary: User statistics
+      parameters:
+      - $ref: '#/components/parameters/UserIdParam'
+      responses:
+        '200':
+          description: Single user stats resource document.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserStatsResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/geokrety-owned:
     get:
       tags:
@@ -943,6 +1085,9 @@ paths:
       - $ref: '#/components/parameters/LimitParam'
       - $ref: '#/components/parameters/CursorParam'
       - $ref: '#/components/parameters/PictureIdsParam'
+      - $ref: '#/components/parameters/GeokretFilterParam'
+      - $ref: '#/components/parameters/MoveFilterParam'
+      - $ref: '#/components/parameters/UserFilterParam'
       responses:
         '200':
           description: Cursor-paginated picture collection.
@@ -1155,7 +1300,85 @@ components:
         minLength: 2
         maxLength: 32
         pattern: ^[A-Za-z0-9_-]{2,32}$
-      example: GC12345
+      example: OC146C3
+    MoveResourceIdParam:
+      in: path
+      name: id
+      description: Internal numeric move identifier.
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    GeokretFilterParam:
+      in: query
+      name: geokret
+      description: Filter by a public GeoKret identifier.
+      required: false
+      schema:
+        type: string
+        pattern: ^(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*$
+      example: GK0001
+    UserFilterParam:
+      in: query
+      name: user
+      description: Filter by an internal numeric user identifier.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 42
+    CountryFilterParam:
+      in: query
+      name: country
+      description: Filter by an ISO-3166 alpha-2 country code.
+      required: false
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 2
+        pattern: ^[A-Za-z]{2}$
+      example: PL
+    WaypointFilterParam:
+      in: query
+      name: waypoint
+      description: Filter by a waypoint code.
+      required: false
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 32
+        pattern: ^[A-Za-z0-9_-]{2,32}$
+      example: OC146C3
+    MoveFilterParam:
+      in: query
+      name: move
+      description: Filter pictures by an internal numeric move identifier.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 9
+    DateFromParam:
+      in: query
+      name: date_from
+      description: Inclusive lower bound for move date filtering.
+      required: false
+      schema:
+        type: string
+        format: date
+      example: '2026-03-01'
+    DateToParam:
+      in: query
+      name: date_to
+      description: Inclusive upper bound for move date filtering.
+      required: false
+      schema:
+        type: string
+        format: date
+      example: '2026-03-29'
     PictureIdParam:
       in: path
       name: id
@@ -1239,6 +1462,8 @@ components:
       properties:
         self:
           type: string
+        related:
+          type: string
     JsonRestDocumentLinks:
       type: object
       additionalProperties: false
@@ -1257,11 +1482,16 @@ components:
           type: string
         id:
           type: string
+    JsonRestRelationshipData:
+      oneOf:
+      - $ref: '#/components/schemas/JsonRestIdentifier'
+      - type: object
+        additionalProperties: true
     JsonRestRelationship:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/JsonRestIdentifier'
+          $ref: '#/components/schemas/JsonRestRelationshipData'
         links:
           $ref: '#/components/schemas/JsonRestResourceLinks'
     JsonRestMeta:
@@ -1362,7 +1592,7 @@ components:
           type:
             type: string
             enum:
-            - geokret
+            - geokrety
     MoveResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -1426,6 +1656,24 @@ components:
             type: string
             enum:
             - waypoint_visit
+    GeokretStatsResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - geokrety_stats
+    UserStatsResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - user_stats
     RootInfo:
       type: object
       xml:

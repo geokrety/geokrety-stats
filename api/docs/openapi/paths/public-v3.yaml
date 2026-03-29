@@ -83,6 +83,33 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
+/api/v3/geokrety/{gkid}/stats:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretStats
+    summary: GeoKret statistics
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    responses:
+      '200':
+        description: Single GeoKret stats resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeokretStatsResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
 /api/v3/geokrety/{gkid}/moves:
   get:
     tags:
@@ -205,6 +232,37 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
+/api/v3/geokrety/{gkid}/finders:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretFinders
+    summary: Users who have logged a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated finder collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
 /api/v3/geokrety/{gkid}/pictures:
   get:
     tags:
@@ -291,6 +349,68 @@
                     type: array
                     items:
                       $ref: '#/components/schemas/WaypointVisitResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/moves:
+  get:
+    tags:
+    - Moves
+    operationId: listMoves
+    summary: List GeoKret moves
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/MoveIdsParam'
+    - $ref: '#/components/parameters/GeokretFilterParam'
+    - $ref: '#/components/parameters/UserFilterParam'
+    - $ref: '#/components/parameters/CountryFilterParam'
+    - $ref: '#/components/parameters/WaypointFilterParam'
+    - $ref: '#/components/parameters/DateFromParam'
+    - $ref: '#/components/parameters/DateToParam'
+    responses:
+      '200':
+        description: Cursor-paginated move collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MoveResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/moves/{id}:
+  get:
+    tags:
+    - Moves
+    operationId: getMove
+    summary: Move details
+    parameters:
+    - $ref: '#/components/parameters/MoveResourceIdParam'
+    responses:
+      '200':
+        description: Single move resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MoveResource'
       '400':
         $ref: '#/components/responses/BadRequest'
       '404':
@@ -588,6 +708,33 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
+/api/v3/users/{id}/stats:
+  get:
+    tags:
+    - Users
+    operationId: getUserStats
+    summary: User statistics
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    responses:
+      '200':
+        description: Single user stats resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserStatsResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
 /api/v3/users/{id}/geokrety-owned:
   get:
     tags:
@@ -815,6 +962,9 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/PictureIdsParam'
+    - $ref: '#/components/parameters/GeokretFilterParam'
+    - $ref: '#/components/parameters/MoveFilterParam'
+    - $ref: '#/components/parameters/UserFilterParam'
     responses:
       '200':
         description: Cursor-paginated picture collection.

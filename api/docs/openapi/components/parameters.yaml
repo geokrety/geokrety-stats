@@ -158,7 +158,93 @@ WaypointCodeParam:
     minLength: 2
     maxLength: 32
     pattern: '^[A-Za-z0-9_-]{2,32}$'
-  example: GC12345
+  example: OC146C3
+
+MoveResourceIdParam:
+  in: path
+  name: id
+  description: Internal numeric move identifier.
+  required: true
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+
+GeokretFilterParam:
+  in: query
+  name: geokret
+  description: Filter by a public GeoKret identifier.
+  required: false
+  schema:
+    type: string
+    pattern: '^(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*$'
+  example: GK0001
+
+UserFilterParam:
+  in: query
+  name: user
+  description: Filter by an internal numeric user identifier.
+  required: false
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+  example: 42
+
+CountryFilterParam:
+  in: query
+  name: country
+  description: Filter by an ISO-3166 alpha-2 country code.
+  required: false
+  schema:
+    type: string
+    minLength: 2
+    maxLength: 2
+    pattern: '^[A-Za-z]{2}$'
+  example: PL
+
+WaypointFilterParam:
+  in: query
+  name: waypoint
+  description: Filter by a waypoint code.
+  required: false
+  schema:
+    type: string
+    minLength: 2
+    maxLength: 32
+    pattern: '^[A-Za-z0-9_-]{2,32}$'
+  example: OC146C3
+
+MoveFilterParam:
+  in: query
+  name: move
+  description: Filter pictures by an internal numeric move identifier.
+  required: false
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+  example: 9
+
+DateFromParam:
+  in: query
+  name: date_from
+  description: Inclusive lower bound for move date filtering.
+  required: false
+  schema:
+    type: string
+    format: date
+  example: '2026-03-01'
+
+DateToParam:
+  in: query
+  name: date_to
+  description: Inclusive upper bound for move date filtering.
+  required: false
+  schema:
+    type: string
+    format: date
+  example: '2026-03-29'
 
 PictureIdParam:
   in: path
