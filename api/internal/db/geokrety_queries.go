@@ -151,6 +151,9 @@ SELECT
 		FROM geokrety.gk_moves AS m
 		WHERE m.geokret = g.id
 			AND m.author IS NOT NULL
+			AND NOT(m.move_type = 4
+				OR (m.move_type = 3 AND m.position IS NOT NULL)
+			)
 	) AS finders_count,
 	(
 		SELECT COUNT(*)::bigint

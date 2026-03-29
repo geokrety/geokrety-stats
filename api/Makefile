@@ -71,7 +71,7 @@ test: ## Run tests
 
 test-integration: ## Run public API integration-style contract tests
 	@echo "$(CYAN)→ Running integration tests...$(RESET)"
-	@$(GO) test ./internal/api -run '^TestPublicIntegration'
+	@$(GO) test -tags=liveintegration ./internal/api -run '^TestPublicLiveIntegration' -count=1
 
 tidy: ## Tidy Go modules
 	@echo "$(CYAN)→ Tidying modules...$(RESET)"

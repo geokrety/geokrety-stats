@@ -58,14 +58,18 @@ func writeEnvelope(w http.ResponseWriter, status int, payload interface{}, start
 
 func writeEnvelopeForRequest(w http.ResponseWriter, r *http.Request, status int, payload interface{}, started time.Time, limit, offset, count int) {
 	if !wantsXML(r) {
+		request := r
+		if isCollectionPayload(payload) {
+			request = normalizedCollectionRequest(r)
+		}
 		presentation := presentationFromPayload(r, payload)
 		links := sharedjsonrest.Links{}
-		links.Set("self", sharedjsonrest.SelfLink(r))
+		links.Set("self", sharedjsonrest.SelfLink(request))
 		meta := sharedjsonrest.NewMeta(started)
 		if isCollectionPayload(payload) {
-			filters, sort := currentQueryContext(r)
+			filters, sort := currentQueryContext(request)
 			meta = meta.WithFilters(filters).WithSort(sort)
-			availableFilters, availableSorts := collectionCapabilities(r)
+			availableFilters, availableSorts := collectionCapabilities(request)
 			meta = meta.WithCapabilities(availableFilters, availableSorts)
 		}
 		writeJSON(w, status, sharedjsonrest.NewDocument(presentation.Data, presentation.Included, meta, links))
@@ -101,19 +105,20 @@ func writeEnvelopeForOffsetRequest(
 		returned = *overrideReturned
 	}
 	if !wantsXML(r) {
+		normalizedRequest := normalizedCollectionRequest(r)
 		hasMoreValue := hasMore != nil && *hasMore
 		var nextCursor *sharedjsonrest.Cursor
-		fingerprint := sharedjsonrest.CursorFingerprint(r, "cursor")
+		fingerprint := sharedjsonrest.CursorFingerprint(normalizedRequest, "cursor")
 		if hasMoreValue {
 			cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, int64(req.Offset+returned), fingerprint)
 			nextCursor = &cursor
 		}
 		meta := sharedjsonrest.NewMeta(started).WithCursor(req, hasMoreValue)
-		filters, sort := currentQueryContext(r)
+		filters, sort := currentQueryContext(normalizedRequest)
 		meta = meta.WithFilters(filters).WithSort(sort)
-		availableFilters, availableSorts := collectionCapabilities(r)
+		availableFilters, availableSorts := collectionCapabilities(normalizedRequest)
 		meta = meta.WithCapabilities(availableFilters, availableSorts)
-		links := sharedjsonrest.CursorLinks(r, req, nextCursor, "limit", "cursor")
+		links := sharedjsonrest.CursorLinks(normalizedRequest, req, nextCursor, "limit", "cursor")
 		presentation := presentationFromPayload(r, payload)
 		writeJSON(w, status, sharedjsonrest.NewDocument(presentation.Data, presentation.Included, meta, links))
 		return
@@ -129,14 +134,15 @@ func writeEnvelopeForOffsetRequest(
 }
 
 func queryPagination(r *http.Request, defaultLimit, maxLimit int) (sharedjsonrest.CursorRequest, error) {
-	return sharedjsonrest.ParseCursorRequest(r, sharedjsonrest.CursorConfig{
+	normalizedRequest := normalizedCollectionRequest(r)
+	return sharedjsonrest.ParseCursorRequest(normalizedRequest, sharedjsonrest.CursorConfig{
 		LimitParam:   "limit",
 		CursorParam:  "cursor",
 		DefaultLimit: defaultLimit,
 		MinLimit:     1,
 		MaxLimit:     maxLimit,
 		Forbidden:    []string{"offset", "page", "per_page"},
-		Fingerprint:  sharedjsonrest.CursorFingerprint(r, "cursor"),
+		Fingerprint:  sharedjsonrest.CursorFingerprint(normalizedRequest, "cursor"),
 	})
 }
 
@@ -160,18 +166,19 @@ func writeRawEnvelopeForOffsetRequest(
 		writeXML(w, status, envelope)
 		return
 	}
+	normalizedRequest := normalizedCollectionRequest(r)
 	var nextCursor *sharedjsonrest.Cursor
-	fingerprint := sharedjsonrest.CursorFingerprint(r, "cursor")
+	fingerprint := sharedjsonrest.CursorFingerprint(normalizedRequest, "cursor")
 	if hasMore {
 		cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, int64(req.Offset+req.Limit), fingerprint)
 		nextCursor = &cursor
 	}
 	meta := sharedjsonrest.NewMeta(started).WithCursor(req, hasMore)
-	filters, sort := currentQueryContext(r)
+	filters, sort := currentQueryContext(normalizedRequest)
 	meta = meta.WithFilters(filters).WithSort(sort)
-	availableFilters, availableSorts := collectionCapabilities(r)
+	availableFilters, availableSorts := collectionCapabilities(normalizedRequest)
 	meta = meta.WithCapabilities(availableFilters, availableSorts)
-	links := sharedjsonrest.CursorLinks(r, req, nextCursor, "limit", "cursor")
+	links := sharedjsonrest.CursorLinks(normalizedRequest, req, nextCursor, "limit", "cursor")
 	presentation := presentationFromPayload(r, payload)
 	writeJSON(w, status, sharedjsonrest.NewDocument(presentation.Data, presentation.Included, meta, links))
 }
@@ -367,6 +374,26 @@ func isCollectionPayload(payload interface{}) bool {
 		return false
 	}
 	return value.Kind() == reflect.Slice || value.Kind() == reflect.Array
+}
+
+func normalizedCollectionRequest(r *http.Request) *http.Request {
+	if r == nil || r.URL == nil {
+		return r
+	}
+	if strings.TrimSpace(r.URL.Query().Get("sort")) != "" {
+		return r
+	}
+	sort := defaultCollectionSort(r)
+	if sort == "" {
+		return r
+	}
+	clone := r.Clone(r.Context())
+	clonedURL := *r.URL
+	clone.URL = &clonedURL
+	values := clone.URL.Query()
+	values.Set("sort", sort)
+	clone.URL.RawQuery = values.Encode()
+	return clone
 }
 
 func payloadCount(payload interface{}) (int, bool) {

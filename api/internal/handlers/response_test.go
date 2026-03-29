@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,5 +66,33 @@ func TestWriteEnvelopeForOffsetRequestOmitsNextLinkOnTerminalPage(t *testing.T) 
 	links := payload["links"].(map[string]any)
 	if _, ok := links["next"]; ok {
 		t.Fatalf("links.next = %#v, want omitted on terminal page", links["next"])
+	}
+}
+
+func TestWriteEnvelopeForOffsetRequestNormalizesDefaultSortIntoLinks(t *testing.T) {
+	started := time.Now().Add(-10 * time.Millisecond)
+	request := sharedjsonrest.CursorRequest{Limit: 2, Offset: 0}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/moves?limit=2", nil)
+
+	hasMore := true
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, []int{1}, started, request, nil, &hasMore, nil)
+
+	var payload map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	links := payload["links"].(map[string]any)
+	self := links["self"].(string)
+	if !strings.Contains(self, "sort=-date") {
+		t.Fatalf("links.self = %q, want normalized default sort", self)
+	}
+	next := links["next"].(string)
+	if !strings.Contains(next, "sort=-date") {
+		t.Fatalf("links.next = %q, want normalized default sort", next)
+	}
+	query := payload["meta"].(map[string]any)["query"].(map[string]any)
+	if got := query["sort"]; got != "-date" {
+		t.Fatalf("meta.query.sort = %#v, want -date", got)
 	}
 }

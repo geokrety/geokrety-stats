@@ -150,13 +150,16 @@ func (s *Store) FetchUserOwnedGeokrety(ctx context.Context, userID int64, sort S
 func (s *Store) FetchUserFoundGeokrety(ctx context.Context, userID int64, sort Sort, limit, offset int) ([]GeokretListItem, error) {
 	rows := []GeokretListItem{}
 	query := geokretSelectColumns() + geokretBaseFromClause() + `
-INNER JOIN geokrety.gk_moves AS authored_move ON authored_move.geokret = g.id
-WHERE authored_move.author = $1
-ORDER BY g.id, authored_move.moved_on_datetime DESC, authored_move.id DESC
+WHERE EXISTS (
+	SELECT 1
+	FROM geokrety.gk_moves AS authored_move
+	WHERE authored_move.geokret = g.id
+		AND authored_move.author = $1
+)
+ORDER BY ` + geokretOrderBy(sort) + `
 LIMIT $2 OFFSET $3
 `
-	wrapped := `SELECT DISTINCT ON (id) * FROM (` + query + `) AS found_geokrety ORDER BY ` + geokretOrderBy(sort)
-	if err := s.db.SelectContext(ctx, &rows, wrapped, userID, limit, offset); err != nil {
+	if err := s.db.SelectContext(ctx, &rows, query, userID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query user found geokrety: %w", err)
 	}
 	return hydrateGeokretListItems(rows), nil
