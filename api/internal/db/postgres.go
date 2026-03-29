@@ -61,29 +61,31 @@ type GlobalStats struct {
 }
 
 type RecentMove struct {
-	ID          int64                `db:"id" json:"id" xml:"id"`
-	GeokretGKID *geokrety.GeokretId  `db:"geokret_gkid" json:"geokretGkid,omitempty" xml:"geokretGkid,omitempty"`
-	GeokretName string               `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	GeokretType *int16               `db:"geokret_type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
-	GeokretAvatarID *int64           `db:"geokret_avatar_id" json:"geokretAvatarId,omitempty" xml:"geokretAvatarId,omitempty"`
-	Type        string               `db:"type" json:"type" xml:"type"`
-	UserID      *int64               `db:"user_id" json:"userId,omitempty" xml:"userId,omitempty"`
-	UserAvatarID *int64              `db:"user_avatar_id" json:"userAvatarId,omitempty" xml:"userAvatarId,omitempty"`
-	Username    string               `db:"username" json:"username" xml:"username"`
-	Country     string               `db:"country" json:"country" xml:"country"`
-	CountryFlag string               `json:"countryFlag" xml:"countryFlag"`
-	Timestamp   time.Time            `db:"timestamp" json:"timestamp" xml:"timestamp"`
+	ID                 int64               `db:"id" json:"id" xml:"id"`
+	GeokretGKID        *geokrety.GeokretId `db:"geokret_gkid" json:"geokretGkid,omitempty" xml:"geokretGkid,omitempty"`
+	GeokretName        string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	GeokretType        *int16              `db:"geokret_type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
+	GeokretTypeIconURL *string             `db:"geokret_type_icon_url" json:"geokretTypeIconUrl,omitempty" xml:"geokretTypeIconUrl,omitempty"`
+	GeokretAvatarURL   *string             `db:"geokret_avatar_url" json:"geokretAvatarUrl,omitempty" xml:"geokretAvatarUrl,omitempty"`
+	Type               string              `db:"type" json:"type" xml:"type"`
+	UserID             *int64              `db:"user_id" json:"userId,omitempty" xml:"userId,omitempty"`
+	UserAvatarURL      *string             `db:"user_avatar_url" json:"userAvatarUrl,omitempty" xml:"userAvatarUrl,omitempty"`
+	Username           string              `db:"username" json:"username" xml:"username"`
+	Country            string              `db:"country" json:"country" xml:"country"`
+	CountryFlag        string              `json:"countryFlag" xml:"countryFlag"`
+	Timestamp          time.Time           `db:"timestamp" json:"timestamp" xml:"timestamp"`
 }
 
 type LeaderboardUser struct {
-	Rank        int    `json:"rank" xml:"rank"`
-	UserID      int64  `db:"user_id" json:"userId" xml:"userId"`
-	Username    string `db:"username" json:"username" xml:"username"`
-	AvatarID    *int64 `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
-	Initials    string `json:"initials" xml:"initials"`
-	Points      int64  `db:"points" json:"points" xml:"points"`
-	MovesCount  int64  `db:"moves_count" json:"movesCount" xml:"movesCount"`
-	AvatarColor string `json:"avatarColor" xml:"avatarColor"`
+	Rank        int     `json:"rank" xml:"rank"`
+	UserID      int64   `db:"user_id" json:"userId" xml:"userId"`
+	Username    string  `db:"username" json:"username" xml:"username"`
+	AvatarID    *int64  `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
+	AvatarURL   *string `db:"avatar_url" json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
+	Initials    string  `json:"initials" xml:"initials"`
+	Points      int64   `db:"points" json:"points" xml:"points"`
+	MovesCount  int64   `db:"moves_count" json:"movesCount" xml:"movesCount"`
+	AvatarColor string  `json:"avatarColor" xml:"avatarColor"`
 }
 
 type CountryStats struct {
@@ -106,32 +108,39 @@ type CountryStats struct {
 }
 
 type RecentBorn struct {
-	ID        int64              `db:"id" json:"id" xml:"id"`
-	GKID      geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid"`
-	Name      string             `db:"name" json:"name" xml:"name"`
-	Type      int16              `db:"type" json:"type" xml:"type"`
-	TypeName  string             `json:"typeName" xml:"typeName"`
-	BornAt    time.Time          `db:"born_at" json:"bornAt" xml:"bornAt"`
-	OwnerID   *int64             `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
-	OwnerName string             `db:"owner_name" json:"ownerName" xml:"ownerName"`
+	ID          int64              `db:"id" json:"id" xml:"id"`
+	GKID        geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid"`
+	Name        string             `db:"name" json:"name" xml:"name"`
+	Type        int16              `db:"type" json:"type" xml:"type"`
+	TypeName    string             `json:"typeName" xml:"typeName"`
+	TypeIconURL string             `db:"type_icon_url" json:"typeIconUrl" xml:"typeIconUrl"`
+	BornAt      time.Time          `db:"born_at" json:"bornAt" xml:"bornAt"`
+	OwnerID     *int64             `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
+	OwnerName   string             `db:"owner_name" json:"ownerName" xml:"ownerName"`
 }
 
 type RecentLoved struct {
-	GeoKretID   int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeoKretName string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	UserID      int64               `db:"user_id" json:"userId" xml:"userId"`
-	Username    string              `db:"username" json:"username" xml:"username"`
-	LovedAt     time.Time           `db:"loved_at" json:"lovedAt" xml:"lovedAt"`
+	GeoKretID          int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID               *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName        string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	GeoKretType        *int16              `db:"geokret_type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
+	GeoKretTypeIconURL *string             `db:"geokret_type_icon_url" json:"geokretTypeIconUrl,omitempty" xml:"geokretTypeIconUrl,omitempty"`
+	UserID             int64               `db:"user_id" json:"userId" xml:"userId"`
+	Username           string              `db:"username" json:"username" xml:"username"`
+	UserAvatarURL      *string             `db:"user_avatar_url" json:"userAvatarUrl,omitempty" xml:"userAvatarUrl,omitempty"`
+	LovedAt            time.Time           `db:"loved_at" json:"lovedAt" xml:"lovedAt"`
 }
 
 type RecentWatched struct {
-	GeoKretID   int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
-	GeoKretName string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
-	UserID      int64               `db:"user_id" json:"userId" xml:"userId"`
-	Username    string              `db:"username" json:"username" xml:"username"`
-	WatchedAt   time.Time           `db:"watched_at" json:"watchedAt" xml:"watchedAt"`
+	GeoKretID          int64               `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	GKID               *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
+	GeoKretName        string              `db:"geokret_name" json:"geokretName" xml:"geokretName"`
+	GeoKretType        *int16              `db:"geokret_type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
+	GeoKretTypeIconURL *string             `db:"geokret_type_icon_url" json:"geokretTypeIconUrl,omitempty" xml:"geokretTypeIconUrl,omitempty"`
+	UserID             int64               `db:"user_id" json:"userId" xml:"userId"`
+	Username           string              `db:"username" json:"username" xml:"username"`
+	UserAvatarURL      *string             `db:"user_avatar_url" json:"userAvatarUrl,omitempty" xml:"userAvatarUrl,omitempty"`
+	WatchedAt          time.Time           `db:"watched_at" json:"watchedAt" xml:"watchedAt"`
 }
 
 type ActiveCountry struct {
@@ -162,11 +171,15 @@ type RecentRegisteredUser struct {
 	Username    string    `db:"username" json:"username" xml:"username"`
 	JoinedAt    time.Time `db:"joined_at" json:"joinedAt" xml:"joinedAt"`
 	HomeCountry *string   `db:"home_country" json:"homeCountry" xml:"homeCountry,omitempty"`
+	AvatarID    *int64    `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
+	AvatarURL   *string   `json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
 }
 
 type RecentActiveUser struct {
 	UserID         int64     `db:"user_id" json:"userId" xml:"userId"`
 	Username       string    `db:"username" json:"username" xml:"username"`
+	AvatarID       *int64    `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
+	AvatarURL      *string   `json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
 	MovesCount     int64     `db:"moves_count" json:"movesCount" xml:"movesCount"`
 	CountriesCount int64     `db:"countries_count" json:"countriesCount" xml:"countriesCount"`
 	LastMoveAt     time.Time `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt"`
@@ -196,16 +209,20 @@ type TopCache struct {
 }
 
 type FirstFinderLeaderboardEntry struct {
-	UserID     int64  `db:"user_id" json:"userId" xml:"userId"`
-	Username   string `db:"username" json:"username" xml:"username"`
-	FirstFinds int64  `db:"first_finds" json:"firstFinds" xml:"firstFinds"`
-	Rank       int    `json:"rank" xml:"rank"`
+	UserID     int64   `db:"user_id" json:"userId" xml:"userId"`
+	Username   string  `db:"username" json:"username" xml:"username"`
+	AvatarID   *int64  `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
+	AvatarURL  *string `db:"avatar_url" json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
+	FirstFinds int64   `db:"first_finds" json:"firstFinds" xml:"firstFinds"`
+	Rank       int     `json:"rank" xml:"rank"`
 }
 
 type DistanceRecord struct {
 	GeoKretID   int64               `db:"gk_id" json:"geokretId" xml:"geokretId"`
 	GKID        *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
 	GeoKretName string              `db:"name" json:"geokretName" xml:"geokretName"`
+	GeoKretType *int16              `db:"type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
+	TypeIconURL *string             `db:"type_icon_url" json:"typeIconUrl,omitempty" xml:"typeIconUrl,omitempty"`
 	KMTotal     float64             `db:"km_total" json:"kmTotal" xml:"kmTotal"`
 	Rank        int                 `json:"rank" xml:"rank"`
 }
@@ -214,23 +231,29 @@ type UserNetworkEdge struct {
 	UserID              int64     `db:"user_id" json:"userId" xml:"userId"`
 	RelatedUserID       int64     `db:"related_user_id" json:"relatedUserId" xml:"relatedUserId"`
 	RelatedUsername     string    `db:"related_username" json:"relatedUsername" xml:"relatedUsername"`
+	RelatedAvatarID     *int64    `db:"related_avatar_id" json:"relatedAvatarId,omitempty" xml:"relatedAvatarId,omitempty"`
+	RelatedAvatarURL    *string   `db:"related_avatar_url" json:"relatedAvatarUrl,omitempty" xml:"relatedAvatarUrl,omitempty"`
 	SharedGeoKretyCount int64     `db:"shared_geokrety_count" json:"sharedGeokretyCount" xml:"sharedGeokretyCount"`
 	FirstSeenAt         time.Time `db:"first_seen_at" json:"firstSeenAt" xml:"firstSeenAt"`
 	LastSeenAt          time.Time `db:"last_seen_at" json:"lastSeenAt" xml:"lastSeenAt"`
 }
 
 type GeokretTimelineEvent struct {
-	GeoKretID     int64     `db:"gk_id" json:"geokretId" xml:"geokretId"`
-	EventType     string    `db:"event_type" json:"eventType" xml:"eventType"`
-	OccurredAt    time.Time `db:"occurred_at" json:"occurredAt" xml:"occurredAt"`
-	ActorUserID   *int64    `db:"actor_user_id" json:"actorUserId" xml:"actorUserId,omitempty"`
-	ActorUsername *string   `db:"actor_username" json:"actorUsername" xml:"actorUsername,omitempty"`
+	GeoKretID      int64     `db:"gk_id" json:"geokretId" xml:"geokretId"`
+	EventType      string    `db:"event_type" json:"eventType" xml:"eventType"`
+	OccurredAt     time.Time `db:"occurred_at" json:"occurredAt" xml:"occurredAt"`
+	ActorUserID    *int64    `db:"actor_user_id" json:"actorUserId" xml:"actorUserId,omitempty"`
+	ActorUsername  *string   `db:"actor_username" json:"actorUsername" xml:"actorUsername,omitempty"`
+	ActorAvatarID  *int64    `db:"actor_avatar_id" json:"actorAvatarId,omitempty" xml:"actorAvatarId,omitempty"`
+	ActorAvatarURL *string   `db:"actor_avatar_url" json:"actorAvatarUrl,omitempty" xml:"actorAvatarUrl,omitempty"`
 }
 
 type GeokretCirculation struct {
 	GeoKretID    int64               `db:"geokrety_id" json:"geokretId" xml:"geokretId"`
 	GKID         *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
 	GeoKretName  string              `db:"name" json:"geokretName" xml:"geokretName"`
+	GeoKretType  *int16              `db:"type" json:"geokretType,omitempty" xml:"geokretType,omitempty"`
+	TypeIconURL  *string             `db:"type_icon_url" json:"typeIconUrl,omitempty" xml:"typeIconUrl,omitempty"`
 	Users        int64               `db:"users" json:"users" xml:"users"`
 	Interactions int64               `db:"interactions" json:"interactions" xml:"interactions"`
 	AvgPerUser   float64             `json:"avgInteractionsPerUser" xml:"avgInteractionsPerUser"`
@@ -400,7 +423,15 @@ m.id,
 g.gkid AS geokret_gkid,
 COALESCE(g.name, 'Unknown GeoKret') AS geokret_name,
 g.type AS geokret_type,
-g.avatar AS geokret_avatar_id,
+CASE
+	WHEN g.type IS NOT NULL THEN 'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg'
+	ELSE NULL
+END AS geokret_type_icon_url,
+CASE
+	WHEN gap.bucket IS NOT NULL AND gap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || gap.bucket || '/' || gap.key
+	WHEN gap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || gap.filename
+	ELSE NULL
+END AS geokret_avatar_url,
 CASE m.move_type
 WHEN 0 THEN 'dropped'
 WHEN 1 THEN 'grabbed'
@@ -411,13 +442,19 @@ WHEN 5 THEN 'dipped'
 ELSE 'unknown'
 END AS type,
 u.id AS user_id,
-u.avatar AS user_avatar_id,
+CASE
+	WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+	WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+	ELSE NULL
+END AS user_avatar_url,
 COALESCE(u.username, m.username, 'unknown') AS username,
 COALESCE(UPPER(m.country), '') AS country,
 m.moved_on_datetime AS timestamp
 FROM geokrety.gk_moves AS m
 LEFT JOIN geokrety.gk_geokrety AS g ON g.id = m.geokret
+LEFT JOIN geokrety.gk_pictures AS gap ON gap.id = g.avatar
 LEFT JOIN geokrety.gk_users AS u ON u.id = m.author
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 ORDER BY m.moved_on_datetime DESC, m.id DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -438,11 +475,17 @@ SELECT
 u.id AS user_id,
 u.username,
 u.avatar AS avatar_id,
+CASE
+	WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+	WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+	ELSE NULL
+END AS avatar_url,
 COUNT(*)::bigint AS points,
 COUNT(*)::bigint AS moves_count
 FROM geokrety.gk_moves AS m
 INNER JOIN geokrety.gk_users AS u ON u.id = m.author
-GROUP BY u.id, u.username, u.avatar
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
+GROUP BY u.id, u.username, u.avatar, uap.filename, uap.key, uap.bucket
 ORDER BY points DESC, u.username ASC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -569,6 +612,7 @@ g.id,
 g.gkid,
 g.name,
 g.type,
+'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg' AS type_icon_url,
 g.born_on_datetime AS born_at,
 g.owner AS owner_id,
 COALESCE(u.username, 'Abandoned') AS owner_name
@@ -592,12 +636,23 @@ SELECT
 l.geokret AS geokret_id,
 g.gkid AS gkid,
 g.name AS geokret_name,
+g.type AS geokret_type,
+CASE
+	WHEN g.type IS NOT NULL THEN 'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg'
+	ELSE NULL
+END AS geokret_type_icon_url,
 l.user AS user_id,
 COALESCE(u.username, 'unknown') AS username,
+CASE
+	WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+	WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+	ELSE NULL
+END AS user_avatar_url,
 l.created_on_datetime AS loved_at
 FROM geokrety.gk_loves AS l
 INNER JOIN geokrety.gk_geokrety AS g ON g.id = l.geokret
 LEFT JOIN geokrety.gk_users AS u ON u.id = l.user
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 ORDER BY l.created_on_datetime DESC, l.id DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -613,12 +668,23 @@ SELECT
 w.geokret AS geokret_id,
 g.gkid AS gkid,
 g.name AS geokret_name,
+g.type AS geokret_type,
+CASE
+	WHEN g.type IS NOT NULL THEN 'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg'
+	ELSE NULL
+END AS geokret_type_icon_url,
 w.user AS user_id,
 COALESCE(u.username, 'unknown') AS username,
+CASE
+	WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+	WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+	ELSE NULL
+END AS user_avatar_url,
 w.created_on_datetime AS watched_at
 FROM geokrety.gk_watched AS w
 INNER JOIN geokrety.gk_geokrety AS g ON g.id = w.geokret
 LEFT JOIN geokrety.gk_users AS u ON u.id = w.user
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 ORDER BY w.created_on_datetime DESC, w.id DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -712,8 +778,15 @@ SELECT
 id,
 username,
 joined_on_datetime AS joined_at,
-UPPER(home_country) AS home_country
+UPPER(home_country) AS home_country,
+avatar AS avatar_id,
+CASE
+	WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+	WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+	ELSE NULL
+END AS avatar_url
 FROM geokrety.gk_users
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = gk_users.avatar
 ORDER BY joined_on_datetime DESC, id DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -728,13 +801,20 @@ func (s *Store) FetchRecentActiveUsers(ctx context.Context, limit, offset int) (
 SELECT
 u.id AS user_id,
 u.username,
+u.avatar AS avatar_id,
+CASE
+	WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+	WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+	ELSE NULL
+END AS avatar_url,
 COUNT(*)::bigint AS moves_count,
 COUNT(DISTINCT UPPER(m.country))::bigint AS countries_count,
 MAX(m.moved_on_datetime) AS last_move_at
 FROM geokrety.gk_moves AS m
 INNER JOIN geokrety.gk_users AS u ON u.id = m.author
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE m.moved_on_datetime >= NOW() - INTERVAL '30 days'
-GROUP BY u.id, u.username
+GROUP BY u.id, u.username, u.avatar, uap.filename, uap.key, uap.bucket
 ORDER BY last_move_at DESC, moves_count DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -806,9 +886,16 @@ func (s *Store) FetchFirstFinderLeaderboard(ctx context.Context, limit, offset i
 SELECT
 	v.finder_user_id AS user_id,
 	COALESCE(u.username, 'unknown') AS username,
+	u.avatar AS avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS avatar_url,
 	v.first_finds
 FROM stats.v_uc14_first_finder_hof AS v
 LEFT JOIN geokrety.gk_users AS u ON u.id = v.finder_user_id
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 ORDER BY v.first_finds DESC, v.finder_user_id ASC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
@@ -827,6 +914,11 @@ SELECT
 	v.gk_id,
 	g.gkid,
 	COALESCE(g.name, 'Unknown GeoKret') AS name,
+	g.type,
+	CASE
+		WHEN g.type IS NOT NULL THEN 'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg'
+		ELSE NULL
+	END AS type_icon_url,
 	v.km_total
 FROM stats.v_uc15_distance_records AS v
 LEFT JOIN geokrety.gk_geokrety AS g ON g.id = v.gk_id
@@ -848,11 +940,18 @@ SELECT
 	v.user_id,
 	v.related_user_id,
 	COALESCE(u.username, 'unknown') AS related_username,
+	u.avatar AS related_avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS related_avatar_url,
 	v.shared_geokrety_count,
 	v.first_seen_at,
 	v.last_seen_at
 FROM stats.v_uc2_user_network AS v
 LEFT JOIN geokrety.gk_users AS u ON u.id = v.related_user_id
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE v.user_id = $1
 ORDER BY v.shared_geokrety_count DESC, v.related_user_id ASC
 LIMIT $2 OFFSET $3
@@ -870,9 +969,16 @@ SELECT
 	v.event_type,
 	v.occurred_at,
 	v.actor_user_id,
-	u.username AS actor_username
+	u.username AS actor_username,
+	u.avatar AS actor_avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS actor_avatar_url
 FROM stats.v_uc13_gk_timeline AS v
 LEFT JOIN geokrety.gk_users AS u ON u.id = v.actor_user_id
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE v.gk_id = $1
 ORDER BY v.occurred_at DESC, v.event_type ASC
 LIMIT $2 OFFSET $3
@@ -889,6 +995,11 @@ SELECT
 	v.geokrety_id,
 	g.gkid,
 	COALESCE(g.name, 'Unknown GeoKret') AS name,
+	g.type,
+	CASE
+		WHEN g.type IS NOT NULL THEN 'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg'
+		ELSE NULL
+	END AS type_icon_url,
 	v.users,
 	v.interactions
 FROM stats.v_uc3_gk_circulation AS v

@@ -99,7 +99,7 @@ func (h *StatsHandler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
 	req, err := queryPagination(r, 50, 1000)
 	if err != nil {
-		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
 		return
 	}
 	rows, err := h.store.FetchCountries(r.Context(), req.Limit+1, req.Offset)
@@ -116,7 +116,7 @@ func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
 	req, err := queryPagination(r, 20, 1000)
 	if err != nil {
-		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
 		return
 	}
 	rows, err := h.store.FetchLeaderboard(r.Context(), req.Limit+1, req.Offset)
@@ -251,7 +251,7 @@ func (h *StatsHandler) getRecentList(
 	started := time.Now()
 	req, err := queryPagination(r, 20, 1000)
 	if err != nil {
-		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
 		return
 	}
 	rows, err := fetch(r.Context(), req.Limit+1, req.Offset)

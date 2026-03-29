@@ -9,13 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geokrety/geokrety-stats-api/internal/pagination"
+	sharedjsonrest "github.com/geokrety/geokrety-stats/geokrety/jsonrest"
 )
 
 type ResponseMeta struct {
-	RequestedAt string                 `json:"requestedAt" xml:"requestedAt"`
-	QueryMs     int64                  `json:"queryMs" xml:"queryMs"`
-	Pagination  *pagination.OffsetInfo `json:"pagination,omitempty" xml:"pagination,omitempty"`
+	RequestedAt string `json:"requestedAt" xml:"requestedAt"`
+	QueryMs     int64  `json:"queryMs" xml:"queryMs"`
 }
 
 type Envelope struct {
@@ -53,6 +52,13 @@ func writeEnvelope(w http.ResponseWriter, status int, payload interface{}, start
 }
 
 func writeEnvelopeForRequest(w http.ResponseWriter, r *http.Request, status int, payload interface{}, started time.Time, limit, offset, count int) {
+	if !wantsXML(r) {
+		data := resourceDataFromPayload(payload)
+		links := sharedjsonrest.Links{}
+		links.Set("self", sharedjsonrest.SelfLink(r))
+		writeJSON(w, status, sharedjsonrest.NewDocument(data, sharedjsonrest.NewMeta(started), links))
+		return
+	}
 	envelope := Envelope{
 		Data: payload,
 		Meta: ResponseMeta{
@@ -73,7 +79,7 @@ func writeEnvelopeForOffsetRequest(
 	status int,
 	payload interface{},
 	started time.Time,
-	req pagination.OffsetRequest,
+	req sharedjsonrest.CursorRequest,
 	totalItems *int,
 	hasMore *bool,
 	overrideReturned *int,
@@ -82,38 +88,70 @@ func writeEnvelopeForOffsetRequest(
 	if overrideReturned != nil {
 		returned = *overrideReturned
 	}
+	if !wantsXML(r) {
+		hasMoreValue := hasMore != nil && *hasMore
+		var nextCursor *sharedjsonrest.Cursor
+		fingerprint := sharedjsonrest.CursorFingerprint(r, "cursor")
+		if hasMoreValue {
+			cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, int64(req.Offset+returned), fingerprint)
+			nextCursor = &cursor
+		}
+		meta := sharedjsonrest.NewMeta(started).WithCursor(req, hasMoreValue)
+		links := sharedjsonrest.CursorLinks(r, req, nextCursor, "limit", "cursor")
+		writeJSON(w, status, sharedjsonrest.NewDocument(resourceDataFromPayload(payload), meta, links))
+		return
+	}
 	envelope := Envelope{
 		Data: payload,
 		Meta: ResponseMeta{
 			RequestedAt: time.Now().UTC().Format(time.RFC3339),
 			QueryMs:     time.Since(started).Milliseconds(),
-			Pagination:  offsetPaginationInfo(req, returned, totalItems, hasMore),
 		},
 	}
+	writeXML(w, status, envelope)
+}
+
+func queryPagination(r *http.Request, defaultLimit, maxLimit int) (sharedjsonrest.CursorRequest, error) {
+	return sharedjsonrest.ParseCursorRequest(r, sharedjsonrest.CursorConfig{
+		LimitParam:   "limit",
+		CursorParam:  "cursor",
+		DefaultLimit: defaultLimit,
+		MinLimit:     1,
+		MaxLimit:     maxLimit,
+		Forbidden:    []string{"offset", "page", "per_page"},
+		Fingerprint:  sharedjsonrest.CursorFingerprint(r, "cursor"),
+	})
+}
+
+func writeRawEnvelopeForOffsetRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+	status int,
+	payload interface{},
+	started time.Time,
+	req sharedjsonrest.CursorRequest,
+	hasMore bool,
+) {
 	if wantsXML(r) {
+		envelope := Envelope{
+			Data: payload,
+			Meta: ResponseMeta{
+				RequestedAt: time.Now().UTC().Format(time.RFC3339),
+				QueryMs:     time.Since(started).Milliseconds(),
+			},
+		}
 		writeXML(w, status, envelope)
 		return
 	}
-	writeJSON(w, status, envelope)
-}
-
-func offsetPaginationInfo(req pagination.OffsetRequest, returned int, totalItems *int, hasMore *bool) *pagination.OffsetInfo {
-	info := pagination.NewOffsetInfo(req.Offset, req.Limit, returned, totalItems, hasMore)
-	return &info
-}
-
-func queryPagination(r *http.Request, defaultLimit, maxLimit int) (pagination.OffsetRequest, error) {
-	return pagination.ParseOffsetRequest(r, pagination.RequestConfig{
-		LimitParam:    "limit",
-		OffsetParam:   "offset",
-		CursorParam:   "cursor",
-		DefaultLimit:  defaultLimit,
-		MinLimit:      1,
-		MaxLimit:      maxLimit,
-		DefaultOffset: 0,
-		MinOffset:     0,
-		MaxOffset:     1_000_000,
-	})
+	var nextCursor *sharedjsonrest.Cursor
+	fingerprint := sharedjsonrest.CursorFingerprint(r, "cursor")
+	if hasMore {
+		cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, int64(req.Offset+req.Limit), fingerprint)
+		nextCursor = &cursor
+	}
+	meta := sharedjsonrest.NewMeta(started).WithCursor(req, hasMore)
+	links := sharedjsonrest.CursorLinks(r, req, nextCursor, "limit", "cursor")
+	writeJSON(w, status, sharedjsonrest.NewDocument(payload, meta, links))
 }
 
 func payloadCount(payload interface{}) (int, bool) {
@@ -155,21 +193,16 @@ func trimPaginatedPayload(payload interface{}, limit int) (interface{}, int, boo
 	return value.Slice(0, limit).Interface(), limit, true
 }
 
-func paginationErrorMessage(err error) string {
-	switch err {
-	case pagination.ErrInvalidCursor:
-		return "invalid cursor"
-	case pagination.ErrUnsupportedCursorVersion:
-		return "unsupported cursor version"
-	case pagination.ErrInvalidLimit:
-		return "invalid limit"
-	case pagination.ErrInvalidOffset:
-		return "invalid offset"
-	case pagination.ErrAmbiguousPagination:
-		return "cannot combine cursor with offset"
-	default:
-		return "invalid pagination parameters"
+func writePaginationErrorForRequest(w http.ResponseWriter, r *http.Request, status int, err error) {
+	requestErr, ok := err.(*sharedjsonrest.RequestError)
+	if !ok {
+		requestErr = &sharedjsonrest.RequestError{Code: "INVALID_PAGINATION_MODE", Message: "invalid pagination parameters"}
 	}
+	if wantsXML(r) {
+		writeErrorForRequest(w, r, status, requestErr.Message)
+		return
+	}
+	writeJSON(w, status, sharedjsonrest.NewErrorDocument(requestErr.Code, requestErr.Message, time.Now()))
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -197,13 +230,24 @@ func writeError(w http.ResponseWriter, status int, message string) {
 }
 
 func writeErrorForRequest(w http.ResponseWriter, r *http.Request, status int, message string) {
-	payload := ErrorResponse{
-		Error:     message,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	}
 	if wantsXML(r) {
+		payload := ErrorResponse{
+			Error:     message,
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		}
 		writeXML(w, status, payload)
 		return
 	}
-	writeJSON(w, status, payload)
+	writeJSON(w, status, sharedjsonrest.NewErrorDocument(errorCodeForStatus(status), message, time.Now()))
+}
+
+func errorCodeForStatus(status int) string {
+	switch status {
+	case http.StatusBadRequest:
+		return "BAD_REQUEST"
+	case http.StatusNotFound:
+		return "NOT_FOUND"
+	default:
+		return "INTERNAL_ERROR"
+	}
 }

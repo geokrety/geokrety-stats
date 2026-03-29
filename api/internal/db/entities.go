@@ -15,8 +15,10 @@ type GeokretListItem struct {
 	GKID           *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
 	Name           string              `db:"name" json:"name" xml:"name"`
 	AvatarID       *int64              `db:"avatar_id" json:"avatarId" xml:"avatarId,omitempty"`
+	AvatarURL      *string             `db:"avatar_url" json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
 	Type           int16               `db:"type" json:"type" xml:"type"`
 	TypeName       string              `json:"typeName" xml:"typeName"`
+	TypeIconURL    string              `db:"type_icon_url" json:"typeIconUrl" xml:"typeIconUrl"`
 	Missing        bool                `db:"missing" json:"missing" xml:"missing"`
 	MissingAt      *time.Time          `db:"missing_at" json:"missingAt" xml:"missingAt,omitempty"`
 	OwnerID        *int64              `db:"owner_id" json:"ownerId" xml:"ownerId,omitempty"`
@@ -45,32 +47,35 @@ type GeokretDetails struct {
 }
 
 type MoveRecord struct {
-	ID             int64      `db:"id" json:"id" xml:"id"`
-	GeokretID      int64      `db:"geokret_id" json:"geokretId" xml:"geokretId"`
-	MoveType       int16      `db:"move_type" json:"moveType" xml:"moveType"`
-	MoveTypeName   string     `json:"moveTypeName" xml:"moveTypeName"`
-	AuthorID       *int64     `db:"author_id" json:"authorId" xml:"authorId,omitempty"`
-	AuthorAvatarID *int64     `db:"author_avatar_id" json:"authorAvatarId,omitempty" xml:"authorAvatarId,omitempty"`
-	Username       *string    `db:"username" json:"username" xml:"username,omitempty"`
-	Country        *string    `db:"country" json:"country" xml:"country,omitempty"`
-	Waypoint       *string    `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
-	Lat            *float64   `db:"lat" json:"lat" xml:"lat,omitempty"`
-	Lon            *float64   `db:"lon" json:"lon" xml:"lon,omitempty"`
-	Elevation      *int64     `db:"elevation" json:"elevation" xml:"elevation,omitempty"`
-	KMDistance     *float64   `db:"km_distance" json:"kmDistance" xml:"kmDistance,omitempty"`
-	MovedOn        time.Time  `db:"moved_on_datetime" json:"movedOn" xml:"movedOn"`
-	CreatedOn      time.Time  `db:"created_on_datetime" json:"createdOn" xml:"createdOn"`
-	PicturesCount  int64      `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
-	CommentsCount  int64      `db:"comments_count" json:"commentsCount" xml:"commentsCount"`
-	Comment        *string    `db:"comment" json:"comment" xml:"comment,omitempty"`
-	CommentHidden  bool       `db:"comment_hidden" json:"commentHidden" xml:"commentHidden"`
-	GeoJSON        *GeoJSONPt `json:"geojson" xml:"geojson,omitempty"`
+	ID              int64      `db:"id" json:"id" xml:"id"`
+	GeokretID       int64      `db:"geokret_id" json:"geokretId" xml:"geokretId"`
+	MoveType        int16      `db:"move_type" json:"moveType" xml:"moveType"`
+	MoveTypeName    string     `json:"moveTypeName" xml:"moveTypeName"`
+	AuthorID        *int64     `db:"author_id" json:"authorId" xml:"authorId,omitempty"`
+	AuthorAvatarID  *int64     `db:"author_avatar_id" json:"authorAvatarId,omitempty" xml:"authorAvatarId,omitempty"`
+	AuthorAvatarURL *string    `db:"author_avatar_url" json:"authorAvatarUrl,omitempty" xml:"authorAvatarUrl,omitempty"`
+	Username        *string    `db:"username" json:"username" xml:"username,omitempty"`
+	Country         *string    `db:"country" json:"country" xml:"country,omitempty"`
+	Waypoint        *string    `db:"waypoint" json:"waypoint" xml:"waypoint,omitempty"`
+	Lat             *float64   `db:"lat" json:"lat" xml:"lat,omitempty"`
+	Lon             *float64   `db:"lon" json:"lon" xml:"lon,omitempty"`
+	Elevation       *int64     `db:"elevation" json:"elevation" xml:"elevation,omitempty"`
+	KMDistance      *float64   `db:"km_distance" json:"kmDistance" xml:"kmDistance,omitempty"`
+	MovedOn         time.Time  `db:"moved_on_datetime" json:"movedOn" xml:"movedOn"`
+	CreatedOn       time.Time  `db:"created_on_datetime" json:"createdOn" xml:"createdOn"`
+	PicturesCount   int64      `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
+	CommentsCount   int64      `db:"comments_count" json:"commentsCount" xml:"commentsCount"`
+	Comment         *string    `db:"comment" json:"comment" xml:"comment,omitempty"`
+	CommentHidden   bool       `db:"comment_hidden" json:"commentHidden" xml:"commentHidden"`
+	GeoJSON         *GeoJSONPt `json:"geojson" xml:"geojson,omitempty"`
 }
 
 type SocialUserEntry struct {
-	UserID   int64     `db:"user_id" json:"userId" xml:"userId"`
-	Username string    `db:"username" json:"username" xml:"username"`
-	At       time.Time `db:"at" json:"at" xml:"at"`
+	UserID    int64     `db:"user_id" json:"userId" xml:"userId"`
+	Username  string    `db:"username" json:"username" xml:"username"`
+	AvatarID  *int64    `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
+	AvatarURL *string   `db:"avatar_url" json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
+	At        time.Time `db:"at" json:"at" xml:"at"`
 }
 
 type PictureInfo struct {
@@ -210,6 +215,7 @@ type UserDetails struct {
 	JoinedAt           time.Time  `db:"joined_at" json:"joinedAt" xml:"joinedAt"`
 	HomeCountry        *string    `db:"home_country" json:"homeCountry" xml:"homeCountry,omitempty"`
 	AvatarID           *int64     `db:"avatar_id" json:"avatarId" xml:"avatarId,omitempty"`
+	AvatarURL          *string    `db:"avatar_url" json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
 	PicturesCount      int64      `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
 	OwnedGeokretyCount int64      `db:"owned_geokrety_count" json:"ownedGeokretyCount" xml:"ownedGeokretyCount"`
 	MovesCount         int64      `db:"moves_count" json:"movesCount" xml:"movesCount"`
@@ -244,6 +250,7 @@ type UserSearchResult struct {
 	JoinedAt    time.Time  `db:"joined_at" json:"joinedAt" xml:"joinedAt"`
 	HomeCountry *string    `db:"home_country" json:"homeCountry" xml:"homeCountry,omitempty"`
 	AvatarID    *int64     `db:"avatar_id" json:"avatarId,omitempty" xml:"avatarId,omitempty"`
+	AvatarURL   *string    `db:"avatar_url" json:"avatarUrl,omitempty" xml:"avatarUrl,omitempty"`
 	LastMoveAt  *time.Time `db:"last_move_at" json:"lastMoveAt" xml:"lastMoveAt,omitempty"`
 }
 
@@ -355,7 +362,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	CASE WHEN gg.missing THEN missing_comment.created_on_datetime END AS missing_at,
 	gg.owner AS owner_id,
@@ -373,6 +386,7 @@ SELECT
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 LEFT JOIN LATERAL (
 	SELECT mc.created_on_datetime
@@ -421,7 +435,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	CASE WHEN gg.missing THEN missing_comment.created_on_datetime END AS missing_at,
 	gg.owner AS owner_id,
@@ -442,6 +462,7 @@ SELECT
 	gg.comments_hidden
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 LEFT JOIN LATERAL (
 	SELECT mc.created_on_datetime
@@ -469,6 +490,11 @@ SELECT
 	m.move_type,
 	m.author AS author_id,
 	u.avatar AS author_avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS author_avatar_url,
 	COALESCE(u.username, m.username) AS username,
 	UPPER(m.country) AS country,
 	UPPER(m.waypoint) AS waypoint,
@@ -484,6 +510,7 @@ SELECT
 	m.comment_hidden
 FROM geokrety.gk_moves AS m
 LEFT JOIN geokrety.gk_users AS u ON u.id = m.author
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE m.geokret = $1
 ORDER BY m.moved_on_datetime DESC, m.id DESC
 LIMIT $2 OFFSET $3
@@ -502,6 +529,11 @@ SELECT
 	m.move_type,
 	m.author AS author_id,
 	u.avatar AS author_avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS author_avatar_url,
 	COALESCE(u.username, m.username) AS username,
 	UPPER(m.country) AS country,
 	UPPER(m.waypoint) AS waypoint,
@@ -517,6 +549,7 @@ SELECT
 	m.comment_hidden
 FROM geokrety.gk_moves AS m
 LEFT JOIN geokrety.gk_users AS u ON u.id = m.author
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE m.geokret = $1 AND m.id = $2
 `, geokretID, moveID); err != nil {
 		return MoveRecord{}, fmt.Errorf("query geokret move details: %w", err)
@@ -530,9 +563,16 @@ func (s *Store) FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, 
 SELECT
 	l.user AS user_id,
 	COALESCE(u.username, 'unknown') AS username,
+	u.avatar AS avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS avatar_url,
 	l.created_on_datetime AS at
 FROM geokrety.gk_loves AS l
 LEFT JOIN geokrety.gk_users AS u ON u.id = l.user
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE l.geokret = $1
 ORDER BY l.created_on_datetime DESC, l.id DESC
 LIMIT $2 OFFSET $3
@@ -548,9 +588,16 @@ func (s *Store) FetchGeokretyWatches(ctx context.Context, geokretID int64, limit
 SELECT
 	w.user AS user_id,
 	COALESCE(u.username, 'unknown') AS username,
+	u.avatar AS avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS avatar_url,
 	w.created_on_datetime AS at
 FROM geokrety.gk_watched AS w
 LEFT JOIN geokrety.gk_users AS u ON u.id = w.user
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE w.geokret = $1
 ORDER BY w.created_on_datetime DESC, w.id DESC
 LIMIT $2 OFFSET $3
@@ -595,7 +642,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	CASE WHEN gg.missing THEN missing_comment.created_on_datetime END AS missing_at,
 	gg.owner AS owner_id,
@@ -613,6 +666,7 @@ SELECT
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 LEFT JOIN LATERAL (
 	SELECT mc.created_on_datetime
@@ -850,7 +904,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	gg.owner AS owner_id,
 	NULLIF(g.owner_username, '') AS owner_username,
@@ -966,7 +1026,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	gg.owner AS owner_id,
 	NULLIF(g.owner_username, '') AS owner_username,
@@ -983,6 +1049,7 @@ SELECT
 	g.moved_on_datetime AS last_move_at
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 WHERE UPPER(g.waypoint) = UPPER($1)
 ORDER BY g.moved_on_datetime DESC, g.id DESC
@@ -1001,7 +1068,13 @@ SELECT
 	g.gkid,
 	g.name,
 	g.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	g.type,
+	'https://cdn.geokrety.org/images/icons/types/' || g.type || '.svg' AS type_icon_url,
 	g.missing,
 	g.owner AS owner_id,
 	ou.username AS owner_username,
@@ -1018,6 +1091,7 @@ SELECT
 FROM stats.gk_cache_visits AS gcv
 INNER JOIN stats.waypoints AS w ON w.id = gcv.waypoint_id
 INNER JOIN geokrety.gk_geokrety AS g ON g.id = gcv.gk_id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = g.avatar
 LEFT JOIN geokrety.gk_users AS ou ON ou.id = g.owner
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = g.holder
 WHERE UPPER(w.waypoint_code) = UPPER($1)
@@ -1062,6 +1136,11 @@ SELECT
 	u.joined_on_datetime AS joined_at,
 	UPPER(u.home_country) AS home_country,
 	u.avatar AS avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS avatar_url,
 	u.pictures_count,
 	(
 		SELECT COUNT(*)::bigint FROM geokrety.gk_geokrety AS g WHERE g.owner = u.id
@@ -1079,6 +1158,7 @@ SELECT
 		SELECT MAX(m.moved_on_datetime) FROM geokrety.gk_moves AS m WHERE m.author = u.id
 	) AS last_move_at
 FROM geokrety.gk_users AS u
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE u.id = $1
 `, userID); err != nil {
 		return UserDetails{}, fmt.Errorf("query user details: %w", err)
@@ -1101,7 +1181,13 @@ SELECT DISTINCT ON (g.id)
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	gg.owner AS owner_id,
 	NULLIF(g.owner_username, '') AS owner_username,
@@ -1119,6 +1205,7 @@ SELECT DISTINCT ON (g.id)
 FROM geokrety.gk_moves AS m
 INNER JOIN geokrety.gk_geokrety_with_details AS g ON g.id = m.geokret
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 WHERE m.author = $1
 ORDER BY g.id, m.moved_on_datetime DESC, m.id DESC
@@ -1137,7 +1224,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	gg.owner AS owner_id,
 	NULLIF(g.owner_username, '') AS owner_username,
@@ -1155,6 +1248,7 @@ SELECT
 FROM geokrety.gk_loves AS l
 INNER JOIN geokrety.gk_geokrety_with_details AS g ON g.id = l.geokret
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 WHERE l.user = $1
 ORDER BY l.created_on_datetime DESC, l.id DESC
@@ -1173,7 +1267,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	gg.owner AS owner_id,
 	NULLIF(g.owner_username, '') AS owner_username,
@@ -1191,6 +1291,7 @@ SELECT
 FROM geokrety.gk_watched AS w
 INNER JOIN geokrety.gk_geokrety_with_details AS g ON g.id = w.geokret
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 WHERE w.user = $1
 ORDER BY w.created_on_datetime DESC, w.id DESC
@@ -1274,14 +1375,32 @@ LIMIT $2 OFFSET $3
 func (s *Store) SearchUsers(ctx context.Context, query string, limit, offset int) ([]UserSearchResult, error) {
 	rows := []UserSearchResult{}
 	if err := s.db.SelectContext(ctx, &rows, `
+WITH filtered_users AS MATERIALIZED (
+	SELECT
+		u.id,
+		u.username,
+		u.joined_on_datetime AS joined_at,
+		UPPER(u.home_country) AS home_country,
+		u.avatar AS avatar_id
+	FROM geokrety.gk_users AS u
+	WHERE u.username ILIKE '%' || $1 || '%'
+	ORDER BY u.joined_on_datetime DESC, u.id DESC
+	LIMIT $2 OFFSET $3
+)
 SELECT
 	u.id,
 	u.username,
-	u.joined_on_datetime AS joined_at,
-	UPPER(u.home_country) AS home_country,
-	u.avatar AS avatar_id,
+	u.joined_at,
+	u.home_country,
+	u.avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS avatar_url,
 	last_move.last_move_at
-FROM geokrety.gk_users AS u
+FROM filtered_users AS u
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar_id
 LEFT JOIN LATERAL (
 	SELECT
 		m.moved_on_datetime AS last_move_at
@@ -1290,9 +1409,6 @@ LEFT JOIN LATERAL (
 	ORDER BY m.moved_on_datetime DESC
 	LIMIT 1
 ) AS last_move ON TRUE
-WHERE u.username ILIKE '%' || $1 || '%'
-ORDER BY u.username ASC
-LIMIT $2 OFFSET $3
 `, query, limit, offset); err != nil {
 		return nil, fmt.Errorf("search users: %w", err)
 	}
@@ -1302,14 +1418,31 @@ LIMIT $2 OFFSET $3
 func (s *Store) FetchUserList(ctx context.Context, limit, offset int) ([]UserSearchResult, error) {
 	rows := []UserSearchResult{}
 	if err := s.db.SelectContext(ctx, &rows, `
+WITH paged_users AS MATERIALIZED (
+	SELECT
+		u.id,
+		u.username,
+		u.joined_on_datetime AS joined_at,
+		UPPER(u.home_country) AS home_country,
+		u.avatar AS avatar_id
+	FROM geokrety.gk_users AS u
+	ORDER BY u.joined_on_datetime DESC, u.id DESC
+	LIMIT $1 OFFSET $2
+)
 SELECT
 	u.id,
 	u.username,
-	u.joined_on_datetime AS joined_at,
-	UPPER(u.home_country) AS home_country,
-	u.avatar AS avatar_id,
+	u.joined_at,
+	u.home_country,
+	u.avatar_id,
+	CASE
+		WHEN uap.bucket IS NOT NULL AND uap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || uap.bucket || '/' || uap.key
+		WHEN uap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || uap.filename
+		ELSE NULL
+	END AS avatar_url,
 	last_move.last_move_at
-FROM geokrety.gk_users AS u
+FROM paged_users AS u
+LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar_id
 LEFT JOIN LATERAL (
 	SELECT
 		m.moved_on_datetime AS last_move_at
@@ -1318,8 +1451,6 @@ LEFT JOIN LATERAL (
 	ORDER BY m.moved_on_datetime DESC
 	LIMIT 1
 ) AS last_move ON TRUE
-ORDER BY u.username ASC, u.id ASC
-LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {
 		return nil, fmt.Errorf("query user list: %w", err)
 	}
@@ -1477,7 +1608,13 @@ SELECT
 	g.gkid,
 	g.name,
 	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
 	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
 	gg.missing,
 	gg.owner AS owner_id,
 	NULLIF(g.owner_username, '') AS owner_username,
@@ -1495,6 +1632,7 @@ SELECT
 	lm.move_type AS last_move_type
 FROM geokrety.gk_geokrety_with_details AS g
 INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
 LEFT JOIN geokrety.gk_moves AS lm ON lm.id = gg.last_position
 LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
 WHERE %s

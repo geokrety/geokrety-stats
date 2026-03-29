@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/geokrety/geokrety-stats-api/internal/pagination"
+	sharedjsonrest "github.com/geokrety/geokrety-stats/geokrety/jsonrest"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -34,6 +36,37 @@ func decodeMap(t *testing.T, body *httptest.ResponseRecorder) map[string]any {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 	return payload
+}
+
+func normalizePaginationTarget(target string) string {
+	parsed, err := url.Parse(target)
+	if err != nil {
+		return target
+	}
+	query := parsed.Query()
+	offsetValue := query.Get("offset")
+	if offsetValue == "" {
+		return target
+	}
+	query.Del("offset")
+	offset, err := strconv.Atoi(offsetValue)
+	if err == nil && offset > 0 {
+		cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, int64(offset))
+		query.Set("cursor", cursor.String())
+	}
+	parsed.RawQuery = query.Encode()
+	return parsed.String()
+}
+
+func resourceAttributes(resource map[string]any) map[string]any {
+	attributes, _ := resource["attributes"].(map[string]any)
+	return attributes
+}
+
+func firstResourceAttributes(payload map[string]any) map[string]any {
+	data := payload["data"].([]any)
+	resource := data[0].(map[string]any)
+	return resourceAttributes(resource)
 }
 
 func TestEntityHandlerSuccessEndpoints(t *testing.T) {
@@ -99,7 +132,7 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			r := httptest.NewRequest(http.MethodGet, normalizePaginationTarget(tc.target), nil)
 			if len(tc.params) > 0 {
 				r = withRouteParams(r, tc.params...)
 			}
@@ -123,18 +156,20 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 			}
 			if tc.name == "geokret-list" {
 				meta := payload["meta"].(map[string]any)
-				pagination := meta["pagination"].(map[string]any)
-				if got := pagination["count"]; got != float64(1) {
-					t.Fatalf("meta.pagination.count = %#v, want 1", got)
+				if got := meta["limit"]; got != float64(4) {
+					t.Fatalf("meta.limit = %#v, want 4", got)
 				}
-				if got, ok := pagination["totalItems"]; ok {
-					t.Fatalf("meta.pagination.totalItems = %#v, want omitted on non-first page", got)
+				if got, ok := meta["total_items"]; ok {
+					t.Fatalf("meta.total_items = %#v, want omitted on cursor collection", got)
 				}
 			}
 			if tc.name == "geokret-details-by-gkid" || tc.name == "geokret-details-by-numeric-gkid" {
 				data := payload["data"].(map[string]any)
-				if got := data["gkid"]; got != "GK0001" {
-					t.Fatalf("data.gkid = %#v, want GK0001", got)
+				if got := data["id"]; got != "GK0001" {
+					t.Fatalf("data.id = %#v, want GK0001", got)
+				}
+				if got := data["type"]; got != "geokret" {
+					t.Fatalf("data.type = %#v, want geokret", got)
 				}
 			}
 		})
@@ -152,10 +187,9 @@ func TestEntityHandlerUserListIncludesAvatarID(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	payload := decodeMap(t, w)
-	data := payload["data"].([]any)
-	item := data[0].(map[string]any)
-	if got := item["avatarId"]; got != float64(33) {
-		t.Fatalf("data[0].avatarId = %#v, want 33", got)
+	attributes := firstResourceAttributes(payload)
+	if got := attributes["avatar_id"]; got != float64(33) {
+		t.Fatalf("data[0].attributes.avatar_id = %#v, want 33", got)
 	}
 }
 
@@ -170,10 +204,9 @@ func TestEntityHandlerUserFoundGeokretyIncludesAvatarID(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	payload := decodeMap(t, w)
-	data := payload["data"].([]any)
-	item := data[0].(map[string]any)
-	if got := item["avatarId"]; got != float64(22) {
-		t.Fatalf("data[0].avatarId = %#v, want 22", got)
+	attributes := firstResourceAttributes(payload)
+	if got := attributes["avatar_id"]; got != float64(22) {
+		t.Fatalf("data[0].attributes.avatar_id = %#v, want 22", got)
 	}
 }
 
@@ -190,16 +223,16 @@ func TestEntityHandlerAcceptsBareHexGKID(t *testing.T) {
 	}
 	payload := decodeMap(t, w)
 	data := payload["data"].(map[string]any)
-	if got := data["gkid"]; got != "GK00FF" {
-		t.Fatalf("data.gkid = %#v, want GK00FF", got)
+	if got := data["id"]; got != "GK00FF" {
+		t.Fatalf("data.id = %#v, want GK00FF", got)
 	}
 }
 
 func TestEntityHandlerAcceptsCursorPagination(t *testing.T) {
 	store := &mockStatsStore{}
 	h := NewStatsHandler(store, zap.NewNop())
-	cursor := pagination.EncodeCursor(pagination.CurrentCursorVersion, 5)
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&cursor="+cursor.String()+"&includeTotal=true", nil)
+	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, 5)
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&cursor="+cursor.String(), nil)
 	w := httptest.NewRecorder()
 
 	h.GetGeokretyList(w, r)
@@ -212,25 +245,19 @@ func TestEntityHandlerAcceptsCursorPagination(t *testing.T) {
 	}
 	payload := decodeMap(t, w)
 	meta := payload["meta"].(map[string]any)
-	page := meta["pagination"].(map[string]any)
-	if got := page["cursor"]; got != cursor.String() {
-		t.Fatalf("pagination.cursor = %#v, want %q", got, cursor.String())
+	if got := meta["limit"]; got != float64(4) {
+		t.Fatalf("meta.limit = %#v, want 4", got)
 	}
-	if got := page["totalItems"]; got != float64(42) {
-		t.Fatalf("pagination.totalItems = %#v, want 42", got)
-	}
-	if got := page["count"]; got != float64(1) {
-		t.Fatalf("pagination.count = %#v, want 1", got)
-	}
-	if got := page["hasMore"]; got != true {
-		t.Fatalf("pagination.hasMore = %#v, want true", got)
+	links := payload["links"].(map[string]any)
+	if got := links["self"]; got == nil || !strings.Contains(got.(string), "cursor=") {
+		t.Fatalf("links.self = %#v, want cursor query parameter", got)
 	}
 }
 
 func TestEntityHandlerIncludesTotalItemsOnFirstPage(t *testing.T) {
 	store := &mockStatsStore{}
 	h := NewStatsHandler(store, zap.NewNop())
-	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&offset=0", nil)
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4", nil)
 	w := httptest.NewRecorder()
 
 	h.GetGeokretyList(w, r)
@@ -240,9 +267,12 @@ func TestEntityHandlerIncludesTotalItemsOnFirstPage(t *testing.T) {
 	}
 	payload := decodeMap(t, w)
 	meta := payload["meta"].(map[string]any)
-	page := meta["pagination"].(map[string]any)
-	if got := page["totalItems"]; got != float64(42) {
-		t.Fatalf("pagination.totalItems = %#v, want 42", got)
+	if got, ok := meta["total_items"]; ok {
+		t.Fatalf("meta.total_items = %#v, want omitted for cursor collection", got)
+	}
+	links := payload["links"].(map[string]any)
+	if got := links["self"]; got == nil || got == "" {
+		t.Fatalf("links.self = %#v, want non-empty string", got)
 	}
 }
 
@@ -258,9 +288,26 @@ func TestEntityHandlerRejectsInvalidCursor(t *testing.T) {
 	}
 }
 
+func TestEntityHandlerRejectsLegacyOffsetPagination(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?limit=4&offset=1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyList(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	errorPayload := payload["error"].(map[string]any)
+	if got := errorPayload["code"]; got != "INVALID_PAGINATION_MODE" {
+		t.Fatalf("error.code = %#v, want INVALID_PAGINATION_MODE", got)
+	}
+}
+
 func TestEntityHandlerRejectsUnsupportedCursorVersion(t *testing.T) {
 	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
-	cursor := pagination.EncodeCursor(pagination.CurrentCursorVersion+1, 5)
+	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion+1, 5)
 	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/?cursor="+cursor.String(), nil)
 	w := httptest.NewRecorder()
 
@@ -273,8 +320,9 @@ func TestEntityHandlerRejectsUnsupportedCursorVersion(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
-	if got := payload["error"]; got != "unsupported cursor version" {
-		t.Fatalf("error = %#v, want unsupported cursor version", got)
+	errorPayload := payload["error"].(map[string]any)
+	if got := errorPayload["code"]; got != "CURSOR_VERSION_MISMATCH" {
+		t.Fatalf("error.code = %#v, want CURSOR_VERSION_MISMATCH", got)
 	}
 }
 
@@ -285,8 +333,26 @@ func TestEntityHandlerRejectsInvalidLimit(t *testing.T) {
 
 	h.GetGeokretyList(w, r)
 
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestSearchHandlersRejectStaleCursorFingerprint(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, 5, "/api/v3/geokrety/search?q=one&limit=3")
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/search?q=two&limit=3&cursor="+cursor.String(), nil)
+	w := httptest.NewRecorder()
+
+	h.SearchGeokrety(w, r)
+
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	errorPayload := payload["error"].(map[string]any)
+	if got := errorPayload["code"]; got != "INVALID_CURSOR" {
+		t.Fatalf("error.code = %#v, want INVALID_CURSOR", got)
 	}
 }
 
@@ -379,7 +445,6 @@ func TestEntityHandlerStoreErrors(t *testing.T) {
 		{"details-500", "FetchGeokrety", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusInternalServerError},
 		{"details-404", "", "FetchGeokrety", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokrety"}, zap.NewNop()).GetGeokrety, "/api/v3/geokrety/1", []string{"id", "1"}, http.StatusNotFound},
 		{"details-by-gkid-404", "", "FetchGeokretyByGKID", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyByGKID"}, zap.NewNop()).GetGeokretyDetailsByGkId, "/api/v3/geokrety/GK0001", []string{"gkid", "GK0001"}, http.StatusNotFound},
-		{"list-count-500", "FetchGeokretyListTotal", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokretyListTotal"}, zap.NewNop()).GetGeokretyList, "/api/v3/geokrety?limit=1&offset=0", nil, http.StatusInternalServerError},
 		{"move-details-404", "", "FetchGeokretyMoveDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchGeokretyMoveDetails"}, zap.NewNop()).GetGeokretyMoveDetails, "/api/v3/geokrety/1/moves/2", []string{"id", "1", "moveId", "2"}, http.StatusNotFound},
 		{"geojson-500", "FetchGeokretyTripPoints", "", NewStatsHandler(&mockStatsStore{failMethod: "FetchGeokretyTripPoints"}, zap.NewNop()).GetGeokretyGeoJSONTrip, "/api/v3/geokrety/1/geojson/trip", []string{"id", "1"}, http.StatusInternalServerError},
 		{"country-404", "", "FetchCountryDetails", NewStatsHandler(&mockStatsStore{noRowsMethod: "FetchCountryDetails"}, zap.NewNop()).GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, http.StatusNotFound},
@@ -390,7 +455,7 @@ func TestEntityHandlerStoreErrors(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			r := httptest.NewRequest(http.MethodGet, normalizePaginationTarget(tc.target), nil)
 			r = withRouteParams(r, tc.params...)
 			w := httptest.NewRecorder()
 			tc.handler(w, r)

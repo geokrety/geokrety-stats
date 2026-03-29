@@ -62,7 +62,7 @@ func (h *StatsHandler) GetGeokretyList(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
 	req, err := queryPagination(r, 20, 100)
 	if err != nil {
-		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
 		return
 	}
 	rows, err := h.store.FetchGeokretyList(r.Context(), req.Limit+1, req.Offset)
@@ -71,17 +71,7 @@ func (h *StatsHandler) GetGeokretyList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pageRows, _, hasMore := trimPaginatedPayload(rows, req.Limit)
-	var totalItems *int
-	if req.Offset == 0 || r.URL.Query().Get("includeTotal") == "true" {
-		total, err := h.store.FetchGeokretyListTotal(r.Context())
-		if err != nil {
-			h.writeStoreError(w, r, err, "failed to count geokrety")
-			return
-		}
-		totalValue := int(total)
-		totalItems = &totalValue
-	}
-	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, totalItems, &hasMore, nil)
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, pageRows, started, req, nil, &hasMore, nil)
 }
 
 func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.Request) {
@@ -248,7 +238,7 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 	}
 	req, err := queryPagination(r, 500, 5000)
 	if err != nil {
-		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
 		return
 	}
 	rows, err := h.store.FetchGeokretyTripPoints(r.Context(), geokretID, req.Limit+1, req.Offset)
@@ -256,7 +246,7 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 		h.writeStoreError(w, r, err, "failed to fetch geokret trip")
 		return
 	}
-	trimmedRows, returned, hasMore := trimPaginatedPayload(rows, req.Limit)
+	trimmedRows, _, hasMore := trimPaginatedPayload(rows, req.Limit)
 	tripRows, _ := trimmedRows.([]db.TripPoint)
 	features := make([]geoJSONFeature, 0, len(tripRows))
 	for _, row := range tripRows {
@@ -273,7 +263,7 @@ func (h *StatsHandler) GetGeokretyGeoJSONTrip(w http.ResponseWriter, r *http.Req
 			},
 		})
 	}
-	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, geoJSONFeatureCollection{Type: "FeatureCollection", Features: features}, started, req, nil, &hasMore, &returned)
+	writeRawEnvelopeForOffsetRequest(w, r, http.StatusOK, geoJSONFeatureCollection{Type: "FeatureCollection", Features: features}, started, req, hasMore)
 }
 
 func (h *StatsHandler) GetCountryDetails(w http.ResponseWriter, r *http.Request) {
@@ -515,7 +505,7 @@ func (h *StatsHandler) getEntityList(w http.ResponseWriter, r *http.Request, fet
 	started := time.Now()
 	req, err := queryPagination(r, 20, 1000)
 	if err != nil {
-		writeErrorForRequest(w, r, http.StatusBadRequest, paginationErrorMessage(err))
+		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
 		return
 	}
 	rows, err := fetch(req.Limit+1, req.Offset)

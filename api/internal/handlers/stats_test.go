@@ -64,17 +64,17 @@ func (m *mockStatsStore) FetchRecentMoves(ctx context.Context, limit, offset int
 		return nil, err
 	}
 	return []db.RecentMove{{
-		ID:              1,
-		GeokretGKID:     mustGeokretIdPtr(255),
-		GeokretName:     "GK",
-		GeokretType:     int16Ptr(10),
-		GeokretAvatarID: int64Ptr(42),
-		Type:            "grabbed",
-		UserID:          int64Ptr(1),
-		UserAvatarID:    int64Ptr(84),
-		Username:        "user",
-		Country:         "PL",
-		Timestamp:       time.Now(),
+		ID:               1,
+		GeokretGKID:      mustGeokretIdPtr(255),
+		GeokretName:      "GK",
+		GeokretType:      int16Ptr(10),
+		GeokretAvatarURL: stringPtr("https://cdn.example/geokret.png"),
+		Type:             "grabbed",
+		UserID:           int64Ptr(1),
+		UserAvatarURL:    stringPtr("https://cdn.example/user.png"),
+		Username:         "user",
+		Country:          "PL",
+		Timestamp:        time.Now(),
 	}}, nil
 }
 
@@ -278,6 +278,10 @@ func int64Ptr(value int64) *int64 {
 }
 
 func int16Ptr(value int16) *int16 {
+	return &value
+}
+
+func stringPtr(value string) *string {
 	return &value
 }
 
@@ -594,7 +598,7 @@ func TestStatsHandlerSuccessEndpoints(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			r := httptest.NewRequest(http.MethodGet, normalizePaginationTarget(tc.target), nil)
 			w := httptest.NewRecorder()
 			tc.handler(w, r)
 
@@ -635,16 +639,15 @@ func TestStatsHandlerRecentMovesIncludesEnrichedFields(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	payload := decodeMap(t, w)
-	data := payload["data"].([]any)
-	item := data[0].(map[string]any)
-	if got := item["geokretType"]; got != float64(10) {
-		t.Fatalf("data[0].geokretType = %#v, want 10", got)
+	attributes := firstResourceAttributes(payload)
+	if got := attributes["geokret_type"]; got != float64(10) {
+		t.Fatalf("data[0].attributes.geokret_type = %#v, want 10", got)
 	}
-	if got := item["geokretAvatarId"]; got != float64(42) {
-		t.Fatalf("data[0].geokretAvatarId = %#v, want 42", got)
+	if got := attributes["geokret_avatar_url"]; got != "https://cdn.example/geokret.png" {
+		t.Fatalf("data[0].attributes.geokret_avatar_url = %#v, want geokret avatar url", got)
 	}
-	if got := item["userAvatarId"]; got != float64(84) {
-		t.Fatalf("data[0].userAvatarId = %#v, want 84", got)
+	if got := attributes["user_avatar_url"]; got != "https://cdn.example/user.png" {
+		t.Fatalf("data[0].attributes.user_avatar_url = %#v, want user avatar url", got)
 	}
 }
 
@@ -659,10 +662,9 @@ func TestStatsHandlerLeaderboardIncludesAvatarID(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	payload := decodeMap(t, w)
-	data := payload["data"].([]any)
-	item := data[0].(map[string]any)
-	if got := item["avatarId"]; got != float64(77) {
-		t.Fatalf("data[0].avatarId = %#v, want 77", got)
+	attributes := firstResourceAttributes(payload)
+	if got := attributes["avatar_id"]; got != float64(77) {
+		t.Fatalf("data[0].attributes.avatar_id = %#v, want 77", got)
 	}
 }
 
@@ -702,12 +704,18 @@ func TestStatsHandlersSerializeGKIDStrings(t *testing.T) {
 			switch typed := data.(type) {
 			case []any:
 				row := typed[0].(map[string]any)
-				if got := row["gkid"]; got != tc.want {
-					t.Fatalf("gkid = %#v, want %s", got, tc.want)
+				if got := row["id"]; got != tc.want {
+					t.Fatalf("id = %#v, want %s", got, tc.want)
+				}
+				if got := row["type"]; got == nil || got == "" {
+					t.Fatalf("type missing from collection resource")
 				}
 			case map[string]any:
-				if got := typed["gkid"]; got != tc.want {
-					t.Fatalf("gkid = %#v, want %s", got, tc.want)
+				if got := typed["id"]; got != tc.want {
+					t.Fatalf("id = %#v, want %s", got, tc.want)
+				}
+				if got := typed["type"]; got == nil || got == "" {
+					t.Fatalf("type missing from single resource")
 				}
 			default:
 				t.Fatalf("unexpected data payload type %T", data)
@@ -792,7 +800,7 @@ func TestStatsHandlerParamEndpoints(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			r := httptest.NewRequest(http.MethodGet, normalizePaginationTarget(tc.path), nil)
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add(tc.key, tc.value)
 			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
@@ -824,6 +832,23 @@ func TestStatsHandlerInvalidIdentifier(t *testing.T) {
 		if w.Code != http.StatusBadRequest {
 			t.Fatalf("expected status 400, got %d", w.Code)
 		}
+	}
+}
+
+func TestStatsHandlerRejectsLegacyOffsetPagination(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/stats/countries?limit=5&offset=1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetCountries(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	errorPayload := payload["error"].(map[string]any)
+	if got := errorPayload["code"]; got != "INVALID_PAGINATION_MODE" {
+		t.Fatalf("error.code = %#v, want INVALID_PAGINATION_MODE", got)
 	}
 }
 

@@ -7,18 +7,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geokrety/geokrety-stats-api/internal/pagination"
+	sharedjsonrest "github.com/geokrety/geokrety-stats/geokrety/jsonrest"
 )
 
 func TestWriteEnvelopeForOffsetRequestIncludesPaginationMetadata(t *testing.T) {
 	started := time.Now().Add(-10 * time.Millisecond)
-	request := pagination.OffsetRequest{Limit: 4, Offset: 4}
-	totalItems := 42
+	cursor := sharedjsonrest.EncodeCursor(sharedjsonrest.CurrentCursorVersion, 4)
+	request := sharedjsonrest.CursorRequest{Limit: 4, Offset: 4, UsedCursor: true, Cursor: cursor}
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/x", nil)
+	r := httptest.NewRequest(http.MethodGet, "/x?limit=4&cursor="+cursor.String(), nil)
 
 	hasMore := true
-	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, []int{1, 2, 3, 4}, started, request, &totalItems, &hasMore, nil)
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, []int{1, 2, 3, 4}, started, request, nil, &hasMore, nil)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", w.Code)
@@ -28,23 +28,40 @@ func TestWriteEnvelopeForOffsetRequestIncludesPaginationMetadata(t *testing.T) {
 		t.Fatalf("decode response: %v", err)
 	}
 	meta := payload["meta"].(map[string]any)
-	page := meta["pagination"].(map[string]any)
-	if got := page["type"]; got != "offset" {
-		t.Fatalf("pagination.type = %#v, want offset", got)
+	if got := meta["limit"]; got != float64(4) {
+		t.Fatalf("meta.limit = %#v, want 4", got)
 	}
-	if got := page["totalItems"]; got != float64(42) {
-		t.Fatalf("pagination.totalItems = %#v, want 42", got)
+	if got := meta["has_more"]; got != true {
+		t.Fatalf("meta.has_more = %#v, want true", got)
 	}
-	if got := page["count"]; got != float64(4) {
-		t.Fatalf("pagination.count = %#v, want 4", got)
+	links := payload["links"].(map[string]any)
+	if got := links["self"]; got == nil || got == "" {
+		t.Fatalf("links.self = %#v, want non-empty string", got)
 	}
-	if got := page["returned"]; got != float64(4) {
-		t.Fatalf("pagination.returned = %#v, want 4", got)
+	if got := links["next"]; got == nil || got == "" {
+		t.Fatalf("links.next = %#v, want non-empty string", got)
 	}
-	if got := page["hasMore"]; got != true {
-		t.Fatalf("pagination.hasMore = %#v, want true", got)
+}
+
+func TestWriteEnvelopeForOffsetRequestOmitsNextLinkOnTerminalPage(t *testing.T) {
+	started := time.Now().Add(-10 * time.Millisecond)
+	request := sharedjsonrest.CursorRequest{Limit: 4, Offset: 8}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/x?limit=4", nil)
+
+	hasMore := false
+	writeEnvelopeForOffsetRequest(w, r, http.StatusOK, []int{1, 2}, started, request, nil, &hasMore, nil)
+
+	var payload map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
 	}
-	if got := page["nextCursor"]; got == nil || got == "" {
-		t.Fatalf("pagination.nextCursor = %#v, want non-empty string", got)
+	meta := payload["meta"].(map[string]any)
+	if got := meta["has_more"]; got != false {
+		t.Fatalf("meta.has_more = %#v, want false", got)
+	}
+	links := payload["links"].(map[string]any)
+	if _, ok := links["next"]; ok {
+		t.Fatalf("links.next = %#v, want omitted on terminal page", links["next"])
 	}
 }
