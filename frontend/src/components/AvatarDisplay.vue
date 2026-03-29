@@ -165,7 +165,7 @@ function closeLightbox() {
 
   <!-- ── Fullscreen lightbox using shadcn Dialog ────────────────────────── -->
   <Dialog v-model:open="lightboxOpen">
-    <DialogContent class="max-w-[95vw] border-0 bg-card/85 p-0 backdrop-blur-sm">
+    <DialogContent :show-close-button="false" class="max-w-[95vw] border-0 bg-card/85 p-0 backdrop-blur-sm">
       <div class="relative flex flex-col items-center justify-center p-8">
         <DialogClose
           class="absolute right-4 top-4 rounded-full bg-card/10 p-2 text-foreground transition hover:bg-card/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

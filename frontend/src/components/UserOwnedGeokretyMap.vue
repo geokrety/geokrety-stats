@@ -201,7 +201,7 @@ onMounted(() => { loadItems() })
 
       <!-- Legend overlay -->
       <div
-        class="absolute bottom-3 left-3 z-[400] rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground pointer-events-none"
+        class="absolute bottom-9 left-3 z-[400] rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground pointer-events-none"
       >
         <template v-if="colorMode === 'lastMove'">
           <p class="mb-1 font-medium text-foreground">Last move date</p>

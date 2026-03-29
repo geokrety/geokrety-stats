@@ -10,6 +10,7 @@ export interface UserDetails {
   joinedAt: string
   homeCountry?: string | null
   avatarId?: number | null
+  avatarUrl?: string | null
   picturesCount: number
   ownedGeokretyCount: number
   movesCount: number

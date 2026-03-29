@@ -13,6 +13,7 @@
 		font-size: 0.75rem;
 		opacity: 1 !important;
 		padding: 0.5rem 0.75rem !important;
+		transition: opacity 0.05s linear !important;
 	}
 
 	.leaflet-dark-tooltip::before {

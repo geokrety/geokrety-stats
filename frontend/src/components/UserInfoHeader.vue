@@ -12,7 +12,7 @@ defineProps<{
 
 <template>
   <div class="flex items-center gap-4 mb-8">
-    <AvatarDisplay :alt="user.username" size="xl" :hover-delay="0" />
+    <AvatarDisplay :src="user.avatarUrl || undefined" :alt="user.username" size="xl" :hover-delay="0" />
     <div>
       <h1 class="text-3xl font-bold tracking-tight">{{ user.username }}</h1>
       <div class="flex items-center gap-2 text-sm text-muted-foreground mt-1">

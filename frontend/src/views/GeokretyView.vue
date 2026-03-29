@@ -4,6 +4,7 @@ import { useGeokrety } from '@/composables/useGeokrety'
 import { useGkid } from '@/composables/useGkid'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatNumber } from '@/lib/format'
+import AvatarDisplay from '@/components/AvatarDisplay.vue'
 import GeokretyTypeBadge from '@/components/GeokretyTypeBadge.vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -98,6 +99,14 @@ function getGkid(gk: { gkid?: string | null; id: number }): string {
         >
           <Card class="hover:border-primary/30 transition-colors cursor-pointer">
             <CardContent class="flex items-center gap-4 p-4">
+              <AvatarDisplay
+                :src="gk.avatarUrl || undefined"
+                :alt="gk.name"
+                :caption="`${getGkid(gk)} · ${gk.name}`"
+                size="lg"
+                shape="rounded"
+                :hover-delay="0"
+              />
               <GeokretyTypeBadge :type="gk.type" icon-only />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">

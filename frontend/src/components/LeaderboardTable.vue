@@ -35,6 +35,7 @@ defineProps<{
             class="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <AvatarDisplay
+              :src="user.avatarUrl || undefined"
               :alt="user.username"
               size="sm"
               :hover-delay="0"

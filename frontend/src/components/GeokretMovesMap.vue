@@ -144,7 +144,7 @@ watch(() => props.moves, renderMoves, { deep: true })
     <!-- Path gradient legend -->
     <div
       v-if="moves.filter(m => m.lat != null && m.lon != null).length > 1"
-      class="absolute bottom-3 left-3 z-[400] flex items-center gap-2 rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground pointer-events-none"
+      class="absolute bottom-9 left-3 z-[400] flex items-center gap-2 rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground pointer-events-none"
     >
       <span>Oldest</span>
       <div class="h-3 w-20 rounded-sm" style="background: linear-gradient(to right, #6366f1, #06b6d4, #22c55e, #fbbf24)" />
@@ -153,7 +153,7 @@ watch(() => props.moves, renderMoves, { deep: true })
     <!-- Move type legend (only types present in this geokrety's history) -->
     <div
       v-if="presentMoveTypes.length > 0"
-      class="absolute bottom-3 right-3 z-[400] rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground pointer-events-none"
+      class="absolute bottom-9 right-3 z-[400] rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground pointer-events-none"
     >
       <p class="mb-1 font-medium text-foreground">Move types</p>
       <div v-for="mt in presentMoveTypes" :key="mt.id" class="flex items-center gap-1.5 leading-5">

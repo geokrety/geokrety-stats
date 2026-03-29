@@ -7,6 +7,7 @@ import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import GeokretyTypeBadge from '@/components/GeokretyTypeBadge.vue'
 import GeokretDetailKpis from '@/components/GeokretDetailKpis.vue'
 import GeokretMovesMap from '@/components/GeokretMovesMap.vue'
+import AvatarDisplay from '@/components/AvatarDisplay.vue'
 import MultilingualMarkdown from '@/components/MultilingualMarkdown.vue'
 import MarkdownContent from '@/components/MarkdownContent.vue'
 import MoveTypeBadge from '@/components/MoveTypeBadge.vue'
@@ -14,7 +15,7 @@ import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatNumber } from '@/lib/format'
-import { User, Calendar } from 'lucide-vue-next'
+import { User, Calendar, MapPin, Package } from 'lucide-vue-next'
 import { formatDateTime, relativeTime } from '@/lib/dates'
 import { countryCodeToFlag } from '@/lib/countryFlag'
 
@@ -75,19 +76,29 @@ watch([moves, movesHasMore], () => {
       <!-- Detail content -->
       <div v-else-if="geokret">
         <!-- Header -->
-        <div class="flex items-start gap-4 mb-8">
-          <GeokretyTypeBadge :type="geokret.type" icon-only class="mt-1" />
+        <div class="mb-8 flex items-start gap-4">
+          <AvatarDisplay
+            :src="geokret.avatarUrl || undefined"
+            :alt="geokret.name"
+            :caption="`${geokret.name} · ${displayGkid}`"
+            size="xl"
+            shape="rounded"
+            :hover-delay="0"
+          />
           <div class="min-w-0 flex-1">
-            <h1 class="text-3xl font-bold tracking-tight">{{ geokret.name }}</h1>
-            <div class="flex items-center gap-2 mt-1">
-              <span class="font-mono text-sm text-muted-foreground">{{ displayGkid }}</span>
-              <span class="text-sm text-muted-foreground">· {{ geokret.typeName }}</span>
-              <span v-if="geokret.missing" class="text-sm text-destructive font-medium">· Missing</span>
+            <div class="flex items-start gap-3">
+              <div class="min-w-0 flex-1">
+                <h1 class="text-3xl font-bold tracking-tight">{{ geokret.name }}</h1>
+                <div class="mt-1 flex items-center gap-2">
+                  <span class="font-mono text-sm text-muted-foreground">{{ displayGkid }}</span>
+                  <span class="text-sm text-muted-foreground">· {{ geokret.typeName }}</span>
+                  <span v-if="geokret.missing" class="text-sm font-medium text-destructive">· Missing</span>
+                </div>
+              </div>
+              <GeokretyTypeBadge :type="geokret.type" icon-only class="mt-1 shrink-0" />
             </div>
           </div>
         </div>
-
-        <GeokretDetailKpis :geokret="geokret" />
 
         <!-- Details card -->
         <Card class="mb-6">
@@ -147,6 +158,8 @@ watch([moves, movesHasMore], () => {
             </div>
           </CardContent>
         </Card>
+
+        <GeokretDetailKpis :geokret="geokret" />
 
         <!-- Movement Map (U17) -->
         <Card v-if="moves.length > 0" class="mb-6">
