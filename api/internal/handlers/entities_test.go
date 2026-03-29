@@ -134,6 +134,8 @@ func sampleMove(id int64) db.MoveRecord {
 	country := "PL"
 	waypoint := "OC146C3"
 	comment := "Moved"
+	app := "go test api client"
+	appVersion := "0.0.1"
 	now := time.Date(2026, 3, 29, 10, 30, 0, 0, time.UTC)
 	return db.MoveRecord{
 		ID:                 id,
@@ -147,6 +149,10 @@ func sampleMove(id int64) db.MoveRecord {
 		Username:           "walker",
 		Country:            &country,
 		Waypoint:           &waypoint,
+		PicturesCount:      2,
+		CommentsCount:      4,
+		App:                &app,
+		AppVersion:         &appVersion,
 		MovedOn:            now,
 		CreatedOn:          now,
 		Comment:            &comment,
@@ -173,6 +179,24 @@ func sampleUser(id int64) db.UserDetails {
 		AvatarID:        int64Ptr(22),
 		AvatarURL:       &avatarURL,
 		LastMoveAt:      &lastMoveAt,
+	}
+}
+
+func samplePicture(id int64) db.PictureInfo {
+	caption := "caption"
+	url := "https://cdn.example/pictures/1.jpg"
+	return db.PictureInfo{
+		ID:             id,
+		Type:           1,
+		URL:            &url,
+		Caption:        &caption,
+		GeokretID:      int64Ptr(1),
+		GeokretGKID:    gkidPtr(1),
+		MoveID:         int64Ptr(9),
+		UserID:         int64Ptr(1),
+		AuthorID:       int64Ptr(1),
+		AuthorUsername: testStringPtr("alice"),
+		CreatedOn:      time.Now().UTC(),
 	}
 }
 
@@ -210,7 +234,6 @@ func (m *mockStatsStore) FetchGeokretStats(ctx context.Context, geokretID int64)
 		GKID:                  gkidPtr(geokretID),
 		CachesCount:           4,
 		PicturesCount:         3,
-		LovesCount:            2,
 		MovesCount:            9,
 		CountriesVisitedCount: 5,
 		WaypointsVisitedCount: 6,
@@ -371,7 +394,7 @@ func (m *mockStatsStore) FetchUserWaypoints(ctx context.Context, userID int64, s
 
 func (m *mockStatsStore) FetchPictureList(ctx context.Context, filters db.PictureFilters, limit, offset int) ([]db.PictureInfo, error) {
 	m.lastMethod = "FetchPictureList"
-	return []db.PictureInfo{{ID: 1, GeokretID: int64Ptr(1), GeokretGKID: gkidPtr(1), MoveID: int64Ptr(9), UserID: int64Ptr(1), AuthorID: int64Ptr(1), AuthorUsername: testStringPtr("alice"), CreatedOn: time.Now().UTC()}}, nil
+	return []db.PictureInfo{samplePicture(1)}, nil
 }
 
 func (m *mockStatsStore) FetchPictureListByIDs(ctx context.Context, pictureIDs []int64) ([]db.PictureInfo, error) {
@@ -379,14 +402,38 @@ func (m *mockStatsStore) FetchPictureListByIDs(ctx context.Context, pictureIDs [
 	m.lastPictureIDs = append([]int64(nil), pictureIDs...)
 	rows := make([]db.PictureInfo, 0, len(pictureIDs))
 	for _, pictureID := range pictureIDs {
-		rows = append(rows, db.PictureInfo{ID: pictureID, GeokretID: int64Ptr(1), GeokretGKID: gkidPtr(1), MoveID: int64Ptr(9), UserID: int64Ptr(1), AuthorID: int64Ptr(1), AuthorUsername: testStringPtr("alice"), CreatedOn: time.Now().UTC()})
+		rows = append(rows, samplePicture(pictureID))
 	}
 	return rows, nil
 }
 
 func (m *mockStatsStore) FetchPicture(ctx context.Context, pictureID int64) (db.PictureInfo, error) {
 	m.lastMethod = "FetchPicture"
-	return db.PictureInfo{ID: pictureID, GeokretID: int64Ptr(1), GeokretGKID: gkidPtr(1), MoveID: int64Ptr(9), UserID: int64Ptr(1), AuthorID: int64Ptr(1), AuthorUsername: testStringPtr("alice"), CreatedOn: time.Now().UTC()}, nil
+	return samplePicture(pictureID), nil
+}
+
+func TestGetGeokretStatsRemovesDeprecatedLovesCount(t *testing.T) {
+	h := newTestStatsHandler(&mockStatsStore{})
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/GK0001/stats", nil), "gkid", "GK0001")
+	w := httptest.NewRecorder()
+
+	h.GetGeokretStats(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodePayload(t, w)
+	data := payload["data"].(map[string]any)
+	if got := data["type"]; got != "geokrety_stats" {
+		t.Fatalf("data.type = %#v, want geokrety_stats", got)
+	}
+	attributes := data["attributes"].(map[string]any)
+	if _, ok := attributes["loves_count"]; ok {
+		t.Fatal("loves_count should not be present")
+	}
+	if got := attributes["lovers_count"]; got != float64(2) {
+		t.Fatalf("attributes.lovers_count = %#v, want 2", got)
+	}
 }
 
 func TestGetGeokretyDetailsIncludesRelationshipLinks(t *testing.T) {
@@ -408,10 +455,20 @@ func TestGetGeokretyDetailsIncludesRelationshipLinks(t *testing.T) {
 	if _, ok := attributes["type_icon_url"]; ok {
 		t.Fatal("type_icon_url should not be present")
 	}
+	if _, ok := attributes["avatar_id"]; ok {
+		t.Fatal("avatar_id should not be present")
+	}
+	if _, ok := attributes["avatar_url"]; ok {
+		t.Fatal("avatar_url should not be present")
+	}
 	if got := attributes["collectible"]; got != true {
 		t.Fatalf("attributes.collectible = %#v, want true", got)
 	}
 	relationships := data["relationships"].(map[string]any)
+	mainAvatar := relationships["main_avatar"].(map[string]any)
+	if got := mainAvatar["links"].(map[string]any)["related"]; got != "/api/v3/pictures/10" {
+		t.Fatalf("main_avatar related link = %#v, want /api/v3/pictures/10", got)
+	}
 	owner := relationships["owner"].(map[string]any)
 	ownerLinks := owner["links"].(map[string]any)
 	if got := ownerLinks["related"]; got != "/api/v3/users/1" {
@@ -427,6 +484,17 @@ func TestGetGeokretyDetailsIncludesRelationshipLinks(t *testing.T) {
 	ownerAttributes := findIncludedResource(t, payload, "user", "1")["attributes"].(map[string]any)
 	if got := ownerAttributes["username"]; got != "owner" {
 		t.Fatalf("owner username = %#v, want owner", got)
+	}
+	avatarResource := findIncludedResource(t, payload, "picture", "10")
+	avatarAttributes := avatarResource["attributes"].(map[string]any)
+	if got := avatarAttributes["url"]; got != "https://cdn.example/avatar.jpg" {
+		t.Fatalf("avatar url = %#v, want https://cdn.example/avatar.jpg", got)
+	}
+	if got := avatarAttributes["type"]; got != float64(0) {
+		t.Fatalf("avatar type = %#v, want 0", got)
+	}
+	if got := avatarAttributes["type_name"]; got != "geokret avatar" {
+		t.Fatalf("avatar type_name = %#v, want geokret avatar", got)
 	}
 	if got := relationships["last_position"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/moves/77" {
 		t.Fatalf("last_position related link = %#v, want /api/v3/moves/77", got)
@@ -455,10 +523,17 @@ func TestGetUserDetailsUsesDateOnlyAndHomeCountryRelationship(t *testing.T) {
 	if joinedAt, ok := attributes["joined_at"].(string); !ok || strings.Contains(joinedAt, "T") {
 		t.Fatalf("joined_at = %#v, want date-only string", attributes["joined_at"])
 	}
+	if _, ok := attributes["avatar_id"]; ok {
+		t.Fatal("avatar_id should not be present")
+	}
+	if _, ok := attributes["avatar_url"]; ok {
+		t.Fatal("avatar_url should not be present")
+	}
 	if _, ok := attributes["home_country"]; ok {
 		t.Fatal("home_country should be exposed through relationship data")
 	}
-	homeCountry := data["relationships"].(map[string]any)["home_country"].(map[string]any)
+	relationships := data["relationships"].(map[string]any)
+	homeCountry := relationships["home_country"].(map[string]any)
 	if got := homeCountry["links"].(map[string]any)["related"]; got != "/api/v3/countries/PL" {
 		t.Fatalf("home_country related link = %#v, want /api/v3/countries/PL", got)
 	}
@@ -469,10 +544,30 @@ func TestGetUserDetailsUsesDateOnlyAndHomeCountryRelationship(t *testing.T) {
 	if got := homeCountryData["id"]; got != "PL" {
 		t.Fatalf("home_country id = %#v, want PL", got)
 	}
-	if got := findIncludedResource(t, payload, "country", "PL")["attributes"].(map[string]any)["flag"]; got != "🇵🇱" {
+	if got := relationships["main_avatar"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/pictures/22" {
+		t.Fatalf("main_avatar related link = %#v, want /api/v3/pictures/22", got)
+	}
+	homeCountryAttributes := findIncludedResource(t, payload, "country", "PL")["attributes"].(map[string]any)
+	if got := homeCountryAttributes["flag"]; got != "🇵🇱" {
 		t.Fatalf("home_country flag = %#v, want 🇵🇱", got)
 	}
-	if got := data["relationships"].(map[string]any)["stats"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/users/1/stats" {
+	if got := homeCountryAttributes["code"]; got != "PL" {
+		t.Fatalf("home_country code = %#v, want PL", got)
+	}
+	if got := homeCountryAttributes["name"]; got != "Poland" {
+		t.Fatalf("home_country name = %#v, want Poland", got)
+	}
+	userAvatarAttributes := findIncludedResource(t, payload, "picture", "22")["attributes"].(map[string]any)
+	if got := userAvatarAttributes["url"]; got != "https://cdn.example/user.jpg" {
+		t.Fatalf("user avatar url = %#v, want https://cdn.example/user.jpg", got)
+	}
+	if got := userAvatarAttributes["type"]; got != float64(2) {
+		t.Fatalf("user avatar type = %#v, want 2", got)
+	}
+	if got := userAvatarAttributes["type_name"]; got != "user avatar" {
+		t.Fatalf("user avatar type_name = %#v, want user avatar", got)
+	}
+	if got := relationships["stats"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/users/1/stats" {
 		t.Fatalf("stats related link = %#v, want /api/v3/users/1/stats", got)
 	}
 }
@@ -496,12 +591,105 @@ func TestGetMoveDetailsUsesRootSelfLinkAndPicturesRelationship(t *testing.T) {
 	if got := attributes["type"]; got != "drop" {
 		t.Fatalf("attributes.type = %#v, want drop", got)
 	}
+	if got := attributes["comment"]; got != "Moved" {
+		t.Fatalf("attributes.comment = %#v, want Moved", got)
+	}
+	if got := attributes["pictures_count"]; got != float64(2) {
+		t.Fatalf("attributes.pictures_count = %#v, want 2", got)
+	}
+	if got := attributes["comments_count"]; got != float64(4) {
+		t.Fatalf("attributes.comments_count = %#v, want 4", got)
+	}
+	if got := attributes["app"]; got != "go test api client" {
+		t.Fatalf("attributes.app = %#v, want go test api client", got)
+	}
+	if got := attributes["app_ver"]; got != "0.0.1" {
+		t.Fatalf("attributes.app_ver = %#v, want 0.0.1", got)
+	}
+	if _, ok := attributes["created_on"]; ok {
+		t.Fatal("created_on should not be present")
+	}
 	relationships := data["relationships"].(map[string]any)
 	if got := relationships["pictures"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/pictures?move=9" {
 		t.Fatalf("pictures related link = %#v, want /api/v3/pictures?move=9", got)
 	}
 	if got := relationships["geokret"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/geokrety/GK0001" {
 		t.Fatalf("geokret related link = %#v, want /api/v3/geokrety/GK0001", got)
+	}
+	authorResource := findIncludedResource(t, payload, "user", "1")
+	if got := authorResource["relationships"].(map[string]any)["main_avatar"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/pictures/15" {
+		t.Fatalf("author main_avatar related link = %#v, want /api/v3/pictures/15", got)
+	}
+	authorAvatar := findIncludedResource(t, payload, "picture", "15")
+	if got := authorAvatar["attributes"].(map[string]any)["type_name"]; got != "user avatar" {
+		t.Fatalf("author avatar type_name = %#v, want user avatar", got)
+	}
+}
+
+func TestGetCountryDetailsUsesOfficialNameAndCode(t *testing.T) {
+	h := newTestStatsHandler(&mockStatsStore{})
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/countries/PL", nil), "code", "PL")
+	w := httptest.NewRecorder()
+
+	h.GetCountryDetails(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodePayload(t, w)
+	data := payload["data"].(map[string]any)
+	attributes := data["attributes"].(map[string]any)
+	if got := attributes["code"]; got != "PL" {
+		t.Fatalf("attributes.code = %#v, want PL", got)
+	}
+	if got := attributes["name"]; got != "Poland" {
+		t.Fatalf("attributes.name = %#v, want Poland", got)
+	}
+	if got := data["relationships"].(map[string]any)["geokrety"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/countries/PL/geokrety" {
+		t.Fatalf("geokrety related link = %#v, want /api/v3/countries/PL/geokrety", got)
+	}
+}
+
+func TestGetPictureDetailsUsesURLAndTypeMetadata(t *testing.T) {
+	h := newTestStatsHandler(&mockStatsStore{})
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/pictures/1", nil), "id", "1")
+	w := httptest.NewRecorder()
+
+	h.GetPictureDetails(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodePayload(t, w)
+	data := payload["data"].(map[string]any)
+	attributes := data["attributes"].(map[string]any)
+	if _, ok := attributes["filename"]; ok {
+		t.Fatal("filename should not be present")
+	}
+	if _, ok := attributes["key"]; ok {
+		t.Fatal("key should not be present")
+	}
+	if _, ok := attributes["created_on"]; ok {
+		t.Fatal("created_on should not be present")
+	}
+	if got := attributes["url"]; got != "https://cdn.example/pictures/1.jpg" {
+		t.Fatalf("attributes.url = %#v, want https://cdn.example/pictures/1.jpg", got)
+	}
+	if got := attributes["type"]; got != float64(1) {
+		t.Fatalf("attributes.type = %#v, want 1", got)
+	}
+	if got := attributes["type_name"]; got != "move picture" {
+		t.Fatalf("attributes.type_name = %#v, want move picture", got)
+	}
+	relationships := data["relationships"].(map[string]any)
+	if got := relationships["move"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/moves/9" {
+		t.Fatalf("move related link = %#v, want /api/v3/moves/9", got)
+	}
+	if got := relationships["geokret"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/geokrety/GK0001" {
+		t.Fatalf("geokret related link = %#v, want /api/v3/geokrety/GK0001", got)
+	}
+	if got := relationships["author"].(map[string]any)["links"].(map[string]any)["related"]; got != "/api/v3/users/1" {
+		t.Fatalf("author related link = %#v, want /api/v3/users/1", got)
 	}
 }
 

@@ -280,6 +280,79 @@ func TestPublicLiveIntegrationReturnsJSONRESTErrors(t *testing.T) {
 	assertLiveErrorDocument(t, badFilter)
 }
 
+func TestPublicLiveIntegrationMatchesLatestResourceContracts(t *testing.T) {
+	client := &http.Client{Timeout: 20 * time.Second}
+	fixtures := discoverLiveFixtures(t, client)
+
+	geokret := liveMapField(t, liveRequestJSON(t, client, "/api/v3/geokrety/"+fixtures.secondaryGeokret, http.StatusOK), "data")
+	geokretAttributes := liveMapField(t, geokret, "attributes")
+	if _, ok := geokretAttributes["avatar_id"]; ok {
+		t.Fatal("geokret attributes.avatar_id should not be present")
+	}
+	if _, ok := geokretAttributes["avatar_url"]; ok {
+		t.Fatal("geokret attributes.avatar_url should not be present")
+	}
+	geokretMainAvatar := liveRelationshipResource(t, geokret, "main_avatar")
+	if geokretMainAvatar != nil && liveStringField(t, geokretMainAvatar, "type") != "picture" {
+		t.Fatal("geokret main_avatar must target picture")
+	}
+
+	geokretStats := liveMapField(t, liveRequestJSON(t, client, "/api/v3/geokrety/"+fixtures.primaryGeokret+"/stats", http.StatusOK), "data")
+	if _, ok := liveMapField(t, geokretStats, "attributes")["loves_count"]; ok {
+		t.Fatal("geokret stats attributes.loves_count should not be present")
+	}
+
+	user := liveMapField(t, liveRequestJSON(t, client, "/api/v3/users/"+fixtures.secondaryUserID, http.StatusOK), "data")
+	userAttributes := liveMapField(t, user, "attributes")
+	if _, ok := userAttributes["avatar_id"]; ok {
+		t.Fatal("user attributes.avatar_id should not be present")
+	}
+	if _, ok := userAttributes["avatar_url"]; ok {
+		t.Fatal("user attributes.avatar_url should not be present")
+	}
+	userMainAvatar := liveRelationshipResource(t, user, "main_avatar")
+	if userMainAvatar != nil && liveStringField(t, userMainAvatar, "type") != "picture" {
+		t.Fatal("user main_avatar must target picture")
+	}
+
+	country := liveMapField(t, liveRequestJSON(t, client, "/api/v3/countries/"+fixtures.countryCode, http.StatusOK), "data")
+	countryAttributes := liveMapField(t, country, "attributes")
+	if got := liveStringField(t, countryAttributes, "code"); got != fixtures.countryCode {
+		t.Fatalf("country attributes.code = %q, want %q", got, fixtures.countryCode)
+	}
+	if strings.TrimSpace(liveStringField(t, countryAttributes, "name")) == "" {
+		t.Fatal("country attributes.name missing")
+	}
+
+	move := liveMapField(t, liveRequestJSON(t, client, "/api/v3/moves/"+fixtures.moveID, http.StatusOK), "data")
+	moveAttributes := liveMapField(t, move, "attributes")
+	for _, key := range []string{"pictures_count", "comments_count", "comment"} {
+		if _, ok := moveAttributes[key]; !ok {
+			t.Fatalf("move attributes.%s missing", key)
+		}
+	}
+	if _, ok := moveAttributes["created_on"]; ok {
+		t.Fatal("move attributes.created_on should not be present")
+	}
+
+	picture := liveMapField(t, liveRequestJSON(t, client, "/api/v3/pictures/"+fixtures.pictureID, http.StatusOK), "data")
+	pictureAttributes := liveMapField(t, picture, "attributes")
+	for _, forbidden := range []string{"filename", "key", "created_on"} {
+		if _, ok := pictureAttributes[forbidden]; ok {
+			t.Fatalf("picture attributes.%s should not be present", forbidden)
+		}
+	}
+	if strings.TrimSpace(liveStringField(t, pictureAttributes, "url")) == "" {
+		t.Fatal("picture attributes.url missing")
+	}
+	if !liveHasNumber(pictureAttributes["type"]) {
+		t.Fatalf("picture attributes.type missing or invalid: %#v", pictureAttributes["type"])
+	}
+	if strings.TrimSpace(liveStringField(t, pictureAttributes, "type_name")) == "" {
+		t.Fatal("picture attributes.type_name missing")
+	}
+}
+
 func discoverLiveFixtures(t *testing.T, client *http.Client) liveFixtures {
 	t.Helper()
 	fixtures := liveFixtures{
@@ -660,6 +733,32 @@ func liveRelationshipID(payload map[string]any, name string) string {
 	}
 	id, _ := identifier["id"].(string)
 	return strings.TrimSpace(id)
+}
+
+func liveRelationshipResource(t *testing.T, resource map[string]any, name string) map[string]any {
+	t.Helper()
+	relationships, ok := resource["relationships"].(map[string]any)
+	if !ok {
+		t.Fatalf("resource.relationships missing: %#v", resource)
+	}
+	relationship, ok := relationships[name].(map[string]any)
+	if !ok {
+		t.Fatalf("relationship %q missing: %#v", name, relationships)
+	}
+	if links, ok := relationship["links"].(map[string]any); ok {
+		if strings.TrimSpace(liveOptionalStringField(links, "related")) == "" {
+			t.Fatalf("relationship %q links.related missing", name)
+		}
+	}
+	data, ok := relationship["data"]
+	if !ok || data == nil {
+		return nil
+	}
+	identifier, ok := data.(map[string]any)
+	if !ok {
+		t.Fatalf("relationship %q data invalid: %#v", name, data)
+	}
+	return identifier
 }
 
 func firstCollectionResourceID(payload map[string]any) string {

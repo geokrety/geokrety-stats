@@ -130,7 +130,6 @@ SELECT
 	g.gkid,
 	g.caches_count,
 	g.pictures_count,
-	g.loves_count,
 	(
 		SELECT COUNT(*)::bigint
 		FROM geokrety.gk_moves AS m

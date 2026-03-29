@@ -11,6 +11,14 @@ import (
 	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
 	sharedjsonrest "github.com/geokrety/geokrety-stats/geokrety/jsonrest"
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/text/language"
+	"golang.org/x/text/language/display"
+)
+
+const (
+	geokretAvatarPictureType int16 = 0
+	movePictureType          int16 = 1
+	userAvatarPictureType    int16 = 2
 )
 
 func resourceDataFromPayload(r *http.Request, payload any) any {
@@ -119,8 +127,6 @@ func presentGeokretResource(row db.GeokretListItem) (sharedjsonrest.Resource, []
 		"parked":          row.ParkedAt != nil,
 		"comments_hidden": row.CommentsHidden,
 	}
-	setInt64Ptr(attributes, "avatar_id", row.AvatarID)
-	setStringPtr(attributes, "avatar_url", row.AvatarURL)
 	setTimePtr(attributes, "missing_at", row.MissingAt)
 	setTimePtr(attributes, "born_at", row.BornAt)
 	setTimePtr(attributes, "last_move_at", row.LastMoveAt)
@@ -130,12 +136,14 @@ func presentGeokretResource(row db.GeokretListItem) (sharedjsonrest.Resource, []
 	}
 
 	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedAvatarPictureResource(row.AvatarID, row.AvatarURL, geokretAvatarPictureType)))
 	collector.Add(optionalResource(includedUserResource(row.OwnerID, row.OwnerUsername, nil, nil)))
 	collector.Add(optionalResource(includedUserResource(row.HolderID, row.HolderUsername, nil, nil)))
 	collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
 	collector.Add(optionalResource(includedWaypointResource(row.Waypoint)))
 
 	relationships := relationships(
+		mainAvatarRelationship(row.AvatarID),
 		relationshipWithIdentifier("owner", "user", int64PtrString(row.OwnerID), userPath(int64PtrString(row.OwnerID))),
 		relationshipWithIdentifier("holder", "user", int64PtrString(row.HolderID), userPath(int64PtrString(row.HolderID))),
 		relationshipWithIdentifier("country", "country", stringPtrString(row.Country), countryPath(stringPtrString(row.Country))),
@@ -160,7 +168,6 @@ func presentGeokretStatsResource(row db.GeokretStats) (sharedjsonrest.Resource, 
 	attributes := map[string]any{
 		"caches_count":            row.CachesCount,
 		"pictures_count":          row.PicturesCount,
-		"loves_count":             row.LovesCount,
 		"moves_count":             row.MovesCount,
 		"countries_visited_count": row.CountriesVisitedCount,
 		"waypoints_visited_count": row.WaypointsVisitedCount,
@@ -198,9 +205,12 @@ func presentMoveResource(row db.MoveRecord) (sharedjsonrest.Resource, []sharedjs
 		"date":           row.MovedOn.UTC().Format(time.RFC3339),
 		"username":       nonEmptyString(row.Username, "unknown"),
 		"comment_hidden": row.CommentHidden,
-		"created_on":     row.CreatedOn.UTC().Format(time.RFC3339),
+		"pictures_count": row.PicturesCount,
+		"comments_count": row.CommentsCount,
+		"comment":        stringValueOrNil(row.Comment),
+		"app":            stringValueOrNil(row.App),
+		"app_ver":        stringValueOrNil(row.AppVersion),
 	}
-	setStringPtr(attributes, "comment", row.Comment)
 	setInt64Ptr(attributes, "elevation", row.Elevation)
 	setFloat64Ptr(attributes, "km_distance", row.KMDistance)
 	if row.GeoJSON != nil {
@@ -210,6 +220,7 @@ func presentMoveResource(row db.MoveRecord) (sharedjsonrest.Resource, []sharedjs
 	collector := newIncludeCollector()
 	collector.Add(optionalResource(includedGeokretResource(row.GeokretGKID, nil)))
 	collector.Add(optionalResource(includedUserResource(row.AuthorID, localStringPtr(nonEmptyString(row.Username, "")), row.AuthorAvatarID, row.AuthorAvatarURL)))
+	collector.Add(optionalResource(includedAvatarPictureResource(row.AuthorAvatarID, row.AuthorAvatarURL, userAvatarPictureType)))
 	collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
 	collector.Add(optionalResource(includedWaypointResource(row.Waypoint)))
 
@@ -245,6 +256,7 @@ func presentSocialRelationshipCollection(r *http.Request, rows []db.SocialUserEn
 			linksForPath(sharedjsonrest.SelfLink(r)+"#"+resourceID),
 		))
 		collector.Add(optionalResource(includedUserResource(&row.UserID, &row.Username, row.AvatarID, row.AvatarURL)))
+		collector.Add(optionalResource(includedAvatarPictureResource(row.AvatarID, row.AvatarURL, userAvatarPictureType)))
 	}
 	if gkid != "" {
 		collector.Add(optionalResource(includedGeokretResource(currentGeokretIDFromRequest(r), nil)))
@@ -266,12 +278,11 @@ func presentPictureCollection(rows []db.PictureInfo) presentedPayload {
 func presentPictureResource(row db.PictureInfo) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	pictureID := strconv.FormatInt(row.ID, 10)
 	attributes := map[string]any{
-		"type":       row.Type,
-		"created_on": row.CreatedOn.UTC().Format(time.RFC3339),
+		"type":      row.Type,
+		"type_name": pictureTypeName(row.Type),
+		"url":       stringValueOrNil(row.URL),
 	}
-	setStringPtr(attributes, "filename", row.Filename)
 	setStringPtr(attributes, "caption", row.Caption)
-	setStringPtr(attributes, "key", row.Key)
 	setStringPtr(attributes, "author_username", row.AuthorUsername)
 	setTimePtr(attributes, "uploaded_on", row.UploadedOn)
 	collector := newIncludeCollector()
@@ -348,7 +359,11 @@ func presentCountryCollection(rows []db.CountryDetails) presentedPayload {
 }
 
 func presentCountryResource(row db.CountryDetails) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
-	attributes := map[string]any{"name": row.Name, "flag": row.Flag}
+	attributes := map[string]any{
+		"code": row.Code,
+		"name": officialCountryName(row.Code, row.Name),
+		"flag": row.Flag,
+	}
 	setStringPtr(attributes, "continent_code", row.ContinentCode)
 	setStringPtr(attributes, "continent_name", row.ContinentName)
 	relationships := relationships(collectionRelationship("geokrety", "/api/v3/countries/"+row.Code+"/geokrety"))
@@ -395,12 +410,12 @@ func presentUserSearchCollection(rows []db.UserSearchResult) presentedPayload {
 func presentUserResource(id int64, username string, joinedAt time.Time, lastMoveAt *time.Time, avatarID *int64, avatarURL *string, homeCountry *string, homeCountryFlag string) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	userID := strconv.FormatInt(id, 10)
 	attributes := map[string]any{"username": username, "joined_at": joinedAt.UTC().Format("2006-01-02")}
-	setInt64Ptr(attributes, "avatar_id", avatarID)
-	setStringPtr(attributes, "avatar_url", avatarURL)
 	setDatePtr(attributes, "last_move_at", lastMoveAt)
 	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedAvatarPictureResource(avatarID, avatarURL, userAvatarPictureType)))
 	collector.Add(optionalResource(includedCountryResource(homeCountry, localStringPtr(homeCountryFlag))))
 	relationships := relationships(
+		mainAvatarRelationship(avatarID),
 		relationshipWithIdentifier("home_country", "country", stringPtrString(homeCountry), countryPath(stringPtrString(homeCountry))),
 		collectionRelationship("owned_geokrety", userPath(userID)+"/geokrety-owned"),
 		collectionRelationship("found_geokrety", userPath(userID)+"/geokrety-found"),
@@ -535,9 +550,7 @@ func includedUserResource(id *int64, username *string, avatarID *int64, avatarUR
 	userID := strconv.FormatInt(*id, 10)
 	attributes := map[string]any{}
 	setStringPtr(attributes, "username", username)
-	setInt64Ptr(attributes, "avatar_id", avatarID)
-	setStringPtr(attributes, "avatar_url", avatarURL)
-	resource := newResource(userID, "user", mapOrNil(attributes), nil, linksForPath(userPath(userID)))
+	resource := newResource(userID, "user", mapOrNil(attributes), relationships(mainAvatarRelationship(avatarID)), linksForPath(userPath(userID)))
 	return &resource
 }
 
@@ -546,7 +559,10 @@ func includedCountryResource(code *string, flag *string) *sharedjsonrest.Resourc
 		return nil
 	}
 	countryCode := strings.ToUpper(strings.TrimSpace(*code))
-	attributes := map[string]any{}
+	attributes := map[string]any{
+		"code": countryCode,
+		"name": officialCountryName(countryCode, ""),
+	}
 	resolvedFlag := countryFlagFromCode(countryCode)
 	if flag != nil && strings.TrimSpace(*flag) != "" {
 		resolvedFlag = *flag
@@ -574,6 +590,24 @@ func includedGeokretResource(gkid *geokrety.GeokretId, name *string) *sharedjson
 	setStringPtr(attributes, "name", name)
 	resource := newResource(id, "geokrety", mapOrNil(attributes), nil, linksForPath(geokretPath(id)))
 	return &resource
+}
+
+func includedAvatarPictureResource(id *int64, resourceURL *string, pictureType int16) *sharedjsonrest.Resource {
+	if id == nil {
+		return nil
+	}
+	pictureID := strconv.FormatInt(*id, 10)
+	attributes := map[string]any{
+		"type":      pictureType,
+		"type_name": pictureTypeName(pictureType),
+		"url":       stringValueOrNil(resourceURL),
+	}
+	resource := newResource(pictureID, "picture", mapOrNil(attributes), nil, linksForPath(picturePath(pictureID)))
+	return &resource
+}
+
+func mainAvatarRelationship(avatarID *int64) namedRelationship {
+	return relationshipWithIdentifier("main_avatar", "picture", int64PtrString(avatarID), picturePath(int64PtrString(avatarID)))
 }
 
 func optionalResource(resource *sharedjsonrest.Resource) sharedjsonrest.Resource {
@@ -658,6 +692,13 @@ func movePath(moveID string) string {
 		return ""
 	}
 	return "/api/v3/moves/" + moveID
+}
+
+func picturePath(pictureID string) string {
+	if pictureID == "" {
+		return ""
+	}
+	return "/api/v3/pictures/" + pictureID
 }
 
 func userPath(userID string) string {
@@ -757,6 +798,41 @@ func setDatePtr(target map[string]any, key string, value *time.Time) {
 		return
 	}
 	target[key] = value.UTC().Format("2006-01-02")
+}
+
+func stringValueOrNil(value *string) any {
+	if value == nil {
+		return nil
+	}
+	return *value
+}
+
+func officialCountryName(code, fallback string) string {
+	normalized := strings.ToUpper(strings.TrimSpace(code))
+	if normalized != "" {
+		if region, err := language.ParseRegion(normalized); err == nil {
+			if name := strings.TrimSpace(display.English.Regions().Name(region)); name != "" {
+				return name
+			}
+		}
+	}
+	if strings.TrimSpace(fallback) != "" {
+		return fallback
+	}
+	return normalized
+}
+
+func pictureTypeName(pictureType int16) string {
+	switch pictureType {
+	case geokretAvatarPictureType:
+		return "geokret avatar"
+	case movePictureType:
+		return "move picture"
+	case userAvatarPictureType:
+		return "user avatar"
+	default:
+		return "picture"
+	}
 }
 
 func countryFlagFromCode(code string) string {

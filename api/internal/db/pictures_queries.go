@@ -9,13 +9,14 @@ import (
 )
 
 func pictureSelectColumns() string {
-	return `
+	return fmt.Sprintf(`
 SELECT
 	p.id,
 	p.type,
 	p.filename,
 	p.caption,
 	p.key,
+	%s AS url,
 	p.geokret AS geokret_id,
 	gg.gkid AS geokret_gkid,
 	p.move AS move_id,
@@ -24,7 +25,7 @@ SELECT
 	u.username AS author_username,
 	p.uploaded_on_datetime,
 	p.created_on_datetime
-`
+`, pictureURLSQL("p"))
 }
 
 func pictureBaseFromClause() string {

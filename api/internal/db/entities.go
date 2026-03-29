@@ -47,7 +47,6 @@ type GeokretStats struct {
 	GKID                  *geokrety.GeokretId `db:"gkid" json:"gkid" xml:"gkid,omitempty"`
 	CachesCount           int64               `db:"caches_count" json:"cachesCount" xml:"cachesCount"`
 	PicturesCount         int64               `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
-	LovesCount            int64               `db:"loves_count" json:"lovesCount" xml:"lovesCount"`
 	MovesCount            int64               `db:"moves_count" json:"movesCount" xml:"movesCount"`
 	CountriesVisitedCount int64               `db:"countries_visited_count" json:"countriesVisitedCount" xml:"countriesVisitedCount"`
 	WaypointsVisitedCount int64               `db:"waypoints_visited_count" json:"waypointsVisitedCount" xml:"waypointsVisitedCount"`
@@ -91,6 +90,10 @@ type MoveRecord struct {
 	Lon                *float64            `db:"lon" json:"lon" xml:"lon,omitempty"`
 	Elevation          *int64              `db:"elevation" json:"elevation" xml:"elevation,omitempty"`
 	KMDistance         *float64            `db:"km_distance" json:"kmDistance" xml:"kmDistance,omitempty"`
+	PicturesCount      int64               `db:"pictures_count" json:"picturesCount" xml:"picturesCount"`
+	CommentsCount      int64               `db:"comments_count" json:"commentsCount" xml:"commentsCount"`
+	App                *string             `db:"app" json:"app,omitempty" xml:"app,omitempty"`
+	AppVersion         *string             `db:"app_ver" json:"appVersion,omitempty" xml:"appVersion,omitempty"`
 	MovedOn            time.Time           `db:"moved_on_datetime" json:"movedOn" xml:"movedOn"`
 	CreatedOn          time.Time           `db:"created_on_datetime" json:"createdOn" xml:"createdOn"`
 	Comment            *string             `db:"comment" json:"comment" xml:"comment,omitempty"`
@@ -125,6 +128,7 @@ type PictureInfo struct {
 	Filename       *string             `db:"filename" json:"filename" xml:"filename,omitempty"`
 	Caption        *string             `db:"caption" json:"caption" xml:"caption,omitempty"`
 	Key            *string             `db:"key" json:"key" xml:"key,omitempty"`
+	URL            *string             `db:"url" json:"url,omitempty" xml:"url,omitempty"`
 	GeokretID      *int64              `db:"geokret_id" json:"geokretId" xml:"geokretId,omitempty"`
 	GeokretGKID    *geokrety.GeokretId `db:"geokret_gkid" json:"geokretGkid,omitempty" xml:"geokretGkid,omitempty"`
 	MoveID         *int64              `db:"move_id" json:"moveId" xml:"moveId,omitempty"`

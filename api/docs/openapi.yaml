@@ -1672,7 +1672,12 @@ components:
         id:
           type: string
     JsonRestRelationshipData:
-      $ref: '#/components/schemas/JsonRestIdentifier'
+      nullable: true
+      oneOf:
+      - $ref: '#/components/schemas/JsonRestIdentifier'
+      - type: array
+        items:
+          $ref: '#/components/schemas/JsonRestIdentifier'
     JsonRestRelationship:
       type: object
       properties:
@@ -1833,6 +1838,62 @@ components:
             type: string
             enum:
             - geokrety
+          attributes:
+            type: object
+            properties:
+              name:
+                type: string
+              type_id:
+                type: integer
+              type_name:
+                type: string
+              missing:
+                type: boolean
+              collectible:
+                type: boolean
+              parked:
+                type: boolean
+              comments_hidden:
+                type: boolean
+              missing_at:
+                type: string
+                format: date-time
+                nullable: true
+              born_at:
+                type: string
+                format: date-time
+                nullable: true
+              last_move_at:
+                type: string
+                format: date-time
+                nullable: true
+              mission:
+                type: string
+                nullable: true
+              location:
+                $ref: '#/components/schemas/GeoJSONPoint'
+                nullable: true
+          relationships:
+            type: object
+            properties:
+              main_avatar:
+                description: Main GeoKret avatar picture relationship replacing the
+                  old avatar_url attribute.
+                $ref: '#/components/schemas/JsonRestRelationship'
+              owner:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              holder:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              country:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              waypoint:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              last_position:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              last_log:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              stats:
+                $ref: '#/components/schemas/JsonRestRelationship'
     MoveResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -1842,6 +1903,61 @@ components:
             type: string
             enum:
             - move
+          attributes:
+            type: object
+            properties:
+              type_id:
+                type: integer
+              type:
+                type: string
+              date:
+                type: string
+                format: date-time
+                description: Move timestamp derived from moved_on_datetime.
+              username:
+                type: string
+              comment_hidden:
+                type: boolean
+              comment:
+                type: string
+                nullable: true
+              pictures_count:
+                type: integer
+              comments_count:
+                type: integer
+              app:
+                type: string
+                nullable: true
+              app_ver:
+                type: string
+                nullable: true
+              elevation:
+                type: integer
+                nullable: true
+              km_distance:
+                type: number
+                format: double
+                nullable: true
+              location:
+                $ref: '#/components/schemas/GeoJSONPoint'
+                nullable: true
+          relationships:
+            type: object
+            properties:
+              geokret:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              author:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              country:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              waypoint:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              previous_move:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              previous_position:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              pictures:
+                $ref: '#/components/schemas/JsonRestRelationship'
     UserResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -1851,6 +1967,29 @@ components:
             type: string
             enum:
             - user
+          attributes:
+            type: object
+            properties:
+              username:
+                type: string
+              joined_at:
+                type: string
+                format: date
+              last_move_at:
+                type: string
+                format: date
+                nullable: true
+          relationships:
+            type: object
+            properties:
+              main_avatar:
+                description: Main user avatar picture relationship replacing the old
+                  avatar_url attribute.
+                $ref: '#/components/schemas/JsonRestRelationship'
+              home_country:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              stats:
+                $ref: '#/components/schemas/JsonRestRelationship'
     PictureResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -1860,6 +1999,46 @@ components:
             type: string
             enum:
             - picture
+          attributes:
+            type: object
+            properties:
+              type:
+                type: integer
+                enum:
+                - 0
+                - 1
+                - 2
+              type_name:
+                type: string
+                enum:
+                - geokret avatar
+                - move picture
+                - user avatar
+                - picture
+              url:
+                type: string
+                nullable: true
+              caption:
+                type: string
+                nullable: true
+              author_username:
+                type: string
+                nullable: true
+              uploaded_on:
+                type: string
+                format: date-time
+                nullable: true
+          relationships:
+            type: object
+            properties:
+              geokret:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              move:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              user:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              author:
+                $ref: '#/components/schemas/JsonRestRelationship'
     CountryResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -1869,6 +2048,29 @@ components:
             type: string
             enum:
             - country
+          attributes:
+            type: object
+            properties:
+              code:
+                type: string
+                maxLength: 2
+              name:
+                type: string
+                description: Official English country name.
+              flag:
+                type: string
+                nullable: true
+              continent_code:
+                type: string
+                nullable: true
+              continent_name:
+                type: string
+                nullable: true
+          relationships:
+            type: object
+            properties:
+              geokrety:
+                $ref: '#/components/schemas/JsonRestRelationship'
     WaypointResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -1932,6 +2134,32 @@ components:
             type: string
             enum:
             - geokrety_stats
+          attributes:
+            type: object
+            properties:
+              caches_count:
+                type: integer
+              pictures_count:
+                type: integer
+              moves_count:
+                type: integer
+              countries_visited_count:
+                type: integer
+              waypoints_visited_count:
+                type: integer
+              finders_count:
+                type: integer
+              watchers_count:
+                type: integer
+              lovers_count:
+                type: integer
+          relationships:
+            type: object
+            properties:
+              current_country:
+                $ref: '#/components/schemas/JsonRestRelationship'
+              current_waypoint:
+                $ref: '#/components/schemas/JsonRestRelationship'
     UserStatsResource:
       allOf:
       - $ref: '#/components/schemas/JsonRestResource'
@@ -2555,8 +2783,6 @@ components:
         waypoint:
           type: string
           nullable: true
-        lovesCount:
-          type: integer
         picturesCount:
           type: integer
         bornAt:
@@ -2624,8 +2850,6 @@ components:
           type: number
           format: double
           nullable: true
-        lovesCount:
-          type: integer
         picturesCount:
           type: integer
         bornAt:
@@ -2673,9 +2897,6 @@ components:
         movedOn:
           type: string
           format: date-time
-        createdOn:
-          type: string
-          format: date-time
         country:
           type: string
           maxLength: 2
@@ -2696,6 +2917,12 @@ components:
         commentsCount:
           type: integer
         comment:
+          type: string
+          nullable: true
+        app:
+          type: string
+          nullable: true
+        appVer:
           type: string
           nullable: true
         commentHidden:
@@ -2786,13 +3013,12 @@ components:
           format: int64
         type:
           type: integer
-        filename:
+        typeName:
           type: string
-          nullable: true
         caption:
           type: string
           nullable: true
-        key:
+        url:
           type: string
           nullable: true
         geokretId:
@@ -2818,9 +3044,6 @@ components:
           type: string
           format: date-time
           nullable: true
-        createdOn:
-          type: string
-          format: date-time
     GeokretCountryVisit:
       type: object
       properties:
