@@ -2,21 +2,25 @@ openapi: 3.0.3
 info:
   title: GeoKrety Stats API
   version: 3.1.0
-  description: "Read-only API for GeoKrety statistics,\n    activity feeds,\nentity\
-    \ exploration, and visualization workloads.\n\nEvery `/api/v3/...` JSON endpoint\
-    \ returns a response envelope with `data`\nand `meta`. List endpoints support\
-    \ `limit` and `offset` pagination.\nSearch endpoints require a `q` query parameter\
-    \ of at least 2 characters.\n\n## GeoKret Public Identifiers (GKID)\n\nGeoKrety\
-    \ endpoints accept public identifiers in three forms:\n- **Numeric decimal**:\
-    \ `1`, `123`, `65535` (direct GKID number)\n- **Bare hexadecimal**: `0001`, `00FF`,\
-    \ `FFFF` (hex without the `GK` prefix)\n- **GK-prefixed hexadecimal**: `GK0001`,\
-    \ `GK00FF`, `GKFFFF`\n  (padded hex representation)\n\nParsing is case-insensitive.\
-    \ Digit-only inputs without a leading zero are\ntreated as decimal, while zero-padded\
-    \ digit-only inputs are treated as\nhexadecimal.\n\nAll forms resolve to the same\
-    \ GeoKret. Examples:\n- `/api/v3/geokrety/1` and `/api/v3/geokrety/GK0001` fetch\
-    \ the same GeoKret\n- `/api/v3/geokrety/00FF` and `/api/v3/geokrety/GK00FF` fetch\
-    \ the same GeoKret\n- `/api/v3/geokrety/255` and `/api/v3/geokrety/GK00FF` are\
-    \ equivalent"
+  description: "Read-only API for GeoKrety statistics,\n    resource exploration.\n\
+    \nThe `/api/v3/...` contract is JSON REST based: every JSON response uses\ntop-level\
+    \ `data`, `meta`, and `links`, while resource objects expose `id`,\n`type`, `attributes`,\
+    \ optional `relationships`, and resource-scoped\n`links.self`.\nCollection endpoints\
+    \ are cursor-first for now: clients send `limit`, follow\n`links.next`, and continue\
+    \ while `meta.has_more` is true. Search endpoints\nrequire a `q` query parameter\
+    \ of at least 2 characters.\nThe public API surface was intentionally reduced\
+    \ during the big-bang\nmigration: redundant activity, stats, alias, and visualization\
+    \ endpoints were\nremoved so the stable contract centers on core resources and\
+    \ scoped\ncollections.\n\n## GeoKret Public Identifiers (GKID)\n\nGeoKrety endpoints\
+    \ accept public identifiers in three forms:\n- **Numeric decimal**: `1`, `123`,\
+    \ `65535` (direct GKID number)\n- **Bare hexadecimal**: `0001`, `00FF`, `FFFF`\
+    \ (hex without the `GK` prefix)\n- **GK-prefixed hexadecimal**: `GK0001`, `GK00FF`,\
+    \ `GKFFFF`\n  (padded hex representation)\n\nParsing is case-insensitive. Digit-only\
+    \ inputs without a leading zero are\ntreated as decimal, while zero-padded digit-only\
+    \ inputs are treated as\nhexadecimal.\n\nAll forms resolve to the same GeoKret.\
+    \ Examples:\n- `/api/v3/geokrety/1` and `/api/v3/geokrety/GK0001` fetch the same\
+    \ GeoKret\n- `/api/v3/geokrety/00FF` and `/api/v3/geokrety/GK00FF` fetch the same\
+    \ GeoKret\n- `/api/v3/geokrety/255` and `/api/v3/geokrety/GK00FF` are equivalent"
 servers:
 - url: http://192.168.130.65:7415
   description: Local network development server
@@ -25,10 +29,8 @@ servers:
 tags:
 - name: System
   description: Service metadata, health checks, metrics, and websocket entrypoint
-- name: Stats
-  description: Global graph and leaderboard datasets
 - name: Geokrety
-  description: GeoKret entity details, feeds, graphs, and map payloads
+  description: GeoKret entities and their primary relationship collections
 - name: Countries
   description: Country-level aggregates and currently spotted GeoKrety
 - name: Waypoints
@@ -151,463 +153,32 @@ paths:
             application/yaml:
               schema:
                 type: string
-  /api/v3/stats/kpis:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsKpis
-      summary: Global KPI counters
-      responses:
-        '200':
-          description: Global KPI payload
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GlobalStats'
-              example:
-                data:
-                  totalGeokrety: 108950
-                  totalGeokretyHidden: 55368
-                  totalMoves: 6926419
-                  movesLast30Days: 19957
-                  registeredUsers: 36410
-                  activeUsers: 16
-                  activeUsersLast30d: 214
-                  countriesReached: 209
-                  picturesUploaded: 69213
-                meta:
-                  requestedAt: '2026-03-16T20:47:17Z'
-                  queryMs: 90
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GlobalStats'
-              example:
-                data:
-                  totalGeokrety: 108950
-                  totalGeokretyHidden: 55368
-                  totalMoves: 6926419
-                  movesLast30Days: 19957
-                  registeredUsers: 36410
-                  activeUsers: 16
-                  activeUsersLast30d: 214
-                  countriesReached: 209
-                  picturesUploaded: 69213
-                meta:
-                  requestedAt: '2026-03-16T20:47:17Z'
-                  queryMs: 90
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/countries:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsCountries
-      summary: Country leaderboard and map aggregates
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Country aggregate rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryStats'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryStats'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/leaderboard:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsLeaderboard
-      summary: User leaderboard
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: User ranking rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/LeaderboardUser'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/LeaderboardUser'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/hourly-heatmap:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsHourlyHeatmap
-      summary: Hourly activity heatmap cells
-      description: Heatmap-ready cells grouped by UTC day and hour.
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Hourly heatmap cells
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/HourlyHeatmapCell'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/HourlyHeatmapCell'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/seasonal-heatmap:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsSeasonalHeatmapAlias
-      summary: Seasonal heatmap alias
-      description: Alias of `/api/v3/stats/hourly-heatmap` backed by the same handler
-        and schema.
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Hourly heatmap cells
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/HourlyHeatmapCell'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/HourlyHeatmapCell'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/country-flows:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsCountryFlows
-      summary: Cross-country GeoKret flow records
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Country flow records
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryFlow'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryFlow'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/top-caches:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsTopCaches
-      summary: Most visited waypoints globally
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Top cache records
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/TopCache'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/TopCache'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/first-finder-leaderboard:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsFirstFinderLeaderboard
-      summary: First-finder hall of fame
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: First-finder ranking rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/FirstFinderLeaderboardEntry'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/FirstFinderLeaderboardEntry'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/distance-records:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsDistanceRecords
-      summary: Distance record leaderboard for GeoKrety
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Distance record rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DistanceRecord'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DistanceRecord'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/dormancy:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsDormancy
-      summary: Longest dormancy records
-      description: GeoKrety ordered by inactivity duration since the last touch event.
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Dormancy records
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DormancyRecord'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DormancyRecord'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/stats/multiplier-velocity:
-    get:
-      tags:
-      - Stats
-      operationId: getStatsMultiplierVelocity
-      summary: Recent multiplier velocity records
-      description: GeoKrety ordered by recent multiplier delta trends.
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Multiplier velocity records
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/MultiplierVelocityRecord'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/MultiplierVelocityRecord'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety:
     get:
       tags:
       - Geokrety
       operationId: listGeokrety
       summary: List GeoKrety
-      description: 'Paginated list of GeoKrety. Results are ordered by activity (most
-        recent moves first).
-
-        '
       parameters:
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
+      - $ref: '#/components/parameters/GeokretIdsParam'
       responses:
         '200':
-          description: Paginated GeoKrety list
+          description: Cursor-paginated GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/search:
@@ -619,173 +190,23 @@ paths:
       parameters:
       - $ref: '#/components/parameters/SearchQueryParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Matching GeoKrety
+          description: Matching GeoKrety.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/recent-moves:
-    get:
-      tags:
-      - Geokrety
-      operationId: getRecentGeokretyMoves
-      summary: Recent GeoKrety moves
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recent move feed
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentMove'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentMove'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/recent-born:
-    get:
-      tags:
-      - Geokrety
-      operationId: getRecentGeokretyBorn
-      summary: Recently created GeoKrety
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recent born feed
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentBorn'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentBorn'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/recent-loved:
-    get:
-      tags:
-      - Geokrety
-      operationId: getRecentGeokretyLoved
-      summary: Recently loved GeoKrety
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recent love feed
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentLoved'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentLoved'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/recent-watched:
-    get:
-      tags:
-      - Geokrety
-      operationId: getRecentGeokretyWatched
-      summary: Recently watched GeoKrety
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recent watch feed
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentWatched'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentWatched'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}:
@@ -794,91 +215,20 @@ paths:
       - Geokrety
       operationId: getGeokret
       summary: GeoKret details
-      description: Fetch full details for a single GeoKret by public identifier (GKID).
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       responses:
         '200':
-          description: GeoKret detail payload
+          description: Single GeoKret resource document.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
                 - type: object
                   properties:
                     data:
-                      $ref: '#/components/schemas/GeokretDetails'
-              example:
-                data:
-                  id: 1
-                  gkid: GK0001
-                  name: Pierwszy GeoKret
-                  type: 0
-                  missing: false
-                  ownerId: 1
-                  ownerUsername: filips
-                  holderId: 1
-                  holderUsername: filips
-                  country: null
-                  waypoint: null
-                  lat: null
-                  lon: null
-                  lovesCount: 0
-                  picturesCount: 0
-                  bornAt: '2007-10-26T02:00:00+02:00'
-                  lastMoveAt: null
-                  geojson: null
-                  mission: Pierwszy GeoKret
-                  distanceKm: 0
-                  cachesCount: 0
-                  commentsHidden: false
-                meta:
-                  requestedAt: '2026-03-16T20:47:17Z'
-                  queryMs: 2
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GeokretDetails'
-              example:
-                data:
-                  id: 1
-                  gkid: GK0001
-                  name: Pierwszy GeoKret
-                  type: 0
-                  missing: false
-                  ownerId: 1
-                  ownerUsername: filips
-                  holderId: 1
-                  holderUsername: filips
-                  country: null
-                  waypoint: null
-                  lat: null
-                  lon: null
-                  lovesCount: 0
-                  picturesCount: 0
-                  bornAt: '2007-10-26T02:00:00+02:00'
-                  lastMoveAt: null
-                  geojson: null
-                  mission: Pierwszy GeoKret
-                  distanceKm: 0
-                  cachesCount: 0
-                  commentsHidden: false
-                meta:
-                  requestedAt: '2026-03-16T20:47:17Z'
-                  queryMs: 2
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
+                      $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -889,38 +239,31 @@ paths:
     get:
       tags:
       - Geokrety
-      operationId: getGeokretMoves
+      operationId: listGeokretMoves
       summary: GeoKret move history
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
+      - $ref: '#/components/parameters/MoveIdsParam'
       responses:
         '200':
-          description: Move history rows
+          description: Cursor-paginated move collection for a GeoKret.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/MoveRecord'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/MoveRecord'
+                        $ref: '#/components/schemas/MoveResource'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/moves/{moveId}:
@@ -928,30 +271,22 @@ paths:
       tags:
       - Geokrety
       operationId: getGeokretMove
-      summary: Single GeoKret move details
+      summary: GeoKret move details
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/MoveIdParam'
       responses:
         '200':
-          description: Move detail payload
+          description: Single move resource document.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
                 - type: object
                   properties:
                     data:
-                      $ref: '#/components/schemas/MoveRecord'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/MoveRecord'
+                      $ref: '#/components/schemas/MoveResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -962,651 +297,150 @@ paths:
     get:
       tags:
       - Geokrety
-      operationId: getGeokretLovedBy
-      summary: Users who loved a GeoKret
+      operationId: listGeokretLovers
+      summary: Users who love a GeoKret
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Love relation rows
+          description: Cursor-paginated user collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/SocialUserEntry'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SocialUserEntry'
+                        $ref: '#/components/schemas/UserResource'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/watched-by:
     get:
       tags:
       - Geokrety
-      operationId: getGeokretWatchedBy
-      summary: Users watching a GeoKret
+      operationId: listGeokretWatchers
+      summary: Users who watch a GeoKret
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Watch relation rows
+          description: Cursor-paginated user collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/SocialUserEntry'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SocialUserEntry'
+                        $ref: '#/components/schemas/UserResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/loves:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretLovesAlias
-      summary: Deprecated alias for loved-by
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/geokrety/{gkid}/loved-by`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SocialUserEntry'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SocialUserEntry'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/watches:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretWatchesAlias
-      summary: Deprecated alias for watched-by
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/geokrety/{gkid}/watched-by`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SocialUserEntry'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SocialUserEntry'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/pictures:
     get:
       tags:
       - Geokrety
-      operationId: getGeokretPictures
-      summary: Picture metadata attached to a GeoKret
+      operationId: listGeokretPictures
+      summary: Pictures attached to a GeoKret
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Picture metadata rows
+          description: Cursor-paginated picture collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/PictureInfo'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/PictureInfo'
+                        $ref: '#/components/schemas/PictureResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/timeline:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretTimeline
-      summary: Milestone timeline for a GeoKret
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Timeline events
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretTimelineEvent'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretTimelineEvent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/countries/timeline:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretCountriesTimelineAlias
-      summary: Deprecated timeline alias
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/geokrety/{gkid}/timeline`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretTimelineEvent'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretTimelineEvent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/events/timeline:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretEventsTimelineAlias
-      summary: Deprecated event timeline alias
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/geokrety/{gkid}/timeline`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretTimelineEvent'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretTimelineEvent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/circulation:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretCirculation
-      summary: Circulation summary for a GeoKret
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      responses:
-        '200':
-          description: Circulation summary
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GeokretCirculation'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GeokretCirculation'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/countries:
     get:
       tags:
       - Geokrety
-      operationId: getGeokretCountries
+      operationId: listGeokretCountries
       summary: Countries visited by a GeoKret
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Country visit rows
+          description: Cursor-paginated country visit collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretCountryVisit'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretCountryVisit'
+                        $ref: '#/components/schemas/CountryVisitResource'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/geokrety/{gkid}/waypoints:
     get:
       tags:
       - Geokrety
-      operationId: getGeokretWaypoints
+      operationId: listGeokretWaypoints
       summary: Waypoints visited by a GeoKret
       parameters:
       - $ref: '#/components/parameters/GeokretIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Waypoint visit rows
+          description: Cursor-paginated waypoint visit collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretWaypointVisit'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretWaypointVisit'
+                        $ref: '#/components/schemas/WaypointVisitResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/stats/map/countries:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretCountryMap
-      summary: Country map counts for a GeoKret
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Country choropleth rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/world-choropleth:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretWorldChoropleth
-      summary: World choropleth alias
-      description: Alias of `/api/v3/geokrety/{gkid}/stats/map/countries`.
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Country choropleth rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/WorldChoropleth:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretWorldChoroplethLegacy
-      summary: Legacy world choropleth alias
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/geokrety/{gkid}/stats/map/countries`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/stats/elevation:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretElevation
-      summary: Elevation profile for a GeoKret
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Elevation points
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ElevationPoint'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ElevationPoint'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/stats/heatmap/days:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretDayHeatmap
-      summary: Daily activity heatmap for a GeoKret
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Daily heatmap cells
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DayHeatmapCell'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DayHeatmapCell'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/geokrety/{gkid}/geojson/trip:
-    get:
-      tags:
-      - Geokrety
-      operationId: getGeokretTripGeoJson
-      summary: GeoJSON trip path for a GeoKret
-      description: Returns a GeoJSON feature collection wrapped in the standard API
-        envelope.
-      parameters:
-      - $ref: '#/components/parameters/GeokretIdParam'
-      - in: query
-        name: limit
-        description: Maximum number of trip points to return.
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 5000
-          default: 500
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: GeoJSON trip feature collection
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GeoJSONFeatureCollection'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/GeoJSONFeatureCollection'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/countries:
@@ -1615,72 +449,26 @@ paths:
       - Countries
       operationId: listCountries
       summary: List countries
-      description: 'Paginated list of countries ranked by recent activity or geographic
-        coverage.
-
-        '
       parameters:
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
+      - $ref: '#/components/parameters/CountryIdsParam'
       responses:
         '200':
-          description: Paginated country list
+          description: Cursor-paginated country collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/CountryDetails'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryDetails'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/countries/recent-active:
-    get:
-      tags:
-      - Countries
-      operationId: getRecentActiveCountries
-      summary: Recently active countries
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recently active country rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ActiveCountry'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ActiveCountry'
+                        $ref: '#/components/schemas/CountryResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/countries/{code}:
@@ -1693,24 +481,16 @@ paths:
       - $ref: '#/components/parameters/CountryCodeParam'
       responses:
         '200':
-          description: Country detail payload
+          description: Single country resource document.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
                 - type: object
                   properties:
                     data:
-                      $ref: '#/components/schemas/CountryDetails'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/CountryDetails'
+                      $ref: '#/components/schemas/CountryResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1721,77 +501,30 @@ paths:
     get:
       tags:
       - Countries
-      operationId: getCountryGeokrety
-      summary: GeoKrety currently spotted in a country
+      operationId: listCountryGeokrety
+      summary: GeoKrety currently in a country
       parameters:
       - $ref: '#/components/parameters/CountryCodeParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: GeoKrety in country
+          description: Cursor-paginated GeoKrety collection scoped to a country.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/countries/{code}/spotted-geokrety:
-    get:
-      tags:
-      - Countries
-      operationId: getCountrySpottedGeokretyAlias
-      summary: Alias for country GeoKrety listing
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/CountryCodeParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/countries/{code}/geokrety`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/waypoints/search:
@@ -1803,108 +536,23 @@ paths:
       parameters:
       - $ref: '#/components/parameters/SearchQueryParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Matching waypoint summaries
+          description: Matching waypoint collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/WaypointSummary'
-              example:
-                data:
-                - id: 942858
-                  waypointCode: 1GC55T35
-                  source: UK
-                  country: DE
-                  lat: 53.59728
-                  lon: 10.04402
-                  geojson:
-                    type: Point
-                    coordinates:
-                    - 10.04402
-                    - 53.59728
-                meta:
-                  requestedAt: '2026-03-16T20:47:24Z'
-                  queryMs: 1
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/WaypointSummary'
-              example:
-                data:
-                - id: 942858
-                  waypointCode: 1GC55T35
-                  source: UK
-                  country: DE
-                  lat: 53.59728
-                  lon: 10.04402
-                  geojson:
-                    type: Point
-                    coordinates:
-                    - 10.04402
-                    - 53.59728
-                meta:
-                  requestedAt: '2026-03-16T20:47:24Z'
-                  queryMs: 1
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
+                        $ref: '#/components/schemas/WaypointResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/waypoints/recent-active:
-    get:
-      tags:
-      - Waypoints
-      operationId: getRecentActiveWaypoints
-      summary: Recently active waypoints
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recently active waypoint rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ActiveWaypoint'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ActiveWaypoint'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/waypoints/{code}:
@@ -1917,24 +565,16 @@ paths:
       - $ref: '#/components/parameters/WaypointCodeParam'
       responses:
         '200':
-          description: Waypoint detail payload
+          description: Single waypoint resource document.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
                 - type: object
                   properties:
                     data:
-                      $ref: '#/components/schemas/WaypointDetails'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/WaypointDetails'
+                      $ref: '#/components/schemas/WaypointResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1945,154 +585,60 @@ paths:
     get:
       tags:
       - Waypoints
-      operationId: getWaypointCurrentGeokrety
+      operationId: listWaypointCurrentGeokrety
       summary: GeoKrety currently at a waypoint
       parameters:
       - $ref: '#/components/parameters/WaypointCodeParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Current GeoKrety for waypoint
+          description: Cursor-paginated GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/waypoints/{code}/spotted-geokrety:
-    get:
-      tags:
-      - Waypoints
-      operationId: getWaypointSpottedGeokretyAlias
-      summary: Alias for current waypoint GeoKrety
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/WaypointCodeParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/waypoints/{code}/geokrety-current`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/waypoints/{code}/geokrety-past:
     get:
       tags:
       - Waypoints
-      operationId: getWaypointPastGeokrety
-      summary: GeoKrety historically seen at a waypoint
+      operationId: listWaypointPastGeokrety
+      summary: GeoKrety previously seen at a waypoint
       parameters:
       - $ref: '#/components/parameters/WaypointCodeParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Historical GeoKrety for waypoint
+          description: Cursor-paginated historical GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/waypoints/{code}/past-geokrety:
-    get:
-      tags:
-      - Waypoints
-      operationId: getWaypointPastGeokretyAlias
-      summary: Deprecated alias for past waypoint GeoKrety
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/WaypointCodeParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/waypoints/{code}/geokrety-past`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users:
@@ -2101,37 +647,26 @@ paths:
       - Users
       operationId: listUsers
       summary: List users
-      description: 'Paginated list of users. Can be ordered by registration date,
-        activity, or other ranking criteria.
-
-        '
       parameters:
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
+      - $ref: '#/components/parameters/UserIdsParam'
       responses:
         '200':
-          description: Paginated user list
+          description: Cursor-paginated user collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/UserSearchResult'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserSearchResult'
+                        $ref: '#/components/schemas/UserResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/search:
@@ -2143,103 +678,23 @@ paths:
       parameters:
       - $ref: '#/components/parameters/SearchQueryParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Matching user summaries
+          description: Matching user collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/UserSearchResult'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserSearchResult'
+                        $ref: '#/components/schemas/UserResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/recent-registered:
-    get:
-      tags:
-      - Users
-      operationId: getRecentRegisteredUsers
-      summary: Recently registered users
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recent registered user rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentRegisteredUser'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentRegisteredUser'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/recent-active:
-    get:
-      tags:
-      - Users
-      operationId: getRecentActiveUsers
-      summary: Recently active users
-      parameters:
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Recent active user rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentActiveUser'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RecentActiveUser'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}:
@@ -2252,682 +707,230 @@ paths:
       - $ref: '#/components/parameters/UserIdParam'
       responses:
         '200':
-          description: User detail payload
+          description: Single user resource document.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
                 - type: object
                   properties:
                     data:
-                      $ref: '#/components/schemas/UserDetails'
-              example:
-                data:
-                  id: 1
-                  username: filips
-                  joinedAt: '2007-10-26T21:46:44+02:00'
-                  homeCountry: PL
-                  avatarId: 18686
-                  picturesCount: 1
-                  ownedGeokretyCount: 250
-                  movesCount: 1085
-                  distinctGeokretyCount: 417
-                  activeCountriesCount: 13
-                  lastMoveAt: '2017-10-29T09:02:00+01:00'
-                  homeCountryFlag: PL
-                meta:
-                  requestedAt: '2026-03-16T20:47:24Z'
-                  queryMs: 6773
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/UserDetails'
-              example:
-                data:
-                  id: 1
-                  username: filips
-                  joinedAt: '2007-10-26T21:46:44+02:00'
-                  homeCountry: PL
-                  avatarId: 18686
-                  picturesCount: 1
-                  ownedGeokretyCount: 250
-                  movesCount: 1085
-                  distinctGeokretyCount: 417
-                  activeCountriesCount: 13
-                  lastMoveAt: '2017-10-29T09:02:00+01:00'
-                  homeCountryFlag: PL
-                meta:
-                  requestedAt: '2026-03-16T20:47:24Z'
-                  queryMs: 6773
-                  pagination:
-                    limit: 1
-                    offset: 0
-                    count: 1
+                      $ref: '#/components/schemas/UserResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/network:
-    get:
-      tags:
-      - Users
-      operationId: getUserNetwork
-      summary: Shared-GeoKret network edges for a user
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: User network edges
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserNetworkEdge'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserNetworkEdge'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/geokrety-owned:
     get:
       tags:
       - Users
-      operationId: getUserOwnedGeokrety
+      operationId: listUserOwnedGeokrety
       summary: GeoKrety owned by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Owned GeoKrety rows
+          description: Cursor-paginated GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/owned-geokrety:
-    get:
-      tags:
-      - Users
-      operationId: getUserOwnedGeokretyAlias
-      summary: Deprecated alias for owned GeoKrety
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/users/{id}/geokrety-owned`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/geokrety-found:
     get:
       tags:
       - Users
-      operationId: getUserFoundGeokrety
-      summary: GeoKrety touched by a user
+      operationId: listUserFoundGeokrety
+      summary: GeoKrety found by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Found GeoKrety rows
+          description: Cursor-paginated GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/found-geokrety:
-    get:
-      tags:
-      - Users
-      operationId: getUserFoundGeokretyAlias
-      summary: Deprecated alias for found GeoKrety
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/users/{id}/geokrety-found`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/geokrety-loved:
     get:
       tags:
       - Users
-      operationId: getUserLovedGeokrety
+      operationId: listUserLovedGeokrety
       summary: GeoKrety loved by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Loved GeoKrety rows
+          description: Cursor-paginated GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/loved-geokrety:
-    get:
-      tags:
-      - Users
-      operationId: getUserLovedGeokretyAlias
-      summary: Deprecated alias for loved GeoKrety
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/users/{id}/geokrety-loved`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/geokrety-watched:
     get:
       tags:
       - Users
-      operationId: getUserWatchedGeokrety
+      operationId: listUserWatchedGeokrety
       summary: GeoKrety watched by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: Watched GeoKrety rows
+          description: Cursor-paginated GeoKrety collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
+                        $ref: '#/components/schemas/GeokretResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/watched-geokrety:
-    get:
-      tags:
-      - Users
-      operationId: getUserWatchedGeokretyAlias
-      summary: Deprecated alias for watched GeoKrety
-      deprecated: true
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Alias of `/api/v3/users/{id}/geokrety-watched`
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GeokretListItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/pictures:
     get:
       tags:
       - Users
-      operationId: getUserPictures
-      summary: Picture metadata related to a user
+      operationId: listUserPictures
+      summary: Pictures authored or owned by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: User picture rows
+          description: Cursor-paginated picture collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/PictureInfo'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/PictureInfo'
+                        $ref: '#/components/schemas/PictureResource'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/countries:
     get:
       tags:
       - Users
-      operationId: getUserCountries
+      operationId: listUserCountries
       summary: Countries visited by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: User country visit rows
+          description: Cursor-paginated country visit collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/UserCountryVisit'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserCountryVisit'
+                        $ref: '#/components/schemas/CountryVisitResource'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/users/{id}/waypoints:
     get:
       tags:
       - Users
-      operationId: getUserWaypoints
+      operationId: listUserWaypoints
       summary: Waypoints visited by a user
       parameters:
       - $ref: '#/components/parameters/UserIdParam'
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
       responses:
         '200':
-          description: User waypoint visit rows
+          description: Cursor-paginated waypoint visit collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/UserWaypointVisit'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserWaypointVisit'
+                        $ref: '#/components/schemas/WaypointVisitResource'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/stats/heatmap/days:
-    get:
-      tags:
-      - Users
-      operationId: getUserDayHeatmap
-      summary: Daily user activity heatmap
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Daily heatmap cells
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DayHeatmapCell'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/DayHeatmapCell'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/stats/heatmap/hours:
-    get:
-      tags:
-      - Users
-      operationId: getUserHourHeatmap
-      summary: Hourly user activity heatmap
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Hourly heatmap cells
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/HourHeatmapCell'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/HourHeatmapCell'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/stats/continent-coverage:
-    get:
-      tags:
-      - Users
-      operationId: getUserContinentCoverage
-      summary: User continent coverage graph
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: Continent coverage rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserContinentCoverage'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserContinentCoverage'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /api/v3/users/{id}/stats/map/countries:
-    get:
-      tags:
-      - Users
-      operationId: getUserCountryMap
-      summary: User country map counts
-      parameters:
-      - $ref: '#/components/parameters/UserIdParam'
-      - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
-      responses:
-        '200':
-          description: User country choropleth rows
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CountryCount'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/pictures:
@@ -2936,36 +939,26 @@ paths:
       - Pictures
       operationId: listPictures
       summary: List pictures
-      description: 'Paginated list of pictures (metadata only, not binary image content).
-
-        '
       parameters:
       - $ref: '#/components/parameters/LimitParam'
-      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/CursorParam'
+      - $ref: '#/components/parameters/PictureIdsParam'
       responses:
         '200':
-          description: Paginated picture list
+          description: Cursor-paginated picture collection.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestCollectionDocument'
                 - type: object
                   properties:
                     data:
                       type: array
                       items:
-                        $ref: '#/components/schemas/PictureInfo'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/PictureInfo'
+                        $ref: '#/components/schemas/PictureResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v3/pictures/{id}:
@@ -2973,29 +966,21 @@ paths:
       tags:
       - Pictures
       operationId: getPicture
-      summary: Picture metadata
+      summary: Picture details
       parameters:
       - $ref: '#/components/parameters/PictureIdParam'
       responses:
         '200':
-          description: Picture detail payload
+          description: Single picture resource document.
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
+                - $ref: '#/components/schemas/JsonRestSingleDocument'
                 - type: object
                   properties:
                     data:
-                      $ref: '#/components/schemas/PictureInfo'
-            application/xml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/EnvelopeBase'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PictureInfo'
+                      $ref: '#/components/schemas/PictureResource'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -3007,16 +992,26 @@ components:
     LimitParam:
       in: query
       name: limit
-      description: Maximum number of items to return. Default 20, maximum 1000.
+      description: Maximum number of items to return. Cursor-paginated endpoints default
+        to 20 and reject values above the endpoint-specific maximum.
       required: false
       schema:
         type: integer
         minimum: 1
         maximum: 1000
         default: 20
+    CursorParam:
+      in: query
+      name: cursor
+      description: Opaque cursor token returned in `links.next`. Do not construct
+        or modify this value on the client.
+      required: false
+      schema:
+        type: string
     OffsetParam:
       in: query
       name: offset
+      deprecated: true
       description: Zero-based starting offset for paginated responses. Default 0.
       required: false
       schema:
@@ -3032,6 +1027,61 @@ components:
         type: string
         minLength: 2
       example: gk
+    GeokretIdsParam:
+      in: query
+      name: ids
+      description: Optional comma-separated list of public GeoKret identifiers. When
+        provided, the endpoint returns exactly the requested resources and ignores
+        cursor pagination.
+      required: false
+      schema:
+        type: string
+        pattern: ^(?:\s*(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*\s*)(?:,\s*(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*\s*)*$
+      example: GK0001,GK00FF
+    MoveIdsParam:
+      in: query
+      name: ids
+      description: Optional comma-separated list of numeric move identifiers. When
+        provided, the endpoint returns exactly the requested move resources and ignores
+        cursor pagination.
+      required: false
+      schema:
+        type: string
+        pattern: ^\s*[1-9][0-9]*(?:\s*,\s*[1-9][0-9]*)*\s*$
+      example: 10,11,15
+    CountryIdsParam:
+      in: query
+      name: ids
+      description: Optional comma-separated list of ISO-3166 alpha-2 country codes.
+        When provided, the endpoint returns exactly the requested country resources
+        and ignores cursor pagination.
+      required: false
+      schema:
+        type: string
+        pattern: ^\s*[A-Za-z]{2}(?:\s*,\s*[A-Za-z]{2})*\s*$
+      example: PL,DE,FR
+    UserIdsParam:
+      in: query
+      name: ids
+      description: Optional comma-separated list of numeric user identifiers. When
+        provided, the endpoint returns exactly the requested user resources and ignores
+        cursor pagination.
+      required: false
+      schema:
+        type: string
+        pattern: ^\s*[1-9][0-9]*(?:\s*,\s*[1-9][0-9]*)*\s*$
+      example: 1,42,99
+    PictureIdsParam:
+      in: query
+      name: ids
+      description: Optional comma-separated list of numeric picture identifiers. When
+        provided, the endpoint returns exactly the requested picture resources and
+        ignores cursor pagination.
+      required: false
+      schema:
+        type: string
+        pattern: ^\s*[1-9][0-9]*(?:\s*,\s*[1-9][0-9]*)*\s*$
+      example: 5,6,7
     GeokretIdParam:
       in: path
       name: gkid
@@ -3121,9 +1171,11 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: '#/components/schemas/JsonRestErrorDocument'
           example:
-            error: invalid identifier
+            error:
+              code: BAD_REQUEST
+              message: invalid identifier
             timestamp: '2026-03-17T09:12:34Z'
         application/xml:
           schema:
@@ -3136,9 +1188,11 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: '#/components/schemas/JsonRestErrorDocument'
           example:
-            error: resource not found
+            error:
+              code: NOT_FOUND
+              message: resource not found
             timestamp: '2026-03-17T09:12:34Z'
         application/xml:
           schema:
@@ -3151,9 +1205,11 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: '#/components/schemas/JsonRestErrorDocument'
           example:
-            error: failed to fetch resource
+            error:
+              code: INTERNAL_ERROR
+              message: failed to fetch resource
             timestamp: '2026-03-17T09:12:34Z'
         application/xml:
           schema:
@@ -3177,6 +1233,199 @@ components:
             status: degraded
             error: database_unavailable
   schemas:
+    JsonRestResourceLinks:
+      type: object
+      additionalProperties: false
+      properties:
+        self:
+          type: string
+    JsonRestDocumentLinks:
+      type: object
+      additionalProperties: false
+      properties:
+        self:
+          type: string
+        next:
+          type: string
+    JsonRestIdentifier:
+      type: object
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+    JsonRestRelationship:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/JsonRestIdentifier'
+        links:
+          $ref: '#/components/schemas/JsonRestResourceLinks'
+    JsonRestMeta:
+      type: object
+      required:
+      - execution_time_ms
+      properties:
+        execution_time_ms:
+          type: integer
+          description: Milliseconds spent handling the request.
+        limit:
+          type: integer
+          description: Requested collection size for cursor collections.
+        has_more:
+          type: boolean
+          description: Indicates whether `links.next` can be followed.
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_items:
+          type: integer
+        total_pages:
+          type: integer
+    JsonRestErrorPayload:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    JsonRestErrorDocument:
+      type: object
+      required:
+      - error
+      - timestamp
+      properties:
+        error:
+          $ref: '#/components/schemas/JsonRestErrorPayload'
+        timestamp:
+          type: string
+          format: date-time
+    JsonRestResource:
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+        relationships:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/JsonRestRelationship'
+        links:
+          $ref: '#/components/schemas/JsonRestResourceLinks'
+    JsonRestSingleDocument:
+      type: object
+      required:
+      - data
+      - meta
+      - links
+      properties:
+        data:
+          $ref: '#/components/schemas/JsonRestResource'
+        meta:
+          $ref: '#/components/schemas/JsonRestMeta'
+        links:
+          $ref: '#/components/schemas/JsonRestDocumentLinks'
+    JsonRestCollectionDocument:
+      type: object
+      required:
+      - data
+      - meta
+      - links
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/JsonRestResource'
+        meta:
+          $ref: '#/components/schemas/JsonRestMeta'
+        links:
+          $ref: '#/components/schemas/JsonRestDocumentLinks'
+    GeokretResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - geokret
+    MoveResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - move
+    UserResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - user
+    PictureResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - picture
+    CountryResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - country
+    WaypointResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - waypoint
+    CountryVisitResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - country_visit
+    WaypointVisitResource:
+      allOf:
+      - $ref: '#/components/schemas/JsonRestResource'
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - waypoint_visit
     RootInfo:
       type: object
       xml:

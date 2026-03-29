@@ -3,9 +3,11 @@ BadRequest:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/ErrorResponse'
+        $ref: '#/components/schemas/JsonRestErrorDocument'
       example:
-        error: invalid identifier
+        error:
+          code: BAD_REQUEST
+          message: invalid identifier
         timestamp: '2026-03-17T09:12:34Z'
     application/xml:
       schema:
@@ -18,9 +20,11 @@ NotFound:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/ErrorResponse'
+        $ref: '#/components/schemas/JsonRestErrorDocument'
       example:
-        error: resource not found
+        error:
+          code: NOT_FOUND
+          message: resource not found
         timestamp: '2026-03-17T09:12:34Z'
     application/xml:
       schema:
@@ -33,9 +37,11 @@ InternalServerError:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/ErrorResponse'
+        $ref: '#/components/schemas/JsonRestErrorDocument'
       example:
-        error: failed to fetch resource
+        error:
+          code: INTERNAL_ERROR
+          message: failed to fetch resource
         timestamp: '2026-03-17T09:12:34Z'
     application/xml:
       schema:

@@ -1,7 +1,7 @@
 LimitParam:
   in: query
   name: limit
-  description: Maximum number of items to return. Default 20, maximum 1000.
+  description: Maximum number of items to return. Cursor-paginated endpoints default to 20 and reject values above the endpoint-specific maximum.
   required: false
   schema:
     type: integer
@@ -9,9 +9,18 @@ LimitParam:
     maximum: 1000
     default: 20
 
+CursorParam:
+  in: query
+  name: cursor
+  description: Opaque cursor token returned in `links.next`. Do not construct or modify this value on the client.
+  required: false
+  schema:
+    type: string
+
 OffsetParam:
   in: query
   name: offset
+  deprecated: true
   description: Zero-based starting offset for paginated responses. Default 0.
   required: false
   schema:
@@ -28,6 +37,56 @@ SearchQueryParam:
     type: string
     minLength: 2
   example: gk
+
+GeokretIdsParam:
+  in: query
+  name: ids
+  description: Optional comma-separated list of public GeoKret identifiers. When provided, the endpoint returns exactly the requested resources and ignores cursor pagination.
+  required: false
+  schema:
+    type: string
+    pattern: '^(?:\s*(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*\s*)(?:,\s*(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*\s*)*$'
+  example: GK0001,GK00FF
+
+MoveIdsParam:
+  in: query
+  name: ids
+  description: Optional comma-separated list of numeric move identifiers. When provided, the endpoint returns exactly the requested move resources and ignores cursor pagination.
+  required: false
+  schema:
+    type: string
+    pattern: '^\s*[1-9][0-9]*(?:\s*,\s*[1-9][0-9]*)*\s*$'
+  example: 10,11,15
+
+CountryIdsParam:
+  in: query
+  name: ids
+  description: Optional comma-separated list of ISO-3166 alpha-2 country codes. When provided, the endpoint returns exactly the requested country resources and ignores cursor pagination.
+  required: false
+  schema:
+    type: string
+    pattern: '^\s*[A-Za-z]{2}(?:\s*,\s*[A-Za-z]{2})*\s*$'
+  example: PL,DE,FR
+
+UserIdsParam:
+  in: query
+  name: ids
+  description: Optional comma-separated list of numeric user identifiers. When provided, the endpoint returns exactly the requested user resources and ignores cursor pagination.
+  required: false
+  schema:
+    type: string
+    pattern: '^\s*[1-9][0-9]*(?:\s*,\s*[1-9][0-9]*)*\s*$'
+  example: 1,42,99
+
+PictureIdsParam:
+  in: query
+  name: ids
+  description: Optional comma-separated list of numeric picture identifiers. When provided, the endpoint returns exactly the requested picture resources and ignores cursor pagination.
+  required: false
+  schema:
+    type: string
+    pattern: '^\s*[1-9][0-9]*(?:\s*,\s*[1-9][0-9]*)*\s*$'
+  example: 5,6,7
 
 GeokretIdParam:
   in: path

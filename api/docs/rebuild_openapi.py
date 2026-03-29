@@ -12,12 +12,7 @@ def load_yaml(path: str) -> Any:
 
 # Read individual path files
 system_paths = load_yaml('openapi/paths/system.yaml')
-stats_paths = load_yaml('openapi/paths/stats.yaml')
-geokrety_paths = load_yaml('openapi/paths/geokrety.yaml')
-countries_paths = load_yaml('openapi/paths/countries.yaml')
-waypoints_paths = load_yaml('openapi/paths/waypoints.yaml')
-users_paths = load_yaml('openapi/paths/users.yaml')
-pictures_paths = load_yaml('openapi/paths/pictures.yaml')
+public_v3_paths = load_yaml('openapi/paths/public-v3.yaml')
 
 parameters = load_yaml('openapi/components/parameters.yaml')
 responses = load_yaml('openapi/components/responses.yaml')
@@ -26,12 +21,7 @@ schemas = load_yaml('openapi/components/schemas.yaml')
 # Merge all paths
 all_paths: dict[str, Any] = {}
 all_paths.update(system_paths or {})
-all_paths.update(stats_paths or {})
-all_paths.update(geokrety_paths or {})
-all_paths.update(countries_paths or {})
-all_paths.update(waypoints_paths or {})
-all_paths.update(users_paths or {})
-all_paths.update(pictures_paths or {})
+all_paths.update(public_v3_paths or {})
 
 # Create the full OpenAPI spec
 spec = {
@@ -40,12 +30,19 @@ spec = {
         'title': 'GeoKrety Stats API',
         'version': '3.1.0',
         'description': '''Read-only API for GeoKrety statistics,
-    activity feeds,
-entity exploration, and visualization workloads.
+    resource exploration.
 
-Every `/api/v3/...` JSON endpoint returns a response envelope with `data`
-and `meta`. List endpoints support `limit` and `offset` pagination.
-Search endpoints require a `q` query parameter of at least 2 characters.
+The `/api/v3/...` contract is JSON REST based: every JSON response uses
+top-level `data`, `meta`, and `links`, while resource objects expose `id`,
+`type`, `attributes`, optional `relationships`, and resource-scoped
+`links.self`.
+Collection endpoints are cursor-first for now: clients send `limit`, follow
+`links.next`, and continue while `meta.has_more` is true. Search endpoints
+require a `q` query parameter of at least 2 characters.
+The public API surface was intentionally reduced during the big-bang
+migration: redundant activity, stats, alias, and visualization endpoints were
+removed so the stable contract centers on core resources and scoped
+collections.
 
 ## GeoKret Public Identifiers (GKID)
 
@@ -83,14 +80,10 @@ All forms resolve to the same GeoKret. Examples:
             ),
         },
         {
-            'name': 'Stats',
-            'description': 'Global graph and leaderboard datasets',
-        },
-        {
             'name': 'Geokrety',
             'description': (
-                'GeoKret entity details, feeds, graphs, '
-                'and map payloads'
+                'GeoKret entities and their primary '
+                'relationship collections'
             ),
         },
         {

@@ -60,6 +60,19 @@ func (h *StatsHandler) GetGeokrety(w http.ResponseWriter, r *http.Request) {
 
 func (h *StatsHandler) GetGeokretyList(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
+	gkids, ok := parsePublicGKIDListQuery(w, r, "ids")
+	if !ok {
+		return
+	}
+	if len(gkids) > 0 {
+		rows, err := h.store.FetchGeokretyByGKIDs(r.Context(), gkids)
+		if err != nil {
+			h.writeStoreError(w, r, err, "failed to fetch geokrety by ids")
+			return
+		}
+		writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, len(rows), 0, len(rows))
+		return
+	}
 	req, err := queryPagination(r, 20, 100)
 	if err != nil {
 		writePaginationErrorForRequest(w, r, http.StatusBadRequest, err)
@@ -89,8 +102,22 @@ func (h *StatsHandler) GetGeokretyDetailsByGkId(w http.ResponseWriter, r *http.R
 }
 
 func (h *StatsHandler) GetGeokretyMoves(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
 	geokretID, ok := h.parseGeokretRouteID(w, r)
 	if !ok {
+		return
+	}
+	moveIDs, ok := parseInt64ListQuery(w, r, "ids")
+	if !ok {
+		return
+	}
+	if len(moveIDs) > 0 {
+		rows, err := h.store.FetchGeokretyMovesByIDs(r.Context(), geokretID, moveIDs)
+		if err != nil {
+			h.writeStoreError(w, r, err, "failed to fetch geokret moves by ids")
+			return
+		}
+		writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, len(rows), 0, len(rows))
 		return
 	}
 	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
@@ -281,6 +308,20 @@ func (h *StatsHandler) GetCountryDetails(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *StatsHandler) GetCountryList(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	codes, ok := parseCountryCodeListQuery(w, r, "ids")
+	if !ok {
+		return
+	}
+	if len(codes) > 0 {
+		rows, err := h.store.FetchCountryListByCodes(r.Context(), codes)
+		if err != nil {
+			h.writeStoreError(w, r, err, "failed to fetch countries by ids")
+			return
+		}
+		writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, len(rows), 0, len(rows))
+		return
+	}
 	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
 		return h.store.FetchCountryList(r.Context(), limit, offset)
 	}, "failed to fetch countries")
@@ -297,7 +338,13 @@ func (h *StatsHandler) GetCountryGeokrety(w http.ResponseWriter, r *http.Request
 }
 
 func (h *StatsHandler) GetCountrySpottedGeokrety(w http.ResponseWriter, r *http.Request) {
-	h.GetCountryGeokrety(w, r)
+	code, ok := parseCountryCodeParam(w, r, "code")
+	if !ok {
+		return
+	}
+	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
+		return h.store.FetchCountrySpottedGeokrety(r.Context(), code, limit, offset)
+	}, "failed to fetch spotted country geokrety")
 }
 
 func (h *StatsHandler) GetWaypoint(w http.ResponseWriter, r *http.Request) {
@@ -325,7 +372,13 @@ func (h *StatsHandler) GetWaypointCurrentGeokrety(w http.ResponseWriter, r *http
 }
 
 func (h *StatsHandler) GetWaypointSpottedGeokrety(w http.ResponseWriter, r *http.Request) {
-	h.GetWaypointCurrentGeokrety(w, r)
+	code, ok := parseWaypointCodeParam(w, r, "code")
+	if !ok {
+		return
+	}
+	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
+		return h.store.FetchWaypointSpottedGeokrety(r.Context(), code, limit, offset)
+	}, "failed to fetch spotted waypoint geokrety")
 }
 
 func (h *StatsHandler) GetWaypointPastGeokrety(w http.ResponseWriter, r *http.Request) {
@@ -363,6 +416,20 @@ func (h *StatsHandler) GetUserDetails(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StatsHandler) GetUserList(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	userIDs, ok := parseInt64ListQuery(w, r, "ids")
+	if !ok {
+		return
+	}
+	if len(userIDs) > 0 {
+		rows, err := h.store.FetchUserListByIDs(r.Context(), userIDs)
+		if err != nil {
+			h.writeStoreError(w, r, err, "failed to fetch users by ids")
+			return
+		}
+		writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, len(rows), 0, len(rows))
+		return
+	}
 	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
 		return h.store.FetchUserList(r.Context(), limit, offset)
 	}, "failed to fetch users")
@@ -483,6 +550,20 @@ func (h *StatsHandler) GetPicture(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StatsHandler) GetPictureList(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	pictureIDs, ok := parseInt64ListQuery(w, r, "ids")
+	if !ok {
+		return
+	}
+	if len(pictureIDs) > 0 {
+		rows, err := h.store.FetchPictureListByIDs(r.Context(), pictureIDs)
+		if err != nil {
+			h.writeStoreError(w, r, err, "failed to fetch pictures by ids")
+			return
+		}
+		writeEnvelopeForRequest(w, r, http.StatusOK, rows, started, len(rows), 0, len(rows))
+		return
+	}
 	h.getEntityList(w, r, func(limit, offset int) (interface{}, error) {
 		return h.store.FetchPictureList(r.Context(), limit, offset)
 	}, "failed to fetch pictures")
@@ -597,4 +678,94 @@ func parseSearchQuery(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 	return value, true
+}
+
+func parseInt64ListQuery(w http.ResponseWriter, r *http.Request, key string) ([]int64, bool) {
+	parts := splitCSVQuery(r, key)
+	if len(parts) == 0 {
+		return nil, true
+	}
+	values := make([]int64, 0, len(parts))
+	seen := make(map[int64]struct{}, len(parts))
+	for _, part := range parts {
+		parsed, err := strconv.ParseInt(part, 10, 64)
+		if err != nil || parsed <= 0 {
+			writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid query parameter %q", key))
+			return nil, false
+		}
+		if _, ok := seen[parsed]; ok {
+			continue
+		}
+		seen[parsed] = struct{}{}
+		values = append(values, parsed)
+	}
+	return values, true
+}
+
+func parseCountryCodeListQuery(w http.ResponseWriter, r *http.Request, key string) ([]string, bool) {
+	parts := splitCSVQuery(r, key)
+	if len(parts) == 0 {
+		return nil, true
+	}
+	values := make([]string, 0, len(parts))
+	seen := make(map[string]struct{}, len(parts))
+	for _, part := range parts {
+		value := strings.ToUpper(part)
+		if len(value) != 2 {
+			writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid query parameter %q", key))
+			return nil, false
+		}
+		for _, ch := range value {
+			if ch < 'A' || ch > 'Z' {
+				writeErrorForRequest(w, r, http.StatusBadRequest, fmt.Sprintf("invalid query parameter %q", key))
+				return nil, false
+			}
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		values = append(values, value)
+	}
+	return values, true
+}
+
+func parsePublicGKIDListQuery(w http.ResponseWriter, r *http.Request, key string) ([]int64, bool) {
+	parts := splitCSVQuery(r, key)
+	if len(parts) == 0 {
+		return nil, true
+	}
+	values := make([]int64, 0, len(parts))
+	seen := make(map[int64]struct{}, len(parts))
+	for _, part := range parts {
+		parsed, err := geokrety.New(part)
+		if err != nil {
+			writeErrorForRequest(w, r, http.StatusBadRequest, err.Error())
+			return nil, false
+		}
+		value := parsed.Int()
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		values = append(values, value)
+	}
+	return values, true
+}
+
+func splitCSVQuery(r *http.Request, key string) []string {
+	raw := strings.TrimSpace(r.URL.Query().Get(key))
+	if raw == "" {
+		return nil
+	}
+	segments := strings.Split(raw, ",")
+	parts := make([]string, 0, len(segments))
+	for _, segment := range segments {
+		trimmed := strings.TrimSpace(segment)
+		if trimmed == "" {
+			continue
+		}
+		parts = append(parts, trimmed)
+	}
+	return parts
 }

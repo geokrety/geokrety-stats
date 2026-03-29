@@ -4,6 +4,10 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/geokrety/geokrety-stats-api/internal/config"
@@ -17,6 +21,11 @@ import (
 
 func testRouter(t *testing.T) http.Handler {
 	t.Helper()
+	return testRouterWithSwagger(t, false)
+}
+
+func testRouterWithSwagger(t *testing.T, enableSwagger bool) http.Handler {
+	t.Helper()
 
 	store := &handlersTestStore{}
 	systemStore := &handlersSystemStore{}
@@ -27,7 +36,26 @@ func testRouter(t *testing.T) http.Handler {
 	statsHandler := handlers.NewStatsHandler(store, logger)
 	systemHandler := handlers.NewSystemHandler(systemStore, hub, logger)
 
-	return NewRouter(config.Config{EnableSwagger: false}, logger, mc, reg, statsHandler, systemHandler, hub)
+	return NewRouter(config.Config{EnableSwagger: enableSwagger}, logger, mc, reg, statsHandler, systemHandler, hub)
+}
+
+func chdirToAPIRoot(t *testing.T) {
+	t.Helper()
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("failed to determine test file path")
+	}
+	apiRoot := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd failed: %v", err)
+	}
+	if err := os.Chdir(apiRoot); err != nil {
+		t.Fatalf("Chdir(%q) failed: %v", apiRoot, err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(cwd)
+	})
 }
 
 type handlersTestStore struct{}
@@ -112,6 +140,10 @@ func (h *handlersTestStore) FetchCountryList(ctx context.Context, limit, offset 
 	return []db.CountryDetails{}, nil
 }
 
+func (h *handlersTestStore) FetchCountryListByCodes(ctx context.Context, codes []string) ([]db.CountryDetails, error) {
+	return []db.CountryDetails{}, nil
+}
+
 func (h *handlersTestStore) FetchUserNetwork(ctx context.Context, userID int64, limit, offset int) ([]db.UserNetworkEdge, error) {
 	return []db.UserNetworkEdge{}, nil
 }
@@ -132,6 +164,10 @@ func (h *handlersTestStore) FetchGeokretyList(ctx context.Context, limit, offset
 	return []db.GeokretListItem{}, nil
 }
 
+func (h *handlersTestStore) FetchGeokretyByGKIDs(ctx context.Context, gkids []int64) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
 func (h *handlersTestStore) FetchGeokretyListTotal(ctx context.Context) (int64, error) {
 	return 0, nil
 }
@@ -145,6 +181,10 @@ func (h *handlersTestStore) ResolveGeokretID(ctx context.Context, gkid int64) (i
 }
 
 func (h *handlersTestStore) FetchGeokretyMoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.MoveRecord, error) {
+	return []db.MoveRecord{}, nil
+}
+
+func (h *handlersTestStore) FetchGeokretyMovesByIDs(ctx context.Context, geokretID int64, moveIDs []int64) ([]db.MoveRecord, error) {
 	return []db.MoveRecord{}, nil
 }
 
@@ -200,11 +240,19 @@ func (h *handlersTestStore) FetchCountryGeokrety(ctx context.Context, countryCod
 	return []db.GeokretListItem{}, nil
 }
 
+func (h *handlersTestStore) FetchCountrySpottedGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
 func (h *handlersTestStore) FetchWaypoint(ctx context.Context, waypointCode string) (db.WaypointDetails, error) {
 	return db.WaypointDetails{}, nil
 }
 
 func (h *handlersTestStore) FetchWaypointCurrentGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+	return []db.GeokretListItem{}, nil
+}
+
+func (h *handlersTestStore) FetchWaypointSpottedGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{}, nil
 }
 
@@ -252,6 +300,10 @@ func (h *handlersTestStore) FetchUserList(ctx context.Context, limit, offset int
 	return []db.UserSearchResult{}, nil
 }
 
+func (h *handlersTestStore) FetchUserListByIDs(ctx context.Context, userIDs []int64) ([]db.UserSearchResult, error) {
+	return []db.UserSearchResult{}, nil
+}
+
 func (h *handlersTestStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
 	return []db.UserSearchResult{}, nil
 }
@@ -280,26 +332,15 @@ func (h *handlersTestStore) FetchPictureList(ctx context.Context, limit, offset 
 	return []db.PictureInfo{}, nil
 }
 
+func (h *handlersTestStore) FetchPictureListByIDs(ctx context.Context, pictureIDs []int64) ([]db.PictureInfo, error) {
+	return []db.PictureInfo{}, nil
+}
+
 func TestV3RoutesReachable(t *testing.T) {
 	r := testRouter(t)
 	paths := []string{
 		"/health",
 		"/metrics",
-		"/api/v3/stats/kpis",
-		"/api/v3/stats/countries",
-		"/api/v3/stats/leaderboard",
-		"/api/v3/stats/hourly-heatmap",
-		"/api/v3/stats/seasonal-heatmap",
-		"/api/v3/stats/country-flows",
-		"/api/v3/stats/top-caches",
-		"/api/v3/stats/first-finder-leaderboard",
-		"/api/v3/stats/distance-records",
-		"/api/v3/stats/dormancy",
-		"/api/v3/stats/multiplier-velocity",
-		"/api/v3/geokrety/recent-moves",
-		"/api/v3/geokrety/recent-born",
-		"/api/v3/geokrety/recent-loved",
-		"/api/v3/geokrety/recent-watched",
 		"/api/v3/geokrety/GK0001",
 		"/api/v3/geokrety/1",
 		"/api/v3/geokrety/00FF",
@@ -310,26 +351,17 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/geokrety/1/watched-by",
 		"/api/v3/geokrety/1/pictures",
 		"/api/v3/geokrety/search?q=gk",
-		"/api/v3/geokrety/1/timeline",
-		"/api/v3/geokrety/1/circulation",
 		"/api/v3/geokrety/1/countries",
 		"/api/v3/geokrety/1/waypoints",
-		"/api/v3/geokrety/1/stats/map/countries",
-		"/api/v3/geokrety/1/stats/elevation",
-		"/api/v3/geokrety/1/stats/heatmap/days",
-		"/api/v3/geokrety/1/geojson/trip",
 		"/api/v3/countries/",
 		"/api/v3/countries/PL",
-		"/api/v3/countries/recent-active",
 		"/api/v3/countries/PL/geokrety",
-		"/api/v3/waypoints/recent-active",
+		"/api/v3/waypoints/search?q=gc",
 		"/api/v3/waypoints/GC123",
 		"/api/v3/waypoints/GC123/geokrety-current",
 		"/api/v3/waypoints/GC123/geokrety-past",
-		"/api/v3/waypoints/search?q=gc",
-		"/api/v3/users/recent-registered",
-		"/api/v3/users/recent-active",
 		"/api/v3/users/",
+		"/api/v3/users/search?q=us",
 		"/api/v3/users/1",
 		"/api/v3/users/1/geokrety-owned",
 		"/api/v3/users/1/geokrety-found",
@@ -338,12 +370,6 @@ func TestV3RoutesReachable(t *testing.T) {
 		"/api/v3/users/1/pictures",
 		"/api/v3/users/1/countries",
 		"/api/v3/users/1/waypoints",
-		"/api/v3/users/1/network",
-		"/api/v3/users/search?q=us",
-		"/api/v3/users/1/stats/continent-coverage",
-		"/api/v3/users/1/stats/heatmap/days",
-		"/api/v3/users/1/stats/heatmap/hours",
-		"/api/v3/users/1/stats/map/countries",
 		"/api/v3/pictures/",
 		"/api/v3/pictures/1",
 	}
@@ -360,10 +386,59 @@ func TestV3RoutesReachable(t *testing.T) {
 
 func TestCORSOptions(t *testing.T) {
 	r := testRouter(t)
-	req := httptest.NewRequest(http.MethodOptions, "/api/v3/stats/kpis", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/api/v3/geokrety", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Fatalf("expected 204, got %d", w.Code)
+	}
+}
+
+func TestRemovedV3RoutesReturnNotFound(t *testing.T) {
+	r := testRouter(t)
+	tests := []struct {
+		path string
+		want int
+	}{
+		{"/api/v3/stats/kpis", http.StatusNotFound},
+		{"/api/v3/geokrety/recent-born", http.StatusNotFound},
+		{"/api/v3/geokrety/1/loves", http.StatusNotFound},
+		{"/api/v3/countries/recent-active", http.StatusNotFound},
+		{"/api/v3/waypoints/recent-active", http.StatusNotFound},
+		{"/api/v3/countries/PL/spotted-geokrety", http.StatusNotFound},
+		{"/api/v3/waypoints/GC123/spotted-geokrety", http.StatusNotFound},
+		{"/api/v3/users/1/network", http.StatusNotFound},
+	}
+
+	for _, tc := range tests {
+		req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code != tc.want {
+			t.Fatalf("expected %d for %s, got %d", tc.want, tc.path, w.Code)
+		}
+	}
+}
+
+func TestServedOpenAPISpecMatchesTrimmedPublicSurface(t *testing.T) {
+	chdirToAPIRoot(t)
+	r := testRouterWithSwagger(t, true)
+	req := httptest.NewRequest(http.MethodGet, "/openapi.yaml", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	body := w.Body.String()
+	if strings.Contains(body, "/api/v3/stats/kpis") {
+		t.Fatalf("served openapi still contains removed stats routes")
+	}
+	if strings.Contains(body, "/api/v3/countries/{code}/spotted-geokrety") {
+		t.Fatalf("served openapi still contains removed spotted country route")
+	}
+	if strings.Contains(body, "/api/v3/waypoints/{code}/spotted-geokrety") {
+		t.Fatalf("served openapi still contains removed spotted waypoint route")
 	}
 }

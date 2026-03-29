@@ -85,6 +85,7 @@ type PictureInfo struct {
 	Caption        *string    `db:"caption" json:"caption" xml:"caption,omitempty"`
 	Key            *string    `db:"key" json:"key" xml:"key,omitempty"`
 	GeokretID      *int64     `db:"geokret_id" json:"geokretId" xml:"geokretId,omitempty"`
+	GeokretGKID    *geokrety.GeokretId `db:"geokret_gkid" json:"geokretGkid,omitempty" xml:"geokretGkid,omitempty"`
 	MoveID         *int64     `db:"move_id" json:"moveId" xml:"moveId,omitempty"`
 	UserID         *int64     `db:"user_id" json:"userId" xml:"userId,omitempty"`
 	AuthorID       *int64     `db:"author_id" json:"authorId" xml:"authorId,omitempty"`
@@ -617,6 +618,7 @@ SELECT
 	p.caption,
 	p.key,
 	p.geokret AS geokret_id,
+	gg.gkid AS geokret_gkid,
 	p.move AS move_id,
 	p.user AS user_id,
 	p.author AS author_id,
@@ -625,6 +627,7 @@ SELECT
 	p.created_on_datetime
 FROM geokrety.gk_pictures AS p
 LEFT JOIN geokrety.gk_users AS u ON u.id = p.author
+LEFT JOIN geokrety.gk_geokrety AS gg ON gg.id = p.geokret
 WHERE p.geokret = $1
 ORDER BY p.created_on_datetime DESC, p.id DESC
 LIMIT $2 OFFSET $3
@@ -937,6 +940,51 @@ LIMIT $2 OFFSET $3
 	return hydrateGeokretListItems(rows), nil
 }
 
+func (s *Store) FetchCountrySpottedGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]GeokretListItem, error) {
+	rows := []GeokretListItem{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	g.id,
+	g.gkid,
+	g.name,
+	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
+	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
+	gg.missing,
+	gg.owner AS owner_id,
+	NULLIF(g.owner_username, '') AS owner_username,
+	gg.holder AS holder_id,
+	hu.username AS holder_username,
+	UPPER(g.country) AS country,
+	UPPER(g.waypoint) AS waypoint,
+	g.lat,
+	g.lon,
+	gg.loves_count,
+	gg.pictures_count,
+	gg.caches_count,
+	gg.born_on_datetime AS born_at,
+	g.moved_on_datetime AS last_move_at,
+	lm.move_type AS last_move_type
+FROM geokrety.gk_geokrety_with_details AS g
+INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
+LEFT JOIN geokrety.gk_moves AS lm ON lm.id = gg.last_position
+LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
+WHERE UPPER(g.country) = UPPER($1)
+	AND lm.move_type = 3
+ORDER BY g.moved_on_datetime DESC, g.id DESC
+LIMIT $2 OFFSET $3
+`, countryCode, limit, offset); err != nil {
+		return nil, fmt.Errorf("query country spotted geokrety: %w", err)
+	}
+	return hydrateGeokretListItems(rows), nil
+}
+
 func (s *Store) FetchCountryList(ctx context.Context, limit, offset int) ([]CountryDetails, error) {
 	rows := []CountryDetails{}
 	if err := s.db.SelectContext(ctx, &rows, `
@@ -1056,6 +1104,51 @@ ORDER BY g.moved_on_datetime DESC, g.id DESC
 LIMIT $2 OFFSET $3
 `, waypointCode, limit, offset); err != nil {
 		return nil, fmt.Errorf("query waypoint current geokrety: %w", err)
+	}
+	return hydrateGeokretListItems(rows), nil
+}
+
+func (s *Store) FetchWaypointSpottedGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]GeokretListItem, error) {
+	rows := []GeokretListItem{}
+	if err := s.db.SelectContext(ctx, &rows, `
+SELECT
+	g.id,
+	g.gkid,
+	g.name,
+	gg.avatar AS avatar_id,
+	CASE
+		WHEN ap.bucket IS NOT NULL AND ap.key IS NOT NULL THEN 'https://minio.geokrety.org/' || ap.bucket || '/' || ap.key
+		WHEN ap.filename IS NOT NULL THEN 'https://cdn.geokrety.org/images/obrazki/' || ap.filename
+		ELSE NULL
+	END AS avatar_url,
+	gg.type,
+	'https://cdn.geokrety.org/images/icons/types/' || gg.type || '.svg' AS type_icon_url,
+	gg.missing,
+	gg.owner AS owner_id,
+	NULLIF(g.owner_username, '') AS owner_username,
+	gg.holder AS holder_id,
+	hu.username AS holder_username,
+	UPPER(g.country) AS country,
+	UPPER(g.waypoint) AS waypoint,
+	g.lat,
+	g.lon,
+	gg.loves_count,
+	gg.pictures_count,
+	gg.caches_count,
+	gg.born_on_datetime AS born_at,
+	g.moved_on_datetime AS last_move_at,
+	lm.move_type AS last_move_type
+FROM geokrety.gk_geokrety_with_details AS g
+INNER JOIN geokrety.gk_geokrety AS gg ON gg.id = g.id
+LEFT JOIN geokrety.gk_pictures AS ap ON ap.id = gg.avatar
+LEFT JOIN geokrety.gk_moves AS lm ON lm.id = gg.last_position
+LEFT JOIN geokrety.gk_users AS hu ON hu.id = gg.holder
+WHERE UPPER(g.waypoint) = UPPER($1)
+	AND lm.move_type = 3
+ORDER BY g.moved_on_datetime DESC, g.id DESC
+LIMIT $2 OFFSET $3
+`, waypointCode, limit, offset); err != nil {
+		return nil, fmt.Errorf("query waypoint spotted geokrety: %w", err)
 	}
 	return hydrateGeokretListItems(rows), nil
 }
@@ -1312,6 +1405,7 @@ SELECT DISTINCT ON (p.id)
 	p.caption,
 	p.key,
 	p.geokret AS geokret_id,
+	gg.gkid AS geokret_gkid,
 	p.move AS move_id,
 	p.user AS user_id,
 	p.author AS author_id,
@@ -1320,6 +1414,7 @@ SELECT DISTINCT ON (p.id)
 	p.created_on_datetime
 FROM geokrety.gk_pictures AS p
 LEFT JOIN geokrety.gk_users AS u ON u.id = p.author
+LEFT JOIN geokrety.gk_geokrety AS gg ON gg.id = p.geokret
 WHERE p.user = $1 OR p.author = $1
 ORDER BY p.id, p.created_on_datetime DESC
 LIMIT $2 OFFSET $3
@@ -1559,6 +1654,7 @@ SELECT
 	p.caption,
 	p.key,
 	p.geokret AS geokret_id,
+	gg.gkid AS geokret_gkid,
 	p.move AS move_id,
 	p.user AS user_id,
 	p.author AS author_id,
@@ -1567,6 +1663,7 @@ SELECT
 	p.created_on_datetime
 FROM geokrety.gk_pictures AS p
 LEFT JOIN geokrety.gk_users AS u ON u.id = p.author
+LEFT JOIN geokrety.gk_geokrety AS gg ON gg.id = p.geokret
 WHERE p.id = $1
 `, pictureID); err != nil {
 		return PictureInfo{}, fmt.Errorf("query picture details: %w", err)
@@ -1584,6 +1681,7 @@ SELECT
 	p.caption,
 	p.key,
 	p.geokret AS geokret_id,
+	gg.gkid AS geokret_gkid,
 	p.move AS move_id,
 	p.user AS user_id,
 	p.author AS author_id,
@@ -1592,6 +1690,7 @@ SELECT
 	p.created_on_datetime
 FROM geokrety.gk_pictures AS p
 LEFT JOIN geokrety.gk_users AS u ON u.id = p.author
+LEFT JOIN geokrety.gk_geokrety AS gg ON gg.id = p.geokret
 ORDER BY p.created_on_datetime DESC, p.id DESC
 LIMIT $1 OFFSET $2
 `, limit, offset); err != nil {

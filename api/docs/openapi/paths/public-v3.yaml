@@ -1,0 +1,862 @@
+/api/v3/geokrety:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokrety
+    summary: List GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretIdsParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/search:
+  get:
+    tags:
+    - Geokrety
+    operationId: searchGeokrety
+    summary: Search GeoKrety
+    parameters:
+    - $ref: '#/components/parameters/SearchQueryParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Matching GeoKrety.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokret
+    summary: GeoKret details
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    responses:
+      '200':
+        description: Single GeoKret resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/moves:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretMoves
+    summary: GeoKret move history
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/MoveIdsParam'
+    responses:
+      '200':
+        description: Cursor-paginated move collection for a GeoKret.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MoveResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/moves/{moveId}:
+  get:
+    tags:
+    - Geokrety
+    operationId: getGeokretMove
+    summary: GeoKret move details
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/MoveIdParam'
+    responses:
+      '200':
+        description: Single move resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MoveResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/loved-by:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretLovers
+    summary: Users who love a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated user collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/watched-by:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretWatchers
+    summary: Users who watch a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated user collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/pictures:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretPictures
+    summary: Pictures attached to a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated picture collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/countries:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretCountries
+    summary: Countries visited by a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated country visit collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryVisitResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/geokrety/{gkid}/waypoints:
+  get:
+    tags:
+    - Geokrety
+    operationId: listGeokretWaypoints
+    summary: Waypoints visited by a GeoKret
+    parameters:
+    - $ref: '#/components/parameters/GeokretIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated waypoint visit collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WaypointVisitResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/countries:
+  get:
+    tags:
+    - Countries
+    operationId: listCountries
+    summary: List countries
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/CountryIdsParam'
+    responses:
+      '200':
+        description: Cursor-paginated country collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/countries/{code}:
+  get:
+    tags:
+    - Countries
+    operationId: getCountry
+    summary: Country details
+    parameters:
+    - $ref: '#/components/parameters/CountryCodeParam'
+    responses:
+      '200':
+        description: Single country resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CountryResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/countries/{code}/geokrety:
+  get:
+    tags:
+    - Countries
+    operationId: listCountryGeokrety
+    summary: GeoKrety currently in a country
+    parameters:
+    - $ref: '#/components/parameters/CountryCodeParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection scoped to a country.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/waypoints/search:
+  get:
+    tags:
+    - Waypoints
+    operationId: searchWaypoints
+    summary: Search waypoints
+    parameters:
+    - $ref: '#/components/parameters/SearchQueryParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Matching waypoint collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WaypointResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/waypoints/{code}:
+  get:
+    tags:
+    - Waypoints
+    operationId: getWaypoint
+    summary: Waypoint details
+    parameters:
+    - $ref: '#/components/parameters/WaypointCodeParam'
+    responses:
+      '200':
+        description: Single waypoint resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WaypointResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/waypoints/{code}/geokrety-current:
+  get:
+    tags:
+    - Waypoints
+    operationId: listWaypointCurrentGeokrety
+    summary: GeoKrety currently at a waypoint
+    parameters:
+    - $ref: '#/components/parameters/WaypointCodeParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/waypoints/{code}/geokrety-past:
+  get:
+    tags:
+    - Waypoints
+    operationId: listWaypointPastGeokrety
+    summary: GeoKrety previously seen at a waypoint
+    parameters:
+    - $ref: '#/components/parameters/WaypointCodeParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated historical GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users:
+  get:
+    tags:
+    - Users
+    operationId: listUsers
+    summary: List users
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/UserIdsParam'
+    responses:
+      '200':
+        description: Cursor-paginated user collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/search:
+  get:
+    tags:
+    - Users
+    operationId: searchUsers
+    summary: Search users
+    parameters:
+    - $ref: '#/components/parameters/SearchQueryParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Matching user collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}:
+  get:
+    tags:
+    - Users
+    operationId: getUser
+    summary: User details
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    responses:
+      '200':
+        description: Single user resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/geokrety-owned:
+  get:
+    tags:
+    - Users
+    operationId: listUserOwnedGeokrety
+    summary: GeoKrety owned by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/geokrety-found:
+  get:
+    tags:
+    - Users
+    operationId: listUserFoundGeokrety
+    summary: GeoKrety found by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/geokrety-loved:
+  get:
+    tags:
+    - Users
+    operationId: listUserLovedGeokrety
+    summary: GeoKrety loved by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/geokrety-watched:
+  get:
+    tags:
+    - Users
+    operationId: listUserWatchedGeokrety
+    summary: GeoKrety watched by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated GeoKrety collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeokretResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/pictures:
+  get:
+    tags:
+    - Users
+    operationId: listUserPictures
+    summary: Pictures authored or owned by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated picture collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/countries:
+  get:
+    tags:
+    - Users
+    operationId: listUserCountries
+    summary: Countries visited by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated country visit collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CountryVisitResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/users/{id}/waypoints:
+  get:
+    tags:
+    - Users
+    operationId: listUserWaypoints
+    summary: Waypoints visited by a user
+    parameters:
+    - $ref: '#/components/parameters/UserIdParam'
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    responses:
+      '200':
+        description: Cursor-paginated waypoint visit collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WaypointVisitResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/pictures:
+  get:
+    tags:
+    - Pictures
+    operationId: listPictures
+    summary: List pictures
+    parameters:
+    - $ref: '#/components/parameters/LimitParam'
+    - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/PictureIdsParam'
+    responses:
+      '200':
+        description: Cursor-paginated picture collection.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestCollectionDocument'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PictureResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/api/v3/pictures/{id}:
+  get:
+    tags:
+    - Pictures
+    operationId: getPicture
+    summary: Picture details
+    parameters:
+    - $ref: '#/components/parameters/PictureIdParam'
+    responses:
+      '200':
+        description: Single picture resource document.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/JsonRestSingleDocument'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PictureResource'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

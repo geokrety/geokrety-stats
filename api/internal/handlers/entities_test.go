@@ -106,10 +106,10 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 		{"country-list", h.GetCountryList, "/api/v3/countries/?limit=4&offset=1", nil, "FetchCountryList", http.StatusOK, true, 4, 1},
 		{"country-details", h.GetCountryDetails, "/api/v3/countries/PL", []string{"code", "PL"}, "FetchCountryDetails", http.StatusOK, false, 0, 0},
 		{"country-geokrety", h.GetCountryGeokrety, "/api/v3/countries/PL/geokrety?limit=4&offset=1", []string{"code", "PL"}, "FetchCountryGeokrety", http.StatusOK, true, 4, 1},
-		{"country-geokrety-alias", h.GetCountrySpottedGeokrety, "/api/v3/countries/PL/spotted-geokrety", []string{"code", "PL"}, "FetchCountryGeokrety", http.StatusOK, true, 20, 0},
+		{"country-spotted-geokrety", h.GetCountrySpottedGeokrety, "/api/v3/countries/PL/spotted-geokrety", []string{"code", "PL"}, "FetchCountrySpottedGeokrety", http.StatusOK, true, 20, 0},
 		{"waypoint-details", h.GetWaypoint, "/api/v3/waypoints/GC123", []string{"code", "GC123"}, "FetchWaypoint", http.StatusOK, false, 0, 0},
 		{"waypoint-current", h.GetWaypointCurrentGeokrety, "/api/v3/waypoints/GC123/geokrety-current?limit=5&offset=2", []string{"code", "GC123"}, "FetchWaypointCurrentGeokrety", http.StatusOK, true, 5, 2},
-		{"waypoint-current-alias", h.GetWaypointSpottedGeokrety, "/api/v3/waypoints/GC123/spotted-geokrety", []string{"code", "GC123"}, "FetchWaypointCurrentGeokrety", http.StatusOK, true, 20, 0},
+		{"waypoint-spotted-geokrety", h.GetWaypointSpottedGeokrety, "/api/v3/waypoints/GC123/spotted-geokrety", []string{"code", "GC123"}, "FetchWaypointSpottedGeokrety", http.StatusOK, true, 20, 0},
 		{"waypoint-past", h.GetWaypointPastGeokrety, "/api/v3/waypoints/GC123/geokrety-past?limit=5&offset=2", []string{"code", "GC123"}, "FetchWaypointPastGeokrety", http.StatusOK, true, 5, 2},
 		{"waypoint-search", h.SearchWaypoints, "/api/v3/waypoints/search?q=gc&limit=5&offset=2", nil, "SearchWaypoints", http.StatusOK, true, 5, 2},
 		{"user-list", h.GetUserList, "/api/v3/users/?limit=4&offset=1", nil, "FetchUserList", http.StatusOK, true, 4, 1},
@@ -171,6 +171,10 @@ func TestEntityHandlerSuccessEndpoints(t *testing.T) {
 				if got := data["type"]; got != "geokret" {
 					t.Fatalf("data.type = %#v, want geokret", got)
 				}
+				resourceLinks := data["links"].(map[string]any)
+				if got := resourceLinks["self"]; got != "/api/v3/geokrety/GK0001" {
+					t.Fatalf("data.links.self = %#v, want /api/v3/geokrety/GK0001", got)
+				}
 			}
 		})
 	}
@@ -225,6 +229,102 @@ func TestEntityHandlerAcceptsBareHexGKID(t *testing.T) {
 	data := payload["data"].(map[string]any)
 	if got := data["id"]; got != "GK00FF" {
 		t.Fatalf("data.id = %#v, want GK00FF", got)
+	}
+	resourceLinks := data["links"].(map[string]any)
+	if got := resourceLinks["self"]; got != "/api/v3/geokrety/GK00FF" {
+		t.Fatalf("data.links.self = %#v, want /api/v3/geokrety/GK00FF", got)
+	}
+}
+
+func TestEntityHandlerCanonicalizesMoveSelfLink(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/geokrety/00FF/moves/9", nil), "gkid", "00FF", "moveId", "9")
+	w := httptest.NewRecorder()
+
+	h.GetGeokretyMoveDetails(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].(map[string]any)
+	resourceLinks := data["links"].(map[string]any)
+	if got := resourceLinks["self"]; got != "/api/v3/geokrety/GK00FF/moves/9" {
+		t.Fatalf("data.links.self = %#v, want /api/v3/geokrety/GK00FF/moves/9", got)
+	}
+}
+
+func TestEntityHandlerPictureRelationshipsUsePublicGKID(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := withRouteParams(httptest.NewRequest(http.MethodGet, "/api/v3/pictures/1", nil), "id", "1")
+	w := httptest.NewRecorder()
+
+	h.GetPictureDetails(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	payload := decodeMap(t, w)
+	data := payload["data"].(map[string]any)
+	relationships := data["relationships"].(map[string]any)
+	geokret := relationships["geokret"].(map[string]any)
+	identifier := geokret["data"].(map[string]any)
+	if got := identifier["id"]; got != "GK0001" {
+		t.Fatalf("relationships.geokret.data.id = %#v, want GK0001", got)
+	}
+}
+
+func TestEntityHandlerBatchIDs(t *testing.T) {
+	store := &mockStatsStore{}
+	h := NewStatsHandler(store, zap.NewNop())
+	tests := []struct {
+		name      string
+		handler   http.HandlerFunc
+		target    string
+		params    []string
+		wantStore string
+		wantCount int
+	}{
+		{name: "geokrety", handler: h.GetGeokretyList, target: "/api/v3/geokrety?ids=GK0001,GK0002", wantStore: "FetchGeokretyByGKIDs", wantCount: 2},
+		{name: "moves", handler: h.GetGeokretyMoves, target: "/api/v3/geokrety/GK0001/moves?ids=7,9", params: []string{"gkid", "GK0001"}, wantStore: "FetchGeokretyMovesByIDs", wantCount: 2},
+		{name: "countries", handler: h.GetCountryList, target: "/api/v3/countries?ids=PL,DE", wantStore: "FetchCountryListByCodes", wantCount: 2},
+		{name: "users", handler: h.GetUserList, target: "/api/v3/users?ids=1,2", wantStore: "FetchUserListByIDs", wantCount: 2},
+		{name: "pictures", handler: h.GetPictureList, target: "/api/v3/pictures?ids=1,2", wantStore: "FetchPictureListByIDs", wantCount: 2},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			if len(tc.params) > 0 {
+				r = withRouteParams(r, tc.params...)
+			}
+			w := httptest.NewRecorder()
+			tc.handler(w, r)
+			if w.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", w.Code)
+			}
+			if store.lastMethod != tc.wantStore {
+				t.Fatalf("expected store method %s, got %s", tc.wantStore, store.lastMethod)
+			}
+			payload := decodeMap(t, w)
+			data := payload["data"].([]any)
+			if len(data) != tc.wantCount {
+				t.Fatalf("data length = %d, want %d", len(data), tc.wantCount)
+			}
+		})
+	}
+}
+
+func TestEntityHandlerRejectsInvalidBatchIDs(t *testing.T) {
+	h := NewStatsHandler(&mockStatsStore{}, zap.NewNop())
+	r := httptest.NewRequest(http.MethodGet, "/api/v3/users?ids=1,abc", nil)
+	w := httptest.NewRecorder()
+
+	h.GetUserList(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
 

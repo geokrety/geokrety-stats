@@ -53,7 +53,7 @@ func writeEnvelope(w http.ResponseWriter, status int, payload interface{}, start
 
 func writeEnvelopeForRequest(w http.ResponseWriter, r *http.Request, status int, payload interface{}, started time.Time, limit, offset, count int) {
 	if !wantsXML(r) {
-		data := resourceDataFromPayload(payload)
+		data := resourceDataFromPayload(r, payload)
 		links := sharedjsonrest.Links{}
 		links.Set("self", sharedjsonrest.SelfLink(r))
 		writeJSON(w, status, sharedjsonrest.NewDocument(data, sharedjsonrest.NewMeta(started), links))
@@ -98,7 +98,7 @@ func writeEnvelopeForOffsetRequest(
 		}
 		meta := sharedjsonrest.NewMeta(started).WithCursor(req, hasMoreValue)
 		links := sharedjsonrest.CursorLinks(r, req, nextCursor, "limit", "cursor")
-		writeJSON(w, status, sharedjsonrest.NewDocument(resourceDataFromPayload(payload), meta, links))
+		writeJSON(w, status, sharedjsonrest.NewDocument(resourceDataFromPayload(r, payload), meta, links))
 		return
 	}
 	envelope := Envelope{

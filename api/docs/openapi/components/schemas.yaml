@@ -1,3 +1,214 @@
+JsonRestResourceLinks:
+  type: object
+  additionalProperties: false
+  properties:
+    self:
+      type: string
+
+JsonRestDocumentLinks:
+  type: object
+  additionalProperties: false
+  properties:
+    self:
+      type: string
+    next:
+      type: string
+
+JsonRestIdentifier:
+  type: object
+  required:
+  - type
+  - id
+  properties:
+    type:
+      type: string
+    id:
+      type: string
+
+JsonRestRelationship:
+  type: object
+  properties:
+    data:
+      $ref: '#/components/schemas/JsonRestIdentifier'
+    links:
+      $ref: '#/components/schemas/JsonRestResourceLinks'
+
+JsonRestMeta:
+  type: object
+  required:
+  - execution_time_ms
+  properties:
+    execution_time_ms:
+      type: integer
+      description: Milliseconds spent handling the request.
+    limit:
+      type: integer
+      description: Requested collection size for cursor collections.
+    has_more:
+      type: boolean
+      description: Indicates whether `links.next` can be followed.
+    page:
+      type: integer
+    per_page:
+      type: integer
+    total_items:
+      type: integer
+    total_pages:
+      type: integer
+
+JsonRestErrorPayload:
+  type: object
+  required:
+  - code
+  - message
+  properties:
+    code:
+      type: string
+    message:
+      type: string
+
+JsonRestErrorDocument:
+  type: object
+  required:
+  - error
+  - timestamp
+  properties:
+    error:
+      $ref: '#/components/schemas/JsonRestErrorPayload'
+    timestamp:
+      type: string
+      format: date-time
+
+JsonRestResource:
+  type: object
+  required:
+  - id
+  - type
+  properties:
+    id:
+      type: string
+    type:
+      type: string
+    attributes:
+      type: object
+      additionalProperties: true
+    relationships:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/JsonRestRelationship'
+    links:
+      $ref: '#/components/schemas/JsonRestResourceLinks'
+
+JsonRestSingleDocument:
+  type: object
+  required:
+  - data
+  - meta
+  - links
+  properties:
+    data:
+      $ref: '#/components/schemas/JsonRestResource'
+    meta:
+      $ref: '#/components/schemas/JsonRestMeta'
+    links:
+      $ref: '#/components/schemas/JsonRestDocumentLinks'
+
+JsonRestCollectionDocument:
+  type: object
+  required:
+  - data
+  - meta
+  - links
+  properties:
+    data:
+      type: array
+      items:
+        $ref: '#/components/schemas/JsonRestResource'
+    meta:
+      $ref: '#/components/schemas/JsonRestMeta'
+    links:
+      $ref: '#/components/schemas/JsonRestDocumentLinks'
+
+GeokretResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - geokret
+
+MoveResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - move
+
+UserResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - user
+
+PictureResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - picture
+
+CountryResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - country
+
+WaypointResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - waypoint
+
+CountryVisitResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - country_visit
+
+WaypointVisitResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - waypoint_visit
+
 RootInfo:
   type: object
   xml:
