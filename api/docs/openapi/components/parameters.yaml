@@ -255,3 +255,287 @@ PictureIdParam:
     type: integer
     format: int64
     minimum: 1
+
+FilterGeokretNameParam:
+  in: query
+  name: filter[name]
+  description: Filter GeoKrety by case-insensitive name fragment.
+  required: false
+  schema:
+    type: string
+
+FilterGeokretOwnerParam:
+  in: query
+  name: filter[owner_id]
+  description: Filter GeoKrety by internal owner user identifier.
+  required: false
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+
+FilterUserNameParam:
+  in: query
+  name: filter[username]
+  description: Filter users by case-insensitive username fragment.
+  required: false
+  schema:
+    type: string
+
+FilterCountryCodesParam:
+  in: query
+  name: filter[country]
+  description: Filter countries by a comma-separated list of ISO-3166 alpha-2 country codes.
+  required: false
+  schema:
+    type: string
+    pattern: '^[A-Za-z]{2}(?:\s*,\s*[A-Za-z]{2})*$'
+  example: PL,DE
+
+FilterMoveGeokretParam:
+  in: query
+  name: filter[geokret]
+  description: Filter moves by a public GeoKret identifier.
+  required: false
+  schema:
+    type: string
+    pattern: '^(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*$'
+  example: GK0001
+
+FilterMoveUserParam:
+  in: query
+  name: filter[user]
+  description: Filter moves by an internal user identifier.
+  required: false
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+  example: 42
+
+FilterMoveCountryParam:
+  in: query
+  name: filter[country]
+  description: Filter moves by an ISO-3166 alpha-2 country code.
+  required: false
+  schema:
+    type: string
+    minLength: 2
+    maxLength: 2
+    pattern: '^[A-Za-z]{2}$'
+  example: PL
+
+FilterMoveWaypointParam:
+  in: query
+  name: filter[waypoint]
+  description: Filter moves by waypoint code.
+  required: false
+  schema:
+    type: string
+    minLength: 2
+    maxLength: 32
+    pattern: '^[A-Za-z0-9_-]{2,32}$'
+  example: OC146C3
+
+FilterMoveDateFromParam:
+  in: query
+  name: filter[date_from]
+  description: Inclusive lower bound for move date filtering.
+  required: false
+  schema:
+    type: string
+    format: date
+  example: '2026-03-01'
+
+FilterMoveDateToParam:
+  in: query
+  name: filter[date_to]
+  description: Inclusive upper bound for move date filtering.
+  required: false
+  schema:
+    type: string
+    format: date
+  example: '2026-03-29'
+
+FilterPictureGeokretParam:
+  in: query
+  name: filter[geokret]
+  description: Filter pictures by a public GeoKret identifier.
+  required: false
+  schema:
+    type: string
+    pattern: '^(?:[Gg][Kk])?0*[1-9A-Fa-f][0-9A-Fa-f]*$'
+  example: GK0001
+
+FilterPictureMoveParam:
+  in: query
+  name: filter[move]
+  description: Filter pictures by an internal move identifier.
+  required: false
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+  example: 9
+
+FilterPictureUserParam:
+  in: query
+  name: filter[user]
+  description: Filter pictures by an internal user identifier.
+  required: false
+  schema:
+    type: integer
+    format: int64
+    minimum: 1
+  example: 42
+
+GeokretSortParam:
+  in: query
+  name: sort
+  description: Sort GeoKret collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - name
+    - -name
+    - born_at
+    - -born_at
+    - last_move_at
+    - -last_move_at
+
+UserSortParam:
+  in: query
+  name: sort
+  description: Sort user collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - username
+    - -username
+    - joined_at
+    - -joined_at
+    - last_move_at
+    - -last_move_at
+
+MoveSortParam:
+  in: query
+  name: sort
+  description: Sort move collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - date
+    - -date
+    - id
+    - -id
+
+PictureSortParam:
+  in: query
+  name: sort
+  description: Sort picture collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - created_on
+    - -created_on
+    - id
+    - -id
+
+CountrySortParam:
+  in: query
+  name: sort
+  description: Sort country collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - code
+    - -code
+    - name
+    - -name
+
+LoverSortParam:
+  in: query
+  name: sort
+  description: Sort the `loved-by` collection. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - loved_on_date
+    - -loved_on_date
+
+WatcherSortParam:
+  in: query
+  name: sort
+  description: Sort the `watched-by` collection. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - watched_on_date
+    - -watched_on_date
+
+FinderSortParam:
+  in: query
+  name: sort
+  description: Sort the `finders` collection. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - found_on_date
+    - -found_on_date
+
+GeokretCountryVisitSortParam:
+  in: query
+  name: sort
+  description: Sort GeoKret country visit collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - country_code
+    - -country_code
+    - first_visited_at
+    - -first_visited_at
+    - move_count
+    - -move_count
+
+UserCountryVisitSortParam:
+  in: query
+  name: sort
+  description: Sort user country visit collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - country_code
+    - -country_code
+    - first_visit
+    - -first_visit
+    - last_visit
+    - -last_visit
+    - move_count
+    - -move_count
+
+WaypointVisitSortParam:
+  in: query
+  name: sort
+  description: Sort waypoint visit collections. Prefix with `-` for descending order.
+  required: false
+  schema:
+    type: string
+    enum:
+    - waypoint_code
+    - -waypoint_code
+    - first_visited_at
+    - -first_visited_at
+    - last_visited_at
+    - -last_visited_at
+    - visit_count
+    - -visit_count

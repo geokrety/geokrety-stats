@@ -8,38 +8,13 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/GeokretIdsParam'
+    - $ref: '#/components/parameters/FilterGeokretNameParam'
+    - $ref: '#/components/parameters/FilterGeokretOwnerParam'
+    - $ref: '#/components/parameters/FilterCountryCodesParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection.
-        content:
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/schemas/JsonRestCollectionDocument'
-              - type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/GeokretResource'
-      '400':
-        $ref: '#/components/responses/BadRequest'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-/api/v3/geokrety/search:
-  get:
-    tags:
-    - Geokrety
-    operationId: searchGeokrety
-    summary: Search GeoKrety
-    parameters:
-    - $ref: '#/components/parameters/SearchQueryParam'
-    - $ref: '#/components/parameters/LimitParam'
-    - $ref: '#/components/parameters/CursorParam'
-    responses:
-      '200':
-        description: Matching GeoKrety.
         content:
           application/json:
             schema:
@@ -121,6 +96,7 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/MoveIdsParam'
+    - $ref: '#/components/parameters/MoveSortParam'
     responses:
       '200':
         description: Cursor-paginated move collection for a GeoKret.
@@ -142,34 +118,6 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
-/api/v3/geokrety/{gkid}/moves/{moveId}:
-  get:
-    tags:
-    - Geokrety
-    operationId: getGeokretMove
-    summary: GeoKret move details
-    parameters:
-    - $ref: '#/components/parameters/GeokretIdParam'
-    - $ref: '#/components/parameters/MoveIdParam'
-    responses:
-      '200':
-        description: Single move resource document.
-        content:
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/schemas/JsonRestSingleDocument'
-              - type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MoveResource'
-      '400':
-        $ref: '#/components/responses/BadRequest'
-      '404':
-        $ref: '#/components/responses/NotFound'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
 /api/v3/geokrety/{gkid}/loved-by:
   get:
     tags:
@@ -180,6 +128,7 @@
     - $ref: '#/components/parameters/GeokretIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/LoverSortParam'
     responses:
       '200':
         description: Cursor-paginated user collection.
@@ -193,7 +142,7 @@
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/UserResource'
+                      $ref: '#/components/schemas/LoverResource'
       '400':
         $ref: '#/components/responses/BadRequest'
       '404':
@@ -211,6 +160,7 @@
     - $ref: '#/components/parameters/GeokretIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/WatcherSortParam'
     responses:
       '200':
         description: Cursor-paginated user collection.
@@ -224,7 +174,7 @@
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/UserResource'
+                      $ref: '#/components/schemas/WatcherResource'
       '400':
         $ref: '#/components/responses/BadRequest'
       '404':
@@ -242,6 +192,7 @@
     - $ref: '#/components/parameters/GeokretIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/FinderSortParam'
     responses:
       '200':
         description: Cursor-paginated finder collection.
@@ -255,7 +206,7 @@
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/UserResource'
+                      $ref: '#/components/schemas/FinderResource'
       '400':
         $ref: '#/components/responses/BadRequest'
       '404':
@@ -273,6 +224,7 @@
     - $ref: '#/components/parameters/GeokretIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/PictureSortParam'
     responses:
       '200':
         description: Cursor-paginated picture collection.
@@ -304,6 +256,7 @@
     - $ref: '#/components/parameters/GeokretIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretCountryVisitSortParam'
     responses:
       '200':
         description: Cursor-paginated country visit collection.
@@ -335,6 +288,7 @@
     - $ref: '#/components/parameters/GeokretIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/WaypointVisitSortParam'
     responses:
       '200':
         description: Cursor-paginated waypoint visit collection.
@@ -366,12 +320,13 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/MoveIdsParam'
-    - $ref: '#/components/parameters/GeokretFilterParam'
-    - $ref: '#/components/parameters/UserFilterParam'
-    - $ref: '#/components/parameters/CountryFilterParam'
-    - $ref: '#/components/parameters/WaypointFilterParam'
-    - $ref: '#/components/parameters/DateFromParam'
-    - $ref: '#/components/parameters/DateToParam'
+    - $ref: '#/components/parameters/FilterMoveGeokretParam'
+    - $ref: '#/components/parameters/FilterMoveUserParam'
+    - $ref: '#/components/parameters/FilterMoveCountryParam'
+    - $ref: '#/components/parameters/FilterMoveWaypointParam'
+    - $ref: '#/components/parameters/FilterMoveDateFromParam'
+    - $ref: '#/components/parameters/FilterMoveDateToParam'
+    - $ref: '#/components/parameters/MoveSortParam'
     responses:
       '200':
         description: Cursor-paginated move collection.
@@ -428,6 +383,7 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/CountryIdsParam'
+    - $ref: '#/components/parameters/CountrySortParam'
     responses:
       '200':
         description: Cursor-paginated country collection.
@@ -484,6 +440,7 @@
     - $ref: '#/components/parameters/CountryCodeParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection scoped to a country.
@@ -502,35 +459,6 @@
         $ref: '#/components/responses/BadRequest'
       '404':
         $ref: '#/components/responses/NotFound'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-/api/v3/waypoints/search:
-  get:
-    tags:
-    - Waypoints
-    operationId: searchWaypoints
-    summary: Search waypoints
-    parameters:
-    - $ref: '#/components/parameters/SearchQueryParam'
-    - $ref: '#/components/parameters/LimitParam'
-    - $ref: '#/components/parameters/CursorParam'
-    responses:
-      '200':
-        description: Matching waypoint collection.
-        content:
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/schemas/JsonRestCollectionDocument'
-              - type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/WaypointResource'
-      '400':
-        $ref: '#/components/responses/BadRequest'
       '500':
         $ref: '#/components/responses/InternalServerError'
 
@@ -571,6 +499,7 @@
     - $ref: '#/components/parameters/WaypointCodeParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection.
@@ -602,6 +531,7 @@
     - $ref: '#/components/parameters/WaypointCodeParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated historical GeoKrety collection.
@@ -633,38 +563,12 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/UserIdsParam'
+    - $ref: '#/components/parameters/FilterUserNameParam'
+    - $ref: '#/components/parameters/FilterCountryCodesParam'
+    - $ref: '#/components/parameters/UserSortParam'
     responses:
       '200':
         description: Cursor-paginated user collection.
-        content:
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/schemas/JsonRestCollectionDocument'
-              - type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/UserResource'
-      '400':
-        $ref: '#/components/responses/BadRequest'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-/api/v3/users/search:
-  get:
-    tags:
-    - Users
-    operationId: searchUsers
-    summary: Search users
-    parameters:
-    - $ref: '#/components/parameters/SearchQueryParam'
-    - $ref: '#/components/parameters/LimitParam'
-    - $ref: '#/components/parameters/CursorParam'
-    responses:
-      '200':
-        description: Matching user collection.
         content:
           application/json:
             schema:
@@ -745,6 +649,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection.
@@ -776,6 +681,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection.
@@ -807,6 +713,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection.
@@ -838,6 +745,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/GeokretSortParam'
     responses:
       '200':
         description: Cursor-paginated GeoKrety collection.
@@ -869,6 +777,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/PictureSortParam'
     responses:
       '200':
         description: Cursor-paginated picture collection.
@@ -900,6 +809,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/UserCountryVisitSortParam'
     responses:
       '200':
         description: Cursor-paginated country visit collection.
@@ -931,6 +841,7 @@
     - $ref: '#/components/parameters/UserIdParam'
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
+    - $ref: '#/components/parameters/WaypointVisitSortParam'
     responses:
       '200':
         description: Cursor-paginated waypoint visit collection.
@@ -962,9 +873,10 @@
     - $ref: '#/components/parameters/LimitParam'
     - $ref: '#/components/parameters/CursorParam'
     - $ref: '#/components/parameters/PictureIdsParam'
-    - $ref: '#/components/parameters/GeokretFilterParam'
-    - $ref: '#/components/parameters/MoveFilterParam'
-    - $ref: '#/components/parameters/UserFilterParam'
+    - $ref: '#/components/parameters/FilterPictureGeokretParam'
+    - $ref: '#/components/parameters/FilterPictureMoveParam'
+    - $ref: '#/components/parameters/FilterPictureUserParam'
+    - $ref: '#/components/parameters/PictureSortParam'
     responses:
       '200':
         description: Cursor-paginated picture collection.

@@ -53,7 +53,7 @@ func (s *Store) FetchPictureList(ctx context.Context, filters PictureFilters, li
 	}
 	query := pictureSelectColumns() + pictureBaseFromClause() + `
 WHERE ` + strings.Join(conditions, ` AND `) + `
-ORDER BY p.created_on_datetime DESC, p.id DESC
+ORDER BY ` + pictureOrderBy(filters.Sort) + `
 LIMIT ? OFFSET ?
 `
 	args = append(args, limit, offset)

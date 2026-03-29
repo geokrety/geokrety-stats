@@ -73,7 +73,7 @@ func (s *Store) FetchMoveList(ctx context.Context, filters MoveFilters, limit, o
 	}
 	query := moveSelectColumns() + moveBaseFromClause() + `
 WHERE ` + strings.Join(conditions, ` AND `) + `
-ORDER BY m.moved_on_datetime DESC, m.id DESC
+ORDER BY ` + moveOrderBy(filters.Sort) + `
 LIMIT ? OFFSET ?
 `
 	args = append(args, limit, offset)

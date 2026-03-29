@@ -1,8 +1,8 @@
 ---
 title: GeoKrety Pagination and Sorting for JSON REST Collections
-version: 2.0
+version: 3.0
 date_created: 2026-03-22
-last_updated: 2026-03-28
+last_updated: 2026-03-29
 owner: GeoKrety Development Team
 tags: [architecture, infrastructure, design, pagination, api, frontend, json-rest]
 ---
@@ -12,8 +12,6 @@ tags: [architecture, infrastructure, design, pagination, api, frontend, json-res
 ## 1. Introduction
 
 This specification defines how GeoKrety paginates JSON collections inside the shared JSON REST envelope documented in [../json-rest/specification.md](../json-rest/specification.md). It covers page-based pagination, cursor-based pagination, sorting, filtering, infinite-scroll client behavior, and the minimum validation rules needed for consistent implementation.
-
-This page is normative for new and explicitly migrated JSON endpoints. Existing endpoints that still emit legacy payloads must document that exception in OpenAPI and endpoint-specific docs until they are migrated.
 
 ## 2. Purpose & Scope
 
@@ -31,6 +29,7 @@ This page is normative for new and explicitly migrated JSON endpoints. Existing 
 - Cursor-based pagination with `limit` and opaque `cursor`
 - Top-level pagination links in JSON REST collection responses
 - Sorting and filtering rules that affect page identity
+- Runtime self-documentation of active filters, active sort, and supported capabilities
 - Infinite-scroll frontend behavior
 - Backend and frontend implementation guidance
 - Validation and testing expectations
@@ -49,7 +48,13 @@ Every paginated JSON collection response uses the shared top-level envelope:
 ```json
 {
   "data": [],
-  "meta": {},
+  "included": [],
+  "meta": {
+    "execution_time_ms": 0,
+    "page": {},
+    "query": {},
+    "capabilities": {}
+  },
   "links": {
     "self": "/api/v3/example"
   }
@@ -59,10 +64,13 @@ Every paginated JSON collection response uses the shared top-level envelope:
 Rules:
 
 - `data` contains resource objects as defined in [../json-rest/specification.md](../json-rest/specification.md)
-- `meta` describes the current page state and applied query context
+- `included` is optional and carries side-loaded related resources
+- `meta.page` describes the current pagination state
+- `meta.query` echoes the effective filters and sort
+- `meta.capabilities` advertises the supported filter and sort inputs for that collection
 - `links` carries navigation URLs
 - collection navigation is link-driven, not field-driven
-- canonical pagination examples must not use nested `meta.pagination`
+- canonical pagination examples must not use flat fields such as `meta.limit`, `meta.has_more`, `meta.sort`, or `meta.filters`
 
 ## 4. Endpoint Mode Selection and Migration Boundary
 
@@ -77,8 +85,8 @@ Rules:
 - cursor-based endpoints accept `limit` and optional `cursor`, and reject `page` and `per_page`
 - requests mixing pagination modes return `INVALID_PAGINATION_MODE` with HTTP 400
 - OpenAPI must declare the supported mode for each endpoint explicitly
-- this specification is mandatory for new endpoints and for endpoints that have been explicitly migrated to the JSON REST contract
-- older endpoints may remain legacy temporarily, but they must document the exception instead of silently presenting legacy payloads as canonical
+- when an endpoint supports filtering, the canonical parameter names are `filter[...]`
+- when an endpoint supports sorting, it documents a single `sort` parameter with a fixed whitelist
 
 ## 5. Page-Based Pagination
 
@@ -96,7 +104,7 @@ Use page-based pagination when:
 Example request:
 
 ```text
-GET /api/v1/users?page=2&per_page=2&status=active&sort=-created_at
+GET /api/v3/example?page=2&per_page=20&filter[status]=active&sort=-created_at
 ```
 
 Parameters:
@@ -105,8 +113,8 @@ Parameters:
 |-----------|------|----------|-------|
 | `page` | integer | No | 1-based page number, defaults to `1` |
 | `per_page` | integer | No | Defaults to `20`, maximum `100` |
-| `sort` | string | No | Comma-separated fields, `-field` means descending |
-| filters | varies | No | Endpoint-specific filter parameters |
+| `sort` | string | No | Endpoint-defined whitelist, `-field` means descending |
+| `filter[...]` | varies | No | Endpoint-specific filter parameters |
 
 ### 5.3 Response Contract
 
@@ -150,22 +158,35 @@ Parameters:
     }
   ],
   "meta": {
-    "page": 2,
-    "per_page": 2,
-    "total_items": 50,
-    "total_pages": 25,
     "execution_time_ms": 14,
-    "filters": {
-      "status": "active"
+    "page": {
+      "type": "page",
+      "number": 2,
+      "size": 20,
+      "total_items": 50,
+      "total_pages": 3
     },
-    "sort": "-created_at,id"
+    "query": {
+      "filters": {
+        "status": "active"
+      },
+      "sort": "-created_at"
+    },
+    "capabilities": {
+      "filters": {
+        "status": {
+          "type": "string"
+        }
+      },
+      "sorts": ["created_at", "-created_at", "username", "-username"]
+    }
   },
   "links": {
-    "self": "/api/v1/users?page=2&per_page=2&status=active&sort=-created_at,id",
-    "first": "/api/v1/users?page=1&per_page=2&status=active&sort=-created_at,id",
-    "prev": "/api/v1/users?page=1&per_page=2&status=active&sort=-created_at,id",
-    "next": "/api/v1/users?page=3&per_page=2&status=active&sort=-created_at,id",
-    "last": "/api/v1/users?page=25&per_page=2&status=active&sort=-created_at,id"
+    "self": "/api/v3/example?page=2&per_page=20&filter[status]=active&sort=-created_at",
+    "first": "/api/v3/example?page=1&per_page=20&filter[status]=active&sort=-created_at",
+    "prev": "/api/v3/example?page=1&per_page=20&filter[status]=active&sort=-created_at",
+    "next": "/api/v3/example?page=3&per_page=20&filter[status]=active&sort=-created_at",
+    "last": "/api/v3/example?page=3&per_page=20&filter[status]=active&sort=-created_at"
   }
 }
 ```
@@ -175,7 +196,7 @@ Rules:
 - `links.self` matches the normalized request URL
 - `links.prev` is omitted on the first page
 - `links.next` is omitted on the last page
-- `total_items` and `total_pages` are part of the external page-based contract
+- `meta.page.total_items` and `meta.page.total_pages` are part of the external page-based contract
 - backends may still compute the page internally with `LIMIT` and `OFFSET`, but the public contract remains page-based
 
 Validation behavior:
@@ -183,7 +204,7 @@ Validation behavior:
 - `page < 1` returns `INVALID_PAGE` with HTTP 400
 - missing or too-small `per_page` resolves to the server default of `20`
 - `per_page > 100` returns `LIMIT_EXCEEDED` with HTTP 400
-- a first-page request against an empty collection returns HTTP 200 with `data: []`, `page: 1`, `total_items: 0`, `total_pages: 1`, and `links.self`, `links.first`, and `links.last` all pointing to the normalized first-page URL
+- a first-page request against an empty collection returns HTTP 200 with `data: []`, `meta.page.number: 1`, `meta.page.total_items: 0`, `meta.page.total_pages: 1`, and `links.self`, `links.first`, and `links.last` all pointing to the normalized first-page URL
 - a request for `page > 1` against an empty collection returns `OUT_OF_BOUNDS` with HTTP 400
 - a request for `page > total_pages` on a non-empty collection returns `OUT_OF_BOUNDS` with HTTP 400
 
@@ -203,7 +224,7 @@ Use cursor-based pagination when:
 Example request:
 
 ```text
-GET /api/v1/moves?limit=20&cursor=eyJpZCI6MjAxfQ==&sort=-created_at
+GET /api/v3/moves?limit=20&cursor=eyJkYXRlIjoiMjAyNi0wMy0yOFQwOTowMDowMFoiLCJpZCI6ODQxMzM2fQ==&filter[country]=PL&sort=-date
 ```
 
 Parameters:
@@ -212,8 +233,8 @@ Parameters:
 |-----------|------|----------|-------|
 | `limit` | integer | No | Defaults to `20`, maximum `100` |
 | `cursor` | string | No | Opaque, versioned token for the next window |
-| `sort` | string | No | Deterministic sort expression |
-| filters | varies | No | Endpoint-specific filter parameters |
+| `sort` | string | No | Endpoint-defined whitelist |
+| `filter[...]` | varies | No | Endpoint-specific filter parameters |
 
 ### 6.3 Response Contract
 
@@ -226,7 +247,7 @@ Parameters:
       "attributes": {
         "lat": 48.8566,
         "lon": 2.3522,
-        "created_at": "2026-03-28T10:00:00Z"
+        "date": "2026-03-28T10:00:00Z"
       }
     },
     {
@@ -235,26 +256,48 @@ Parameters:
       "attributes": {
         "lat": 51.5074,
         "lon": -0.1278,
-        "created_at": "2026-03-28T09:58:00Z"
+        "date": "2026-03-28T09:58:00Z"
       }
     }
   ],
   "meta": {
-    "limit": 20,
-    "has_more": true,
     "execution_time_ms": 9,
-    "sort": "-created_at,id"
+    "page": {
+      "type": "cursor",
+      "limit": 20,
+      "has_more": true
+    },
+    "query": {
+      "filters": {
+        "country": "PL"
+      },
+      "sort": "-date"
+    },
+    "capabilities": {
+      "filters": {
+        "country": {
+          "type": "string"
+        },
+        "geokret": {
+          "type": "string"
+        },
+        "user": {
+          "type": "integer"
+        }
+      },
+      "sorts": ["date", "-date", "id", "-id"]
+    }
   },
   "links": {
-    "self": "/api/v1/moves?limit=20&cursor=eyJpZCI6MjAxfQ==&sort=-created_at,id",
-    "next": "/api/v1/moves?limit=20&cursor=eyJpZCI6MjAwfQ==&sort=-created_at,id"
+    "self": "/api/v3/moves?limit=20&filter[country]=PL&sort=-date",
+    "next": "/api/v3/moves?limit=20&cursor=eyJkYXRlIjoiMjAyNi0wMy0yOFQwOTo1ODowMFoiLCJpZCI6MjAwfQ==&filter[country]=PL&sort=-date"
   }
 }
 ```
 
 Rules:
 
-- `links.next` is present only when `meta.has_more` is `true`
+- `links.next` is present only when `meta.page.has_more` is `true`
 - the cursor remains opaque to clients even if its implementation is a base64-encoded JSON payload
 - the response body does not expose `nextCursor` as a canonical field
 - cursor pagination is forward-only in this specification
@@ -267,7 +310,7 @@ The frontend contract for infinite-scroll collections is:
 
 1. Request the first page without a cursor.
 2. Append `data` to the current list.
-3. If `meta.has_more` is true, call `links.next`.
+3. If `meta.page.has_more` is true, call `links.next`.
 4. Repeat until `links.next` is absent or `meta.has_more` is false.
 
 Minimal pseudocode:
@@ -275,7 +318,7 @@ Minimal pseudocode:
 ```text
 GET /moves?limit=20
 append data
-if meta.has_more:
+if meta.page.has_more:
     call links.next
 repeat
 ```
@@ -286,40 +329,36 @@ repeat
 
 Canonical sort syntax is:
 
-- `sort=-created_at`
-- `sort=-last_move_at,id`
+- `sort=-date`
+- `sort=-last_move_at`
 - `sort=name`
 
 Rules:
 
 - a leading `-` means descending order
 - no prefix means ascending order
-- multiple fields are comma-separated
-- endpoints should allow at most three sort columns
+- each endpoint exposes an explicit whitelist
+- the response echoes the effective sort in `meta.query.sort`
+- the response advertises the supported sort list in `meta.capabilities.sorts`
 
 ### 8.2 Deterministic Sort Requirement
 
 Cursor-based pagination requires a stable sort order, for example:
 
 ```sql
-ORDER BY created_at DESC, id DESC
+ORDER BY moved_at DESC, id DESC
 ```
 
-When a client omits the deterministic tie-breaker:
-
-- the server appends the endpoint-defined unique final key automatically
-- the server echoes the normalized sort expression in `meta.sort`
-- the server uses the normalized sort expression in `links.self` and all pagination links
+When a client omits the sort parameter, the server applies the endpoint default and echoes it in `meta.query.sort`.
 
 Reject these cases:
 
 - unknown sort fields with `INVALID_SORT_FIELD`
-- more than three sort columns with `SORT_COMPLEXITY_EXCEEDED`
 
 Avoid non-deterministic or mutable primary ordering such as:
 
 - `ORDER BY RANDOM()`
-- `ORDER BY created_at DESC` without a unique tie-breaker
+- `ORDER BY moved_at DESC` without a unique tie-breaker
 - `ORDER BY updated_at DESC` when `updated_at` can change during pagination
 
 ### 8.3 Filter and Sort Reset Behavior
@@ -331,7 +370,7 @@ Avoid non-deterministic or mutable primary ordering such as:
 
 ### 8.4 Sort Discovery
 
-OpenAPI is the authoritative place to document allowed sort fields. If an endpoint wants runtime discovery, it may also expose `meta.sortable_fields`, but that is optional and must not replace OpenAPI.
+OpenAPI is the authoritative place to document allowed filter and sort fields. Collection responses must also expose the active and supported values at runtime through `meta.query` and `meta.capabilities`.
 
 ## 9. Security and Error Handling
 
@@ -368,6 +407,9 @@ Cursor failure mapping:
 - generate page-based `first`, `prev`, `next`, and `last` links on the server
 - generate cursor-based `links.next` only when more rows exist
 - preserve all active filters and normalized sort expressions in generated links
+- echo the effective filter state in `meta.query.filters`
+- echo the effective sort state in `meta.query.sort`
+- advertise supported filters and sorts in `meta.capabilities`
 - validate `page`, `per_page`, `limit`, `cursor`, and sort expressions before querying data
 - page-based handlers may translate `page` and `per_page` into internal `LIMIT` and `OFFSET`
 
@@ -388,7 +430,7 @@ Behavior:
 - call the first URL explicitly
 - append returned `data`
 - set `next_link` from `links.next`
-- stop when `next_link` is absent or `meta.has_more` is false
+- stop when `next_link` is absent or `meta.page.has_more` is false
 - reset local state when filters or sort change
 
 ## 11. Testing and Rollout Guidance
@@ -400,6 +442,8 @@ Behavior:
 - validate first-page, middle-page, last-page, and empty-page behavior
 - validate stale cursor rejection after filter or sort changes
 - validate mixed-parameter rejection for unsupported pagination modes
+- validate `meta.query` reflects the effective filter and sort state
+- validate `meta.capabilities` lists the supported filters and sorts for the endpoint
 - validate that generated links preserve filters and normalized sort expressions
 
 ### 11.2 Documentation Validation
@@ -419,21 +463,23 @@ Behavior:
 
 ## 12. Acceptance Criteria
 
-- canonical paginated examples use top-level `data`, `meta`, and `links`
-- page-based examples use `page`, `per_page`, `total_items`, and `total_pages`
-- cursor-based examples use `limit`, `has_more`, and `links.next`
+- canonical paginated examples use top-level `data`, optional `included`, `meta`, and `links`
+- page-based examples use `meta.page.number`, `meta.page.size`, `meta.page.total_items`, and `meta.page.total_pages`
+- cursor-based examples use `meta.page.limit`, `meta.page.has_more`, and `links.next`
+- collection examples echo active filters and sort through `meta.query`
+- collection examples advertise supported filters and sorts through `meta.capabilities`
 - infinite-scroll guidance tells clients to follow `links.next` instead of parsing cursor fields from the response body
-- sort syntax is documented with a JSON REST-friendly expression such as `-created_at,id`
+- sort syntax is documented with a JSON REST-friendly expression such as `-date`
 - each endpoint documents exactly one public pagination mode and rejects mixed-mode parameters
 - stable sort, filter reset, cursor-versioning, and rollout-boundary guidance remain documented
 - the page references the shared JSON REST envelope instead of redefining it from scratch
 
 ## 13. Implementation Checklist
 
-- [x] Rewrite canonical examples to use resource objects inside `data`
-- [x] Replace `meta.pagination` examples with top-level `links`
-- [x] Change public page-based examples from offset-oriented to page-oriented
+- [x] Rewrite canonical examples to use nested `meta.page`, `meta.query`, and `meta.capabilities`
+- [x] Use `filter[...]` as the canonical documentation form for list filters
 - [x] Keep cursor-based examples link-driven and forward-only
 - [x] Define endpoint mode selection and mixed-parameter rejection
 - [x] Preserve stable sorting, filter-reset, rollout-boundary, and validation guidance
+- [x] Require runtime self-documentation of active query state and supported capabilities
 - [x] Link this page to the global JSON REST API specification

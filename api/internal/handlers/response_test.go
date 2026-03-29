@@ -28,11 +28,12 @@ func TestWriteEnvelopeForOffsetRequestIncludesPaginationMetadata(t *testing.T) {
 		t.Fatalf("decode response: %v", err)
 	}
 	meta := payload["meta"].(map[string]any)
-	if got := meta["limit"]; got != float64(4) {
-		t.Fatalf("meta.limit = %#v, want 4", got)
+	page := meta["page"].(map[string]any)
+	if got := page["limit"]; got != float64(4) {
+		t.Fatalf("meta.page.limit = %#v, want 4", got)
 	}
-	if got := meta["has_more"]; got != true {
-		t.Fatalf("meta.has_more = %#v, want true", got)
+	if got := page["has_more"]; got != true {
+		t.Fatalf("meta.page.has_more = %#v, want true", got)
 	}
 	links := payload["links"].(map[string]any)
 	if got := links["self"]; got == nil || got == "" {
@@ -57,8 +58,9 @@ func TestWriteEnvelopeForOffsetRequestOmitsNextLinkOnTerminalPage(t *testing.T) 
 		t.Fatalf("decode response: %v", err)
 	}
 	meta := payload["meta"].(map[string]any)
-	if got := meta["has_more"]; got != false {
-		t.Fatalf("meta.has_more = %#v, want false", got)
+	page := meta["page"].(map[string]any)
+	if got := page["has_more"]; got != false {
+		t.Fatalf("meta.page.has_more = %#v, want false", got)
 	}
 	links := payload["links"].(map[string]any)
 	if _, ok := links["next"]; ok {

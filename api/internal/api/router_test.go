@@ -53,7 +53,15 @@ func newRouterForTests(t *testing.T) http.Handler {
 	reg := prometheus.NewRegistry()
 	mc := metrics.New(reg)
 	hub := ws.NewHub(logger, mc, 0)
-	statsHandler := handlers.NewStatsHandler(&apiTestStore{}, logger)
+	store := &apiTestStore{}
+	statsHandler := handlers.NewStatsHandler(handlers.StatsHandlerStores{
+		Geokrety:  store,
+		Moves:     store,
+		Countries: store,
+		Waypoints: store,
+		Users:     store,
+		Pictures:  store,
+	}, logger)
 	systemHandler := handlers.NewSystemHandler(&apiSystemStore{}, hub, logger)
 	return NewRouter(config.Config{EnableSwagger: false}, logger, mc, reg, statsHandler, systemHandler, hub)
 }
@@ -78,7 +86,7 @@ func (s *apiTestStore) ResolveGeokretID(ctx context.Context, gkid int64) (int64,
 	return gkid, nil
 }
 
-func (s *apiTestStore) FetchGeokretyList(ctx context.Context, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchGeokretyList(ctx context.Context, filters db.GeokretListFilters, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
@@ -94,10 +102,6 @@ func (s *apiTestStore) FetchGeokretyByGKID(ctx context.Context, gkid int64) (db.
 	ownerID := int64(1)
 	ownerUsername := "owner"
 	return db.GeokretDetails{GeokretListItem: db.GeokretListItem{ID: gkid, GKID: apiGKID(gkid), Name: "Traveler", Type: 1, OwnerID: &ownerID, OwnerUsername: &ownerUsername}}, nil
-}
-
-func (s *apiTestStore) SearchGeokrety(ctx context.Context, query string, limit, offset int) ([]db.GeokretListItem, error) {
-	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: query, Type: 1}}, nil
 }
 
 func (s *apiTestStore) FetchGeokretStats(ctx context.Context, geokretID int64) (db.GeokretStats, error) {
@@ -120,27 +124,27 @@ func (s *apiTestStore) FetchMove(ctx context.Context, moveID int64) (db.MoveReco
 	return sampleAPIMove(moveID), nil
 }
 
-func (s *apiTestStore) FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+func (s *apiTestStore) FetchGeokretyLoves(ctx context.Context, geokretID int64, sort db.Sort, limit, offset int) ([]db.SocialUserEntry, error) {
 	return []db.SocialUserEntry{{UserID: 1, Username: "lover", At: time.Now().UTC()}}, nil
 }
 
-func (s *apiTestStore) FetchGeokretyWatches(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+func (s *apiTestStore) FetchGeokretyWatches(ctx context.Context, geokretID int64, sort db.Sort, limit, offset int) ([]db.SocialUserEntry, error) {
 	return []db.SocialUserEntry{{UserID: 2, Username: "watcher", At: time.Now().UTC()}}, nil
 }
 
-func (s *apiTestStore) FetchGeokretyFinders(ctx context.Context, geokretID int64, limit, offset int) ([]db.SocialUserEntry, error) {
+func (s *apiTestStore) FetchGeokretyFinders(ctx context.Context, geokretID int64, sort db.Sort, limit, offset int) ([]db.SocialUserEntry, error) {
 	return []db.SocialUserEntry{{UserID: 3, Username: "finder", At: time.Now().UTC()}}, nil
 }
 
-func (s *apiTestStore) FetchGeokretyCountries(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretCountryVisit, error) {
+func (s *apiTestStore) FetchGeokretyCountries(ctx context.Context, geokretID int64, sort db.Sort, limit, offset int) ([]db.GeokretCountryVisit, error) {
 	return []db.GeokretCountryVisit{{CountryCode: "PL", FirstVisitedAt: time.Now().UTC(), MoveCount: 1, Flag: "🇵🇱"}}, nil
 }
 
-func (s *apiTestStore) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, limit, offset int) ([]db.GeokretWaypointVisit, error) {
+func (s *apiTestStore) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, sort db.Sort, limit, offset int) ([]db.GeokretWaypointVisit, error) {
 	return []db.GeokretWaypointVisit{{WaypointCode: "OC146C3", VisitCount: 1, FirstVisitedAt: time.Now().UTC(), LastVisitedAt: time.Now().UTC()}}, nil
 }
 
-func (s *apiTestStore) FetchCountryList(ctx context.Context, limit, offset int) ([]db.CountryDetails, error) {
+func (s *apiTestStore) FetchCountryList(ctx context.Context, filters db.CountryListFilters, limit, offset int) ([]db.CountryDetails, error) {
 	return []db.CountryDetails{{Code: "PL", Name: "Poland", Flag: "🇵🇱"}}, nil
 }
 
@@ -156,7 +160,7 @@ func (s *apiTestStore) FetchCountryDetails(ctx context.Context, countryCode stri
 	return db.CountryDetails{Code: countryCode, Name: "Poland", Flag: "🇵🇱"}, nil
 }
 
-func (s *apiTestStore) FetchCountryGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchCountryGeokrety(ctx context.Context, countryCode string, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
@@ -164,19 +168,15 @@ func (s *apiTestStore) FetchWaypoint(ctx context.Context, waypointCode string) (
 	return db.WaypointDetails{WaypointSummary: db.WaypointSummary{WaypointCode: waypointCode, Source: "opencaching"}}, nil
 }
 
-func (s *apiTestStore) FetchWaypointCurrentGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchWaypointCurrentGeokrety(ctx context.Context, waypointCode string, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
-func (s *apiTestStore) FetchWaypointPastGeokrety(ctx context.Context, waypointCode string, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchWaypointPastGeokrety(ctx context.Context, waypointCode string, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 2, GKID: apiGKID(2), Name: "Traveler", Type: 1}}, nil
 }
 
-func (s *apiTestStore) SearchWaypoints(ctx context.Context, query string, limit, offset int) ([]db.WaypointSummary, error) {
-	return []db.WaypointSummary{{WaypointCode: "OC146C3", Source: "opencaching"}}, nil
-}
-
-func (s *apiTestStore) FetchUserList(ctx context.Context, limit, offset int) ([]db.UserSearchResult, error) {
+func (s *apiTestStore) FetchUserList(ctx context.Context, filters db.UserListFilters, limit, offset int) ([]db.UserSearchResult, error) {
 	homeCountry := "PL"
 	return []db.UserSearchResult{{ID: 1, Username: "alice", JoinedAt: time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC), HomeCountry: &homeCountry, HomeCountryFlag: "🇵🇱"}}, nil
 }
@@ -189,10 +189,6 @@ func (s *apiTestStore) FetchUserListByIDs(ctx context.Context, userIDs []int64) 
 	return rows, nil
 }
 
-func (s *apiTestStore) SearchUsers(ctx context.Context, query string, limit, offset int) ([]db.UserSearchResult, error) {
-	return []db.UserSearchResult{{ID: 1, Username: query, JoinedAt: time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)}}, nil
-}
-
 func (s *apiTestStore) FetchUserDetails(ctx context.Context, userID int64) (db.UserDetails, error) {
 	homeCountry := "PL"
 	return db.UserDetails{ID: userID, Username: "alice", JoinedAt: time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC), HomeCountry: &homeCountry, HomeCountryFlag: "🇵🇱"}, nil
@@ -202,27 +198,27 @@ func (s *apiTestStore) FetchUserStats(ctx context.Context, userID int64) (db.Use
 	return db.UserStats{UserID: userID, MovesCount: 9}, nil
 }
 
-func (s *apiTestStore) FetchUserOwnedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchUserOwnedGeokrety(ctx context.Context, userID int64, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
-func (s *apiTestStore) FetchUserFoundGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchUserFoundGeokrety(ctx context.Context, userID int64, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
-func (s *apiTestStore) FetchUserLovedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchUserLovedGeokrety(ctx context.Context, userID int64, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
-func (s *apiTestStore) FetchUserWatchedGeokrety(ctx context.Context, userID int64, limit, offset int) ([]db.GeokretListItem, error) {
+func (s *apiTestStore) FetchUserWatchedGeokrety(ctx context.Context, userID int64, sort db.Sort, limit, offset int) ([]db.GeokretListItem, error) {
 	return []db.GeokretListItem{{ID: 1, GKID: apiGKID(1), Name: "Traveler", Type: 1}}, nil
 }
 
-func (s *apiTestStore) FetchUserCountries(ctx context.Context, userID int64, limit, offset int) ([]db.UserCountryVisit, error) {
+func (s *apiTestStore) FetchUserCountries(ctx context.Context, userID int64, sort db.Sort, limit, offset int) ([]db.UserCountryVisit, error) {
 	return []db.UserCountryVisit{{CountryCode: "PL", MoveCount: 1, FirstVisit: time.Now().UTC(), LastVisit: time.Now().UTC(), Flag: "🇵🇱"}}, nil
 }
 
-func (s *apiTestStore) FetchUserWaypoints(ctx context.Context, userID int64, limit, offset int) ([]db.UserWaypointVisit, error) {
+func (s *apiTestStore) FetchUserWaypoints(ctx context.Context, userID int64, sort db.Sort, limit, offset int) ([]db.UserWaypointVisit, error) {
 	return []db.UserWaypointVisit{{WaypointCode: "OC146C3", VisitCount: 1, FirstVisitedAt: time.Now().UTC(), LastVisitedAt: time.Now().UTC()}}, nil
 }
 
@@ -258,6 +254,26 @@ func TestRouterExposesNewPublicSurface(t *testing.T) {
 			r.ServeHTTP(w, req)
 			if w.Code != http.StatusOK {
 				t.Fatalf("expected 200, got %d", w.Code)
+			}
+		})
+	}
+}
+
+func TestRouterRemovesRedundantAliases(t *testing.T) {
+	r := newRouterForTests(t)
+	paths := []string{
+		"/api/v3/geokrety/search",
+		"/api/v3/geokrety/GK0001/moves/9",
+		"/api/v3/users/search",
+		"/api/v3/waypoints/search",
+	}
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			if w.Code != http.StatusNotFound {
+				t.Fatalf("expected 404, got %d", w.Code)
 			}
 		})
 	}

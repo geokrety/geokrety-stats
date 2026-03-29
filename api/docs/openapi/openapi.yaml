@@ -6,8 +6,9 @@ info:
   description: |
     Read-only API for GeoKrety resource exploration.
 
-    The `/api/v3/...` contract is JSON REST based: every JSON response uses top-level `data`, `meta`, and `links`, while resource objects expose `id`, `type`, `attributes`, optional `relationships`, and resource-scoped `links.self`.
-    Collection endpoints are cursor-first for now: clients send `limit`, follow `links.next`, and continue while `meta.has_more` is true. Search endpoints require a `q` query parameter of at least 2 characters.
+    The `/api/v3/...` contract is JSON REST based: every JSON response uses top-level `data`, optional `included`, `meta`, and `links`, while resource objects expose `id`, `type`, `attributes`, optional `relationships`, and resource-scoped `links.self`.
+    Relationship linkage is identifier-only: `relationships.*.data` contains only `type` and `id`, and related attributes are exposed through top-level `included` resources.
+    Collection endpoints are cursor-first for now: clients send `limit`, follow `links.next`, and continue while `meta.page.has_more` is true. Effective filters, sort order, and collection capabilities are reflected in `meta.query` and `meta.capabilities`.
     The public API surface was intentionally reduced during the big-bang migration: redundant activity, stats, alias, and visualization endpoints were removed so the stable contract centers on core resources and scoped collections.
 
     ## GeoKret Public Identifiers (GKID)
@@ -36,10 +37,12 @@ tags:
     description: Service metadata, health checks, metrics, and websocket entrypoint
   - name: Geokrety
     description: GeoKret entities and their primary relationship collections
+  - name: Moves
+    description: GeoKret move resources and filtered move listings
   - name: Countries
     description: Country-level aggregates and currently spotted GeoKrety
   - name: Waypoints
-    description: Waypoint search, details, and spotted or historical GeoKrety
+    description: Waypoint details and spotted or historical GeoKrety
   - name: Users
     description: User details, activity, relationships, collections, and graphs
   - name: Pictures
@@ -60,32 +63,34 @@ paths:
     $ref: './paths/system.yaml#/~1openapi.yaml'
   /api/v3/geokrety:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety'
-  /api/v3/geokrety/search:
-    $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1search'
   /api/v3/geokrety/{gkid}:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}'
+  /api/v3/geokrety/{gkid}/stats:
+    $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1stats'
   /api/v3/geokrety/{gkid}/moves:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1moves'
-  /api/v3/geokrety/{gkid}/moves/{moveId}:
-    $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1moves~1{moveId}'
   /api/v3/geokrety/{gkid}/loved-by:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1loved-by'
   /api/v3/geokrety/{gkid}/watched-by:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1watched-by'
+  /api/v3/geokrety/{gkid}/finders:
+    $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1finders'
   /api/v3/geokrety/{gkid}/pictures:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1pictures'
   /api/v3/geokrety/{gkid}/countries:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1countries'
   /api/v3/geokrety/{gkid}/waypoints:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1geokrety~1{gkid}~1waypoints'
+  /api/v3/moves:
+    $ref: './paths/public-v3.yaml#/~1api~1v3~1moves'
+  /api/v3/moves/{id}:
+    $ref: './paths/public-v3.yaml#/~1api~1v3~1moves~1{id}'
   /api/v3/countries:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1countries'
   /api/v3/countries/{code}:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1countries~1{code}'
   /api/v3/countries/{code}/geokrety:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1countries~1{code}~1geokrety'
-  /api/v3/waypoints/search:
-    $ref: './paths/public-v3.yaml#/~1api~1v3~1waypoints~1search'
   /api/v3/waypoints/{code}:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1waypoints~1{code}'
   /api/v3/waypoints/{code}/geokrety-current:
@@ -94,10 +99,10 @@ paths:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1waypoints~1{code}~1geokrety-past'
   /api/v3/users:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1users'
-  /api/v3/users/search:
-    $ref: './paths/public-v3.yaml#/~1api~1v3~1users~1search'
   /api/v3/users/{id}:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1users~1{id}'
+  /api/v3/users/{id}/stats:
+    $ref: './paths/public-v3.yaml#/~1api~1v3~1users~1{id}~1stats'
   /api/v3/users/{id}/geokrety-owned:
     $ref: './paths/public-v3.yaml#/~1api~1v3~1users~1{id}~1geokrety-owned'
   /api/v3/users/{id}/geokrety-found:

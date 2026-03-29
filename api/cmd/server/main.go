@@ -43,7 +43,14 @@ func main() {
 	metricsCollector := metrics.New(registry)
 
 	hub := ws.NewHub(logger, metricsCollector, time.Duration(cfg.WSBroadcastInterval)*time.Millisecond)
-	statsHandler := handlers.NewStatsHandler(store, logger)
+	statsHandler := handlers.NewStatsHandler(handlers.StatsHandlerStores{
+		Geokrety:  store,
+		Moves:     store,
+		Countries: store,
+		Waypoints: store,
+		Users:     store,
+		Pictures:  store,
+	}, logger)
 	systemHandler := handlers.NewSystemHandler(store, hub, logger)
 
 	router := api.NewRouter(cfg, logger, metricsCollector, registry, statsHandler, systemHandler, hub)

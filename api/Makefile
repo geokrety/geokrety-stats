@@ -1,55 +1,95 @@
+# ================================
+# ✨ Geokrety Stats API Makefile ✨
+# ================================
+
 BINARY := geokrety-stats-api
 CMD := ./cmd/server
 GO := go
+BIN_DIR := bin
 
-.PHONY: help fmt lint vet build run test tidy docker-build clean
+.DEFAULT_GOAL := help
 
-.PHONY: help fmt lint vet build run test tidy docker-build up down clean
+# Colors 🌈
+GREEN  := \033[32m
+YELLOW := \033[33m
+CYAN   := \033[36m
+RESET  := \033[0m
 
-help:
-	@echo "Available targets: fmt lint vet build run test tidy docker-build up down clean"
+# --------------------------------
+# 📖 Help (auto-generated)
+# --------------------------------
+.PHONY: help
+help: ## Show this help message
+	@echo ""
+	@echo "$(CYAN)✨ Available targets:$(RESET)"
+	@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@echo ""
 
-fmt:
-	@echo "Running gofmt..."
+# --------------------------------
+# 🧹 Formatting & Linting
+# --------------------------------
+.PHONY: fmt lint vet
+
+fmt: ## Format Go code
+	@echo "$(CYAN)→ Running gofmt...$(RESET)"
 	@gofmt -w .
 
-lint: fmt
-	@echo "Running go vet..."
+lint: fmt ## Run linter (go vet)
+	@echo "$(CYAN)→ Running go vet...$(RESET)"
 	@$(GO) vet ./...
 
-vet: lint
+vet: lint ## Alias for lint
 
-build:
-	@echo "Building $(BINARY)..."
-	@mkdir -p bin
-	@$(GO) build -o bin/$(BINARY) $(CMD)
-	@echo "Built bin/$(BINARY)"
+# --------------------------------
+# 🔨 Build & Run
+# --------------------------------
+.PHONY: build run clean
 
-run:
-	@echo "Running server..."
+build: ## Build the binary
+	@echo "$(CYAN)→ Building $(BINARY)...$(RESET)"
+	@mkdir -p $(BIN_DIR)
+	@$(GO) build -o $(BIN_DIR)/$(BINARY) $(CMD)
+	@echo "$(GREEN)✔ Built $(BIN_DIR)/$(BINARY)$(RESET)"
+
+run: ## Run the application
+	@echo "$(CYAN)→ Running server...$(RESET)"
 	@$(GO) run $(CMD)
 
-test:
-	@echo "Running tests..."
+clean: ## Remove built binary
+	@echo "$(CYAN)→ Cleaning...$(RESET)"
+	@rm -f $(BIN_DIR)/$(BINARY)
+	@echo "$(GREEN)✔ Cleaned$(RESET)"
+
+# --------------------------------
+# 🧪 Testing & Modules
+# --------------------------------
+.PHONY: test test-integration tidy
+
+test: ## Run tests
+	@echo "$(CYAN)→ Running tests...$(RESET)"
 	@$(GO) test ./...
 
-tidy:
-	@echo "Tidying modules..."
+test-integration: ## Run public API integration-style contract tests
+	@echo "$(CYAN)→ Running integration tests...$(RESET)"
+	@$(GO) test ./internal/api -run '^TestPublicIntegration'
+
+tidy: ## Tidy Go modules
+	@echo "$(CYAN)→ Tidying modules...$(RESET)"
 	@$(GO) mod tidy
 
-docker-build:
-	@echo "Building Docker image geokrety/geokrety-stats-api:local"
-	docker compose build
+# --------------------------------
+# 🐳 Docker
+# --------------------------------
+.PHONY: docker-build up down
 
-up:
-	@echo "Starting stack with docker compose (force recreate)..."
-	docker compose up --force-recreate -d
+docker-build: ## Build Docker image
+	@echo "$(CYAN)→ Building Docker image...$(RESET)"
+	@docker compose build
 
-down:
-	@echo "Stopping stack..."
-	docker compose down
+up: ## Start stack (force recreate)
+	@echo "$(CYAN)→ Starting stack...$(RESET)"
+	@docker compose up --force-recreate -d
 
-clean:
-	@echo "Cleaning..."
-	@rm -f bin/$(BINARY)
-	@echo "Cleaned."
+down: ## Stop stack
+	@echo "$(CYAN)→ Stopping stack...$(RESET)"
+	@docker compose down

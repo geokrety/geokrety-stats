@@ -9,8 +9,12 @@ import (
 
 func TestNewMetaAndDocument(t *testing.T) {
 	started := time.Now().Add(-15 * time.Millisecond)
-	meta := NewMeta(started).WithCursor(CursorRequest{Limit: 20}, true).WithSort("-created_at,id")
-	doc := NewDocument([]Resource{{ID: "1", Type: "user"}}, meta, Links{"self": "/api/v3/users?limit=20"})
+	meta := NewMeta(started).
+		WithCursor(CursorRequest{Limit: 20}, true).
+		WithFilters(map[string]any{"username": "alice"}).
+		WithSort("-created_at,id").
+		WithCapabilities(map[string]any{"username": map[string]any{"type": "string"}}, []string{"created_at", "-created_at"})
+	doc := NewDocument([]Resource{{ID: "1", Type: "user"}}, []Resource{{ID: "2", Type: "country"}}, meta, Links{"self": "/api/v3/users?limit=20"})
 
 	data, err := json.Marshal(doc)
 	if err != nil {
@@ -24,8 +28,19 @@ func TestNewMetaAndDocument(t *testing.T) {
 	if metaPayload["execution_time_ms"] == nil {
 		t.Fatalf("execution_time_ms missing from meta")
 	}
-	if got := metaPayload["has_more"]; got != true {
-		t.Fatalf("has_more = %#v, want true", got)
+	page := metaPayload["page"].(map[string]any)
+	if got := page["has_more"]; got != true {
+		t.Fatalf("page.has_more = %#v, want true", got)
+	}
+	query := metaPayload["query"].(map[string]any)
+	if got := query["sort"]; got != "-created_at,id" {
+		t.Fatalf("query.sort = %#v, want -created_at,id", got)
+	}
+	if got := query["filters"].(map[string]any)["username"]; got != "alice" {
+		t.Fatalf("query.filters.username = %#v, want alice", got)
+	}
+	if got := len(payload["included"].([]any)); got != 1 {
+		t.Fatalf("included length = %d, want 1", got)
 	}
 	if got := payload["links"].(map[string]any)["self"]; got != "/api/v3/users?limit=20" {
 		t.Fatalf("links.self = %#v, want /api/v3/users?limit=20", got)

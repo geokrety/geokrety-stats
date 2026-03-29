@@ -58,6 +58,13 @@ type GeokretStats struct {
 	CurrentWaypointCode   *string             `db:"current_waypoint_code" json:"currentWaypointCode,omitempty" xml:"currentWaypointCode,omitempty"`
 }
 
+type GeokretListFilters struct {
+	Name      *string
+	OwnerID   *int64
+	Countries []string
+	Sort      Sort
+}
+
 type MoveFilters struct {
 	GeokretID *int64
 	UserID    *int64
@@ -65,6 +72,7 @@ type MoveFilters struct {
 	Waypoint  *string
 	DateFrom  *time.Time
 	DateTo    *time.Time
+	Sort      Sort
 }
 
 type MoveRecord struct {
@@ -100,10 +108,15 @@ type SocialUserEntry struct {
 	At        time.Time `db:"at" json:"at" xml:"at"`
 }
 
+type CountryListFilters struct {
+	Sort Sort
+}
+
 type PictureFilters struct {
 	GeokretID *int64
 	MoveID    *int64
 	UserID    *int64
+	Sort      Sort
 }
 
 type PictureInfo struct {
@@ -216,6 +229,12 @@ type UserSearchResult struct {
 	HomeCountryFlag string     `json:"homeCountryFlag" xml:"homeCountryFlag"`
 }
 
+type UserListFilters struct {
+	Username  *string
+	Countries []string
+	Sort      Sort
+}
+
 type GeoJSONPt struct {
 	Type        string    `json:"type" xml:"type"`
 	Coordinates []float64 `json:"coordinates" xml:"coordinates>coordinate"`
@@ -306,6 +325,5 @@ func hydrateUserRows(items []UserSearchResult) []UserSearchResult {
 		}
 	}
 	return items
-	
-}
 
+}

@@ -10,26 +10,31 @@ import (
 	"github.com/geokrety/geokrety-stats-api/internal/db"
 	geokrety "github.com/geokrety/geokrety-stats/geokrety/geokrety"
 	sharedjsonrest "github.com/geokrety/geokrety-stats/geokrety/jsonrest"
+	"github.com/go-chi/chi/v5"
 )
 
 func resourceDataFromPayload(r *http.Request, payload any) any {
 	switch typed := dereferencePayload(payload).(type) {
 	case db.GeokretDetails:
-		return presentGeokretResource(typed.GeokretListItem)
+		resource, included := presentGeokretResource(typed.GeokretListItem)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.GeokretListItem:
 		return presentGeokretCollection(typed)
 	case db.GeokretStats:
-		return presentGeokretStatsResource(typed)
+		resource, included := presentGeokretStatsResource(typed)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.MoveRecord:
 		return presentMoveCollection(typed)
 	case db.MoveRecord:
-		return presentMoveResource(typed)
+		resource, included := presentMoveResource(typed)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.SocialUserEntry:
-		return presentSocialUserCollection(typed)
+		return presentSocialRelationshipCollection(r, typed)
 	case []db.PictureInfo:
 		return presentPictureCollection(typed)
 	case db.PictureInfo:
-		return presentPictureResource(typed)
+		resource, included := presentPictureResource(typed)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.GeokretCountryVisit:
 		return presentGeokretCountryVisitCollection(typed)
 	case []db.GeokretWaypointVisit:
@@ -37,17 +42,21 @@ func resourceDataFromPayload(r *http.Request, payload any) any {
 	case []db.CountryDetails:
 		return presentCountryCollection(typed)
 	case db.CountryDetails:
-		return presentCountryResource(typed)
+		resource, included := presentCountryResource(typed)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.WaypointSummary:
 		return presentWaypointSummaryCollection(typed)
 	case db.WaypointDetails:
-		return presentWaypointDetailsResource(typed)
+		resource, included := presentWaypointSummaryResource(typed.WaypointSummary)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.UserSearchResult:
 		return presentUserSearchCollection(typed)
 	case db.UserDetails:
-		return presentUserDetailsResource(typed)
+		resource, included := presentUserResource(typed.ID, typed.Username, typed.JoinedAt, typed.LastMoveAt, typed.AvatarID, typed.AvatarURL, typed.HomeCountry, typed.HomeCountryFlag)
+		return presentedPayload{Data: resource, Included: included}
 	case db.UserStats:
-		return presentUserStatsResource(typed)
+		resource, included := presentUserStatsResource(typed)
+		return presentedPayload{Data: resource, Included: included}
 	case []db.UserCountryVisit:
 		return presentUserCountryVisitCollection(typed)
 	case []db.UserWaypointVisit:
@@ -57,15 +66,48 @@ func resourceDataFromPayload(r *http.Request, payload any) any {
 	}
 }
 
-func presentGeokretCollection(rows []db.GeokretListItem) []sharedjsonrest.Resource {
-	resources := make([]sharedjsonrest.Resource, 0, len(rows))
-	for _, row := range rows {
-		resources = append(resources, presentGeokretResource(row))
-	}
-	return resources
+type includeCollector struct {
+	items []sharedjsonrest.Resource
+	seen  map[string]struct{}
 }
 
-func presentGeokretResource(row db.GeokretListItem) sharedjsonrest.Resource {
+func newIncludeCollector() *includeCollector {
+	return &includeCollector{seen: map[string]struct{}{}}
+}
+
+func (c *includeCollector) Add(resources ...sharedjsonrest.Resource) {
+	for _, resource := range resources {
+		if resource.ID == "" || resource.Type == "" {
+			continue
+		}
+		key := resource.Type + ":" + resource.ID
+		if _, ok := c.seen[key]; ok {
+			continue
+		}
+		c.seen[key] = struct{}{}
+		c.items = append(c.items, resource)
+	}
+}
+
+func (c *includeCollector) List() []sharedjsonrest.Resource {
+	if len(c.items) == 0 {
+		return nil
+	}
+	return c.items
+}
+
+func presentGeokretCollection(rows []db.GeokretListItem) presentedPayload {
+	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
+	for _, row := range rows {
+		resource, included := presentGeokretResource(row)
+		resources = append(resources, resource)
+		collector.Add(included...)
+	}
+	return presentedPayload{Data: resources, Included: collector.List()}
+}
+
+func presentGeokretResource(row db.GeokretListItem) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	gkid := gkidString(row.GKID)
 	selfPath := geokretPath(gkid)
 	attributes := map[string]any{
@@ -87,11 +129,17 @@ func presentGeokretResource(row db.GeokretListItem) sharedjsonrest.Resource {
 		attributes["position"] = row.GeoJSON
 	}
 
+	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedUserResource(row.OwnerID, row.OwnerUsername, nil, nil)))
+	collector.Add(optionalResource(includedUserResource(row.HolderID, row.HolderUsername, nil, nil)))
+	collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
+	collector.Add(optionalResource(includedWaypointResource(row.Waypoint)))
+
 	relationships := relationships(
-		relationshipWithResource("owner", embeddedUserResource(row.OwnerID, row.OwnerUsername, nil, nil), userPath(int64PtrString(row.OwnerID))),
-		relationshipWithResource("holder", embeddedUserResource(row.HolderID, row.HolderUsername, nil, nil), userPath(int64PtrString(row.HolderID))),
-		relationshipWithResource("country", embeddedCountryResource(row.Country, nil), countryPath(stringPtrString(row.Country))),
-		relationshipWithResource("waypoint", embeddedWaypointResource(row.Waypoint), waypointPath(stringPtrString(row.Waypoint))),
+		relationshipWithIdentifier("owner", "user", int64PtrString(row.OwnerID), userPath(int64PtrString(row.OwnerID))),
+		relationshipWithIdentifier("holder", "user", int64PtrString(row.HolderID), userPath(int64PtrString(row.HolderID))),
+		relationshipWithIdentifier("country", "country", stringPtrString(row.Country), countryPath(stringPtrString(row.Country))),
+		relationshipWithIdentifier("waypoint", "waypoint", stringPtrString(row.Waypoint), waypointPath(stringPtrString(row.Waypoint))),
 		relationshipWithIdentifier("last_position", "move", int64PtrString(row.LastPositionID), movePath(int64PtrString(row.LastPositionID))),
 		relationshipWithIdentifier("last_log", "move", int64PtrString(row.LastLogID), movePath(int64PtrString(row.LastLogID))),
 		collectionRelationship("moves", selfPath+"/moves"),
@@ -104,12 +152,11 @@ func presentGeokretResource(row db.GeokretListItem) sharedjsonrest.Resource {
 		collectionRelationship("stats", selfPath+"/stats"),
 	)
 
-	return newResource(gkid, "geokrety", mapOrNil(attributes), relationships, linksForPath(selfPath))
+	return newResource(gkid, "geokrety", mapOrNil(attributes), relationships, linksForPath(selfPath)), collector.List()
 }
 
-func presentGeokretStatsResource(row db.GeokretStats) sharedjsonrest.Resource {
+func presentGeokretStatsResource(row db.GeokretStats) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	gkid := gkidString(row.GKID)
-	selfPath := geokretPath(gkid) + "/stats"
 	attributes := map[string]any{
 		"caches_count":            row.CachesCount,
 		"pictures_count":          row.PicturesCount,
@@ -121,25 +168,30 @@ func presentGeokretStatsResource(row db.GeokretStats) sharedjsonrest.Resource {
 		"watchers_count":          row.WatchersCount,
 		"lovers_count":            row.LoversCount,
 	}
+	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedCountryResource(row.CurrentCountryCode, nil)))
+	collector.Add(optionalResource(includedWaypointResource(row.CurrentWaypointCode)))
 	relationships := relationships(
 		relationshipWithIdentifier("geokret", "geokrety", gkid, geokretPath(gkid)),
-		relationshipWithResource("current_country", embeddedCountryResource(row.CurrentCountryCode, nil), countryPath(stringPtrString(row.CurrentCountryCode))),
-		relationshipWithResource("current_waypoint", embeddedWaypointResource(row.CurrentWaypointCode), waypointPath(stringPtrString(row.CurrentWaypointCode))),
+		relationshipWithIdentifier("current_country", "country", stringPtrString(row.CurrentCountryCode), countryPath(stringPtrString(row.CurrentCountryCode))),
+		relationshipWithIdentifier("current_waypoint", "waypoint", stringPtrString(row.CurrentWaypointCode), waypointPath(stringPtrString(row.CurrentWaypointCode))),
 	)
-	return newResource(gkid, "geokrety_stats", attributes, relationships, linksForPath(selfPath))
+	return newResource(gkid, "geokrety_stats", attributes, relationships, linksForPath(geokretPath(gkid)+"/stats")), collector.List()
 }
 
-func presentMoveCollection(rows []db.MoveRecord) []sharedjsonrest.Resource {
+func presentMoveCollection(rows []db.MoveRecord) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
-		resources = append(resources, presentMoveResource(row))
+		resource, included := presentMoveResource(row)
+		resources = append(resources, resource)
+		collector.Add(included...)
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentMoveResource(row db.MoveRecord) sharedjsonrest.Resource {
+func presentMoveResource(row db.MoveRecord) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	moveID := strconv.FormatInt(row.ID, 10)
-	selfPath := movePath(moveID)
 	attributes := map[string]any{
 		"type_id":        row.MoveType,
 		"type":           moveTypeSlug(row.MoveType),
@@ -155,42 +207,63 @@ func presentMoveResource(row db.MoveRecord) sharedjsonrest.Resource {
 		attributes["position"] = row.GeoJSON
 	}
 
+	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedGeokretResource(row.GeokretGKID, nil)))
+	collector.Add(optionalResource(includedUserResource(row.AuthorID, localStringPtr(nonEmptyString(row.Username, "")), row.AuthorAvatarID, row.AuthorAvatarURL)))
+	collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
+	collector.Add(optionalResource(includedWaypointResource(row.Waypoint)))
+
 	relationships := relationships(
-		relationshipWithResource("geokret", embeddedGeokretResource(row.GeokretGKID, nil), geokretPath(gkidString(row.GeokretGKID))),
-		relationshipWithResource("author", embeddedUserResource(row.AuthorID, localStringPtr(nonEmptyString(row.Username, "")), row.AuthorAvatarID, row.AuthorAvatarURL), userPath(int64PtrString(row.AuthorID))),
-		relationshipWithResource("country", embeddedCountryResource(row.Country, nil), countryPath(stringPtrString(row.Country))),
-		relationshipWithResource("waypoint", embeddedWaypointResource(row.Waypoint), waypointPath(stringPtrString(row.Waypoint))),
+		relationshipWithIdentifier("geokret", "geokrety", gkidString(row.GeokretGKID), geokretPath(gkidString(row.GeokretGKID))),
+		relationshipWithIdentifier("author", "user", int64PtrString(row.AuthorID), userPath(int64PtrString(row.AuthorID))),
+		relationshipWithIdentifier("country", "country", stringPtrString(row.Country), countryPath(stringPtrString(row.Country))),
+		relationshipWithIdentifier("waypoint", "waypoint", stringPtrString(row.Waypoint), waypointPath(stringPtrString(row.Waypoint))),
 		relationshipWithIdentifier("previous_move", "move", int64PtrString(row.PreviousMoveID), movePath(int64PtrString(row.PreviousMoveID))),
 		relationshipWithIdentifier("previous_position", "move", int64PtrString(row.PreviousPositionID), movePath(int64PtrString(row.PreviousPositionID))),
 		collectionRelationship("pictures", "/api/v3/pictures?move="+moveID),
 	)
-	return newResource(moveID, "move", mapOrNil(attributes), relationships, linksForPath(selfPath))
+	return newResource(moveID, "move", mapOrNil(attributes), relationships, linksForPath(movePath(moveID))), collector.List()
 }
 
-func presentSocialUserCollection(rows []db.SocialUserEntry) []sharedjsonrest.Resource {
+func presentSocialRelationshipCollection(r *http.Request, rows []db.SocialUserEntry) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
+	relationType, attributeName := socialRelationshipDescriptor(r)
+	gkid := currentGeokretFromRequest(r)
 	for _, row := range rows {
 		userID := strconv.FormatInt(row.UserID, 10)
-		attributes := map[string]any{
-			"username": row.Username,
-			"at":       row.At.UTC().Format(time.RFC3339),
-		}
-		setInt64Ptr(attributes, "avatar_id", row.AvatarID)
-		setStringPtr(attributes, "avatar_url", row.AvatarURL)
-		resources = append(resources, newResource(userID, "user", mapOrNil(attributes), nil, linksForPath(userPath(userID))))
+		attributes := map[string]any{attributeName: row.At.UTC().Format("2006-01-02")}
+		resourceID := compositeID(gkid, userID)
+		resources = append(resources, newResource(
+			resourceID,
+			relationType,
+			attributes,
+			relationships(
+				relationshipWithIdentifier("user", "user", userID, userPath(userID)),
+				relationshipWithIdentifier("geokret", "geokrety", gkid, geokretPath(gkid)),
+			),
+			linksForPath(sharedjsonrest.SelfLink(r)+"#"+resourceID),
+		))
+		collector.Add(optionalResource(includedUserResource(&row.UserID, &row.Username, row.AvatarID, row.AvatarURL)))
 	}
-	return resources
+	if gkid != "" {
+		collector.Add(optionalResource(includedGeokretResource(currentGeokretIDFromRequest(r), nil)))
+	}
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentPictureCollection(rows []db.PictureInfo) []sharedjsonrest.Resource {
+func presentPictureCollection(rows []db.PictureInfo) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
-		resources = append(resources, presentPictureResource(row))
+		resource, included := presentPictureResource(row)
+		resources = append(resources, resource)
+		collector.Add(included...)
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentPictureResource(row db.PictureInfo) sharedjsonrest.Resource {
+func presentPictureResource(row db.PictureInfo) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	pictureID := strconv.FormatInt(row.ID, 10)
 	attributes := map[string]any{
 		"type":       row.Type,
@@ -201,18 +274,22 @@ func presentPictureResource(row db.PictureInfo) sharedjsonrest.Resource {
 	setStringPtr(attributes, "key", row.Key)
 	setStringPtr(attributes, "author_username", row.AuthorUsername)
 	setTimePtr(attributes, "uploaded_on", row.UploadedOn)
-
+	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedGeokretResource(row.GeokretGKID, nil)))
+	collector.Add(optionalResource(includedUserResource(row.UserID, nil, nil, nil)))
+	collector.Add(optionalResource(includedUserResource(row.AuthorID, row.AuthorUsername, nil, nil)))
 	relationships := relationships(
-		relationshipWithResource("geokret", embeddedGeokretResource(row.GeokretGKID, nil), geokretPath(gkidString(row.GeokretGKID))),
+		relationshipWithIdentifier("geokret", "geokrety", gkidString(row.GeokretGKID), geokretPath(gkidString(row.GeokretGKID))),
 		relationshipWithIdentifier("move", "move", int64PtrString(row.MoveID), movePath(int64PtrString(row.MoveID))),
 		relationshipWithIdentifier("user", "user", int64PtrString(row.UserID), userPath(int64PtrString(row.UserID))),
 		relationshipWithIdentifier("author", "user", int64PtrString(row.AuthorID), userPath(int64PtrString(row.AuthorID))),
 	)
-	return newResource(pictureID, "picture", mapOrNil(attributes), relationships, linksForPath("/api/v3/pictures/"+pictureID))
+	return newResource(pictureID, "picture", mapOrNil(attributes), relationships, linksForPath("/api/v3/pictures/"+pictureID)), collector.List()
 }
 
-func presentGeokretCountryVisitCollection(rows []db.GeokretCountryVisit) []sharedjsonrest.Resource {
+func presentGeokretCountryVisitCollection(rows []db.GeokretCountryVisit) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
 		attributes := map[string]any{
 			"first_visited_at": row.FirstVisitedAt.UTC().Format(time.RFC3339),
@@ -223,15 +300,17 @@ func presentGeokretCountryVisitCollection(rows []db.GeokretCountryVisit) []share
 			row.CountryCode,
 			"country_visit",
 			attributes,
-			relationships(relationshipWithResource("country", embeddedCountryResource(&row.CountryCode, localStringPtr(row.Flag)), countryPath(row.CountryCode))),
+			relationships(relationshipWithIdentifier("country", "country", row.CountryCode, countryPath(row.CountryCode))),
 			linksForPath(countryPath(row.CountryCode)),
 		))
+		collector.Add(optionalResource(includedCountryResource(&row.CountryCode, localStringPtr(row.Flag))))
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentGeokretWaypointVisitCollection(rows []db.GeokretWaypointVisit) []sharedjsonrest.Resource {
+func presentGeokretWaypointVisitCollection(rows []db.GeokretWaypointVisit) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
 		attributes := map[string]any{
 			"visit_count":      row.VisitCount,
@@ -246,86 +325,83 @@ func presentGeokretWaypointVisitCollection(rows []db.GeokretWaypointVisit) []sha
 			"waypoint_visit",
 			mapOrNil(attributes),
 			relationships(
-				relationshipWithResource("waypoint", embeddedWaypointResource(&row.WaypointCode), waypointPath(row.WaypointCode)),
-				relationshipWithResource("country", embeddedCountryResource(row.Country, nil), countryPath(stringPtrString(row.Country))),
+				relationshipWithIdentifier("waypoint", "waypoint", row.WaypointCode, waypointPath(row.WaypointCode)),
+				relationshipWithIdentifier("country", "country", stringPtrString(row.Country), countryPath(stringPtrString(row.Country))),
 			),
 			linksForPath(waypointPath(row.WaypointCode)),
 		))
+		collector.Add(optionalResource(includedWaypointResource(&row.WaypointCode)))
+		collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentCountryCollection(rows []db.CountryDetails) []sharedjsonrest.Resource {
+func presentCountryCollection(rows []db.CountryDetails) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
-		resources = append(resources, presentCountryResource(row))
+		resource, included := presentCountryResource(row)
+		resources = append(resources, resource)
+		collector.Add(included...)
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentCountryResource(row db.CountryDetails) sharedjsonrest.Resource {
-	attributes := map[string]any{
-		"name": row.Name,
-		"flag": row.Flag,
-	}
+func presentCountryResource(row db.CountryDetails) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
+	attributes := map[string]any{"name": row.Name, "flag": row.Flag}
 	setStringPtr(attributes, "continent_code", row.ContinentCode)
 	setStringPtr(attributes, "continent_name", row.ContinentName)
-	relationships := relationships(
-		collectionRelationship("geokrety", "/api/v3/countries/"+row.Code+"/geokrety"),
-	)
-	return newResource(row.Code, "country", mapOrNil(attributes), relationships, linksForPath(countryPath(row.Code)))
+	relationships := relationships(collectionRelationship("geokrety", "/api/v3/countries/"+row.Code+"/geokrety"))
+	return newResource(row.Code, "country", mapOrNil(attributes), relationships, linksForPath(countryPath(row.Code))), nil
 }
 
-func presentWaypointSummaryCollection(rows []db.WaypointSummary) []sharedjsonrest.Resource {
+func presentWaypointSummaryCollection(rows []db.WaypointSummary) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
-		resources = append(resources, presentWaypointSummaryResource(row))
+		resource, included := presentWaypointSummaryResource(row)
+		resources = append(resources, resource)
+		collector.Add(included...)
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentWaypointDetailsResource(row db.WaypointDetails) sharedjsonrest.Resource {
-	return presentWaypointSummaryResource(row.WaypointSummary)
-}
-
-func presentWaypointSummaryResource(row db.WaypointSummary) sharedjsonrest.Resource {
-	attributes := map[string]any{
-		"source": row.Source,
-	}
+func presentWaypointSummaryResource(row db.WaypointSummary) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
+	attributes := map[string]any{"source": row.Source}
 	if row.GeoJSON != nil {
 		attributes["position"] = row.GeoJSON
 	}
+	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
 	relationships := relationships(
-		relationshipWithResource("country", embeddedCountryResource(row.Country, nil), countryPath(stringPtrString(row.Country))),
+		relationshipWithIdentifier("country", "country", stringPtrString(row.Country), countryPath(stringPtrString(row.Country))),
 		collectionRelationship("current_geokrety", "/api/v3/waypoints/"+row.WaypointCode+"/geokrety-current"),
 		collectionRelationship("past_geokrety", "/api/v3/waypoints/"+row.WaypointCode+"/geokrety-past"),
 	)
-	return newResource(row.WaypointCode, "waypoint", mapOrNil(attributes), relationships, linksForPath(waypointPath(row.WaypointCode)))
+	return newResource(row.WaypointCode, "waypoint", mapOrNil(attributes), relationships, linksForPath(waypointPath(row.WaypointCode))), collector.List()
 }
 
-func presentUserSearchCollection(rows []db.UserSearchResult) []sharedjsonrest.Resource {
+func presentUserSearchCollection(rows []db.UserSearchResult) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
-		resources = append(resources, presentUserResource(row.ID, row.Username, row.JoinedAt, row.LastMoveAt, row.AvatarID, row.AvatarURL, row.HomeCountry, row.HomeCountryFlag))
+		resource, included := presentUserResource(row.ID, row.Username, row.JoinedAt, row.LastMoveAt, row.AvatarID, row.AvatarURL, row.HomeCountry, row.HomeCountryFlag)
+		resources = append(resources, resource)
+		collector.Add(included...)
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentUserDetailsResource(row db.UserDetails) sharedjsonrest.Resource {
-	return presentUserResource(row.ID, row.Username, row.JoinedAt, row.LastMoveAt, row.AvatarID, row.AvatarURL, row.HomeCountry, row.HomeCountryFlag)
-}
-
-func presentUserResource(id int64, username string, joinedAt time.Time, lastMoveAt *time.Time, avatarID *int64, avatarURL *string, homeCountry *string, homeCountryFlag string) sharedjsonrest.Resource {
+func presentUserResource(id int64, username string, joinedAt time.Time, lastMoveAt *time.Time, avatarID *int64, avatarURL *string, homeCountry *string, homeCountryFlag string) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	userID := strconv.FormatInt(id, 10)
-	attributes := map[string]any{
-		"username":  username,
-		"joined_at": joinedAt.UTC().Format("2006-01-02"),
-	}
+	attributes := map[string]any{"username": username, "joined_at": joinedAt.UTC().Format("2006-01-02")}
 	setInt64Ptr(attributes, "avatar_id", avatarID)
 	setStringPtr(attributes, "avatar_url", avatarURL)
 	setDatePtr(attributes, "last_move_at", lastMoveAt)
+	collector := newIncludeCollector()
+	collector.Add(optionalResource(includedCountryResource(homeCountry, localStringPtr(homeCountryFlag))))
 	relationships := relationships(
-		relationshipWithResource("home_country", embeddedCountryResource(homeCountry, localStringPtr(homeCountryFlag)), countryPath(stringPtrString(homeCountry))),
+		relationshipWithIdentifier("home_country", "country", stringPtrString(homeCountry), countryPath(stringPtrString(homeCountry))),
 		collectionRelationship("owned_geokrety", userPath(userID)+"/geokrety-owned"),
 		collectionRelationship("found_geokrety", userPath(userID)+"/geokrety-found"),
 		collectionRelationship("loved_geokrety", userPath(userID)+"/geokrety-loved"),
@@ -335,10 +411,10 @@ func presentUserResource(id int64, username string, joinedAt time.Time, lastMove
 		collectionRelationship("waypoints_visited", userPath(userID)+"/waypoints"),
 		collectionRelationship("stats", userPath(userID)+"/stats"),
 	)
-	return newResource(userID, "user", mapOrNil(attributes), relationships, linksForPath(userPath(userID)))
+	return newResource(userID, "user", mapOrNil(attributes), relationships, linksForPath(userPath(userID))), collector.List()
 }
 
-func presentUserStatsResource(row db.UserStats) sharedjsonrest.Resource {
+func presentUserStatsResource(row db.UserStats) (sharedjsonrest.Resource, []sharedjsonrest.Resource) {
 	userID := strconv.FormatInt(row.UserID, 10)
 	attributes := map[string]any{
 		"owned_geokrety_count":    row.OwnedGeokretyCount,
@@ -351,14 +427,13 @@ func presentUserStatsResource(row db.UserStats) sharedjsonrest.Resource {
 		"moves_count":             row.MovesCount,
 		"distinct_geokrety_count": row.DistinctGeokretyCount,
 	}
-	relationships := relationships(
-		relationshipWithIdentifier("user", "user", userID, userPath(userID)),
-	)
-	return newResource(userID, "user_stats", attributes, relationships, linksForPath(userPath(userID)+"/stats"))
+	relationships := relationships(relationshipWithIdentifier("user", "user", userID, userPath(userID)))
+	return newResource(userID, "user_stats", attributes, relationships, linksForPath(userPath(userID)+"/stats")), nil
 }
 
-func presentUserCountryVisitCollection(rows []db.UserCountryVisit) []sharedjsonrest.Resource {
+func presentUserCountryVisitCollection(rows []db.UserCountryVisit) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
 		attributes := map[string]any{
 			"move_count":  row.MoveCount,
@@ -370,15 +445,17 @@ func presentUserCountryVisitCollection(rows []db.UserCountryVisit) []sharedjsonr
 			row.CountryCode,
 			"country_visit",
 			attributes,
-			relationships(relationshipWithResource("country", embeddedCountryResource(&row.CountryCode, localStringPtr(row.Flag)), countryPath(row.CountryCode))),
+			relationships(relationshipWithIdentifier("country", "country", row.CountryCode, countryPath(row.CountryCode))),
 			linksForPath(countryPath(row.CountryCode)),
 		))
+		collector.Add(optionalResource(includedCountryResource(&row.CountryCode, localStringPtr(row.Flag))))
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
-func presentUserWaypointVisitCollection(rows []db.UserWaypointVisit) []sharedjsonrest.Resource {
+func presentUserWaypointVisitCollection(rows []db.UserWaypointVisit) presentedPayload {
 	resources := make([]sharedjsonrest.Resource, 0, len(rows))
+	collector := newIncludeCollector()
 	for _, row := range rows {
 		attributes := map[string]any{
 			"visit_count":      row.VisitCount,
@@ -393,23 +470,19 @@ func presentUserWaypointVisitCollection(rows []db.UserWaypointVisit) []sharedjso
 			"waypoint_visit",
 			mapOrNil(attributes),
 			relationships(
-				relationshipWithResource("waypoint", embeddedWaypointResource(&row.WaypointCode), waypointPath(row.WaypointCode)),
-				relationshipWithResource("country", embeddedCountryResource(row.Country, nil), countryPath(stringPtrString(row.Country))),
+				relationshipWithIdentifier("waypoint", "waypoint", row.WaypointCode, waypointPath(row.WaypointCode)),
+				relationshipWithIdentifier("country", "country", stringPtrString(row.Country), countryPath(stringPtrString(row.Country))),
 			),
 			linksForPath(waypointPath(row.WaypointCode)),
 		))
+		collector.Add(optionalResource(includedWaypointResource(&row.WaypointCode)))
+		collector.Add(optionalResource(includedCountryResource(row.Country, nil)))
 	}
-	return resources
+	return presentedPayload{Data: resources, Included: collector.List()}
 }
 
 func newResource(id, resourceType string, attributes map[string]any, relationships map[string]sharedjsonrest.Relationship, links sharedjsonrest.Links) sharedjsonrest.Resource {
-	return sharedjsonrest.Resource{
-		ID:            id,
-		Type:          resourceType,
-		Attributes:    attributes,
-		Relationships: relationships,
-		Links:         links,
-	}
+	return sharedjsonrest.Resource{ID: id, Type: resourceType, Attributes: attributes, Relationships: relationships, Links: links}
 }
 
 type namedRelationship struct {
@@ -441,37 +514,21 @@ func collectionRelationship(name, relatedPath string) namedRelationship {
 	if relatedPath == "" {
 		return namedRelationship{}
 	}
-	return namedRelationship{
-		Name: name,
-		Relationship: sharedjsonrest.Relationship{
-			Links: relatedLinks(relatedPath),
-		},
-	}
+	return namedRelationship{Name: name, Relationship: sharedjsonrest.Relationship{Links: relatedLinks(relatedPath)}}
 }
 
 func relationshipWithIdentifier(name, resourceType, id, relatedPath string) namedRelationship {
 	if id == "" && relatedPath == "" {
 		return namedRelationship{}
 	}
-	relationship := sharedjsonrest.Relationship{Links: relatedLinks(relatedPath)}
+	rel := sharedjsonrest.Relationship{Links: relatedLinks(relatedPath)}
 	if id != "" {
-		relationship.Data = sharedjsonrest.Identifier{Type: resourceType, ID: id}
+		rel.Data = sharedjsonrest.Identifier{Type: resourceType, ID: id}
 	}
-	return namedRelationship{Name: name, Relationship: relationship}
+	return namedRelationship{Name: name, Relationship: rel}
 }
 
-func relationshipWithResource(name string, resource *sharedjsonrest.Resource, relatedPath string) namedRelationship {
-	if resource == nil && relatedPath == "" {
-		return namedRelationship{}
-	}
-	relationship := sharedjsonrest.Relationship{Links: relatedLinks(relatedPath)}
-	if resource != nil {
-		relationship.Data = *resource
-	}
-	return namedRelationship{Name: name, Relationship: relationship}
-}
-
-func embeddedUserResource(id *int64, username *string, avatarID *int64, avatarURL *string) *sharedjsonrest.Resource {
+func includedUserResource(id *int64, username *string, avatarID *int64, avatarURL *string) *sharedjsonrest.Resource {
 	if id == nil {
 		return nil
 	}
@@ -484,7 +541,7 @@ func embeddedUserResource(id *int64, username *string, avatarID *int64, avatarUR
 	return &resource
 }
 
-func embeddedCountryResource(code *string, flag *string) *sharedjsonrest.Resource {
+func includedCountryResource(code *string, flag *string) *sharedjsonrest.Resource {
 	if code == nil || strings.TrimSpace(*code) == "" {
 		return nil
 	}
@@ -499,7 +556,7 @@ func embeddedCountryResource(code *string, flag *string) *sharedjsonrest.Resourc
 	return &resource
 }
 
-func embeddedWaypointResource(code *string) *sharedjsonrest.Resource {
+func includedWaypointResource(code *string) *sharedjsonrest.Resource {
 	if code == nil || strings.TrimSpace(*code) == "" {
 		return nil
 	}
@@ -508,7 +565,7 @@ func embeddedWaypointResource(code *string) *sharedjsonrest.Resource {
 	return &resource
 }
 
-func embeddedGeokretResource(gkid *geokrety.GeokretId, name *string) *sharedjsonrest.Resource {
+func includedGeokretResource(gkid *geokrety.GeokretId, name *string) *sharedjsonrest.Resource {
 	id := gkidString(gkid)
 	if id == "" {
 		return nil
@@ -517,6 +574,48 @@ func embeddedGeokretResource(gkid *geokrety.GeokretId, name *string) *sharedjson
 	setStringPtr(attributes, "name", name)
 	resource := newResource(id, "geokrety", mapOrNil(attributes), nil, linksForPath(geokretPath(id)))
 	return &resource
+}
+
+func optionalResource(resource *sharedjsonrest.Resource) sharedjsonrest.Resource {
+	if resource == nil {
+		return sharedjsonrest.Resource{}
+	}
+	return *resource
+}
+
+func socialRelationshipDescriptor(r *http.Request) (string, string) {
+	if r == nil || r.URL == nil {
+		return "relationship", "at"
+	}
+	switch {
+	case strings.HasSuffix(r.URL.Path, "/loved-by"):
+		return "lover", "loved_on_date"
+	case strings.HasSuffix(r.URL.Path, "/watched-by"):
+		return "watcher", "watched_on_date"
+	case strings.HasSuffix(r.URL.Path, "/finders"):
+		return "finder", "found_on_date"
+	default:
+		return "relationship", "at"
+	}
+}
+
+func currentGeokretIDFromRequest(r *http.Request) *geokrety.GeokretId {
+	if r == nil {
+		return nil
+	}
+	raw := strings.TrimSpace(chi.URLParam(r, "gkid"))
+	if raw == "" {
+		return nil
+	}
+	parsed, err := geokrety.New(raw)
+	if err != nil {
+		return nil
+	}
+	return parsed
+}
+
+func currentGeokretFromRequest(r *http.Request) string {
+	return gkidString(currentGeokretIDFromRequest(r))
 }
 
 func dereferencePayload(payload any) any {
@@ -696,4 +795,15 @@ func nonEmptyString(value, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func compositeID(parts ...string) string {
+	filtered := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if strings.TrimSpace(part) == "" {
+			continue
+		}
+		filtered = append(filtered, part)
+	}
+	return strings.Join(filtered, ":")
 }

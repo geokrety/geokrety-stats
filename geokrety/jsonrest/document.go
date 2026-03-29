@@ -7,9 +7,10 @@ type Links map[string]string
 type Meta map[string]any
 
 type Document struct {
-	Data  any   `json:"data"`
-	Meta  Meta  `json:"meta"`
-	Links Links `json:"links,omitempty"`
+	Data     any        `json:"data"`
+	Included []Resource `json:"included,omitempty"`
+	Meta     Meta       `json:"meta"`
+	Links    Links      `json:"links,omitempty"`
 }
 
 type Resource struct {
@@ -72,29 +73,62 @@ func (m Meta) Set(key string, value any) Meta {
 }
 
 func (m Meta) WithPage(req PageRequest, totalItems, totalPages int) Meta {
-	m.Set("page", req.Page)
-	m.Set("per_page", req.PerPage)
-	m.Set("total_items", totalItems)
-	m.Set("total_pages", totalPages)
+	m.Set("page", map[string]any{
+		"type":        "page",
+		"number":      req.Page,
+		"size":        req.PerPage,
+		"total_items": totalItems,
+		"total_pages": totalPages,
+	})
 	return m
 }
 
 func (m Meta) WithCursor(req CursorRequest, hasMore bool) Meta {
-	m.Set("limit", req.Limit)
-	m.Set("has_more", hasMore)
+	m.Set("page", map[string]any{
+		"type":     "cursor",
+		"limit":    req.Limit,
+		"has_more": hasMore,
+	})
 	return m
 }
 
 func (m Meta) WithSort(sort string) Meta {
-	return m.Set("sort", sort)
+	if sort == "" {
+		return m
+	}
+	query := metaMapValue(m, "query")
+	query["sort"] = sort
+	m["query"] = query
+	return m
 }
 
 func (m Meta) WithFilters(filters map[string]any) Meta {
-	return m.Set("filters", filters)
+	if len(filters) == 0 {
+		return m
+	}
+	query := metaMapValue(m, "query")
+	query["filters"] = filters
+	m["query"] = query
+	return m
 }
 
-func NewDocument(data any, meta Meta, links Links) Document {
-	return Document{Data: data, Meta: meta, Links: links}
+func (m Meta) WithCapabilities(filters map[string]any, sorts []string) Meta {
+	capabilities := map[string]any{}
+	if len(filters) > 0 {
+		capabilities["filters"] = filters
+	}
+	if len(sorts) > 0 {
+		capabilities["sorts"] = sorts
+	}
+	if len(capabilities) == 0 {
+		return m
+	}
+	m["capabilities"] = capabilities
+	return m
+}
+
+func NewDocument(data any, included []Resource, meta Meta, links Links) Document {
+	return Document{Data: data, Included: included, Meta: meta, Links: links}
 }
 
 func NewErrorDocument(code, message string, now time.Time) ErrorDocument {
@@ -105,4 +139,14 @@ func NewErrorDocument(code, message string, now time.Time) ErrorDocument {
 		},
 		Timestamp: now.UTC().Format(time.RFC3339),
 	}
+}
+
+func metaMapValue(meta Meta, key string) map[string]any {
+	if meta == nil {
+		meta = Meta{}
+	}
+	if existing, ok := meta[key].(map[string]any); ok {
+		return existing
+	}
+	return map[string]any{}
 }

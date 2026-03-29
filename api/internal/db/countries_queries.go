@@ -8,9 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func (s *Store) FetchCountryList(ctx context.Context, limit, offset int) ([]CountryDetails, error) {
+func (s *Store) FetchCountryList(ctx context.Context, filters CountryListFilters, limit, offset int) ([]CountryDetails, error) {
 	rows := []CountryDetails{}
-	if err := s.db.SelectContext(ctx, &rows, `
+	query := `
 WITH names AS (
 	SELECT
 		UPPER(original) AS code,
@@ -27,9 +27,10 @@ FROM stats.country_daily_stats AS cds
 LEFT JOIN names AS n ON n.code = UPPER(cds.country_code)
 LEFT JOIN stats.continent_reference AS cr ON cr.country_alpha2 = UPPER(cds.country_code)::bpchar
 GROUP BY UPPER(cds.country_code)
-ORDER BY code ASC
+ORDER BY ` + countryOrderBy(filters.Sort) + `
 LIMIT $1 OFFSET $2
-`, limit, offset); err != nil {
+`
+	if err := s.db.SelectContext(ctx, &rows, query, limit, offset); err != nil {
 		return nil, fmt.Errorf("query country list: %w", err)
 	}
 	for i := range rows {
@@ -104,11 +105,11 @@ FROM base
 	return row, nil
 }
 
-func (s *Store) FetchCountryGeokrety(ctx context.Context, countryCode string, limit, offset int) ([]GeokretListItem, error) {
+func (s *Store) FetchCountryGeokrety(ctx context.Context, countryCode string, sort Sort, limit, offset int) ([]GeokretListItem, error) {
 	rows := []GeokretListItem{}
 	query := geokretSelectColumns() + geokretBaseFromClause() + `
 WHERE UPPER(g.country) = UPPER($1)
-ORDER BY g.moved_on_datetime DESC, g.id DESC
+ORDER BY ` + geokretOrderBy(sort) + `
 LIMIT $2 OFFSET $3
 `
 	if err := s.db.SelectContext(ctx, &rows, query, countryCode, limit, offset); err != nil {

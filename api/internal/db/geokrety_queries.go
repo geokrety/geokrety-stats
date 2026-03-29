@@ -57,13 +57,33 @@ LEFT JOIN LATERAL (
 `
 }
 
-func (s *Store) FetchGeokretyList(ctx context.Context, limit, offset int) ([]GeokretListItem, error) {
+func (s *Store) FetchGeokretyList(ctx context.Context, filters GeokretListFilters, limit, offset int) ([]GeokretListItem, error) {
 	rows := []GeokretListItem{}
+	conditions := []string{"TRUE"}
+	args := make([]any, 0, 6)
+	if filters.Name != nil {
+		conditions = append(conditions, "g.name ILIKE ?")
+		args = append(args, "%"+strings.TrimSpace(*filters.Name)+"%")
+	}
+	if filters.OwnerID != nil {
+		conditions = append(conditions, "gg.owner = ?")
+		args = append(args, *filters.OwnerID)
+	}
+	if len(filters.Countries) > 0 {
+		conditions = append(conditions, "UPPER(g.country) IN (?)")
+		args = append(args, filters.Countries)
+	}
 	query := geokretSelectColumns() + geokretBaseFromClause() + `
-ORDER BY g.moved_on_datetime DESC, g.id DESC
-LIMIT $1 OFFSET $2
+WHERE ` + strings.Join(conditions, ` AND `) + `
+ORDER BY ` + geokretOrderBy(filters.Sort) + `
+LIMIT ? OFFSET ?
 `
-	if err := s.db.SelectContext(ctx, &rows, query, limit, offset); err != nil {
+	args = append(args, limit, offset)
+	query, expandedArgs, err := sqlx.In(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("build geokret list query: %w", err)
+	}
+	if err := s.db.SelectContext(ctx, &rows, s.db.Rebind(query), expandedArgs...); err != nil {
 		return nil, fmt.Errorf("query geokret list: %w", err)
 	}
 	return hydrateGeokretListItems(rows), nil
@@ -100,22 +120,6 @@ WHERE gkid = $1
 		return 0, fmt.Errorf("resolve geokret id: %w", err)
 	}
 	return geokretID, nil
-}
-
-func (s *Store) SearchGeokrety(ctx context.Context, query string, limit, offset int) ([]GeokretListItem, error) {
-	rows := []GeokretListItem{}
-	statement := geokretSelectColumns() + geokretBaseFromClause() + `
-WHERE g.name ILIKE '%' || $1 || '%'
-	OR ('GK' || LPAD(UPPER(TO_HEX(g.gkid)), 4, '0')) ILIKE UPPER($1) || '%'
-	OR CAST(g.gkid AS text) = $1
-	OR CAST(g.id AS text) = $1
-ORDER BY g.moved_on_datetime DESC, g.id DESC
-LIMIT $2 OFFSET $3
-`
-	if err := s.db.SelectContext(ctx, &rows, statement, query, limit, offset); err != nil {
-		return nil, fmt.Errorf("search geokrety: %w", err)
-	}
-	return hydrateGeokretListItems(rows), nil
 }
 
 func (s *Store) FetchGeokretStats(ctx context.Context, geokretID int64) (GeokretStats, error) {
@@ -190,7 +194,7 @@ WHERE g.id = $1
 	return row, nil
 }
 
-func (s *Store) FetchGeokretyLoves(ctx context.Context, geokretID int64, limit, offset int) ([]SocialUserEntry, error) {
+func (s *Store) FetchGeokretyLoves(ctx context.Context, geokretID int64, sort Sort, limit, offset int) ([]SocialUserEntry, error) {
 	rows := []SocialUserEntry{}
 	if err := s.db.SelectContext(ctx, &rows, fmt.Sprintf(`
 SELECT
@@ -203,15 +207,15 @@ FROM geokrety.gk_loves AS l
 LEFT JOIN geokrety.gk_users AS u ON u.id = l.user
 LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE l.geokret = $1
-ORDER BY l.created_on_datetime DESC, l.id DESC
+ORDER BY %s
 LIMIT $2 OFFSET $3
-`, pictureURLSQL("uap")), geokretID, limit, offset); err != nil {
+`, pictureURLSQL("uap"), socialOrderBy(sort)), geokretID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query geokret loves: %w", err)
 	}
 	return rows, nil
 }
 
-func (s *Store) FetchGeokretyWatches(ctx context.Context, geokretID int64, limit, offset int) ([]SocialUserEntry, error) {
+func (s *Store) FetchGeokretyWatches(ctx context.Context, geokretID int64, sort Sort, limit, offset int) ([]SocialUserEntry, error) {
 	rows := []SocialUserEntry{}
 	if err := s.db.SelectContext(ctx, &rows, fmt.Sprintf(`
 SELECT
@@ -224,15 +228,15 @@ FROM geokrety.gk_watched AS w
 LEFT JOIN geokrety.gk_users AS u ON u.id = w.user
 LEFT JOIN geokrety.gk_pictures AS uap ON uap.id = u.avatar
 WHERE w.geokret = $1
-ORDER BY w.created_on_datetime DESC, w.id DESC
+ORDER BY %s
 LIMIT $2 OFFSET $3
-`, pictureURLSQL("uap")), geokretID, limit, offset); err != nil {
+`, pictureURLSQL("uap"), socialOrderBy(sort)), geokretID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query geokret watches: %w", err)
 	}
 	return rows, nil
 }
 
-func (s *Store) FetchGeokretyFinders(ctx context.Context, geokretID int64, limit, offset int) ([]SocialUserEntry, error) {
+func (s *Store) FetchGeokretyFinders(ctx context.Context, geokretID int64, sort Sort, limit, offset int) ([]SocialUserEntry, error) {
 	rows := []SocialUserEntry{}
 	if err := s.db.SelectContext(ctx, &rows, fmt.Sprintf(`
 WITH latest_finders AS (
@@ -251,26 +255,27 @@ WITH latest_finders AS (
 )
 SELECT user_id, username, avatar_id, avatar_url, at
 FROM latest_finders
-ORDER BY at DESC, user_id DESC
+ORDER BY %s
 LIMIT $2 OFFSET $3
-`, pictureURLSQL("uap")), geokretID, limit, offset); err != nil {
+`, pictureURLSQL("uap"), socialOrderBy(sort)), geokretID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query geokret finders: %w", err)
 	}
 	return rows, nil
 }
 
-func (s *Store) FetchGeokretyCountries(ctx context.Context, geokretID int64, limit, offset int) ([]GeokretCountryVisit, error) {
+func (s *Store) FetchGeokretyCountries(ctx context.Context, geokretID int64, sort Sort, limit, offset int) ([]GeokretCountryVisit, error) {
 	rows := []GeokretCountryVisit{}
-	if err := s.db.SelectContext(ctx, &rows, `
+	query := `
 SELECT
 	UPPER(country_code) AS country_code,
 	first_visited_at,
 	move_count::bigint AS move_count
 FROM stats.gk_countries_visited
 WHERE geokrety_id = $1
-ORDER BY first_visited_at DESC, country_code ASC
+ORDER BY ` + geokretCountryVisitOrderBy(sort) + `
 LIMIT $2 OFFSET $3
-`, geokretID, limit, offset); err != nil {
+`
+	if err := s.db.SelectContext(ctx, &rows, query, geokretID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query geokret countries: %w", err)
 	}
 	for i := range rows {
@@ -279,9 +284,9 @@ LIMIT $2 OFFSET $3
 	return rows, nil
 }
 
-func (s *Store) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, limit, offset int) ([]GeokretWaypointVisit, error) {
+func (s *Store) FetchGeokretyWaypoints(ctx context.Context, geokretID int64, sort Sort, limit, offset int) ([]GeokretWaypointVisit, error) {
 	rows := []GeokretWaypointVisit{}
-	if err := s.db.SelectContext(ctx, &rows, `
+	query := `
 SELECT
 	w.waypoint_code,
 	UPPER(w.country) AS country,
@@ -293,9 +298,10 @@ SELECT
 FROM stats.gk_cache_visits AS v
 INNER JOIN stats.waypoints AS w ON w.id = v.waypoint_id
 WHERE v.gk_id = $1
-ORDER BY v.last_visited_at DESC, w.waypoint_code ASC
+ORDER BY ` + waypointVisitOrderBy(sort) + `
 LIMIT $2 OFFSET $3
-`, geokretID, limit, offset); err != nil {
+`
+	if err := s.db.SelectContext(ctx, &rows, query, geokretID, limit, offset); err != nil {
 		return nil, fmt.Errorf("query geokret waypoints: %w", err)
 	}
 	return hydrateGKWaypointVisits(rows), nil

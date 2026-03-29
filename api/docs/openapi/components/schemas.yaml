@@ -15,6 +15,13 @@ JsonRestDocumentLinks:
       type: string
     next:
       type: string
+    prev:
+      type: string
+      nullable: true
+    first:
+      type: string
+    last:
+      type: string
 
 JsonRestIdentifier:
   type: object
@@ -28,10 +35,7 @@ JsonRestIdentifier:
       type: string
 
 JsonRestRelationshipData:
-  oneOf:
-  - $ref: '#/components/schemas/JsonRestIdentifier'
-  - type: object
-    additionalProperties: true
+  $ref: '#/components/schemas/JsonRestIdentifier'
 
 JsonRestRelationship:
   type: object
@@ -41,6 +45,64 @@ JsonRestRelationship:
     links:
       $ref: '#/components/schemas/JsonRestResourceLinks'
 
+JsonRestPageMeta:
+  type: object
+  properties:
+    type:
+      type: string
+      enum:
+      - cursor
+      - page
+    limit:
+      type: integer
+    has_more:
+      type: boolean
+    number:
+      type: integer
+    size:
+      type: integer
+    total_items:
+      type: integer
+    total_pages:
+      type: integer
+
+JsonRestQueryMeta:
+  type: object
+  properties:
+    filters:
+      type: object
+      additionalProperties: true
+    sort:
+      type: string
+
+JsonRestFilterCapability:
+  type: object
+  properties:
+    type:
+      type: string
+    multi:
+      type: boolean
+    values:
+      type: array
+      items:
+        type: string
+    operators:
+      type: array
+      items:
+        type: string
+
+JsonRestCapabilitiesMeta:
+  type: object
+  properties:
+    filters:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/JsonRestFilterCapability'
+    sorts:
+      type: array
+      items:
+        type: string
+
 JsonRestMeta:
   type: object
   required:
@@ -49,20 +111,12 @@ JsonRestMeta:
     execution_time_ms:
       type: integer
       description: Milliseconds spent handling the request.
-    limit:
-      type: integer
-      description: Requested collection size for cursor collections.
-    has_more:
-      type: boolean
-      description: Indicates whether `links.next` can be followed.
     page:
-      type: integer
-    per_page:
-      type: integer
-    total_items:
-      type: integer
-    total_pages:
-      type: integer
+      $ref: '#/components/schemas/JsonRestPageMeta'
+    query:
+      $ref: '#/components/schemas/JsonRestQueryMeta'
+    capabilities:
+      $ref: '#/components/schemas/JsonRestCapabilitiesMeta'
 
 JsonRestErrorPayload:
   type: object
@@ -116,6 +170,10 @@ JsonRestSingleDocument:
   properties:
     data:
       $ref: '#/components/schemas/JsonRestResource'
+    included:
+      type: array
+      items:
+        $ref: '#/components/schemas/JsonRestResource'
     meta:
       $ref: '#/components/schemas/JsonRestMeta'
     links:
@@ -129,6 +187,10 @@ JsonRestCollectionDocument:
   - links
   properties:
     data:
+      type: array
+      items:
+        $ref: '#/components/schemas/JsonRestResource'
+    included:
       type: array
       items:
         $ref: '#/components/schemas/JsonRestResource'
@@ -216,6 +278,36 @@ WaypointVisitResource:
         type: string
         enum:
         - waypoint_visit
+
+LoverResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - lover
+
+WatcherResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - watcher
+
+FinderResource:
+  allOf:
+  - $ref: '#/components/schemas/JsonRestResource'
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - finder
 
 GeokretStatsResource:
   allOf:
